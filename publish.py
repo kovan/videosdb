@@ -69,7 +69,6 @@ def check_for_videos(db, url):
         def __init__(self):
             self.output = []
         def debug(self, msg): 
-            print("--------------")
             print(msg) 
             #hack: filter out real debug messages, leave only "info" messages
             if re.match("^\[.*\]", msg):
@@ -94,10 +93,6 @@ def check_for_videos(db, url):
 
     def download_video(video_id, skip_download=False):
         logger = MyLogger()
-        opt = dict(listformats=True, logger=logger)
-        with youtube_dl.YoutubeDL(opt) as ytd:
-            ytd.download([video_id])
-
         ytd_opts = dict(
            logger=logger,
            forceid=True,
@@ -105,8 +100,8 @@ def check_for_videos(db, url):
            writeinfojson=True,
            ignoreerrors=True,
            playlistrandom=True,
-           format='(248,247/bestvideo[ext=webm])+bestaudio',
-           outtmpl='%(uploader)s - %(title)s (%(height)sp) [%(id)s]'
+#          format='(248,247/bestvideo[ext=webm])+bestaudio',
+           outtmpl='%(uploader)s - %(title)s (%(height)sp) [%(id)s].%(ext)s'
         )
         with tempfile.TemporaryDirectory() as tmpdir:
             os.chdir(tmpdir)
