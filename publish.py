@@ -115,7 +115,7 @@ def check_for_videos(db, url):
                 video_json["description"],
                 video_json["uploader"]
             )
-            video.files = glob.glob("*.webm")
+            video.files = [file for file in glob.glob("*") if not file.endswith(".json")]
             db.put(video.youtube_id, video)
         
     new_videos_ids = find_new_videos_ids([url])
