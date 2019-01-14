@@ -3,5 +3,7 @@ easyblogger
 pylint
 youtube-dl
 lazydb
+requests
 ipdb
 ipython
+

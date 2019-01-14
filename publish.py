@@ -1,13 +1,10 @@
 #!env python3
 from executor import execute
 import lazydb
-import shutil
-import subprocess
 import tempfile
 import json
 import sys
 import optparse
-import blogger
 import os
 import os.path
 import glob
@@ -28,7 +25,8 @@ class Video:
     def __repr__(self):
         return self.youtube_id
 
-    def publish(self):
+    def publish_blogger(self):
+        import blogger
         template_raw = '''
         <br />
         <div style="padding-bottom: 56.25%; position: relative;">
@@ -55,6 +53,19 @@ class Video:
         eb.post(self.title, html, labels, isDraft=False)
         self.published = True
 
+    def publish_wordpress(self):
+        import requests
+        site_id = "156901386"
+        url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'
+        headers = { "Authorization": "BEARER " + "qpTIK7(hogZ#3WhSK#N@39xSQHc5aD@7D5VkxnXWBGgXsQwt90E#vw3!3yJA&Kc)" }
+        data = {
+            "title" : self.title,
+            "categories": ["video", self.uploader],
+            "content": "[embed]https://www.youtube.com/watch?v=%s[/embed]" % self.youtube_id
+        }
+        requests.post(url,headers=headers,data=data)
+
+
 
 def publish_random_video(db):
 
@@ -63,7 +74,7 @@ def publish_random_video(db):
         return
     video_id = random.choice(current_videos)
     video = db.get(video_id)
-    video.publish()
+    video.publish_wordpress()
     db.put(video_id, video)
 
 
