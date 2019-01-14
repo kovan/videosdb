@@ -1,5 +1,8 @@
 #!env python3
+import ipfsapi
 import lazydb
+import shutil
+import subprocess
 import tempfile
 import json
 import youtube_dl
@@ -104,6 +107,7 @@ def check_for_videos(db, url):
            outtmpl='%(uploader)s - %(title)s (%(height)sp) [%(id)s].%(ext)s'
         )
         with tempfile.TemporaryDirectory() as tmpdir:
+            original_cwd = os.getcwd()
             os.chdir(tmpdir)
             with youtube_dl.YoutubeDL(ytd_opts) as ytd:
                 ytd.download([video_id])
@@ -117,6 +121,26 @@ def check_for_videos(db, url):
             )
             video.files = [file for file in glob.glob("*") if not file.endswith(".json")]
             db.put(video.youtube_id, video)
+            for file in video.files:
+                shutil.move(file, original_cwd)
+
+#           TORRENT:
+#            for file in video.files:
+#                torrent_name = os.path.splitext(file)[0] + ".torrent"
+#                cmd = ["transmission-create", "-o", torrent_name]
+#
+#                for tracker in open(original_cwd + "/torrent-trackers.txt").readlines():
+#                    cmd += ["-t", tracker.strip()]
+#
+#                cmd += [file]
+#
+#                subprocess.check_call(cmd)
+#                cmd = ["transmission-remote", "--add", "'%s'" % torrent_name,
+#                        "--auth", "transmission:transmission"]
+#                subprocess.check_call(cmd)
+#                
+#                shutil.move(torrent_name, original_cwd)
+
         
     new_videos_ids = find_new_videos_ids([url])
     for video_id in new_videos_ids:
@@ -124,7 +148,7 @@ def check_for_videos(db, url):
 
 if __name__ == "__main__":
     parser = optparse.OptionParser()
-    parser.add_option("--url")
+    parser.add_option("--url", metavar="URL")
     parser.add_option("--skip-publish", action="store_true")
     (options, args) = parser.parse_args()
     
