@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--skip-publish", "--url", "jkIJlw_XctQ"]
+            "args": ["--skip-publish", "--url", "https://www.youtube.com/channel/UCJC1RVLcKzP-Zg-PNlg3z-Q"]
         },
         {
             "name": "Python: Current File (Integrated Terminal)",
