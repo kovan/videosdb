@@ -23,12 +23,12 @@ class Video:
         self.title = title
         self.uploader = uploader
         self.file = file
+        self.published = False
+
     def __repr__(self):
         return self.youtube_id
 
-def publish_random_video(db):
-
-    def publish_video(video):
+    def publish(self):
         template_raw = '''
         <br />
         <div style="padding-bottom: 56.25%; position: relative;">
@@ -44,23 +44,27 @@ def publish_random_video(db):
         '''
         template = jinja2.Template(template_raw)
         html = template.render(
-            video_id=video.youtube_id,
-            title=video.title,
-            description=video.description.splitlines()
+            video_id=self.youtube_id,
+            title=self.title
         )
         eb = blogger.EasyBlogger(
             clientId="62814020656-olqaifiob7ufoqpe1k4iah3v2ra12h8a.apps.googleusercontent.com", 
             clientSecret = "fnUgEpdkUTtthUtDk0vLvjMm",
             blogId = "8804984470189945822")
-        labels = "video, " + video.uploader
-        eb.post(video.title, html, labels, isDraft=False)
+        labels = "video, " + self.uploader
+        eb.post(self.title, html, labels, isDraft=False)
+        self.published = True
+
+
+def publish_random_video(db):
 
     current_videos = list(db.keys())
     if not current_videos:
         return
     video_id = random.choice(current_videos)
-    publish_video(db.get(video_id))
-
+    video = db.get(video_id)
+    video.publish()
+    db.put(video_id, video)
 
 
       
@@ -68,8 +72,8 @@ def check_for_videos(db, url):
 
     def find_new_videos_ids(url):
         result = execute("youtube-dl --get-id " + url, capture=True)
-        local_videos_ids = set(db.keys())
         remote_videos_ids = set(result.splitlines())
+        local_videos_ids = set(db.keys())
         new_videos_ids = remote_videos_ids - local_videos_ids
         return new_videos_ids
 
@@ -87,12 +91,13 @@ def check_for_videos(db, url):
                 video_json["uploader"],
                 file = [file for file in glob.glob("*") if not file.endswith(".json")][0]
             )
-            db.put(video.youtube_id, video)
+        return video
 
         
     new_videos_ids = find_new_videos_ids(url)
     for video_id in new_videos_ids:
-        download_video(video_id)
+        video = download_video(video_id)
+        db.put(video_id, video)
 
 if __name__ == "__main__":
     parser = optparse.OptionParser()
