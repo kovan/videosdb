@@ -7,10 +7,11 @@ import os.path
 import optparse
 
 class Video:
-    def __init__(self, youtube_id, file=None):
+    def __init__(self, youtube_id, file=None, ipfs_hash=None):
         self.youtube_id = youtube_id
         self.file = file
         self.published = False
+        self.ipfs_hash = ipfs_hash
 
     def __repr__(self):
         return self.youtube_id
