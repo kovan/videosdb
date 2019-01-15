@@ -2,8 +2,7 @@ jinja2
 easyblogger
 pylint
 youtube-dl
-lazydb
 requests
+dataset
 ipdb
-ipython
 

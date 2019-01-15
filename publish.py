@@ -1,9 +1,8 @@
 #!env python3
 from executor import execute
-import lazydb
+import dataset
 import json
 import os
-import os.path
 import optparse
 
 class Video:
@@ -59,12 +58,11 @@ class Video:
 
 
 
-def publish_random_video(db):
+def publish_video(videos):
     import random
-    current_videos = list(db.keys())
-    if not current_videos:
+    if not videos:
         return
-    video_id = random.choice(current_videos)
+    video_id = random.choice(videos)
     video = db.get(video_id)
     video.publish_wordpress()
     db.put(video_id, video)
@@ -75,8 +73,9 @@ def check_for_videos(db, url, skip_download):
 
     def find_new_videos_ids(url):
         result = execute("youtube-dl --get-id " + url, capture=True)
-        remote_videos_ids = set(result.splitlines())
-        local_videos_ids = set(db.keys())
+        remote_videos_ids = result.splitlines()
+        for id in remote_videos_ids:
+            if db["videos"].find_one(youtube_id=id)
         new_videos_ids = remote_videos_ids - local_videos_ids
         return new_videos_ids
 
@@ -129,6 +128,7 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     
     db = lazydb.Db("db.db")
+    db = dataset.connect("sqlite:///db.db")
     check_for_videos(db, options.url, options.skip_download)
     if not options.skip_publish:
         publish_random_video(db)
