@@ -7,7 +7,7 @@ import os.path
 import optparse
 
 class Video:
-    def __init__(self, youtube_id, file):
+    def __init__(self, youtube_id, file=None):
         self.youtube_id = youtube_id
         self.file = file
         self.published = False
@@ -70,7 +70,7 @@ def publish_random_video(db):
 
 
       
-def check_for_videos(db, url):
+def check_for_videos(db, url, skip_download):
 
     def find_new_videos_ids(url):
         result = execute("youtube-dl --get-id " + url, capture=True)
@@ -79,19 +79,30 @@ def check_for_videos(db, url):
         new_videos_ids = remote_videos_ids - local_videos_ids
         return new_videos_ids
 
-    def download_video(video_id):
+    def download_video(video_id, skip_download=False):
         import tempfile
         import glob
         with tempfile.TemporaryDirectory() as tmpdir:
             os.chdir(tmpdir)
-            execute("youtube-dl --write-info-json --ignore-errors --playlist-random"\
-                " --output '%(uploader)s - %(title)s (%(height)sp) [%(id)s].%(ext)s' " + video_id)
+            cmd = "youtube-dl"\
+                    " --write-info-json"\
+                    " --ignore-errors"\
+                    " --playlist-random"\
+                    " --output '%(uploader)s - %(title)s (%(height)sp) [%(id)s].%(ext)s' "\
+                    + video_id
+            if skip_download:
+                cmd +=  " --skip-download"
+
+            execute(cmd)
             
             video_json = json.load(open(glob.glob("*.json")[0]))
-            video = Video(
-                video_id,
-                file = [file for file in glob.glob("*") if not file.endswith(".json")][0]
-            )
+
+            video = Video(video_id)
+            
+            downloaded_video_files = [file for file in glob.glob("*") if not file.endswith(".json")]
+            if downloaded_video_files:
+                video.file = downloaded_video_files[0]
+
             interesting_attrs = ["title",
                     "description",
                     "uploader",
@@ -106,17 +117,18 @@ def check_for_videos(db, url):
         
     new_videos_ids = find_new_videos_ids(url)
     for video_id in new_videos_ids:
-        video = download_video(video_id)
+        video = download_video(video_id, skip_download)
         db.put(video_id, video)
 
 if __name__ == "__main__":
     parser = optparse.OptionParser()
     parser.add_option("--url", metavar="URL")
     parser.add_option("--skip-publish", action="store_true")
+    parser.add_option("--skip-download", action="store_true")
     (options, args) = parser.parse_args()
     
     db = lazydb.Db("db.db")
-    check_for_videos(db, options.url)
+    check_for_videos(db, options.url, options.skip_download)
     if not options.skip_publish:
         publish_random_video(db)
 
