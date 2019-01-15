@@ -1,24 +1,14 @@
 #!env python3
 from executor import execute
 import lazydb
-import tempfile
 import json
-import sys
-import optparse
 import os
 import os.path
-import glob
-import random
-import jinja2
-import re
-
+import optparse
 
 class Video:
-    def __init__(self, youtube_id, title, description, uploader, file):
+    def __init__(self, youtube_id, file):
         self.youtube_id = youtube_id
-        self.description = description
-        self.title = title
-        self.uploader = uploader
         self.file = file
         self.published = False
 
@@ -27,6 +17,7 @@ class Video:
 
     def publish_blogger(self):
         import blogger
+        import jinja2
         template_raw = '''
         <br />
         <div style="padding-bottom: 56.25%; position: relative;">
@@ -60,7 +51,7 @@ class Video:
         headers = { "Authorization": "BEARER " + "qpTIK7(hogZ#3WhSK#N@39xSQHc5aD@7D5VkxnXWBGgXsQwt90E#vw3!3yJA&Kc)" }
         data = {
             "title" : self.title,
-            "categories": ["video", self.uploader],
+            "categories": "videos, " + self.uploader,
             "content": "[embed]https://www.youtube.com/watch?v=%s[/embed]" % self.youtube_id
         }
         requests.post(url,headers=headers,data=data)
@@ -68,7 +59,7 @@ class Video:
 
 
 def publish_random_video(db):
-
+    import random
     current_videos = list(db.keys())
     if not current_videos:
         return
@@ -89,6 +80,8 @@ def check_for_videos(db, url):
         return new_videos_ids
 
     def download_video(video_id):
+        import tempfile
+        import glob
         with tempfile.TemporaryDirectory() as tmpdir:
             os.chdir(tmpdir)
             execute("youtube-dl --write-info-json --ignore-errors --playlist-random"\
@@ -97,11 +90,17 @@ def check_for_videos(db, url):
             video_json = json.load(open(glob.glob("*.json")[0]))
             video = Video(
                 video_id,
-                video_json["title"],
-                video_json["description"],
-                video_json["uploader"],
                 file = [file for file in glob.glob("*") if not file.endswith(".json")][0]
             )
+            interesting_attrs = ["title",
+                    "description",
+                    "uploader",
+                    "upload_date",
+                    "duration",
+                    "channel_url"]
+            for attr in interesting_attrs:
+                setattr(video, attr, video_json[attr])
+
         return video
 
         
