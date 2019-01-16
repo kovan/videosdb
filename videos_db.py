@@ -2,11 +2,9 @@
 from executor import execute
 import tempfile
 import random
-import dataset
 import json
 import os
 
-def ipdb(): import ipdb; ipdb.set_trace()
 
 class Video:
     def __init__(self, youtube_id = "", file=None, ipfs_hash=None):
@@ -15,10 +13,6 @@ class Video:
         self.published = False
         self.ipfs_hash = ipfs_hash
         self.extension = ""
-
-    def from_dict(self, dicty):
-        for key in dicty.keys():
-            setattr(self, key, dicty[key])
 
     def __repr__(self):
         return self.youtube_id
@@ -89,28 +83,25 @@ class Video:
             for attr in interesting_attrs:
                 setattr(self, attr, video_json[attr])
 
-def _create_video(db, youtube_id):
-    video = Video(youtube_id)
-    video.fill_info()
-    db["videos"].upsert(vars(video),["youtube_id"])
 
 # ---------------- PUBLIC:
 
 def publish_one(db, youtube_id):
-    video = _create_video(db, youtube_id)
+    video = Video(youtube_id)
+    video.fill_info()
     video.publish_wordpress()
-
+    db["videos"].upsert(vars(video),["youtube_id"])
 
 def publish_next(db):
-    row = db["publish_queue"].find_one()
+    # treat table as a LIFO stack, so that recent videos get published first:
+    row = db["publish_queue"].find_one(order_by=["-id"]) 
     if not row:
-        #TODO: we ran out of videos, reenqueue all
+        #we ran out of videos, reenqueue all:
+        for video_row in db["videos"].all():
+            db["publish_queue"].insert({"youtube_id": video_row["youtube_id"]})
         return
 
-    video_row = db["videos"].find_one(youtube_id=row["youtube_id"])
-    video = Video()
-    video.from_dict(video_row)
-    video.publish_wordpress()
+    publish_one(db, row["youtube_id"])
     db["publish_queue"].delete(**row)
 
 
@@ -122,13 +113,12 @@ def enqueue(db, url):
         random.shuffle(new_videos_ids)
         return new_videos_ids
 
-
     for youtube_id in _find_new_videos_ids(url):
-        _create_video(db, youtube_id)
-        db["publish_queue"].insert(dict(youtube_id=youtube_id))
+        db["publish_queue"].insert({"youtube_id": youtube_id} )
 
 
 def main():
+    import dataset
     import optparse
     parser = optparse.OptionParser()
     parser.add_option("--enqueue", metavar="URL")
@@ -153,5 +143,12 @@ def main():
         
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except:
+        import traceback, ipdb, sys
+        traceback.print_exc()
+        print ('')
+        ipdb.post_mortem()
+        sys.exit(1)
 
