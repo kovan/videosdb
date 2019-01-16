@@ -46,12 +46,12 @@ class Video:
     def publish_wordpress(self):
         import requests
         import jinja2
+        import urllib
 
         template_raw = '''"[embed]https://www.youtube.com/watch?v={{ youtube_id }}[/embed] '''
         if self.ipfs_hash:
             template_raw += '''
-                <p>Download video:</p>
-                <p><a href="http://ipfs.spiritualityresources.net/ipfs/{{ ipfs_hash }}" download="{{ file }}">{{ file }}</a></p>
+                <p>Download video: <a href="http://ipfs.spiritualityresources.net/ipfs/{{ ipfs_hash }}?filename={{ file|urlencode}}">{{ file }}</a></p>
         '''
         template = jinja2.Template(template_raw)
         html = template.render(
@@ -159,12 +159,12 @@ def main():
         
 
 if __name__ == "__main__":
-    try:
+#    try:
         main()
-    except:
-        import traceback, ipdb, sys
-        traceback.print_exc()
-        print ('')
-        ipdb.post_mortem()
-        sys.exit(1)
+#    except:
+#        import traceback, ipdb, sys
+#        traceback.print_exc()
+#        print ('')
+#        ipdb.post_mortem()
+#        sys.exit(1)
 
