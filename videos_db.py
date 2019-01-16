@@ -108,14 +108,14 @@ def publish_next(db):
 
 def enqueue(db, url):
 
-    def _find_new_videos_ids(url):
+    def _get_remote_videos_ids(url):
         result = execute("youtube-dl --ignore-errors --playlist-random --get-id " + url, capture=True)
-        new_videos_ids = result.splitlines()
-        random.shuffle(new_videos_ids)
-        return new_videos_ids
+        ids = result.splitlines()
+        random.shuffle(ids)
+        return ids
 
-    for youtube_id in _find_new_videos_ids(url):
-        db["publish_queue"].insert({"youtube_id": youtube_id} )
+    for id in _get_remote_videos_ids(url):
+        db["publish_queue"].upsert({"youtube_id":id}, ["youtube_id"] )
 
 
 def main():
