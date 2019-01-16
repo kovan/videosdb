@@ -1,5 +1,6 @@
 #!env python3
 from executor import execute
+import clogging
 import tempfile
 import random
 import json
@@ -62,14 +63,14 @@ class Video:
         with tempfile.TemporaryDirectory() as tmpdir:
             os.chdir(tmpdir)
             filename_format = "'%(uploader)s - %(title)s (%(height)sp) [%(id)s].%(ext)s'"
-            execute("youtube-dl --output %s %s" %( filename_format ,self.youtube_id))
+            execute("youtube-dl --ignore-errors --output %s %s" %( filename_format ,self.youtube_id))
             #TODO
 
     def fill_info(self):
         with tempfile.TemporaryDirectory() as tmpdir: #tmpdir = tempfile.mkdtemp()
             
             os.chdir(tmpdir)
-            cmd = "youtube-dl --write-info-json --skip-download --output '%(id)s' " + self.youtube_id
+            cmd = "youtube-dl --ignore-errors --write-info-json --skip-download --output '%(id)s' " + self.youtube_id
             execute(cmd)
 
             video_json = json.load(open(self.youtube_id + ".info.json"))
@@ -120,6 +121,7 @@ def enqueue(db, url):
 def main():
     import dataset
     import optparse
+
     parser = optparse.OptionParser()
     parser.add_option("--enqueue", metavar="URL")
     parser.add_option("--publish-next", action="store_true")
@@ -143,12 +145,5 @@ def main():
         
 
 if __name__ == "__main__":
-    try:
-        main()
-    except:
-        import traceback, ipdb, sys
-        traceback.print_exc()
-        print ('')
-        ipdb.post_mortem()
-        sys.exit(1)
+    main()
 
