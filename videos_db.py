@@ -7,12 +7,10 @@ import os
 
 
 class Video:
-    def __init__(self, youtube_id = "", file=None, ipfs_hash=None):
+    def __init__(self, youtube_id = None):
         self.youtube_id = youtube_id
-        self.file = file
-        self.published = False
-        self.ipfs_hash = ipfs_hash
-        self.extension = ""
+        self.file = ""
+        self.ipfs_hash = ""
 
     def __repr__(self):
         return self.youtube_id
@@ -47,23 +45,38 @@ class Video:
 
     def publish_wordpress(self):
         import requests
+        import jinja2
+
+        template_raw = '''"[embed]https://www.youtube.com/watch?v={{ youtube_id }}[/embed] '''
+        if self.ipfs_hash:
+            template_raw += '''
+                <p>Download video:</p>
+                <p><a href="http://ipfs.spiritualityresources.net/ipfs/{{ ipfs_hash }}" download="{{ file }}">{{ file }}</a></p>
+        '''
+        template = jinja2.Template(template_raw)
+        html = template.render(
+            youtube_id=self.youtube_id,
+            ipfs_hash=self.ipfs_hash,
+            file=self.file
+        )
         site_id = "156901386"
         url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'
         headers = { "Authorization": "BEARER " + "qpTIK7(hogZ#3WhSK#N@39xSQHc5aD@7D5VkxnXWBGgXsQwt90E#vw3!3yJA&Kc)" }
         data = {
             "title" : self.title,
             "categories": "videos, " + self.uploader,
-            "content": "[embed]https://www.youtube.com/watch?v=%s[/embed]" % self.youtube_id
+            "content": html
         }
         requests.post(url,headers=headers,data=data)
 
 
-    def download(self):
+    def download_to_ipfs(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             os.chdir(tmpdir)
             filename_format = "'%(uploader)s - %(title)s (%(height)sp) [%(id)s].%(ext)s'"
             execute("youtube-dl --output %s %s" %( filename_format ,self.youtube_id))
-            #TODO
+            self.file = os.listdir(".")[0]
+            self.ipfs_hash = execute("ipfs add -Q '%s'" % self.file, capture=True)
 
     def fill_info(self):
         with tempfile.TemporaryDirectory() as tmpdir: #tmpdir = tempfile.mkdtemp()
@@ -86,13 +99,15 @@ class Video:
 
 # ---------------- PUBLIC:
 
-def publish_one(db, youtube_id):
+def publish_one(db, youtube_id, enable_ipfs):
     video = Video(youtube_id)
     video.fill_info()
+    if enable_ipfs:
+        video.download_to_ipfs()
     video.publish_wordpress()
-    db["videos"].upsert(vars(video),["youtube_id"])
+    db["videos"].upsert(vars(video),["youtube_id"], ensure=True)
 
-def publish_next(db):
+def publish_next(db, enable_ipfs):
     # treat table as a LIFO stack, so that recent videos get published first:
     row = db["publish_queue"].find_one(order_by=["-id"]) 
     if not row:
@@ -101,7 +116,7 @@ def publish_next(db):
             db["publish_queue"].insert({"youtube_id": video_row["youtube_id"]})
         return
 
-    publish_one(db, row["youtube_id"])
+    publish_one(db, row["youtube_id"], enable_ipfs)
     db["publish_queue"].delete(**row)
 
 
@@ -124,6 +139,7 @@ def main():
     parser.add_option("--enqueue", metavar="URL")
     parser.add_option("--publish-next", action="store_true")
     parser.add_option("--publish-one",metavar="VIDEO-ID") 
+    parser.add_option("--enable-ipfs", action="store_true")
     (options, args) = parser.parse_args()
     db = dataset.connect("sqlite:///db.db")
 
@@ -132,11 +148,11 @@ def main():
         return
 
     if options.publish_one:
-        publish_one(db, options.publish_one)
+        publish_one(db, options.publish_one, options.enable_ipfs)
         return
 
     if options.publish_next:
-        publish_next(db)
+        publish_next(db, options.enable_ipfs)
         return
 
     options.print_usage()
