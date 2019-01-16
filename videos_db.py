@@ -1,12 +1,14 @@
 #!env python3
 from executor import execute
-import clogging
+from autologging import traced, TRACE
 import tempfile
 import random
+import logging
 import json
+import sys
 import os
 
-
+@traced(logging.getLogger(__name__))
 class Video:
     def __init__(self, youtube_id = "", file=None, ipfs_hash=None):
         self.youtube_id = youtube_id
@@ -85,14 +87,14 @@ class Video:
                 setattr(self, attr, video_json[attr])
 
 
-# ---------------- PUBLIC:
-
+@traced(logging.getLogger(__name__))
 def publish_one(db, youtube_id):
     video = Video(youtube_id)
     video.fill_info()
     video.publish_wordpress()
     db["videos"].upsert(vars(video),["youtube_id"])
 
+@traced(logging.getLogger(__name__))
 def publish_next(db):
     # treat table as a LIFO stack, so that recent videos get published first:
     row = db["publish_queue"].find_one(order_by=["-id"]) 
@@ -106,6 +108,7 @@ def publish_next(db):
     db["publish_queue"].delete(**row)
 
 
+@traced(logging.getLogger(__name__))
 def enqueue(db, url):
 
     def _get_remote_videos_ids(url):
@@ -118,16 +121,23 @@ def enqueue(db, url):
         db["publish_queue"].upsert({"youtube_id":id}, ["youtube_id"] )
 
 
+@traced(logging.getLogger(__name__))
 def main():
     import dataset
     import optparse
-
     parser = optparse.OptionParser()
+    parser.add_option("--verbose", action="store_true")
     parser.add_option("--enqueue", metavar="URL")
     parser.add_option("--publish-next", action="store_true")
     parser.add_option("--publish-one",metavar="VIDEO-ID") 
     (options, args) = parser.parse_args()
     db = dataset.connect("sqlite:///db.db")
+    if options.verbose:
+        logging.basicConfig(
+                 stream=sys.stderr,
+                 format="%(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s")
+        logging.getLogger(__name__).setLevel(TRACE)
+        logging.getLogger("executor").setLevel(logging.DEBUG)
 
     if options.enqueue:
         enqueue(db, options.enqueue)
@@ -141,7 +151,6 @@ def main():
         publish_next(db)
         return
 
-    options.print_usage()
         
 
 if __name__ == "__main__":
