@@ -85,7 +85,11 @@ class IPFS:
         if not os.path.exists(var_dir):
             os.mkdir(var_dir)
         self.root_hash_filename = var_dir + "/ipfs_root_hash.txt"
-        self.root_hash = open(self.root_hash_filename).read().strip() 
+        if os.path.exists(self.root_hash_filename):
+            self.root_hash = open(self.root_hash_filename).read().strip() 
+        else:
+            self.root_hash = ""
+
     def _update_root_hash(self, new_root_hash):
         self.root_hash = new_root_hash
         with io.open(self.root_hash_filename, "w") as f:
@@ -96,8 +100,9 @@ class IPFS:
         api = ipfsapi.connect(self.host, self.port)
         hash = api.add(filename)["Hash"]
         api.pin_add(hash)
-        result = api.object_patch_add_link(self.root_hash, filename, hash)
-        self._update_root_hash(result["Hash"])        
+        if self.root_hash:
+            result = api.object_patch_add_link(self.root_hash, filename, hash)
+            self._update_root_hash(result["Hash"])        
         return hash
         
         
