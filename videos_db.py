@@ -75,7 +75,29 @@ def _publish_wordpress(video):
 
         
 
+@traced(logging.getLogger(__name__))
+class DNS:
+    def update(self, new_root_hash):
+        from google.cloud import dns
+        client = dns.Client()
+        zone = client.zone("spirituality")
+        #records, page_token = zone.list_resource_record_sets()
+        records = zone.list_resource_record_sets()
+        import ipdb; ipdb.set_trace()
+        
+        # init transaction
+        changes = zone.changes()
+        # delete old
+        for record in records:
+            if record.name == "list.spiritualityresources.net.":
+                changes.delete_record_set(record)
+        #add new 
+        record = zone.resource_record_set("list.spiritualityresources.net.","TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
+        changes.add_record_set(record)
+        #finish transaction
+        changes.create()
 
+        
 @traced(logging.getLogger(__name__))
 class IPFS:
     def __init__(self, address):
@@ -94,6 +116,7 @@ class IPFS:
         self.root_hash = new_root_hash
         with io.open(self.root_hash_filename, "w") as f:
             f.write(new_root_hash)
+        DNS().update(new_root_hash) 
 
     def add_file(self, filename):
         import ipfsapi
@@ -228,6 +251,8 @@ def main():
     parser.add_option("--publish-next", action="store_true")
     parser.add_option("--publish-one",metavar="VIDEO-ID") 
     parser.add_option("--ipfs-address", metavar="HOST:PORT")
+    parser.add_option("--only-update-dnslink", action="store_true")
+
     (options, args) = parser.parse_args()
     db = dataset.connect("sqlite:///db.db")
 
@@ -238,6 +263,9 @@ def main():
         logging.getLogger(__name__).setLevel(TRACE)
         logging.getLogger("executor").setLevel(logging.DEBUG)
 
+    if options.only_update_dnslink:
+        DNS().update(open("/home/k/.videos_db/ipfs_root_hash.txt").read().strip())
+        return
     if options.enqueue:
         enqueue(db, options.enqueue)
         return
