@@ -53,7 +53,7 @@ def _publish_wordpress(video):
     html = template.render(
         youtube_id=video["youtube_id"],
         ipfs_hash=video.get("ipfs_hash"),
-        file=video.get("file")
+        file=video.get("filename")
     )
     site_id = "156901386"
     url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'
@@ -151,8 +151,8 @@ def publish_one(db, youtube_id, ipfs_host):
         with tempfile.TemporaryDirectory() as tmpdir:
             old_cwd = os.getcwd()
             os.chdir(tmpdir)
-            video_filename = ydl.download_video(video["youtube_id"])
-            video["ipfs_hash"]= ipfs.add_video(video_filename)
+            video["filename"] = ydl.download_video(video["youtube_id"])
+            video["ipfs_hash"]= ipfs.add_video(video["filename"])
             os.chdir(old_cwd)
            
     _publish_wordpress(video)
