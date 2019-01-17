@@ -7,6 +7,8 @@ import logging
 import json
 import sys
 import os
+import io
+
 
 @traced(logging.getLogger(__name__))
 def _publish_blogger(video):
@@ -76,11 +78,30 @@ def _publish_wordpress(video):
 
 @traced(logging.getLogger(__name__))
 class IPFS:
-    def __init__(self, host, root_hash):
-        self.host = host
-        self.root_hash = root_hash
+    def __init__(self, address):
+        self.host, self.port = address.split(":")
+        from pathlib import Path
+        var_dir = str(Path.home()) + "/.videos_db"
+        if not os.path.exists(var_dir):
+            os.mkdir(var_dir)
+        self.root_hash_filename = var_dir + "/ipfs_root_hash.txt"
+        self.root_hash = open(self.root_hash_filename).read().strip() 
+    def _update_root_hash(self, new_root_hash):
+        self.root_hash = new_root_hash
+        with io.open(self.root_hash_filename, "w") as f:
+            f.write(new_root_hash)
 
-    def add_video(self, video_filename):
+    def add_file(self, filename):
+        import ipfsapi
+        api = ipfsapi.connect(self.host, self.port)
+        hash = api.add(filename)["Hash"]
+        api.pin_add(hash)
+        result = api.object_patch_add_link(self.root_hash, filename, hash)
+        self._update_root_hash(result["Hash"])        
+        return hash
+        
+        
+    def add_video_http(self, video_filename):
         # IPFS add:
         url = self.host + "/api/v0/add"
         files = { "files": open(video_filename, "rb") }
@@ -109,9 +130,9 @@ class YoutubeDL:
     def __init__(self):
         self.base_cmd =  "youtube-dl --youtube-skip-dash-manifest --ignore-errors "
 
-    def download_video(self,url):
+    def download_video(self,url_or_id):
         filename_format = "%(uploader)s - %(title)s (%(height)sp) [%(id)s].%(ext)s"
-        execute(self.base_cmd + "--output '%s' %s" %( filename_format ,url))
+        execute(self.base_cmd + "--output '%s' %s" %( filename_format,url_or_id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
@@ -137,7 +158,7 @@ class YoutubeDL:
 
 
 @traced(logging.getLogger(__name__))
-def publish_one(db, youtube_id, ipfs_host):
+def publish_one(db, youtube_id, ipfs_address):
     ydl = YoutubeDL()
     info = ydl.download_info(youtube_id)
     video = dict()
@@ -152,13 +173,13 @@ def publish_one(db, youtube_id, ipfs_host):
         video[attr] = info[attr]
 
 
-    if ipfs_host and "ipfs_hash" not in video:
-        ipfs = IPFS(ipfs_host, open("ipfs_root_hash.txt").read().strip())
+    if ipfs_address and "ipfs_hash" not in video:
+        ipfs = IPFS(ipfs_address)
         with tempfile.TemporaryDirectory() as tmpdir:
             old_cwd = os.getcwd()
             os.chdir(tmpdir)
             video["filename"] = ydl.download_video(video["youtube_id"])
-            video["ipfs_hash"]= ipfs.add_video(video["filename"])
+            video["ipfs_hash"]= ipfs.add_file(video["filename"])
             os.chdir(old_cwd)
            
     _publish_wordpress(video)
@@ -167,7 +188,7 @@ def publish_one(db, youtube_id, ipfs_host):
 
 
 @traced(logging.getLogger(__name__))
-def publish_next(db, ipfs_host):
+def publish_next(db, ipfs_address):
     # treat table as a LIFO stack, so that recent videos get published first:
     row = db["publish_queue"].find_one(order_by=["-id"]) 
     if not row:
@@ -176,7 +197,7 @@ def publish_next(db, ipfs_host):
             db["publish_queue"].insert({"youtube_id": video["youtube_id"]})
         return
 
-    publish_one(db, row["youtube_id"], ipfs_host)
+    publish_one(db, row["youtube_id"], ipfs_address)
     db["publish_queue"].delete(**row)
 
 
@@ -201,9 +222,10 @@ def main():
     parser.add_option("--enqueue", metavar="URL")
     parser.add_option("--publish-next", action="store_true")
     parser.add_option("--publish-one",metavar="VIDEO-ID") 
-    parser.add_option("--ipfs-host", metavar="PROTOCOL://HOST:PORT")
+    parser.add_option("--ipfs-address", metavar="HOST:PORT")
     (options, args) = parser.parse_args()
     db = dataset.connect("sqlite:///db.db")
+
     if options.verbose:
         logging.basicConfig(
                  stream=sys.stdout,
@@ -216,11 +238,11 @@ def main():
         return
 
     if options.publish_one:
-        publish_one(db, options.publish_one, options.ipfs_host)
+        publish_one(db, options.publish_one, options.ipfs_address)
         return
 
     if options.publish_next:
-        publish_next(db, options.ipfs_host)
+        publish_next(db, options.ipfs_address)
         return
 
         

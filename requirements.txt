@@ -4,4 +4,5 @@ https://github.com/Khang-NT/youtube-dl/archive/master.zip
 requests
 dataset
 executor
+ipfsapi
 
