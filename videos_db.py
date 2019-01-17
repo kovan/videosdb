@@ -53,9 +53,12 @@ class Video:
 
         template_raw = '''[embed]https://www.youtube.com/watch?v={{ youtube_id }}[/embed] '''
         if self.ipfs_hash:
-            template_raw += '''
-                <p>Download video: <a href="http://ipfs.spiritualityresources.net/ipfs/{{ ipfs_hash }}?filename={{ file|urlencode}}">{{ file }}</a></p>
-        '''
+            template_raw += \
+            '''
+            <!-- wp:button -->
+            <div class="wp-block-button"><a class="wp-block-button__link" href="http://ipfs.spiritualityresources.net/ipfs/{{ ipfs_hash }}?filename={{file|urlencode}}">Download video<br></a></div>
+            <!-- /wp:button -->
+            '''
         template = jinja2.Template(template_raw)
         html = template.render(
             youtube_id=self.youtube_id,
