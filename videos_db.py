@@ -7,6 +7,7 @@ import logging
 import json
 import sys
 import os
+YDL_BASE_CMD = "youtube-dl --youtube-skip-dash-manifest --ignore-errors "
 
 @traced(logging.getLogger(__name__))
 class Video:
@@ -65,14 +66,14 @@ class Video:
         with tempfile.TemporaryDirectory() as tmpdir:
             os.chdir(tmpdir)
             filename_format = "'%(uploader)s - %(title)s (%(height)sp) [%(id)s].%(ext)s'"
-            execute("youtube-dl --ignore-errors --output %s %s" %( filename_format ,self.youtube_id))
+            execute(YDL_BASE_CMD + "--output %s %s" %( filename_format ,self.youtube_id))
             #TODO
 
     def fill_info(self):
         with tempfile.TemporaryDirectory() as tmpdir: #tmpdir = tempfile.mkdtemp()
             
             os.chdir(tmpdir)
-            cmd = "youtube-dl --ignore-errors --write-info-json --skip-download --output '%(id)s' " + self.youtube_id
+            cmd = YDL_BASE_CMD + "--write-info-json --skip-download --output '%(id)s' " + self.youtube_id
             execute(cmd)
 
             video_json = json.load(open(self.youtube_id + ".info.json"))
@@ -112,7 +113,9 @@ def publish_next(db):
 def enqueue(db, url):
 
     def _get_remote_videos_ids(url):
-        result = execute("youtube-dl --ignore-errors --playlist-random --get-id " + url, capture=True)
+        result = execute(YDL_BASE_CMD + "--playlist-random --get-id " + url, check=False, capture=True)
+        if not result:
+            raise Exception("youtube-dl error")
         ids = result.splitlines()
         random.shuffle(ids)
         return ids
@@ -134,7 +137,7 @@ def main():
     db = dataset.connect("sqlite:///db.db")
     if options.verbose:
         logging.basicConfig(
-                 stream=sys.stderr,
+                 stream=sys.stdout,
                  format="%(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s")
         logging.getLogger(__name__).setLevel(TRACE)
         logging.getLogger("executor").setLevel(logging.DEBUG)
