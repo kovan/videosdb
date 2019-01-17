@@ -54,9 +54,14 @@ class Video:
         site_id = "156901386"
         url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'
         headers = { "Authorization": "BEARER " + "qpTIK7(hogZ#3WhSK#N@39xSQHc5aD@7D5VkxnXWBGgXsQwt90E#vw3!3yJA&Kc)" }
+        categories = [
+            "videos",
+            "short videos" if self.duration/60 <= 20 else "long videos",
+            self.uploader
+        ]
         data = {
             "title" : self.title,
-            "categories": "videos, " + self.uploader,
+            "categories": ",".join(categories),
             "content": "[embed]https://www.youtube.com/watch?v=%s[/embed]" % self.youtube_id
         }
         requests.post(url,headers=headers,data=data)
@@ -77,7 +82,6 @@ class Video:
             execute(cmd)
 
             video_json = json.load(open(self.youtube_id + ".info.json"))
-
             interesting_attrs = ["title",
                     "description",
                     "uploader",
