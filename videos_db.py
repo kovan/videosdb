@@ -50,9 +50,8 @@ class Video:
     def publish_wordpress(self):
         import requests
         import jinja2
-        import urllib
 
-        template_raw = '''"[embed]https://www.youtube.com/watch?v={{ youtube_id }}[/embed] '''
+        template_raw = '''[embed]https://www.youtube.com/watch?v={{ youtube_id }}[/embed] '''
         if self.ipfs_hash:
             template_raw += '''
                 <p>Download video: <a href="http://ipfs.spiritualityresources.net/ipfs/{{ ipfs_hash }}?filename={{ file|urlencode}}">{{ file }}</a></p>
