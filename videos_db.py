@@ -121,7 +121,7 @@ class Video:
 def publish_one(db, youtube_id, enable_ipfs):
     video = Video(youtube_id)
     video.fill_info()
-    if enable_ipfs:
+    if enable_ipfs and not video.ipfs_hash:
         video.download_to_ipfs()
     video.publish_wordpress()
     db["videos"].upsert(vars(video),["youtube_id"], ensure=True)
