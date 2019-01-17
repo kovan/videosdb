@@ -68,7 +68,10 @@ def _publish_wordpress(video):
         "categories": ",".join(categories),
         "content": html
     }
-    requests.post(url,headers=headers,data=data)
+    response = requests.post(url,headers=headers,data=data)
+    response.raise_for_status()
+
+        
 
 
 @traced(logging.getLogger(__name__))
@@ -82,19 +85,22 @@ class IPFS:
         url = self.host + "/api/v0/add"
         files = { "files": open(video_filename, "rb") }
         response = requests.post(url, files=files)
+        response.raise_for_status()
         hash = response.json()["Hash"]
 
         # IPFS pin:
         params = { "arg" : "/ipfs/" + hash }
         requests.get(self.host + "/api/v0/pin/add", params=params)
+        response.raise_for_status()
 
         # IPFS add to directory:
         params = { 
-            "arg" : self.root_hash,
-            "arg" : hash,
-            "arg" : video_filename
+            "root" : self.root_hash,
+            "ref" : hash,
+            "name" : video_filename
         }
-        requests.get(self.host + "/api/v0/object/patch/add-link", params=params)
+        #response = requests.get(self.host + "/api/v0/object/patch/add-link", params=params)
+        #response.raise_for_status()
         return hash
 
 
@@ -147,7 +153,7 @@ def publish_one(db, youtube_id, ipfs_host):
 
 
     if ipfs_host and "ipfs_hash" not in video:
-        ipfs = IPFS(ipfs_host, open("ipfs_root_hash.txt").read())
+        ipfs = IPFS(ipfs_host, open("ipfs_root_hash.txt").read().strip())
         with tempfile.TemporaryDirectory() as tmpdir:
             old_cwd = os.getcwd()
             os.chdir(tmpdir)
