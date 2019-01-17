@@ -81,7 +81,7 @@ class Video:
         requests.post(url,headers=headers,data=data)
 
 
-    def download_to_ipfs(self):
+    def download_to_ipfs(self, ipfs_host):
         import requests
         with tempfile.TemporaryDirectory() as tmpdir:
             os.chdir(tmpdir)
@@ -89,7 +89,7 @@ class Video:
             execute(YDL_BASE_CMD + "--output '%s' %s" %( filename_format ,self.youtube_id))
             self.file = os.listdir(".")[0]
 
-            url = "http://ipfs:5001/api/v0/add"
+            url = ipfs_host + "/api/v0/add"
             files = {
                 "files": open(self.file, "rb")
             }
@@ -118,16 +118,16 @@ class Video:
 
 
 @traced(logging.getLogger(__name__))
-def publish_one(db, youtube_id, enable_ipfs):
+def publish_one(db, youtube_id, ipfs_host):
     video = Video(youtube_id)
     video.fill_info()
-    if enable_ipfs and not video.ipfs_hash:
-        video.download_to_ipfs()
+    if ipfs_host and not video.ipfs_hash:
+        video.download_to_ipfs(ipfs_host)
     video.publish_wordpress()
     db["videos"].upsert(vars(video),["youtube_id"], ensure=True)
 
 @traced(logging.getLogger(__name__))
-def publish_next(db, enable_ipfs):
+def publish_next(db, ipfs_host):
     # treat table as a LIFO stack, so that recent videos get published first:
     row = db["publish_queue"].find_one(order_by=["-id"]) 
     if not row:
@@ -136,7 +136,7 @@ def publish_next(db, enable_ipfs):
             db["publish_queue"].insert({"youtube_id": video_row["youtube_id"]})
         return
 
-    publish_one(db, row["youtube_id"], enable_ipfs)
+    publish_one(db, row["youtube_id"], ipfs_host)
     db["publish_queue"].delete(**row)
 
 
@@ -164,7 +164,7 @@ def main():
     parser.add_option("--enqueue", metavar="URL")
     parser.add_option("--publish-next", action="store_true")
     parser.add_option("--publish-one",metavar="VIDEO-ID") 
-    parser.add_option("--enable-ipfs", action="store_true")
+    parser.add_option("--ipfs-host", metavar="PROTOCOL://HOST:PORT")
     (options, args) = parser.parse_args()
     db = dataset.connect("sqlite:///db.db")
     if options.verbose:
@@ -179,11 +179,11 @@ def main():
         return
 
     if options.publish_one:
-        publish_one(db, options.publish_one, options.enable_ipfs)
+        publish_one(db, options.publish_one, options.ipfs_host)
         return
 
     if options.publish_next:
-        publish_next(db, options.enable_ipfs)
+        publish_next(db, options.ipfs_host)
         return
 
         

@@ -5,4 +5,4 @@ git pull
 source venv/bin/activate
 pip install -r requirements.txt
 python videos_db.py --verbose --enqueue https://www.youtube.com/user/sadhguru
-python videos_db.py --verbose --enable-ipfs --publish-next
+python videos_db.py --verbose --ipfs-host http://ipfs:5001 --publish-next
