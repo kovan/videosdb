@@ -55,8 +55,8 @@ class Video:
         url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'
         headers = { "Authorization": "BEARER " + "qpTIK7(hogZ#3WhSK#N@39xSQHc5aD@7D5VkxnXWBGgXsQwt90E#vw3!3yJA&Kc)" }
         categories = [
-            "videos",
-            "short videos" if self.duration/60 <= 20 else "long videos",
+            "Videos",
+            "Short videos" if self.duration/60 <= 20 else "Long videos",
             self.uploader
         ]
         data = {
