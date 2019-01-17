@@ -35,7 +35,7 @@ def _publish_blogger(video):
         clientSecret = "fnUgEpdkUTtthUtDk0vLvjMm",
         blogId = "8804984470189945822")
     labels = "video, " + video["uploader"]
-    eb.post(video.title, html, labels, isDraft=False)
+    eb.post(video["title"], html, labels, isDraft=False)
 
 @traced(logging.getLogger(__name__))
 def _publish_wordpress(video):
@@ -77,10 +77,10 @@ class IPFS:
         self.host = host
         self.root_hash = root_hash
 
-    def add_video(video_filename):
+    def add_video(self, video_filename):
         # IPFS add:
         url = self.host + "/api/v0/add"
-        files = { "files": open(video.filename, "rb") }
+        files = { "files": open(video_filename, "rb") }
         response = requests.post(url, files=files)
         hash = response.json()["Hash"]
 
@@ -112,10 +112,12 @@ class YoutubeDL:
 
     def download_info(self, youtube_id):
         with tempfile.TemporaryDirectory() as tmpdir: 
+            old_cwd = os.getcwd()
             os.chdir(tmpdir)
             cmd = self.base_cmd + "--write-info-json --skip-download --output '%(id)s' " + youtube_id
             execute(cmd)
             video_json = json.load(open(youtube_id + ".info.json"))
+            os.chdir(old_cwd)
         return video_json 
 
     def list_videos(self, url):
@@ -144,12 +146,14 @@ def publish_one(db, youtube_id, ipfs_host):
         video[attr] = info[attr]
 
 
-    if ipfs_host and not video.ipfs_hash:
+    if ipfs_host and "ipfs_hash" not in video:
         ipfs = IPFS(ipfs_host, open("ipfs_root_hash.txt").read())
         with tempfile.TemporaryDirectory() as tmpdir:
+            old_cwd = os.getcwd()
             os.chdir(tmpdir)
             video_filename = ydl.download_video(video["youtube_id"])
             video["ipfs_hash"]= ipfs.add_video(video_filename)
+            os.chdir(old_cwd)
            
     _publish_wordpress(video)
     db["videos"].upsert(video,["youtube_id"], ensure=True)
