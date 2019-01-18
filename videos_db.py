@@ -46,24 +46,28 @@ def _publish_wordpress(video):
     from string import Template
     from urllib.parse import urlencode
     template_raw = '''
-        <!-- wp:core-embed/youtube {"url":"https://www.youtube.com/watch?v=$youtube_id }}}","type":"video","providerNameSlug":"youtube","className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
+        <!-- wp:core-embed/youtube {"url":"https://www.youtube.com/watch?v=$youtube_id","type":"video","providerNameSlug":"youtube","className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
         <figure class="wp-block-embed-youtube wp-block-embed is-type-video is-provider-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">
         https://www.youtube.com/watch?v=$youtube_id
         </div></figure>
         <!-- /wp:core-embed/youtube -->
         '''
-    if "ipfs_hash" in video:
-        template_raw += \
-        '''
-        <!-- wp:button {"align":"center"}-->
-        <div class="wp-block-button"><a class="wp-block-button__link" href="http://ipfs.spiritualityresources.net/ipfs/$ipfs_hash?filename=$file">Download video<br></a></div>
+
+    template_raw_ipfs = '''
+        <!-- wp:button {"align":"center"} -->
+        <div class="wp-block-button aligncenter"><a class="wp-block-button__link" href="http://ipfs.spiritualityresources.net/ipfs/$ipfs_hash?$filename_param">Download video</a></div>
         <!-- /wp:button -->
+
         '''
+
+    if "ipfs_hash" in video:
+        template_raw += template_raw_ipfs
+
     template = Template(template_raw)
     html = template.substitute(
         youtube_id=video["youtube_id"],
         ipfs_hash=video.get("ipfs_hash"),
-        file=urlencode({ "filename" : video.get("filename")} )
+        filename_param=urlencode({ "filename" : video.get("filename")} )
     )
     site_id = "156901386"
     url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'
@@ -172,17 +176,19 @@ class YoutubeDL:
 @traced(logging.getLogger(__name__))
 def publish_one(db, youtube_id, ipfs_address):
     ydl = YoutubeDL()
-    info = ydl.download_info(youtube_id)
-    video = dict()
-    video["youtube_id"] = youtube_id
-    interesting_attrs = ["title",
-            "description",
-            "uploader",
-            "upload_date",
-            "duration",
-            "channel_url"]
-    for attr in interesting_attrs:
-        video[attr] = info[attr]
+    video = db["videos"].find_one(youtube_id=youtube_id)
+    if not video:
+        video = dict()
+        video["youtube_id"] = youtube_id
+        info = ydl.download_info(youtube_id)
+        interesting_attrs = ["title",
+                "description",
+                "uploader",
+                "upload_date",
+                "duration",
+                "channel_url"]
+        for attr in interesting_attrs:
+            video[attr] = info[attr]
 
     if ipfs_address and "ipfs_hash" not in video:
         ipfs = IPFS(ipfs_address)
