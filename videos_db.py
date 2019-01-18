@@ -118,20 +118,21 @@ class DNS:
 class IPFS:
     def __init__(self, address):
         self.host, self.port = address.split(":")
-
-    def add_file(self, filename, root_hash=None):
         import ipfsapi
-        api = ipfsapi.connect(self.host, self.port)
-        file_hash = api.add(filename)["Hash"]
-        api.pin_add(file_hash)
-        if not root_hash:
-            root_node = api.name_resolve("/ipns/list.spiritualityresources.net")
-            root_hash = root_node["Path"]
-        new_root = api.object_patch_add_link(root_hash, filename, file_hash)
-        DNS.update(new_root["Hash"]) 
+        self.api = ipfsapi.connect(self.host, self.port)
+        root_node = self.api.name_resolve("/ipns/list.spiritualityresources.net")
+        self.root_hash = root_node["Path"]
+
+    def add_file(self, filename):
+        file_hash = self.api.add(filename)["Hash"]
+        self.api.pin_add(file_hash)
+        new_root = self.api.object_patch_add_link(self.root_hash, filename, file_hash)
+        self.root_hash = new_root["Hash"]
         return file_hash
         
-        
+    def update_dnslink(self):
+        DNS.update(self.root_hash)  
+
 
 @traced(logging.getLogger(__name__))
 class YoutubeDL:
@@ -171,16 +172,21 @@ class YoutubeDL:
 class Main:
     def __init__(self, ipfs_address=None):
         self.db = dataset.connect("sqlite:///db.db")
-        self.ipfs_address = ipfs_address
-    
+        if ipfs_address:
+            self.ipfs = IPFS(ipfs_address)
+        else:
+            self.ipfs = None
 
     def download_all(self):
         ids = [row["youtube_id"] for row in self.db["publish_queue"].all()]
         for id in ids:
-            self.download_one(id)
+            self.download_one(id, False)
+    
+        if self.ipfs:
+            self.ipfs.update_dnslink()
         
 
-    def download_one(self, youtube_id):
+    def download_one(self, youtube_id, update_dnslink=True):
         video = self.db["videos"].find_one(youtube_id=youtube_id)
         if not video:
             video = dict()
@@ -195,16 +201,19 @@ class Main:
             for attr in interesting_attrs:
                 video[attr] = info[attr]
 
-        if self.ipfs_address and "ipfs_hash" not in video:
-            ipfs = IPFS(self.ipfs_address)
+        if self.ipfs and "ipfs_hash" not in video:
             with tempfile.TemporaryDirectory() as tmpdir:
                 old_cwd = os.getcwd()
                 os.chdir(tmpdir)
                 video["filename"] = YoutubeDL.download_video(video["youtube_id"])
-                video["ipfs_hash"]= ipfs.add_file(video["filename"])
+                video["ipfs_hash"]= self.ipfs.add_file(video["filename"])
                 os.chdir(old_cwd)
                
         self.db["videos"].upsert(video,["youtube_id"], ensure=True)
+
+        if self.ipfs and update_dnslink:
+            self.ipfs.update_dnslink()
+
         return video
 
 
