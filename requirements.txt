@@ -6,3 +6,4 @@ dataset
 executor
 ipfsapi
 
+google-cloud-dns
