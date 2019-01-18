@@ -9,6 +9,8 @@ import sys
 import os
 import io
 
+def dbg():
+        import ipdb; ipdb.set_trace()
 
 @traced(logging.getLogger(__name__))
 def _publish_blogger(video):
@@ -83,7 +85,6 @@ class DNS:
         zone = client.zone("spirituality")
         #records, page_token = zone.list_resource_record_sets()
         records = zone.list_resource_record_sets()
-        import ipdb; ipdb.set_trace()
         
         # init transaction
         changes = zone.changes()
@@ -251,7 +252,7 @@ def main():
     parser.add_option("--publish-next", action="store_true")
     parser.add_option("--publish-one",metavar="VIDEO-ID") 
     parser.add_option("--ipfs-address", metavar="HOST:PORT")
-    parser.add_option("--only-update-dnslink", action="store_true")
+    parser.add_option("--only-update-dnslink", metavar="ROOT_HASH")
 
     (options, args) = parser.parse_args()
     db = dataset.connect("sqlite:///db.db")
@@ -264,7 +265,7 @@ def main():
         logging.getLogger("executor").setLevel(logging.DEBUG)
 
     if options.only_update_dnslink:
-        DNS().update(open("/home/k/.videos_db/ipfs_root_hash.txt").read().strip())
+        DNS().update(options.only_update_dnslink)
         return
     if options.enqueue:
         enqueue(db, options.enqueue)
