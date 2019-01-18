@@ -140,28 +140,37 @@ class IPFS:
 
 @traced(logging.getLogger(__name__))
 class YoutubeDL:
-    def __init__(self):
-        self.base_cmd =  "youtube-dl --youtube-skip-dash-manifest --ignore-errors "
+    BASE_CMD =  "youtube-dl --youtube-skip-dash-manifest --ignore-errors "
 
-    def download_video(self,url_or_id):
+    @staticmethod
+    def download_video(url_or_id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
-        execute(self.base_cmd + "--output '%s' %s" %( filename_format,url_or_id))
+        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,url_or_id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
 
-    def download_info(self, youtube_id):
+    @staticmethod
+    def download_info(youtube_id):
         with tempfile.TemporaryDirectory() as tmpdir: 
             old_cwd = os.getcwd()
             os.chdir(tmpdir)
-            cmd = self.base_cmd + "--write-info-json --skip-download --output '%(id)s' " + youtube_id
+            cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' " + youtube_id
             execute(cmd)
             video_json = json.load(open(youtube_id + ".info.json"))
             os.chdir(old_cwd)
         return video_json 
 
+    @staticmethod
+    def download_many(id_list, max_procs = 1):
+       from multiprocessing import Pool
+       with Pool(max_procs) as pool:
+           return pool.map(YoutubeDL.download_video,id_list)
+             
+
+    @staticmethod
     def list_videos(self, url):
-        result = execute(self.base_cmd + "--playlist-random --get-id " + url, check=False, capture=True)
+        result = execute(YoutubeDL.BASE_CMD + "--playlist-random --get-id " + url, check=False, capture=True)
         if not result:
             raise Exception("youtube-dl error")
         ids = result.splitlines()
@@ -176,16 +185,16 @@ class Main:
     
 
     def download_all(self):
-        for video in self.db["videos"].all():
-            self.download_one(video["youtube_id"])
+        ids = [row["youtube_id"] for row in self.db["publish_queue"].all()]
+        YoutubeDL.download_many(ids, max_procs=10)
+        
 
     def download_one(self, youtube_id):
         video = self.db["videos"].find_one(youtube_id=youtube_id)
         if not video:
             video = dict()
             video["youtube_id"] = youtube_id
-            ydl = YoutubeDL()
-            info = ydl.download_info(youtube_id)
+            info = YoutubeDL.download_info(youtube_id)
             interesting_attrs = ["title",
                     "description",
                     "uploader",
@@ -200,7 +209,7 @@ class Main:
             with tempfile.TemporaryDirectory() as tmpdir:
                 old_cwd = os.getcwd()
                 os.chdir(tmpdir)
-                video["filename"] = ydl.download_video(video["youtube_id"])
+                video["filename"] = YoutubeDL.download_video(video["youtube_id"])
                 video["ipfs_hash"]= ipfs.add_file(video["filename"])
                 os.chdir(old_cwd)
                
@@ -229,8 +238,7 @@ class Main:
     def enqueue(self, url):
         import random
 
-        ydl = YoutubeDL()
-        video_ids = ydl.list_videos(url)
+        video_ids = YoutubeDL.list_videos(url)
         random.shuffle(video_ids)
 
         for id in video_ids:
