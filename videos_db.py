@@ -59,6 +59,9 @@ def _publish_wordpress(video):
         <div class="wp-block-button aligncenter"><a class="wp-block-button__link" href="http://ipfs.spiritualityresources.net/ipfs/$ipfs_hash?$filename_param">Download video</a></div>
         <!-- /wp:button -->
 
+        <!-- wp:paragraph {"align":"center","customFontSize":11} -->
+        <p style="font-size:11px;text-align:center">If your browser automatically plays the video instead of downloading it, right click on the link and choose "Save as..."</p>
+        <!-- /wp:paragraph -->
         '''
 
     if video.get("ipfs_hash"):
