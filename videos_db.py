@@ -2,6 +2,7 @@
 from executor import execute
 from autologging import traced, TRACE
 import tempfile
+import dataset
 import requests
 import logging
 import json
@@ -167,79 +168,87 @@ class YoutubeDL:
         return ids
     
 
-
-
 @traced(logging.getLogger(__name__))
-def publish_one(db, youtube_id, ipfs_address):
-    ydl = YoutubeDL()
-    video = db["videos"].find_one(youtube_id=youtube_id)
-    if not video:
-        video = dict()
-        video["youtube_id"] = youtube_id
-        info = ydl.download_info(youtube_id)
-        interesting_attrs = ["title",
-                "description",
-                "uploader",
-                "upload_date",
-                "duration",
-                "channel_url"]
-        for attr in interesting_attrs:
-            video[attr] = info[attr]
+class Main:
+    def __init__(self, ipfs_address=None):
+        self.db = dataset.connect("sqlite:///db.db")
+        self.ipfs_address = ipfs_address
+    
 
-    if ipfs_address and "ipfs_hash" not in video:
-        ipfs = IPFS(ipfs_address)
-        with tempfile.TemporaryDirectory() as tmpdir:
-            old_cwd = os.getcwd()
-            os.chdir(tmpdir)
-            video["filename"] = ydl.download_video(video["youtube_id"])
-            video["ipfs_hash"]= ipfs.add_file(video["filename"])
-            os.chdir(old_cwd)
-           
-    _publish_wordpress(video)
-    db["videos"].upsert(video,["youtube_id"], ensure=True)
+    def download_all(self, youtube_id):
+        for video in self.db["videos"].all():
+            self.download_one(video["youtube_id"])
 
+    def download_one(self, youtube_id):
+        video = self.db["videos"].find_one(youtube_id=youtube_id)
+        if not video:
+            video = dict()
+            video["youtube_id"] = youtube_id
+            ydl = YoutubeDL()
+            info = ydl.download_info(youtube_id)
+            interesting_attrs = ["title",
+                    "description",
+                    "uploader",
+                    "upload_date",
+                    "duration",
+                    "channel_url"]
+            for attr in interesting_attrs:
+                video[attr] = info[attr]
 
-
-@traced(logging.getLogger(__name__))
-def publish_next(db, ipfs_address):
-    # treat table as a LIFO stack, so that recent videos get published first:
-    row = db["publish_queue"].find_one(order_by=["-id"]) 
-    if not row:
-        #we ran out of videos, reenqueue all:
-        for video in db["videos"].all():
-            db["publish_queue"].insert({"youtube_id": video["youtube_id"]})
-        return
-
-    publish_one(db, row["youtube_id"], ipfs_address)
-    db["publish_queue"].delete(**row)
+        if self.ipfs_address and "ipfs_hash" not in video:
+            ipfs = IPFS(self.ipfs_address)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                old_cwd = os.getcwd()
+                os.chdir(tmpdir)
+                video["filename"] = ydl.download_video(video["youtube_id"])
+                video["ipfs_hash"]= ipfs.add_file(video["filename"])
+                os.chdir(old_cwd)
+               
+        self.db["videos"].upsert(video,["youtube_id"], ensure=True)
+        return video
 
 
-@traced(logging.getLogger(__name__))
-def enqueue(db, url):
-    import random
-
-    ydl = YoutubeDL()
-    video_ids = ydl.list_videos(url)
-    random.shuffle(video_ids)
-
-    for id in video_ids:
-        db["publish_queue"].upsert({"youtube_id":id}, ["youtube_id"] )
+    def publish_one(self, youtube_id):
+        video = self.download_one(youtube_id)
+        _publish_wordpress(video)
 
 
-@traced(logging.getLogger(__name__))
-def main():
+    def publish_next(self):
+        # treat table as a LIFO stack, so that recent videos get published first:
+        row = self.db["publish_queue"].find_one(order_by=["-id"]) 
+        if not row:
+            #we ran out of videos, reenqueue all:
+            for video in self.db["videos"].all():
+                self.db["publish_queue"].insert({"youtube_id": video["youtube_id"]})
+            return
+
+        self.publish_one(row["youtube_id"])
+        self.db["publish_queue"].delete(**row)
+
+
+    def enqueue(self, url):
+        import random
+
+        ydl = YoutubeDL()
+        video_ids = ydl.list_videos(url)
+        random.shuffle(video_ids)
+
+        for id in video_ids:
+            self.db["publish_queue"].upsert({"youtube_id":id}, ["youtube_id"] )
+
+def _main():
     import dataset
     import optparse
     parser = optparse.OptionParser()
     parser.add_option("--verbose", action="store_true")
     parser.add_option("--enqueue", metavar="URL")
+    parser.add_option("--download-all", metavar="URL")
     parser.add_option("--publish-next", action="store_true")
     parser.add_option("--publish-one",metavar="VIDEO-ID") 
     parser.add_option("--ipfs-address", metavar="HOST:PORT")
     parser.add_option("--only-update-dnslink", metavar="ROOT_HASH")
 
     (options, args) = parser.parse_args()
-    db = dataset.connect("sqlite:///db.db")
 
     if options.verbose:
         logging.basicConfig(
@@ -251,20 +260,27 @@ def main():
     if options.only_update_dnslink:
         DNS().update(options.only_update_dnslink)
         return
+
+    main = Main(options.ipfs_address)
+
     if options.enqueue:
-        enqueue(db, options.enqueue)
+        main.enqueue(options.enqueue)
+        return
+
+    if options.download_all:
+        main.download_all(options.download_all)
         return
 
     if options.publish_one:
-        publish_one(db, options.publish_one, options.ipfs_address)
+        main.publish_one(options.publish_one)
         return
 
     if options.publish_next:
-        publish_next(db, options.ipfs_address)
+        main.publish_next()
         return
 
         
 
-if __name__ == "__main__":
-    main()
 
+if __name__ == "__main__":
+    _main()
