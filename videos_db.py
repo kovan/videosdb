@@ -43,21 +43,27 @@ def _publish_blogger(video):
 
 @traced(logging.getLogger(__name__))
 def _publish_wordpress(video):
-    import jinja2
-
-    template_raw = '''[embed]https://www.youtube.com/watch?v={{ youtube_id }}[/embed] '''
+    from string import Template
+    from urllib.parse import urlencode
+    template_raw = '''
+        <!-- wp:core-embed/youtube {"url":"https://www.youtube.com/watch?v=$youtube_id }}}","type":"video","providerNameSlug":"youtube","className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
+        <figure class="wp-block-embed-youtube wp-block-embed is-type-video is-provider-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">
+        https://www.youtube.com/watch?v=$youtube_id
+        </div></figure>
+        <!-- /wp:core-embed/youtube -->
+        '''
     if "ipfs_hash" in video:
         template_raw += \
         '''
-        <!-- wp:button -->
-        <div class="wp-block-button"><a class="wp-block-button__link" href="http://ipfs.spiritualityresources.net/ipfs/{{ ipfs_hash }}?filename={{file|urlencode}}">Download video<br></a></div>
+        <!-- wp:button {"align":"center"}-->
+        <div class="wp-block-button"><a class="wp-block-button__link" href="http://ipfs.spiritualityresources.net/ipfs/$ipfs_hash?filename=$file">Download video<br></a></div>
         <!-- /wp:button -->
         '''
-    template = jinja2.Template(template_raw)
-    html = template.render(
+    template = Template(template_raw)
+    html = template.substitute(
         youtube_id=video["youtube_id"],
         ipfs_hash=video.get("ipfs_hash"),
-        file=video.get("filename")
+        file=urlencode({ "filename" : video.get("filename")} )
     )
     site_id = "156901386"
     url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'
@@ -130,29 +136,6 @@ class IPFS:
         return hash
         
         
-    def add_video_http(self, video_filename):
-        # IPFS add:
-        url = self.host + "/api/v0/add"
-        files = { "files": open(video_filename, "rb") }
-        response = requests.post(url, files=files)
-        response.raise_for_status()
-        hash = response.json()["Hash"]
-
-        # IPFS pin:
-        params = { "arg" : "/ipfs/" + hash }
-        requests.get(self.host + "/api/v0/pin/add", params=params)
-        response.raise_for_status()
-
-        # IPFS add to directory:
-        params = { 
-            "root" : self.root_hash,
-            "ref" : hash,
-            "name" : video_filename
-        }
-        #response = requests.get(self.host + "/api/v0/object/patch/add-link", params=params)
-        #response.raise_for_status()
-        return hash
-
 
 @traced(logging.getLogger(__name__))
 class YoutubeDL:
@@ -200,7 +183,6 @@ def publish_one(db, youtube_id, ipfs_address):
             "channel_url"]
     for attr in interesting_attrs:
         video[attr] = info[attr]
-
 
     if ipfs_address and "ipfs_hash" not in video:
         ipfs = IPFS(ipfs_address)

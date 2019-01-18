@@ -1,4 +1,3 @@
-jinja2
 easyblogger
 https://github.com/Khang-NT/youtube-dl/archive/master.zip
 requests
