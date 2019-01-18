@@ -10,6 +10,8 @@ import sys
 import os
 import io
 
+import config
+
 def dbg():
         import ipdb; ipdb.set_trace()
 
@@ -36,9 +38,9 @@ def _publish_blogger(video):
         title=video["title"]
     )
     eb = blogger.EasyBlogger(
-        clientId="62814020656-olqaifiob7ufoqpe1k4iah3v2ra12h8a.apps.googleusercontent.com", 
-        clientSecret = "fnUgEpdkUTtthUtDk0vLvjMm",
-        blogId = "8804984470189945822")
+        clientId=config.blogger_token, 
+        clientSecret = config.blogger_secret,
+        blogId = config.blogger_blogid)
     labels = "video, " + video["uploader"]
     eb.post(video["title"], html, labels, isDraft=False)
 
@@ -73,9 +75,9 @@ def _publish_wordpress(video):
         ipfs_hash=video.get("ipfs_hash"),
         filename_param=urlencode({ "filename" : video.get("filename")} )
     )
-    site_id = "156901386"
+    site_id = config.wordpress_site_id
     url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'
-    headers = { "Authorization": "BEARER " + "qpTIK7(hogZ#3WhSK#N@39xSQHc5aD@7D5VkxnXWBGgXsQwt90E#vw3!3yJA&Kc)" }
+    headers = { "Authorization": "BEARER " + config.wordpress_token}
     categories = [
         "Videos",
         "Short videos" if video["duration"]/60 <= 20 else "Long videos",
@@ -96,19 +98,18 @@ class DNS:
     @staticmethod
     def update(new_root_hash):
         from google.cloud import dns
-        client = dns.Client()
-        zone = client.zone("spirituality")
-        #records, page_token = zone.list_resource_record_sets()
+        client = dns.Client(project=config.gcloud_project)
+        zone = client.zone(config.dns_zone)
         records = zone.list_resource_record_sets()
         
         # init transaction
         changes = zone.changes()
         # delete old
         for record in records:
-            if record.name == "list.spiritualityresources.net.":
+            if record.name == config.dnslink_record:
                 changes.delete_record_set(record)
         #add new 
-        record = zone.resource_record_set("list.spiritualityresources.net.","TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
+        record = zone.resource_record_set(dnslink_record,"TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
         changes.add_record_set(record)
         #finish transaction
         changes.create()
@@ -116,11 +117,11 @@ class DNS:
         
 @traced(logging.getLogger(__name__))
 class IPFS:
-    def __init__(self, address):
-        self.host, self.port = address.split(":")
+    def __init__(self, host, port):
+        self.host, self.port = host, port
         import ipfsapi
         self.api = ipfsapi.connect(self.host, self.port)
-        root_node = self.api.name_resolve("/ipns/list.spiritualityresources.net")
+        root_node = self.api.name_resolve("/ipns/" + config.dnslink_record)
         self.root_hash = root_node["Path"]
 
     def add_file(self, filename):
@@ -128,6 +129,9 @@ class IPFS:
         self.api.pin_add(file_hash)
         new_root = self.api.object_patch_add_link(self.root_hash, filename, file_hash)
         self.root_hash = new_root["Hash"]
+        # save just in case:
+        with open("ipfs_root_hash.txt","w") as f:
+            f.write(self.root_hash)
         return file_hash
         
     def update_dnslink(self):
@@ -170,10 +174,10 @@ class YoutubeDL:
 
 @traced(logging.getLogger(__name__))
 class Main:
-    def __init__(self, ipfs_address=None):
+    def __init__(self):
         self.db = dataset.connect("sqlite:///db.db")
-        if ipfs_address:
-            self.ipfs = IPFS(ipfs_address)
+        if config.ipfs_host:
+            self.ipfs = IPFS(config.ipfs_host, config.ipfs_port)
         else:
             self.ipfs = None
 
@@ -253,7 +257,7 @@ def _main():
     parser.add_option("--download-all", action="store_true")
     parser.add_option("--publish-next", action="store_true")
     parser.add_option("--publish-one",metavar="VIDEO-ID") 
-    parser.add_option("--ipfs-address", metavar="HOST:PORT")
+    parser.add_option("--ipfs-enable", action="store_true")
     parser.add_option("--only-update-dnslink", metavar="ROOT_HASH")
 
     (options, args) = parser.parse_args()
@@ -269,7 +273,7 @@ def _main():
         DNS.update(options.only_update_dnslink)
         return
 
-    main = Main(options.ipfs_address)
+    main = Main()
 
     if options.enqueue:
         main.enqueue(options.enqueue)
