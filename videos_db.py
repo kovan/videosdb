@@ -113,11 +113,7 @@ class DNS:
 class IPFS:
     def __init__(self, address):
         self.host, self.port = address.split(":")
-        from pathlib import Path
-        var_dir = str(Path.home()) + "/.videos_db"
-        if not os.path.exists(var_dir):
-            os.mkdir(var_dir)
-        self.root_hash_filename = var_dir + "/ipfs_root_hash.txt"
+        self.root_hash_filename = "ipfs_root_hash.txt"
         if os.path.exists(self.root_hash_filename):
             self.root_hash = open(self.root_hash_filename).read().strip() 
         else:
@@ -147,7 +143,7 @@ class YoutubeDL:
         self.base_cmd =  "youtube-dl --youtube-skip-dash-manifest --ignore-errors "
 
     def download_video(self,url_or_id):
-        filename_format = "%(uploader)s - %(title)s (%(height)sp) [%(id)s].%(ext)s"
+        filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
         execute(self.base_cmd + "--output '%s' %s" %( filename_format,url_or_id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
