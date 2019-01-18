@@ -148,6 +148,7 @@ class YoutubeDL:
         execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,url_or_id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
+ 
         return filename
 
     @staticmethod
@@ -161,12 +162,6 @@ class YoutubeDL:
             os.chdir(old_cwd)
         return video_json 
 
-    @staticmethod
-    def download_many(id_list, max_procs = 1):
-       from multiprocessing import Pool
-       with Pool(max_procs) as pool:
-           return pool.map(YoutubeDL.download_video,id_list)
-             
 
     @staticmethod
     def list_videos(self, url):
@@ -186,7 +181,8 @@ class Main:
 
     def download_all(self):
         ids = [row["youtube_id"] for row in self.db["publish_queue"].all()]
-        YoutubeDL.download_many(ids, max_procs=10)
+        for id in ids:
+            self.download_one(id)
         
 
     def download_one(self, youtube_id):
