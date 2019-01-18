@@ -60,7 +60,7 @@ def _publish_wordpress(video):
 
         '''
 
-    if "ipfs_hash" in video:
+    if video.get("ipfs_hash"):
         template_raw += template_raw_ipfs
 
     template = Template(template_raw)
