@@ -93,7 +93,8 @@ def _publish_wordpress(video):
 
 @traced(logging.getLogger(__name__))
 class DNS:
-    def update(self, new_root_hash):
+    @staticmethod
+    def update(new_root_hash):
         from google.cloud import dns
         client = dns.Client()
         zone = client.zone("spirituality")
@@ -117,27 +118,18 @@ class DNS:
 class IPFS:
     def __init__(self, address):
         self.host, self.port = address.split(":")
-        self.root_hash_filename = "ipfs_root_hash.txt"
-        if os.path.exists(self.root_hash_filename):
-            self.root_hash = open(self.root_hash_filename).read().strip() 
-        else:
-            self.root_hash = ""
 
-    def _update_root_hash(self, new_root_hash):
-        self.root_hash = new_root_hash
-        with io.open(self.root_hash_filename, "w") as f:
-            f.write(new_root_hash)
-        DNS().update(new_root_hash) 
-
-    def add_file(self, filename):
+    def add_file(self, filename, root_hash=None):
         import ipfsapi
         api = ipfsapi.connect(self.host, self.port)
-        hash = api.add(filename)["Hash"]
-        api.pin_add(hash)
-        if self.root_hash:
-            result = api.object_patch_add_link(self.root_hash, filename, hash)
-            self._update_root_hash(result["Hash"])        
-        return hash
+        file_hash = api.add(filename)["Hash"]
+        api.pin_add(file_hash)
+        if not root_hash:
+            root_node = api.name_resolve("/ipns/list.spiritualityresources.net")
+            root_hash = root_node["Path"]
+        new_root = api.object_patch_add_link(root_hash, filename, file_hash)
+        DNS.update(new_root["Hash"]) 
+        return file_hash
         
         
 
@@ -146,9 +138,9 @@ class YoutubeDL:
     BASE_CMD =  "youtube-dl --youtube-skip-dash-manifest --ignore-errors "
 
     @staticmethod
-    def download_video(url_or_id):
+    def download_video(id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
-        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,url_or_id))
+        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,"http://www.youtube.com/watch?v=" + id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
  
@@ -159,7 +151,7 @@ class YoutubeDL:
         with tempfile.TemporaryDirectory() as tmpdir: 
             old_cwd = os.getcwd()
             os.chdir(tmpdir)
-            cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' " + youtube_id
+            cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' http://www.youtube.com/watch?v=" + youtube_id
             execute(cmd)
             video_json = json.load(open(youtube_id + ".info.json"))
             os.chdir(old_cwd)
@@ -265,7 +257,7 @@ def _main():
         logging.getLogger("executor").setLevel(logging.DEBUG)
 
     if options.only_update_dnslink:
-        DNS().update(options.only_update_dnslink)
+        DNS.update(options.only_update_dnslink)
         return
 
     main = Main(options.ipfs_address)
