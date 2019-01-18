@@ -175,7 +175,7 @@ class Main:
         self.ipfs_address = ipfs_address
     
 
-    def download_all(self, youtube_id):
+    def download_all(self):
         for video in self.db["videos"].all():
             self.download_one(video["youtube_id"])
 
@@ -242,7 +242,7 @@ def _main():
     parser = optparse.OptionParser()
     parser.add_option("--verbose", action="store_true")
     parser.add_option("--enqueue", metavar="URL")
-    parser.add_option("--download-all", metavar="URL")
+    parser.add_option("--download-all", action="store_true")
     parser.add_option("--publish-next", action="store_true")
     parser.add_option("--publish-one",metavar="VIDEO-ID") 
     parser.add_option("--ipfs-address", metavar="HOST:PORT")
@@ -268,7 +268,7 @@ def _main():
         return
 
     if options.download_all:
-        main.download_all(options.download_all)
+        main.download_all()
         return
 
     if options.publish_one:
