@@ -123,7 +123,7 @@ class IPFS:
         import ipfsapi
         self.host, self.port = host, port
         self.api = ipfsapi.connect(self.host, self.port)
-        root_node = self.api.name_resolve("/ipns/" + config.dnslink_record)
+        root_node = self.api.name_resolve("/ipns/" + config.dnslink_name)
         self.root_hash = root_node["Path"]
 
     def add_file(self, filename):
