@@ -4,5 +4,5 @@ requests
 dataset
 executor
 ipfsapi
-
+autologging
 google-cloud-dns
