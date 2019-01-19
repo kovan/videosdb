@@ -147,7 +147,7 @@ class YoutubeDL:
     @staticmethod
     def download_video(id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
-        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,"http://www.youtube.com/watch?v=" + id))
+        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,"https://www.youtube.com/watch?v=" + id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
  
@@ -158,7 +158,7 @@ class YoutubeDL:
         with tempfile.TemporaryDirectory() as tmpdir: 
             old_cwd = os.getcwd()
             os.chdir(tmpdir)
-            cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' http://www.youtube.com/watch?v=" + youtube_id
+            cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
             execute(cmd)
             video_json = json.load(open(youtube_id + ".info.json"))
             os.chdir(old_cwd)
