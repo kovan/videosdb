@@ -57,14 +57,16 @@ def _publish_wordpress(video):
 
     template_raw_ipfs = '''
         <!-- wp:button {"align":"center"} -->
-        <div class="wp-block-button aligncenter"><a class="wp-block-button__link" href="http://ipfs.spiritualityresources.net/ipfs/$ipfs_hash?$filename_param">Download video</a></div>
+        <div class="wp-block-button aligncenter"><a class="wp-block-button__link" href="http://ipfs.spiritualityresources.net/ipfs/$ipfs_hash?$filename_param"
+            download="$filename">Download video</a></div>
         <!-- /wp:button -->
-
-        <!-- wp:paragraph {"align":"center","customFontSize":11} -->
-        <p style="font-size:11px;text-align:center">If your browser automatically plays the video instead of downloading it, right click on the link and choose "Save as..."</p>
-        <!-- /wp:paragraph -->
         '''
-
+#        '''
+#        <!-- wp:paragraph {"align":"center","customFontSize":11} -->
+#        <p style="font-size:11px;text-align:center">If your browser automatically plays the video instead of downloading it, right click on the link and choose "Save as..."</p>
+#        <!-- /wp:paragraph -->
+#        '''
+    
     if video.get("ipfs_hash"):
         template_raw += template_raw_ipfs
 
@@ -72,7 +74,8 @@ def _publish_wordpress(video):
     html = template.substitute(
         youtube_id=video["youtube_id"],
         ipfs_hash=video.get("ipfs_hash"),
-        filename_param=urlencode({ "filename" : video.get("filename")} )
+        filename_param=urlencode({ "filename" : video.get("filename") }),
+        filename=video.get("filename")
     )
     site_id = config.wordpress_site_id
     url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'
