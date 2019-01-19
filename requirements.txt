@@ -1,5 +1,5 @@
 easyblogger
-https://github.com/Khang-NT/youtube-dl/archive/master.zip
+-e git+https://github.com/rg3/youtube-dl.git#egg=youtube-dl
 requests
 dataset
 executor
