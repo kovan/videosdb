@@ -58,7 +58,7 @@ def _publish_wordpress(video):
     template_raw_ipfs = '''
         <!-- wp:button {"align":"center"} -->
         <div class="wp-block-button aligncenter"><a class="wp-block-button__link" href="http://ipfs.spiritualityresources.net/ipfs/$ipfs_hash?$filename_param"
-            download="$filename">Download video</a></div>
+            download="$filename">Play/download video</a></div>
         <!-- /wp:button -->
         '''
 #        '''
