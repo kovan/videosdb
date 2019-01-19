@@ -123,21 +123,22 @@ class IPFS:
         import ipfsapi
         self.host, self.port = host, port
         self.api = ipfsapi.connect(self.host, self.port)
-        root_node = self.api.name_resolve("/ipns/" + config.dnslink_name)
-        self.root_hash = root_node["Path"]
+        #root_node = self.api.name_resolve("/ipns/" + config.dnslink_name)
+        #self.root_hash = root_node["Path"]
 
     def add_file(self, filename):
         file_hash = self.api.add(filename)["Hash"]
         self.api.pin_add(file_hash)
-        new_root = self.api.object_patch_add_link(self.root_hash, filename, file_hash)
-        self.root_hash = new_root["Hash"]
+        #new_root = self.api.object_patch_add_link(self.root_hash, filename, file_hash)
+        #self.root_hash = new_root["Hash"]
         # save just in case:
-        with open("ipfs_root_hash.txt","w") as f:
-            f.write(self.root_hash)
+        #with open("ipfs_root_hash.txt","w") as f:
+        #    f.write(self.root_hash)
         return file_hash
         
     def update_dnslink(self):
-        DNS.update(self.root_hash)  
+        pass
+        #DNS.update(self.root_hash)  
 
 
 @traced(logging.getLogger(__name__))
@@ -156,12 +157,10 @@ class YoutubeDL:
     @staticmethod
     def download_info(youtube_id):
         with tempfile.TemporaryDirectory() as tmpdir: 
-            old_cwd = os.getcwd()
             os.chdir(tmpdir)
             cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
             execute(cmd)
             video_json = json.load(open(youtube_id + ".info.json"))
-            os.chdir(old_cwd)
         return video_json 
 
 
@@ -239,13 +238,11 @@ class Main:
             for attr in interesting_attrs:
                 video[attr] = info[attr]
 
-        if self.ipfs and "ipfs_hash" not in video:
+        if self.ipfs and not video.get("ipfs_hash"):
             with tempfile.TemporaryDirectory() as tmpdir:
-                old_cwd = os.getcwd()
                 os.chdir(tmpdir)
                 video["filename"] = YoutubeDL.download_video(video["youtube_id"])
                 video["ipfs_hash"]= self.ipfs.add_file(video["filename"])
-                os.chdir(old_cwd)
                
         self.db.put_video(video)
 
