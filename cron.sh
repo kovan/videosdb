@@ -1,6 +1,5 @@
 #!/bin/bash
 
-cd ~/prj/blog
 git pull
 source venv/bin/activate
 pip install -r requirements.txt
