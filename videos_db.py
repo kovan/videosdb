@@ -2,8 +2,6 @@
 from executor import execute
 from autologging import traced, TRACE
 import tempfile
-import dataset
-import requests
 import logging
 import json
 import sys
@@ -46,6 +44,7 @@ def _publish_blogger(video):
 
 @traced(logging.getLogger(__name__))
 def _publish_wordpress(video):
+    import requests
     from string import Template
     from urllib.parse import urlencode
     template_raw = '''
@@ -118,8 +117,8 @@ class DNS:
 @traced(logging.getLogger(__name__))
 class IPFS:
     def __init__(self, host, port):
-        self.host, self.port = host, port
         import ipfsapi
+        self.host, self.port = host, port
         self.api = ipfsapi.connect(self.host, self.port)
         root_node = self.api.name_resolve("/ipns/" + config.dnslink_record)
         self.root_hash = root_node["Path"]
@@ -171,27 +170,59 @@ class YoutubeDL:
         ids = result.splitlines()
         return ids
     
+@traced(logging.getLogger(__name__))
+class DB:
+    def __init__(self):
+        import dataset
+        self.db = dataset.connect("sqlite:///db.db")
+        
+    def queue_push(self, youtube_id):
+        self.db["publish_queue"].insert({"youtube_id":youtube_id})
+    
+    def queue_pop_video_id(self):
+        # treat table as a LIFO stack, so that recent videos get published first:
+        row = self.db["publish_queue"].find_one(order_by=["-id"]) 
+        if not row:
+            #we ran out of videos, reenqueue all:
+            for video in self.db["videos"].all():
+                self.db["publish_queue"].insert({"youtube_id": video["youtube_id"]})
+            row = self.db["publish_queue"].find_one(order_by=["-id"]) 
+        
+        if not row:
+            return None
+
+        self.db["publish_queue"].delete(**row)
+        return row["youtube_id"]
+
+    def get_queue(self):
+        return [row["youtube_id"] for row in self.db["publish_queue"].all()]
+
+    def get_video(self, youtube_id):
+        return self.db["videos"].find_one(youtube_id=youtube_id)
+
+    def put_video(self, video):
+        self.db["videos"].upsert(video,["youtube_id"], ensure=True)
+
 
 @traced(logging.getLogger(__name__))
 class Main:
     def __init__(self):
-        self.db = dataset.connect("sqlite:///db.db")
-        if config.ipfs_host:
+        self.db = DB()
+        if config.ipfs_host and config.ipfs_port:
             self.ipfs = IPFS(config.ipfs_host, config.ipfs_port)
         else:
             self.ipfs = None
 
     def download_all(self):
-        ids = [row["youtube_id"] for row in self.db["publish_queue"].all()]
-        for id in ids:
-            self.download_one(id, False)
+        for _id in self.db.get_queue():
+            self.download_one(_id, False)
     
         if self.ipfs:
             self.ipfs.update_dnslink()
-        
+
 
     def download_one(self, youtube_id, update_dnslink=True):
-        video = self.db["videos"].find_one(youtube_id=youtube_id)
+        video = self.db.get_video(youtube_id)
         if not video:
             video = dict()
             video["youtube_id"] = youtube_id
@@ -213,7 +244,7 @@ class Main:
                 video["ipfs_hash"]= self.ipfs.add_file(video["filename"])
                 os.chdir(old_cwd)
                
-        self.db["videos"].upsert(video,["youtube_id"], ensure=True)
+        self.db.put_video(video)
 
         if self.ipfs and update_dnslink:
             self.ipfs.update_dnslink()
@@ -227,16 +258,10 @@ class Main:
 
 
     def publish_next(self):
-        # treat table as a LIFO stack, so that recent videos get published first:
-        row = self.db["publish_queue"].find_one(order_by=["-id"]) 
-        if not row:
-            #we ran out of videos, reenqueue all:
-            for video in self.db["videos"].all():
-                self.db["publish_queue"].insert({"youtube_id": video["youtube_id"]})
+        next_video_id = self.db.queue_pop()
+        if not next_video_id:
             return
-
-        self.publish_one(row["youtube_id"])
-        self.db["publish_queue"].delete(**row)
+        self.publish_one(next_video_id)
 
 
     def enqueue(self, url):
@@ -245,11 +270,10 @@ class Main:
         video_ids = YoutubeDL.list_videos(url)
         random.shuffle(video_ids)
 
-        for id in video_ids:
-            self.db["publish_queue"].upsert({"youtube_id":id}, ["youtube_id"] )
+        for youtube_id in video_ids:
+            self.db.queue_push(youtube_id)
 
 def _main():
-    import dataset
     import optparse
     parser = optparse.OptionParser()
     parser.add_option("--verbose", action="store_true")
