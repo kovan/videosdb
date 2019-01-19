@@ -108,10 +108,10 @@ class DNS:
         changes = zone.changes()
         # delete old
         for record in records:
-            if record.name == config.dnslink_record:
+            if record.name == config.dnslink_name:
                 changes.delete_record_set(record)
         #add new 
-        record = zone.resource_record_set(dnslink_record,"TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
+        record = zone.resource_record_set(config.dnslink_name,"TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
         changes.add_record_set(record)
         #finish transaction
         changes.create()
