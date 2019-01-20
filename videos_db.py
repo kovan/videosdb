@@ -115,7 +115,7 @@ class YoutubeDL:
 
     @staticmethod
     def download_video(id):
-        filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
+        filename_format = "%(uploader)s - %(title)s.%(ext)s"
         execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,"https://www.youtube.com/watch?v=" + id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
