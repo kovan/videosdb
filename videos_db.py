@@ -119,12 +119,12 @@ class DNS:
         
 @traced(logging.getLogger(__name__))
 class IPFS:
-    def __init__(self, host, port):
-        self.host, self.port = host, port
+    def __init__(self):
+        self.host = config.ipfs_host
+        self.port = config.ipfs_port
         self.root_dir = "/videos"
         import ipfsapi
         self.api = ipfsapi.connect(self.host, self.port)
-        #root_node = self.api.name_resolve("/ipns/" + config.dnslink_name)
 
     def add_file(self, filename):
         file_hash = self.api.add(filename)["Hash"]
@@ -135,8 +135,8 @@ class IPFS:
         return file_hash
         
     def update_dnslink(self):
-        pass
-        #DNS.update(self.root_hash)  
+        root_hash = self.api.files_stat(self.root_dir)["Hash"]
+        DNS.update(root_hash)  
 
 
 @traced(logging.getLogger(__name__))
@@ -285,7 +285,7 @@ def _main():
     parser.add_option("--publish-next", action="store_true")
     parser.add_option("--publish-one",metavar="VIDEO-ID") 
     parser.add_option("--ipfs-enable", action="store_true")
-    parser.add_option("--only-update-dnslink", metavar="ROOT_HASH")
+    parser.add_option("--only-update-dnslink", action="store_true")
 
     (options, args) = parser.parse_args()
 
@@ -297,7 +297,8 @@ def _main():
         logging.getLogger("executor").setLevel(logging.DEBUG)
 
     if options.only_update_dnslink:
-        DNS.update(options.only_update_dnslink)
+        ipfs = IPFS()
+        ipfs.update_dnslink()
         return
 
     main = Main()
