@@ -194,6 +194,9 @@ class DB:
         self.db["publish_queue"].delete(**row)
         return row["youtube_id"]
 
+    def is_video_in_queue(self, youtube_id):
+        return self.db["publish_queue"].find_one(youtube_id=youtube_id) is not None
+
     def get_queue(self):
         return [row["youtube_id"] for row in self.db["publish_queue"].all()]
 
@@ -270,7 +273,8 @@ class Main:
         random.shuffle(video_ids)
 
         for youtube_id in video_ids:
-            self.db.queue_push(youtube_id)
+            if not self.db.is_video_in_queue(youtube_id):
+                self.db.queue_push(youtube_id)
 
 def _main():
     import optparse
