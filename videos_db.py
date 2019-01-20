@@ -101,7 +101,7 @@ class IPFS:
         self.api.pin_add(file_hash)
         src = "/ipfs/"+ video["ipfs_hash"]
         dst =  self.ipfs.root_dir + "/" + video["filename"]
-        result = self.ipfs.api.files_mv(src, dst)
+        result = self.ipfs.api.files_cp(src, dst)
         return file_hash
         
     def update_dnslink(self):
