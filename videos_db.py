@@ -13,34 +13,6 @@ import config
 def dbg():
         import ipdb; ipdb.set_trace()
 
-@traced(logging.getLogger(__name__))
-def _publish_blogger(video):
-    import blogger
-    import jinja2
-    template_raw = '''
-    <br />
-    <div style="padding-bottom: 56.25%; position: relative;">
-    <iframe allow="encrypted-media" allowfullscreen="" frameborder="0" gesture="media" src="https://www.youtube.com/embed/{{ youtube_id }}" style="height: 100%; left: 0; position: absolute; top: 0; width: 100%;">
-    </iframe>
-    </div>
-    <ul>
-    {% for file in files %}
-        <li>Download from IPFS: <a href="https://cloudfare-ipfs.com/ipfs/{{ ipfs_hash }}" download="{{ filename }}">{{ title }}</a></li>
-    {% endfor %}
-    </ul>
-    </div>
-    '''
-    template = jinja2.Template(template_raw)
-    html = template.render(
-        youtube_id=video["youtube_id"],
-        title=video["title"]
-    )
-    eb = blogger.EasyBlogger(
-        clientId=config.blogger_token, 
-        clientSecret = config.blogger_secret,
-        blogId = config.blogger_blogid)
-    labels = "video, " + video["uploader"]
-    eb.post(video["title"], html, labels, isDraft=False)
 
 @traced(logging.getLogger(__name__))
 def _publish_wordpress(video):
