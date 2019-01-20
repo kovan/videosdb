@@ -120,20 +120,18 @@ class DNS:
 @traced(logging.getLogger(__name__))
 class IPFS:
     def __init__(self, host, port):
-        import ipfsapi
         self.host, self.port = host, port
+        self.root_dir = "/videos"
+        import ipfsapi
         self.api = ipfsapi.connect(self.host, self.port)
         #root_node = self.api.name_resolve("/ipns/" + config.dnslink_name)
-        #self.root_hash = root_node["Path"]
 
     def add_file(self, filename):
         file_hash = self.api.add(filename)["Hash"]
         self.api.pin_add(file_hash)
-        #new_root = self.api.object_patch_add_link(self.root_hash, filename, file_hash)
-        #self.root_hash = new_root["Hash"]
-        # save just in case:
-        #with open("ipfs_root_hash.txt","w") as f:
-        #    f.write(self.root_hash)
+        src = "/ipfs/"+ video["ipfs_hash"]
+        dst =  self.ipfs.root_dir + "/" + video["filename"]
+        result = self.ipfs.api.files_mv(src, dst)
         return file_hash
         
     def update_dnslink(self):
@@ -237,6 +235,7 @@ class Main:
                     "channel_url"]
             for attr in interesting_attrs:
                 video[attr] = info[attr]
+
 
         if self.ipfs and not video.get("ipfs_hash"):
             with tempfile.TemporaryDirectory() as tmpdir:
