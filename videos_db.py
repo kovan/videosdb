@@ -46,7 +46,7 @@ def _publish_blogger(video):
 def _publish_wordpress(video):
     import requests
     from string import Template
-    from urllib.parse import urlencode
+    from urllib.parse import quote
     template_raw = '''
         <!-- wp:core-embed/youtube {"url":"https://www.youtube.com/watch?v=$youtube_id","type":"video","providerNameSlug":"youtube","className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
         <figure class="wp-block-embed-youtube wp-block-embed is-type-video is-provider-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">
@@ -57,8 +57,7 @@ def _publish_wordpress(video):
 
     template_raw_ipfs = '''
         <!-- wp:button {"align":"center"} -->
-        <div class="wp-block-button aligncenter"><a class="wp-block-button__link" href="http://ipfs.spiritualityresources.net/ipfs/$ipfs_hash?$filename_param"
-            download="$filename">Play/download video</a></div>
+        <div class="wp-block-button aligncenter"><a class="wp-block-button__link" href="http://$dnslink_name/$filename_quoted" download="">Play/download video</a></div>
         <!-- /wp:button -->
         '''
 #        '''
@@ -73,9 +72,8 @@ def _publish_wordpress(video):
     template = Template(template_raw)
     html = template.substitute(
         youtube_id=video["youtube_id"],
-        ipfs_hash=video.get("ipfs_hash"),
-        filename_param=urlencode({ "filename" : video.get("filename") }),
-        filename=video.get("filename")
+        dnslink_name=config.dnslink_name,
+        filename_quoted=quote(video.get("filename"))
     )
     site_id = config.wordpress_site_id
     url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'
@@ -108,10 +106,10 @@ class DNS:
         changes = zone.changes()
         # delete old
         for record in records:
-            if record.name == config.dnslink_name:
+            if record.name == config.dnslink_name + "."  and record.record_type == "TXT":
                 changes.delete_record_set(record)
         #add new 
-        record = zone.resource_record_set(config.dnslink_name,"TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
+        record = zone.resource_record_set(config.dnslink_name + ".","TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
         changes.add_record_set(record)
         #finish transaction
         changes.create()
@@ -212,7 +210,7 @@ class Main:
     def __init__(self):
         self.db = DB()
         if config.ipfs_host and config.ipfs_port:
-            self.ipfs = IPFS(config.ipfs_host, config.ipfs_port)
+            self.ipfs = IPFS()
         else:
             self.ipfs = None
 
@@ -245,11 +243,10 @@ class Main:
                 os.chdir(tmpdir)
                 video["filename"] = YoutubeDL.download_video(video["youtube_id"])
                 video["ipfs_hash"]= self.ipfs.add_file(video["filename"])
-               
-        self.db.put_video(video)
+            if update_dnslink:
+                self.ipfs.update_dnslink()
 
-        if self.ipfs and update_dnslink:
-            self.ipfs.update_dnslink()
+        self.db.put_video(video)
 
         return video
 
