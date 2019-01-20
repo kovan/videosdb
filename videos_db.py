@@ -149,7 +149,7 @@ class DB:
     def queue_push(self, youtube_id):
         self.db["publish_queue"].insert({"youtube_id":youtube_id})
     
-    def queue_pop_video_id(self):
+    def queue_pop(self):
         # treat table as a LIFO stack, so that recent videos get published first:
         row = self.db["publish_queue"].find_one(order_by=["-id"]) 
         if not row:
