@@ -247,13 +247,13 @@ class Main:
 def _main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--verbose", action="store_true")
-    parser.add_argument("--enqueue", metavar="URL")
-    parser.add_argument("--download-all", action="store_true")
-    parser.add_argument("--publish-next", action="store_true")
-    parser.add_argument("--publish-one",metavar="VIDEO-ID") 
-    parser.add_argument("--enable-ipfs", action="store_true")
-    parser.add_argument("--only-update-dnslink", action="store_true")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("-e", "--enqueue", metavar="URL")
+    parser.add_argument("-d", "--download-all", action="store_true")
+    parser.add_argument("-n", "--publish-next", action="store_true")
+    parser.add_argument("-o", "--publish-one",metavar="VIDEO-ID") 
+    parser.add_argument("-i", "--enable-ipfs", action="store_true")
+    parser.add_argument("-u", "--only-update-dnslink", action="store_true")
 
     args = parser.parse_args()
 
