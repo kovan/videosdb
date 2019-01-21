@@ -245,45 +245,45 @@ class Main:
                 self.db.queue_push(youtube_id)
 
 def _main():
-    import optparse
-    parser = optparse.OptionParser()
-    parser.add_option("--verbose", action="store_true")
-    parser.add_option("--enqueue", metavar="URL")
-    parser.add_option("--download-all", action="store_true")
-    parser.add_option("--publish-next", action="store_true")
-    parser.add_option("--publish-one",metavar="VIDEO-ID") 
-    parser.add_option("--enable-ipfs", action="store_true")
-    parser.add_option("--only-update-dnslink", action="store_true")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--enqueue", metavar="URL")
+    parser.add_argument("--download-all", action="store_true")
+    parser.add_argument("--publish-next", action="store_true")
+    parser.add_argument("--publish-one",metavar="VIDEO-ID") 
+    parser.add_argument("--enable-ipfs", action="store_true")
+    parser.add_argument("--only-update-dnslink", action="store_true")
 
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
 
-    if options.verbose:
+    if args.verbose:
         logging.basicConfig(
                  stream=sys.stdout,
                  format="%(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s")
         logging.getLogger(__name__).setLevel(TRACE)
         logging.getLogger("executor").setLevel(logging.DEBUG)
 
-    if options.only_update_dnslink:
+    if args.only_update_dnslink:
         ipfs = IPFS()
         ipfs.update_dnslink()
         return
 
-    main = Main(options.enable_ipfs)
+    main = Main(args.enable_ipfs)
 
-    if options.enqueue:
+    if args.enqueue:
         main.enqueue(options.enqueue)
         return
 
-    if options.download_all:
+    if args.download_all:
         main.download_all()
         return
 
-    if options.publish_one:
+    if args.publish_one:
         main.publish_one(options.publish_one)
         return
 
-    if options.publish_next:
+    if args.publish_next:
         main.publish_next()
         return
 
