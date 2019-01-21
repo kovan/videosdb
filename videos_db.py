@@ -71,7 +71,7 @@ class DNS:
     @staticmethod
     def update(new_root_hash):
         from google.cloud import dns
-        client = dns.Client(project=config.gcloud_project)
+        client = dns.Client()
         zone = client.zone(config.dns_zone)
         records = zone.list_resource_record_sets()
         

@@ -3,7 +3,6 @@ wordpress_token = "qpTIK7(hogZ#3WhSK#N@39xSQHc5aD@7D5VkxnXWBGgXsQwt90E#vw3!3yJA&
 blogger_token = "62814020656-olqaifiob7ufoqpe1k4iah3v2ra12h8a.apps.googleusercontent.com"
 blogger_secret =  "fnUgEpdkUTtthUtDk0vLvjMm"
 blogger_blogid =  "8804984470189945822"
-gcloud_project = "ubuntu-200222"
 dns_zone = "spirituality"
 dnslink_name =  "resources.spiritualityresources.net"
 ipfs_host = "ipfs"
