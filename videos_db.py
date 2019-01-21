@@ -34,7 +34,7 @@ def _publish_wordpress(video):
         <!-- wp:paragraph {"align":"center"} -->
         <p style="text-align:center">
             <a href="ipns://$dnslink_name/videos/$filename_quoted">Play/download from IPFS</a>
-            (<a href="http://www.spiritualityresources.net/download-and-share/">more on this</a>)
+            (<a href="$www_root/download-and-share/">more on this</a>)
         </p>
         <!-- /wp:paragraph -->
         '''
@@ -46,7 +46,8 @@ def _publish_wordpress(video):
     html = template.substitute(
         youtube_id=video["youtube_id"],
         dnslink_name=config.dnslink_name,
-        filename_quoted=quote(video.get("filename"))
+        www_root=config.www_root,
+        filename_quoted=quote(video.get("filename")),
     )
     site_id = config.wordpress_site_id
     url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'

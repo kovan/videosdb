@@ -7,4 +7,5 @@ dns_zone = "spirituality"
 dnslink_name =  "resources.spiritualityresources.net"
 ipfs_host = "ipfs"
 ipfs_port = "5001"
+www_root= "https://www.spiritualityresources.net"
 
