@@ -34,6 +34,7 @@ def _publish_wordpress(video):
         <!-- wp:paragraph {"align":"center"} -->
         <p style="text-align:center">
             <a href="ipns://$dnslink_name/videos/$filename_quoted">Play/download from IPFS</a>
+            (<a href="http://www.spiritualityresources.net/download-and-share/">more on this</a>)
         </p>
         <!-- /wp:paragraph -->
         '''
