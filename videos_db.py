@@ -99,8 +99,8 @@ class IPFS:
     def add_file(self, filename):
         file_hash = self.api.add(filename)["Hash"]
         self.api.pin_add(file_hash)
-        src = "/ipfs/"+ video["ipfs_hash"]
-        dst =  self.ipfs.root_dir + "/" + video["filename"]
+        src = "/ipfs/"+ file_hash
+        dst =  self.root_dir + "/" + filename
         result = self.ipfs.api.files_cp(src, dst)
         return file_hash
         
