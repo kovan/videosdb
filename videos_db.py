@@ -272,7 +272,7 @@ def _main():
     main = Main(args.enable_ipfs)
 
     if args.enqueue:
-        main.enqueue(options.enqueue)
+        main.enqueue(args.enqueue)
         return
 
     if args.download_all:
@@ -280,7 +280,7 @@ def _main():
         return
 
     if args.publish_one:
-        main.publish_one(options.publish_one)
+        main.publish_one(args.publish_one)
         return
 
     if args.publish_next:
