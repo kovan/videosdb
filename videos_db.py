@@ -29,14 +29,14 @@ def _publish_wordpress(video):
 
     template_raw_ipfs = '''
         <!-- wp:button {"align":"center"} -->
-        <div class="wp-block-button aligncenter"><a class="wp-block-button__link" href="http://$dnslink_name/$filename_quoted" download="">Play/download video</a></div>
+        <div class="wp-block-button aligncenter"><a class="wp-block-button__link" href="http://$dnslink_name/videos/$filename_quoted" download="">Play/download video</a></div>
         <!-- /wp:button -->
+        <!-- wp:paragraph {"align":"center"} -->
+        <p style="text-align:center">
+            <a href="ipns://$dnslink_name/videos/$filename_quoted">Play/download from IPFS</a>
+        </p>
+        <!-- /wp:paragraph -->
         '''
-#        '''
-#        <!-- wp:paragraph {"align":"center","customFontSize":11} -->
-#        <p style="font-size:11px;text-align:center">If your browser automatically plays the video instead of downloading it, right click on the link and choose "Save as..."</p>
-#        <!-- /wp:paragraph -->
-#        '''
     
     if video.get("ipfs_hash"):
         template_raw += template_raw_ipfs
@@ -92,7 +92,6 @@ class IPFS:
     def __init__(self):
         self.host = config.ipfs_host
         self.port = config.ipfs_port
-        self.root_dir = "/videos"
         import ipfsapi
         self.api = ipfsapi.connect(self.host, self.port)
 
@@ -100,12 +99,12 @@ class IPFS:
         file_hash = self.api.add(filename)["Hash"]
         self.api.pin_add(file_hash)
         src = "/ipfs/"+ file_hash
-        dst =  self.root_dir + "/" + filename
+        dst =  "/videos/" + filename
         result = self.ipfs.api.files_cp(src, dst)
         return file_hash
         
     def update_dnslink(self):
-        root_hash = self.api.files_stat(self.root_dir)["Hash"]
+        root_hash = self.api.files_stat("/")["Hash"]
         DNS.update(root_hash)  
 
 

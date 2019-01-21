@@ -5,7 +5,7 @@ blogger_secret =  "fnUgEpdkUTtthUtDk0vLvjMm"
 blogger_blogid =  "8804984470189945822"
 gcloud_project = "ubuntu-200222"
 dns_zone = "spirituality"
-dnslink_name =  "videos.spiritualityresources.net"
+dnslink_name =  "resources.spiritualityresources.net"
 ipfs_host = "ipfs"
 ipfs_port = "5001"
 
