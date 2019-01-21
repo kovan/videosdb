@@ -246,7 +246,7 @@ class Main:
 
 def _main():
     import argparse
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Download videos from YouTube and publish them on IPFS and/or a Wordpress blog")
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-e", "--enqueue", metavar="URL")
     parser.add_argument("-d", "--download-all", action="store_true")
@@ -287,7 +287,7 @@ def _main():
         main.publish_next()
         return
 
-        
+    parser.print_help() 
 
 
 if __name__ == "__main__":
