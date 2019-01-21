@@ -8,7 +8,6 @@ import sys
 import os
 import io
 
-import config
 
 def dbg():
         import ipdb; ipdb.set_trace()
@@ -45,13 +44,12 @@ def _publish_wordpress(video):
     template = Template(template_raw)
     html = template.substitute(
         youtube_id=video["youtube_id"],
-        dnslink_name=config.dnslink_name,
-        www_root=config.www_root,
+        dnslink_name=config["dnslink_name"],
+        www_root=config["www_root"],
         filename_quoted=quote(video.get("filename")),
     )
-    site_id = config.wordpress_site_id
-    url = 'https://public-api.wordpress.com/rest/v1/sites/' + site_id + '/posts/new'
-    headers = { "Authorization": "BEARER " + config.wordpress_token}
+    url = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/new' % config["wordpress_site_id"]
+    headers = { "Authorization": "BEARER " + config["wordpress_token"] }
     categories = [
         "Videos",
         "Short videos" if video["duration"]/60 <= 20 else "Long videos",
@@ -73,17 +71,17 @@ class DNS:
     def update(new_root_hash):
         from google.cloud import dns
         client = dns.Client()
-        zone = client.zone(config.dns_zone)
+        zone = client.zone(config["dns_zone"])
         records = zone.list_resource_record_sets()
         
         # init transaction
         changes = zone.changes()
         # delete old
         for record in records:
-            if record.name == config.dnslink_name + "."  and record.record_type == "TXT":
+            if record.name == config["dnslink_name"] + "."  and record.record_type == "TXT":
                 changes.delete_record_set(record)
         #add new 
-        record = zone.resource_record_set(config.dnslink_name + ".","TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
+        record = zone.resource_record_set(config["dnslink_name"] + ".","TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
         changes.add_record_set(record)
         #finish transaction
         changes.create()
@@ -92,8 +90,8 @@ class DNS:
 @traced(logging.getLogger(__name__))
 class IPFS:
     def __init__(self):
-        self.host = config.ipfs_host
-        self.port = config.ipfs_port
+        self.host = config["ipfs_host"]
+        self.port = config["ipfs_port"]
         import ipfsapi
         self.api = ipfsapi.connect(self.host, self.port)
 
@@ -180,9 +178,9 @@ class DB:
 
 @traced(logging.getLogger(__name__))
 class Main:
-    def __init__(self):
+    def __init__(self, enable_ipfs=True):
         self.db = DB()
-        if config.ipfs_host and config.ipfs_port:
+        if enable_ipfs:
             self.ipfs = IPFS()
         else:
             self.ipfs = None
@@ -254,7 +252,7 @@ def _main():
     parser.add_option("--download-all", action="store_true")
     parser.add_option("--publish-next", action="store_true")
     parser.add_option("--publish-one",metavar="VIDEO-ID") 
-    parser.add_option("--ipfs-enable", action="store_true")
+    parser.add_option("--enable-ipfs", action="store_true")
     parser.add_option("--only-update-dnslink", action="store_true")
 
     (options, args) = parser.parse_args()
@@ -271,7 +269,7 @@ def _main():
         ipfs.update_dnslink()
         return
 
-    main = Main()
+    main = Main(options.enable_ipfs)
 
     if options.enqueue:
         main.enqueue(options.enqueue)
@@ -293,4 +291,7 @@ def _main():
 
 
 if __name__ == "__main__":
+    import yaml
+    with io.open("config.yaml") as f:
+        config = yaml.load(f)
     _main()

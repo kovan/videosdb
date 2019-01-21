@@ -6,3 +6,4 @@ executor
 ipfsapi
 autologging
 google-cloud-dns
+pyyaml
