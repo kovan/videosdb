@@ -39,15 +39,17 @@ def _publish_wordpress(video, as_draft=False):
         '''
     
     if video.get("ipfs_hash"):
-        template_raw += template_raw_ipfs
+        template = Template(template_raw + template_raw_ipfs)
+        html = template.substitute(
+            youtube_id=video["youtube_id"],
+            dnslink_name=config["dnslink_name"],
+            www_root=config["www_root"],
+            filename_quoted=quote(video.get("filename")),
+        )
+    else:
+        template = Template(template_raw)
+        html = template.substitute(youtube_id=video["youtube_id"])
 
-    template = Template(template_raw)
-    html = template.substitute(
-        youtube_id=video["youtube_id"],
-        dnslink_name=config["dnslink_name"],
-        www_root=config["www_root"],
-        filename_quoted=quote(video.get("filename")),
-    )
     url = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/new' % config["wordpress_site_id"]
     headers = { "Authorization": "BEARER " + config["wordpress_token"] }
     categories = [
@@ -114,7 +116,7 @@ class IPFS:
 
 @traced(logging.getLogger(__name__))
 class YoutubeDL:
-    BASE_CMD =  "youtube-dl --youtube-skip-dash-manifest --ignore-errors "
+    BASE_CMD =  "youtube-dl --youtube-skip-dash-manifest --ignore-errors -f best "
 
     @staticmethod
     def download_video(id):
@@ -257,11 +259,12 @@ def _main():
     parser = argparse.ArgumentParser(description="Download videos from YouTube and publish them on IPFS and/or a Wordpress blog")
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-e", "--enqueue", metavar="URL")
-    parser.add_argument("-a", "--download-all", action="store_true")
+    parser.add_argument("-p", "--publish-one", metavar="VIDEO-ID") 
     parser.add_argument("-n", "--publish-next", action="store_true")
-    parser.add_argument("-o", "--publish-one",metavar="VIDEO-ID") 
+    parser.add_argument("-d", "--download-one", metavar="VIDEO-ID")
+    parser.add_argument("-a", "--download-all", action="store_true")
     parser.add_argument("-i", "--enable-ipfs", action="store_true")
-    parser.add_argument("-d", "--only-update-dnslink", action="store_true")
+    parser.add_argument("-u", "--only-update-dnslink", action="store_true")
     parser.add_argument("--as-draft", action="store_true")
 
     args = parser.parse_args()
@@ -287,6 +290,9 @@ def _main():
 
     if args.download_all:
         main.download_all()
+
+    if args.download_one:
+        main.download_one(args.download_one)
 
     if args.publish_one:
         main.publish_one(args.publish_one, args.as_draft)
