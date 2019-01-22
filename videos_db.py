@@ -10,7 +10,8 @@ import io
 
 
 def dbg():
-        import ipdb; ipdb.set_trace()
+    os.chdir("/")
+    import ipdb; ipdb.set_trace()
 
 
 @traced(logging.getLogger(__name__))
@@ -107,7 +108,8 @@ class IPFS:
         self.api.pin_add(file_hash)
         src = "/ipfs/"+ file_hash
         dst =  "/videos/" + filename
-        result = self.api.files_cp(src, dst)
+        self.api.files_rm(dst)
+        self.api.files_cp(src, dst)
         return file_hash
         
     def update_dnslink(self):
@@ -216,7 +218,7 @@ class Main:
 
         download_info = False
         for attr in interesting_attrs:
-            if not attr in video:
+            if not video.get(attr): 
                 download_info = True
                 break
 
@@ -226,20 +228,24 @@ class Main:
             for attr in interesting_attrs:
                 video[attr] = info[attr]
                 
-            tags = [
+            my_tags = [
                     "yoga",
                     "yoga video",
                     "enlightenment",
                     "guru",
                     "shiva",
-                    "shiva video"
+                    "shiva video",
+                    info["uploader"]
             ]
 
+            tags = []
             for tag in info["tags"]:
-                if tag.lower() not in tags:
+                tags.append(tag.lower())
+            for tag in my_tags:
+                if tag not in tags:
                     tags.append(tag)
 
-            video["tags"] = ",".join(tags) 
+            video["tags"] = ", ".join(tags) 
                 
 
 
