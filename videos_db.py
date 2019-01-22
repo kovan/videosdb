@@ -10,7 +10,6 @@ import io
 
 
 def dbg():
-    os.chdir("/")
     import ipdb; ipdb.set_trace()
 
 
@@ -105,15 +104,15 @@ class IPFS:
 
     def add_file(self, filename):
         from ipfsapi.exceptions import StatusError
+        file_hash = self.api.add(filename)["Hash"]
+        self.api.pin_add(file_hash)
+        src = "/ipfs/"+ file_hash
+        dst =  "/videos/" + filename
         try:
-            file_hash = self.api.add(filename)["Hash"]
-            self.api.pin_add(file_hash)
-            src = "/ipfs/"+ file_hash
-            dst =  "/videos/" + filename
             self.api.files_rm(dst)
-            self.api.files_cp(src, dst)
-        except StatusError as e:
-            raise StatusError(e.original.response.text)
+        except StatusError:
+            pass
+        self.api.files_cp(src, dst)
 
         return file_hash
         
