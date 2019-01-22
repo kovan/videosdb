@@ -57,19 +57,10 @@ def _publish_wordpress(video, as_draft=False):
         "Short videos" if video["duration"]/60 <= 20 else "Long videos",
         video["uploader"]
     ]
-    tags = [
-            video["uploader"],
-            "guru",
-            "enlightenment",
-            "yoga",
-            "yoga video",
-            "shiva",
-            "shiva video"
-    ]
     data = {
         "title" : video["title"],
         "categories": ",".join(categories),
-        "tags": ",".join(tags),
+        "tags":  video["tags"],
         "content": html
     }
     if as_draft:
@@ -214,15 +205,43 @@ class Main:
         if not video:
             video = dict()
             video["youtube_id"] = youtube_id
+
+        interesting_attrs = ["title",
+                "description",
+                "uploader",
+                "upload_date",
+                "duration",
+                "channel_url",
+                "tags"]
+
+        download_info = False
+        for attr in interesting_attrs:
+            if not attr in video:
+                download_info = True
+                break
+
+        if download_info:
             info = YoutubeDL.download_info(youtube_id)
-            interesting_attrs = ["title",
-                    "description",
-                    "uploader",
-                    "upload_date",
-                    "duration",
-                    "channel_url"]
+
             for attr in interesting_attrs:
                 video[attr] = info[attr]
+                
+            tags = [
+                    "yoga",
+                    "yoga video",
+                    "enlightenment",
+                    "guru",
+                    "shiva",
+                    "shiva video"
+            ]
+
+            for tag in info["tags"]:
+                if tag.lower() not in tags:
+                    tags.append(tag)
+
+            video["tags"] = ",".join(tags) 
+                
+
 
 
         if self.ipfs and not video.get("ipfs_hash"):
