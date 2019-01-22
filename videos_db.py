@@ -44,7 +44,7 @@ def _publish_wordpress(video, as_draft=False):
             youtube_id=video["youtube_id"],
             dnslink_name=config["dnslink_name"],
             www_root=config["www_root"],
-            filename_quoted=quote(video.get("filename")),
+            filename_quoted=quote(video.get("filename"))
         )
     else:
         template = Template(template_raw)
@@ -57,9 +57,19 @@ def _publish_wordpress(video, as_draft=False):
         "Short videos" if video["duration"]/60 <= 20 else "Long videos",
         video["uploader"]
     ]
+    tags = [
+            video["uploader"],
+            "guru",
+            "enlightenment",
+            "yoga",
+            "yoga video",
+            "shiva",
+            "shiva video"
+    ]
     data = {
         "title" : video["title"],
         "categories": ",".join(categories),
+        "tags": ",".join(tags),
         "content": html
     }
     if as_draft:
