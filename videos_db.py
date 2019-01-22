@@ -264,6 +264,8 @@ def _main():
         logging.getLogger(__name__).setLevel(TRACE)
         logging.getLogger("executor").setLevel(logging.DEBUG)
 
+
+
     if args.only_update_dnslink:
         ipfs = IPFS()
         ipfs.update_dnslink()
@@ -273,19 +275,15 @@ def _main():
 
     if args.enqueue:
         main.enqueue(args.enqueue)
-        return
 
     if args.download_all:
         main.download_all()
-        return
 
     if args.publish_one:
         main.publish_one(args.publish_one)
-        return
 
     if args.publish_next:
         main.publish_next()
-        return
 
     parser.print_help() 
 
