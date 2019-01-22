@@ -104,12 +104,17 @@ class IPFS:
         self.api = ipfsapi.connect(self.host, self.port)
 
     def add_file(self, filename):
-        file_hash = self.api.add(filename)["Hash"]
-        self.api.pin_add(file_hash)
-        src = "/ipfs/"+ file_hash
-        dst =  "/videos/" + filename
-        self.api.files_rm(dst)
-        self.api.files_cp(src, dst)
+        from ipfsapi.exceptions import StatusError
+        try:
+            file_hash = self.api.add(filename)["Hash"]
+            self.api.pin_add(file_hash)
+            src = "/ipfs/"+ file_hash
+            dst =  "/videos/" + filename
+            self.api.files_rm(dst)
+            self.api.files_cp(src, dst)
+        except StatusError as e:
+            raise StatusError(e.original.response.text)
+
         return file_hash
         
     def update_dnslink(self):
