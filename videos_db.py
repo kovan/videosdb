@@ -14,7 +14,7 @@ def dbg():
 
 
 @traced(logging.getLogger(__name__))
-def _publish_wordpress(video):
+def _publish_wordpress(video, as_draft=False):
     import requests
     from string import Template
     from urllib.parse import quote
@@ -60,8 +60,12 @@ def _publish_wordpress(video):
         "categories": ",".join(categories),
         "content": html
     }
+    if as_draft:
+        data["status"] = "draft"
+
     response = requests.post(url,headers=headers,data=data)
     response.raise_for_status()
+    return response.json()
 
         
 
@@ -222,16 +226,20 @@ class Main:
         return video
 
 
-    def publish_one(self, youtube_id):
+    def publish_one(self, youtube_id, as_draft):
+        from datetime import datetime
         video = self.download_one(youtube_id)
-        _publish_wordpress(video)
+        result = _publish_wordpress(video, as_draft)
+        video["publish_response"] =  json.dumps(result)
+        video["publish_date"] = datetime.now()
+        self.db.put_video(video)
 
 
-    def publish_next(self):
+    def publish_next(self, as_draft):
         next_video_id = self.db.queue_pop()
         if not next_video_id:
             return
-        self.publish_one(next_video_id)
+        self.publish_one(next_video_id, as_draft)
 
 
     def enqueue(self, url):
@@ -249,11 +257,12 @@ def _main():
     parser = argparse.ArgumentParser(description="Download videos from YouTube and publish them on IPFS and/or a Wordpress blog")
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-e", "--enqueue", metavar="URL")
-    parser.add_argument("-d", "--download-all", action="store_true")
+    parser.add_argument("-a", "--download-all", action="store_true")
     parser.add_argument("-n", "--publish-next", action="store_true")
     parser.add_argument("-o", "--publish-one",metavar="VIDEO-ID") 
     parser.add_argument("-i", "--enable-ipfs", action="store_true")
-    parser.add_argument("-u", "--only-update-dnslink", action="store_true")
+    parser.add_argument("-d", "--only-update-dnslink", action="store_true")
+    parser.add_argument("--as-draft", action="store_true")
 
     args = parser.parse_args()
 
@@ -280,10 +289,10 @@ def _main():
         main.download_all()
 
     if args.publish_one:
-        main.publish_one(args.publish_one)
+        main.publish_one(args.publish_one, args.as_draft)
 
     if args.publish_next:
-        main.publish_next()
+        main.publish_next(args.as_draft)
 
 
 
