@@ -100,7 +100,7 @@ class IPFS:
         self.api.pin_add(file_hash)
         src = "/ipfs/"+ file_hash
         dst =  "/videos/" + filename
-        result = self.ipfs.api.files_cp(src, dst)
+        result = self.api.files_cp(src, dst)
         return file_hash
         
     def update_dnslink(self):
