@@ -285,7 +285,6 @@ def _main():
     if args.publish_next:
         main.publish_next()
 
-    parser.print_help() 
 
 
 if __name__ == "__main__":
