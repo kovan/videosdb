@@ -146,9 +146,9 @@ class YoutubeDL:
 
     @staticmethod
     def list_videos(url):
-        result = execute(YoutubeDL.BASE_CMD + "--playlist-random --get-id " + url, check=False, capture=True)
+        result = execute(YoutubeDL.BASE_CMD + "--playlist-random --get-id " + url, check=False, capture=True, capture_stderr=True)
         if not result:
-            raise Exception("youtube-dl error")
+            raise Exception("youtube-dl error. " + result.stderr)
         ids = result.splitlines()
         return ids
     
