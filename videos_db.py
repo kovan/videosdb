@@ -278,8 +278,6 @@ class Main:
 
     def publish_next(self, as_draft):
         next_video_id = self.db.queue_pop()
-        if not next_video_id:
-            return
         self.publish_one(next_video_id, as_draft)
 
 
@@ -289,9 +287,10 @@ class Main:
         video_ids = YoutubeDL.list_videos(url)
         random.shuffle(video_ids)
 
-        for youtube_id in video_ids:
-            if not self.db.is_video_in_queue(youtube_id):
-                self.db.queue_push(youtube_id)
+        for yid in video_ids:
+            if self.db.get_video(yid) or self.db.is_video_in_queue(yid):
+                continue
+            self.db.queue_push(yid)
 
 def _main():
     import argparse
