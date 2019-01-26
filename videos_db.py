@@ -55,6 +55,8 @@ def _publish_wordpress(video, as_draft=False):
     categories = [
         "Videos",
         "Short videos" if video["duration"]/60 <= 20 else "Long videos",
+        "shiva videos",
+        "yoga videos",
         video["uploader"]
     ]
     data = {
