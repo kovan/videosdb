@@ -53,8 +53,9 @@ def _publish_wordpress(video, as_draft=False):
     url = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/new' % config["wordpress_site_id"]
     headers = { "Authorization": "BEARER " + config["wordpress_token"] }
     categories = [
-        "Videos",
-        "Short videos" if video["duration"]/60 <= 20 else "Long videos",
+        "Short video" if video["duration"]/60 <= 20 else "Long videos",
+        "Shiva video",
+        "Yoga video",
         video["uploader"]
     ]
     data = {
