@@ -123,7 +123,7 @@ class IPFS:
 
 @traced(logging.getLogger(__name__))
 class YoutubeDL:
-    BASE_CMD =  "youtube-dl --youtube-skip-dash-manifest --ignore-errors "
+    BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
 
     @staticmethod
     def download_video(id):
