@@ -5,7 +5,3 @@ dnslink_name:  resources.spiritualityresources.net
 www_root: https://www.spiritualityresources.net
 ipfs_host: localhost
 ipfs_port: 5001
-
-blogger_token: 62814020656-olqaifiob7ufoqpe1k4iah3v2ra12h8a.apps.googleusercontent.com
-blogger_secret:  fnUgEpdkUTtthUtDk0vLvjMm
-blogger_blogid:  8804984470189945822
