@@ -14,7 +14,7 @@ def dbg():
 
 
 @traced(logging.getLogger(__name__))
-def _publish_wordpress(video, tags, categories, as_draft=False):
+def _publish_wordpress(video, categories, tags, as_draft=False):
     import requests
     from string import Template
     from urllib.parse import quote
