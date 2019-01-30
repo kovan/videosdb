@@ -98,9 +98,10 @@ class DNS:
 @traced(logging.getLogger(__name__))
 class IPFS:
     def __init__(self):
+        import ipfsapi
         self.host = config["ipfs_host"]
         self.port = config["ipfs_port"]
-        import ipfsapi
+        self.dnslink_update_pending = False
         self.api = ipfsapi.connect(self.host, self.port)
 
     def add_file(self, filename):
@@ -114,12 +115,17 @@ class IPFS:
         except StatusError:
             pass
         self.api.files_cp(src, dst)
+        self.dnslink_update_pending = True
 
         return file_hash
         
-    def update_dnslink(self):
+    def update_dnslink(self, force=False):
+        if not self.dnslink_update_pending and not force:
+            return
+
         root_hash = self.api.files_stat("/")["Hash"]
         DNS.update(root_hash)  
+        self.dnslink_update_pending = False
 
 
 @traced(logging.getLogger(__name__))
@@ -319,7 +325,7 @@ def _main():
 
     if args.only_update_dnslink:
         ipfs = IPFS()
-        ipfs.update_dnslink()
+        ipfs.update_dnslink(true)
         return
 
     main = Main(args.enable_ipfs)
