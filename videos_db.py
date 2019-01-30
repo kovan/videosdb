@@ -146,11 +146,14 @@ class YoutubeDL:
 
     @staticmethod
     def list_videos(url):
-        result = execute(YoutubeDL.BASE_CMD + "--playlist-random --get-id " + url, check=False, capture=True, capture_stderr=True)
+        result = execute(YoutubeDL.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
         if not result:
             raise Exception("youtube-dl error. " + result.stderr)
-        ids = result.splitlines()
-        return ids
+        videos = []
+        for video_json in result.splitlines():
+            video = json.loads(video_json)
+            videos.append(video) 
+        return videos
     
 @traced(logging.getLogger(__name__))
 class DB:
@@ -287,10 +290,11 @@ class Main:
     def enqueue(self, url):
         import random
 
-        video_ids = YoutubeDL.list_videos(url)
-        random.shuffle(video_ids)
+        videos = YoutubeDL.list_videos(url)
+        random.shuffle(videos)
 
-        for yid in video_ids:
+        for video in videos:
+            yid = video["id"]
             if self.db.get_video(yid) or self.db.is_video_in_queue(yid):
                 continue
             self.db.queue_push(yid)
