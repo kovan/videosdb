@@ -232,27 +232,7 @@ class Main:
             for attr in interesting_attrs:
                 video[attr] = info[attr]
                 
-            my_tags = [
-                    "yoga",
-                    "yoga video",
-                    "enlightenment",
-                    "guru",
-                    "shiva",
-                    "shiva video",
-                    info["uploader"]
-            ]
-
-            tags = []
-            for tag in info["tags"]:
-                tags.append(tag.lower())
-            for tag in my_tags:
-                if tag not in tags:
-                    tags.append(tag)
-
-            video["tags"] = ", ".join(tags) 
-                
-
-
+            video["tags"] = ", ".join(video["tags"]) 
 
         if self.ipfs: 
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -274,14 +254,26 @@ class Main:
     def publish_one(self, youtube_id, as_draft):
         from datetime import datetime
         video = self.download_one(youtube_id)
-        categories = [
+        categories = set([
             "Short videos" if video["duration"]/60 <= 20 else "Long videos",
+            "Englightenment",
+            "Guru",
             "Shiva video",
             "Yoga video",
             video["uploader"]
-        ]
-        tags = [tag.strip() for tag in video["tags"].split(',')]
-        result = _publish_wordpress(video, categories, tags, as_draft)
+        ])
+        video_tags = set([tag.lower() for tag in video["tags"].split(',')])
+        my_tags = set([
+            "yoga",
+            "yoga video",
+            "enlightenment",
+            "guru",
+            "shiva",
+            "shiva video"
+        ])
+        final_tags = video_tags.union(my_tags)
+
+        result = _publish_wordpress(video, categories, final_tags, as_draft)
         video["publish_response"] =  json.dumps(result)
         video["publish_date"] = datetime.now()
         self.db.put_video(video)
