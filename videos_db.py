@@ -14,54 +14,37 @@ def dbg():
 
 
 @traced(logging.getLogger(__name__))
-def _publish_wordpress(video, as_draft=False):
+def _publish_wordpress(video, categories, tags, as_draft=False):
     import requests
     from string import Template
     from urllib.parse import quote
-    template_raw = '''
-        <!-- wp:core-embed/youtube {"url":"https://www.youtube.com/watch?v=$youtube_id","type":"video","providerNameSlug":"youtube","className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
-        <figure class="wp-block-embed-youtube wp-block-embed is-type-video is-provider-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">
-        https://www.youtube.com/watch?v=$youtube_id
-        </div></figure>
-        <!-- /wp:core-embed/youtube -->
-        '''
+    template_raw = \
+'''
+   <!-- wp:video {"align":"center"} -->
+<figure class="wp-block-video aligncenter"><video controls poster="https://$ipfs_gateway/ipfs/$thumbnail_hash" src="https://$dnslink_name/videos/$filename_quoted"></video></figure>
+<!-- /wp:video -->
 
-    template_raw_ipfs = '''
-        <!-- wp:button {"align":"center"} -->
-        <div class="wp-block-button aligncenter"><a class="wp-block-button__link" href="http://$dnslink_name/videos/$filename_quoted" download="">Play/download video</a></div>
-        <!-- /wp:button -->
-        <!-- wp:paragraph {"align":"center"} -->
-        <p style="text-align:center">
-            <a href="ipns://$dnslink_name/videos/$filename_quoted">Play/download from IPFS</a>
-            (<a href="$www_root/download-and-share/">more on this</a>)
-        </p>
-        <!-- /wp:paragraph -->
-        '''
+<!-- wp:paragraph {"align":"center"} -->
+<p style="text-align:center">Download/play from: <a href="https://$dnslink_name/videos/$filename_quoted">HTTP</a> | <a href="ipns://$dnslink_name/videos/$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a></p>
+<!-- /wp:paragraph --> 
+'''
     
-    if video.get("ipfs_hash"):
-        template = Template(template_raw + template_raw_ipfs)
-        html = template.substitute(
-            youtube_id=video["youtube_id"],
-            dnslink_name=config["dnslink_name"],
-            www_root=config["www_root"],
-            filename_quoted=quote(video.get("filename"))
-        )
-    else:
-        template = Template(template_raw)
-        html = template.substitute(youtube_id=video["youtube_id"])
+    template = Template(template_raw)
+    html = template.substitute(
+        youtube_id=video["youtube_id"],
+        dnslink_name=config["dnslink_name"],
+        www_root=config["www_root"],
+        filename_quoted=quote(video.get("filename")),
+        ipfs_gateway=config["ipfs_gateway"],
+        thumbnail_hash=video["ipfs_thumbnail_hash"]
+    )
 
     url = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/new' % config["wordpress_site_id"]
     headers = { "Authorization": "BEARER " + config["wordpress_token"] }
-    categories = [
-        "Short video" if video["duration"]/60 <= 20 else "Long videos",
-        "Shiva video",
-        "Yoga video",
-        video["uploader"]
-    ]
     data = {
         "title" : video["title"],
         "categories": ",".join(categories),
-        "tags":  video["tags"],
+        "tags": ",".join(tags),
         "content": html
     }
     if as_draft:
@@ -104,10 +87,14 @@ class IPFS:
         self.dnslink_update_pending = False
         self.api = ipfsapi.connect(self.host, self.port)
 
-    def add_file(self, filename):
+    def add_file(self, filename, add_to_dir=True):
         from ipfsapi.exceptions import StatusError
         file_hash = self.api.add(filename)["Hash"]
         self.api.pin_add(file_hash)
+
+        if not add_to_dir:
+            return file_hash 
+
         src = "/ipfs/"+ file_hash
         dst =  "/videos/" + filename
         try:
@@ -133,12 +120,18 @@ class YoutubeDL:
     BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
 
     @staticmethod
-    def download_video(id):
+    def download_video(_id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
-        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,"https://www.youtube.com/watch?v=" + id))
+        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,"https://www.youtube.com/watch?v=" + _id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
- 
+        return filename
+
+    @staticmethod
+    def download_thumbnail(_id):
+        execute(YoutubeDL.BASE_CMD + "--write-thumbnail --skip-download https://www.youtube.com/watch?v=" + _id)
+        files = os.listdir(".")
+        filename = max(files, key=os.path.getctime)
         return filename
 
     @staticmethod
@@ -153,11 +146,14 @@ class YoutubeDL:
 
     @staticmethod
     def list_videos(url):
-        result = execute(YoutubeDL.BASE_CMD + "--playlist-random --get-id " + url, check=False, capture=True, capture_stderr=True)
+        result = execute(YoutubeDL.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
         if not result:
             raise Exception("youtube-dl error. " + result.stderr)
-        ids = result.splitlines()
-        return ids
+        videos = []
+        for video_json in result.splitlines():
+            video = json.loads(video_json)
+            videos.append(video) 
+        return videos
     
 @traced(logging.getLogger(__name__))
 class DB:
@@ -186,8 +182,8 @@ class DB:
     def is_video_in_queue(self, youtube_id):
         return self.db["publish_queue"].find_one(youtube_id=youtube_id) is not None
 
-    def get_queue(self):
-        return [row["youtube_id"] for row in self.db["publish_queue"].all()]
+    def get_video_ids(self):
+        return [video["youtube_id"] for video in self.db["videos"].all()]
 
     def get_video(self, youtube_id):
         return self.db["videos"].find_one(youtube_id=youtube_id)
@@ -206,7 +202,7 @@ class Main:
             self.ipfs = None
 
     def download_all(self):
-        for _id in self.db.get_queue():
+        for _id in self.db.get_video_ids():
             self.download_one(_id, False)
     
         if self.ipfs:
@@ -239,33 +235,17 @@ class Main:
             for attr in interesting_attrs:
                 video[attr] = info[attr]
                 
-            my_tags = [
-                    "yoga",
-                    "yoga video",
-                    "enlightenment",
-                    "guru",
-                    "shiva",
-                    "shiva video",
-                    info["uploader"]
-            ]
+            video["tags"] = ", ".join(video["tags"]) 
 
-            tags = []
-            for tag in info["tags"]:
-                tags.append(tag.lower())
-            for tag in my_tags:
-                if tag not in tags:
-                    tags.append(tag)
-
-            video["tags"] = ", ".join(tags) 
-                
-
-
-
-        if self.ipfs and not video.get("ipfs_hash"):
+        if self.ipfs: 
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
-                video["filename"] = YoutubeDL.download_video(video["youtube_id"])
-                video["ipfs_hash"]= self.ipfs.add_file(video["filename"])
+                if not video.get("ipfs_hash"):
+                    video["filename"] = YoutubeDL.download_video(video["youtube_id"])
+                    video["ipfs_hash"]= self.ipfs.add_file(video["filename"])
+                if not video.get("ipfs_thumbnail_hash"):
+                    thumbnail_filename = YoutubeDL.download_thumbnail(video["youtube_id"])
+                    video["ipfs_thumbnail_hash"] = self.ipfs.add_file(thumbnail_filename, False)
             if update_dnslink:
                 self.ipfs.update_dnslink()
 
@@ -277,7 +257,26 @@ class Main:
     def publish_one(self, youtube_id, as_draft):
         from datetime import datetime
         video = self.download_one(youtube_id)
-        result = _publish_wordpress(video, as_draft)
+        categories = set([
+            "Short videos" if video["duration"]/60 <= 20 else "Long videos",
+            "Englightenment",
+            "Guru",
+            "Shiva video",
+            "Yoga video",
+            video["uploader"]
+        ])
+        video_tags = set([tag.lower() for tag in video["tags"].split(',')])
+        my_tags = set([
+            "yoga",
+            "yoga video",
+            "enlightenment",
+            "guru",
+            "shiva",
+            "shiva video"
+        ])
+        final_tags = video_tags.union(my_tags)
+
+        result = _publish_wordpress(video, categories, final_tags, as_draft)
         video["publish_response"] =  json.dumps(result)
         video["publish_date"] = datetime.now()
         self.db.put_video(video)
@@ -291,10 +290,11 @@ class Main:
     def enqueue(self, url):
         import random
 
-        video_ids = YoutubeDL.list_videos(url)
-        random.shuffle(video_ids)
+        videos = YoutubeDL.list_videos(url)
+        random.shuffle(videos)
 
-        for yid in video_ids:
+        for video in videos:
+            yid = video["id"]
             if self.db.get_video(yid) or self.db.is_video_in_queue(yid):
                 continue
             self.db.queue_push(yid)
