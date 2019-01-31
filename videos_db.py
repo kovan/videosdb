@@ -20,13 +20,15 @@ def _publish_wordpress(video, categories, tags, as_draft=False):
     from urllib.parse import quote
     template_raw = \
 '''
-   <!-- wp:video {"align":"center"} -->
-<figure class="wp-block-video aligncenter"><video controls poster="https://$ipfs_gateway/ipfs/$thumbnail_hash" src="https://$dnslink_name/videos/$filename_quoted"></video></figure>
+<!-- wp:video {"align":"center"} -->
+<figure class="wp-block-video aligncenter">
+    <video controls poster="https://$ipfs_gateway/ipfs/$thumbnail_hash" src="https://$dnslink_name/videos/$filename_quoted">
+    </video>
+    <figcaption>
+Download/play from: <a href="https://$dnslink_name/videos/$filename_quoted">HTTP</a> | <a href="ipns://$dnslink_name/videos/$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
+    </figcaption>
+</figure>
 <!-- /wp:video -->
-
-<!-- wp:paragraph {"align":"center"} -->
-<p style="text-align:center">Download/play from: <a href="https://$dnslink_name/videos/$filename_quoted">HTTP</a> | <a href="ipns://$dnslink_name/videos/$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a></p>
-<!-- /wp:paragraph --> 
 '''
     
     template = Template(template_raw)
