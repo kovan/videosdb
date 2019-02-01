@@ -119,6 +119,9 @@ class IPFS:
 
 @traced(logging.getLogger(__name__))
 class YoutubeDL:
+    class YoutubeDLError(Exception):
+        pass
+
     BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
 
     @staticmethod
@@ -138,11 +141,14 @@ class YoutubeDL:
 
     @staticmethod
     def download_info(youtube_id):
-        with tempfile.TemporaryDirectory() as tmpdir: 
-            os.chdir(tmpdir)
-            cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
-            execute(cmd)
-            video_json = json.load(open(youtube_id + ".info.json"))
+        cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
+        result = execute(cmd, capture=True, capture_stderr=True)
+        if "has blocked it on copyright grounds" in result.stderr:
+            raise YoutubeDLError()
+        if result.stderr:
+            raise Exception(result.stderr)
+
+        video_json = json.load(open(youtube_id + ".info.json"))
         return video_json 
 
 
@@ -150,7 +156,7 @@ class YoutubeDL:
     def list_videos(url):
         result = execute(YoutubeDL.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
         if not result:
-            raise Exception("youtube-dl error. " + result.stderr)
+            raise YoutubeDLError("youtube-dl error. " + result.stderr)
         videos = []
         for video_json in result.splitlines():
             video = json.loads(video_json)
@@ -232,7 +238,9 @@ class Main:
                 break
 
         if download_info:
-            info = YoutubeDL.download_info(youtube_id)
+            with tempfile.TemporaryDirectory() as tmpdir: 
+                os.chdir(tmpdir)
+                info = YoutubeDL.download_info(youtube_id)
 
             for attr in interesting_attrs:
                 video[attr] = info[attr]
@@ -249,9 +257,7 @@ class Main:
                     thumbnail_filename = YoutubeDL.download_thumbnail(video["youtube_id"])
                     video["ipfs_thumbnail_hash"] = self.ipfs.add_file(thumbnail_filename, False)
             if update_dnslink:
-                self.ipfs.update_dnslink()
-
-        self.db.put_video(video)
+                self.db.put_video(video)
 
         return video
 
@@ -278,7 +284,11 @@ class Main:
         ])
         final_tags = video_tags.union(my_tags)
 
-        result = _publish_wordpress(video, categories, final_tags, as_draft)
+        try:
+            result = _publish_wordpress(video, categories, final_tags, as_draft)
+        except YoutubeDL.YoutubeDLError:
+            return
+
         video["publish_response"] =  json.dumps(result)
         video["publish_date"] = datetime.now()
         self.db.put_video(video)
