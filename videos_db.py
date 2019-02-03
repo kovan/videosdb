@@ -12,50 +12,70 @@ import io
 def dbg():
     import ipdb; ipdb.set_trace()
 
-
 @traced(logging.getLogger(__name__))
-def _publish_wordpress(video, categories, tags, as_draft=False):
-    import requests
-    from string import Template
-    from urllib.parse import quote
-    template_raw = \
-'''
-<!-- wp:video {"align":"center"} -->
-<figure class="wp-block-video aligncenter">
-    <video controls poster="https://$ipfs_gateway/ipfs/$thumbnail_hash" src="https://$dnslink_name/$filename_quoted">
-    </video>
-    <figcaption>
-Download/play from: <a href="https://$dnslink_name/$filename_quoted">HTTP</a> | <a href="ipns://$dnslink_name/$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
-    </figcaption>
-</figure>
-<!-- /wp:video -->
-'''
+class Wordpress:
+    def __init__(self):
+        self.api_root = "https://public-api.wordpress.com/rest/v1.1/sites/" + config["wordpress_site_id"]
+        self.headers = { "Authorization": "BEARER " + config["wordpress_token"] }
+
     
-    template = Template(template_raw)
-    html = template.substitute(
-        youtube_id=video["youtube_id"],
-        dnslink_name=config["dnslink_name"],
-        www_root=config["www_root"],
-        filename_quoted=quote(video.get("filename")),
-        ipfs_gateway=config["ipfs_gateway"],
-        thumbnail_hash=video["ipfs_thumbnail_hash"]
-    )
+    
+    def upload_image(self, image, title, youtube_id):
+        url = self.url_root + "/media/new"
+        files = { "media": media }
+        data = {
+                "title": title
+                "description": youtube_id
+        }
+        response = requests.post(url,headers=self.headers,files=files, data=data)
+        response.raise_for_status()
+        return response.json()
 
-    url = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/new' % config["wordpress_site_id"]
-    headers = { "Authorization": "BEARER " + config["wordpress_token"] }
-    data = {
-        "title" : video["title"],
-        "categories": ",".join(categories),
-        "tags": ",".join(tags),
-        "content": html
-    }
-    if as_draft:
-        data["status"] = "draft"
 
-    response = requests.post(url,headers=headers,data=data)
-    response.raise_for_status()
-    return response.json()
+    def publish(self, video, categories, tags, image_id, as_draft=False):
+        import requests
+        from string import Template
+        from urllib.parse import quote
+        template_raw = \
+    '''
+    <!-- wp:video {"align":"center"} -->
+    <figure class="wp-block-video aligncenter">
+        <video controls poster="https://$ipfs_gateway/ipfs/$thumbnail_hash" src="https://$dnslink_name/videos/$filename_quoted">
+        </video>
+        <figcaption>
+    Download/play from: <a href="https://$dnslink_name/videos/$filename_quoted">HTTP</a> | <a href="ipns://$dnslink_name/videos/$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
+        </figcaption>
+    </figure>
+    <!-- /wp:video -->
+    '''
+        
+        template = Template(template_raw)
+        html = template.substitute(
+            youtube_id=video["youtube_id"],
+            dnslink_name=config["dnslink_name"],
+            www_root=config["www_root"],
+            filename_quoted=quote(video.get("filename")),
+            ipfs_gateway=config["ipfs_gateway"],
+            thumbnail_hash=video["ipfs_thumbnail_hash"]
+        )
 
+        url = self.url_root + "/posts/new"
+        data = {
+            "title" : video["title"],
+            "categories": ",".join(categories),
+            "tags": ",".join(tags),
+            "featured_image": image_id,
+            "metadata": { "youtube_id" : video["youtube_id"] }, 
+            "content": html
+        }
+        if as_draft:
+            data["status"] = "draft"
+
+        response = requests.post(url,headers=self.headers,data=data)
+        response.raise_for_status()
+        return response.json()
+
+    
         
 
 @traced(logging.getLogger(__name__))
@@ -107,12 +127,15 @@ class IPFS:
         self.dnslink_update_pending = True
 
         return file_hash
+
+    def get_file(self, ipfs_hash):
+        self.api.get(ipfs_hash)
         
     def update_dnslink(self, force=False):
         if not self.dnslink_update_pending and not force:
             return
 
-        root_hash = self.api.files_stat("/videos")["Hash"]
+        root_hash = self.api.files_stat("/")["Hash"]
         DNS.update(root_hash)  
         self.dnslink_update_pending = False
 
@@ -198,16 +221,16 @@ class DB:
 
     def put_video(self, video):
         self.db["videos"].upsert(video,["youtube_id"], ensure=True)
+    
+    def add_publication(self, pub):
+        self.db["publications"].insert(pub)
 
 
 @traced(logging.getLogger(__name__))
 class Main:
-    def __init__(self, enable_ipfs=True):
+    def __init__(self):
         self.db = DB()
-        if enable_ipfs:
-            self.ipfs = IPFS()
-        else:
-            self.ipfs = None
+        self.ipfs = IPFS()
 
     def download_all(self):
         for _id in self.db.get_video_ids():
@@ -264,7 +287,11 @@ class Main:
 
     def publish_one(self, youtube_id, as_draft):
         from datetime import datetime
-        video = self.download_one(youtube_id)
+        try:
+            video = self.download_one(youtube_id)
+        except YoutubeDL.YoutubeDLError:
+            return
+
         categories = set([
             "Short videos" if video["duration"]/60 <= 20 else "Long videos",
             "Englightenment",
@@ -284,19 +311,30 @@ class Main:
         ])
         final_tags = video_tags.union(my_tags)
 
-        try:
-            result = _publish_wordpress(video, categories, final_tags, as_draft)
-        except YoutubeDL.YoutubeDLError:
-            return
+        dbg()
+        wp = Wordpress()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.chdir(tmpdir)
+            result = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
+            with io.open(result["filename"], "rb") as imgfile:#TODO
+                result = wp.upload_image(imgfile, video["title"], youtube_id)
+                image_id = result["id"] #TODO
+        result = wp.publish(video, categories, final_tags, image_id, as_draft)
 
-        video["publish_response"] =  json.dumps(result)
-        video["publish_date"] = datetime.now()
-        self.db.put_video(video)
+
+        publication = {}
+        publication["response"] =  json.dumps(result)
+        publication["date"] = datetime.now()
+        publication["youtube_id"] = youtube_id
+        publication["tags"] = final_tags
+        publication["categories"] = categories
+        return publication
 
 
     def publish_next(self, as_draft):
         next_video_id = self.db.queue_pop()
-        self.publish_one(next_video_id, as_draft)
+        publication = self.publish_one(next_video_id, as_draft)
+        self.db.add_publication(publication)
 
 
     def enqueue(self, url):
@@ -320,7 +358,6 @@ def _main():
     parser.add_argument("-n", "--publish-next", action="store_true")
     parser.add_argument("-d", "--download-one", metavar="VIDEO-ID")
     parser.add_argument("-a", "--download-all", action="store_true")
-    parser.add_argument("-i", "--enable-ipfs", action="store_true")
     parser.add_argument("-u", "--only-update-dnslink", action="store_true")
     parser.add_argument("--as-draft", action="store_true")
 
@@ -340,7 +377,7 @@ def _main():
         ipfs.update_dnslink(true)
         return
 
-    main = Main(args.enable_ipfs)
+    main = Main()
 
     if args.enqueue:
         main.enqueue(args.enqueue)
