@@ -1,5 +1,4 @@
 -e git+https://github.com/rg3/youtube-dl.git#egg=youtube-dl
-requests
 dataset
 executor
 ipfsapi
