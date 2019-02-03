@@ -9,45 +9,51 @@ import os
 import io
 
 
+
 def dbg():
+    os.chdir("/tmp")
     import ipdb; ipdb.set_trace()
 
 @traced(logging.getLogger(__name__))
 class Wordpress:
     def __init__(self):
-        self.api_root = "https://public-api.wordpress.com/rest/v1.1/sites/" + config["wordpress_site_id"]
-        self.headers = { "Authorization": "BEARER " + config["wordpress_token"] }
+        from wordpress_xmlrpc import Client
+        self.client = Client('https://www.spiritualityresources.net/xmlrpc.php', "sad-northcutt", "MIwEvLhawMp0")
+    
+    def upload_image(self, filename, title, youtube_id):
+        from wordpress_xmlrpc.compat import xmlrpc_client
+        from wordpress_xmlrpc.methods import media, posts
 
-    
-    
-    def upload_image(self, image, title, youtube_id):
-        url = self.url_root + "/media/new"
-        files = { "media": media }
         data = {
-                "title": title
-                "description": youtube_id
+            "name": title + ".jpg",
+            'type': 'image/jpeg'
         }
-        response = requests.post(url,headers=self.headers,files=files, data=data)
-        response.raise_for_status()
-        return response.json()
+
+        with open(filename, 'rb') as img:
+            data['bits'] = xmlrpc_client.Binary(img.read())
+
+        response = self.client.call(media.UploadFile(data))
+        return response
 
 
-    def publish(self, video, categories, tags, image_id, as_draft=False):
-        import requests
+
+    def publish(self, video, categories, tags, thumbnail, as_draft=False):
+        from wordpress_xmlrpc import WordPressPost
+        from wordpress_xmlrpc.methods.posts import NewPost
         from string import Template
         from urllib.parse import quote
         template_raw = \
-    '''
-    <!-- wp:video {"align":"center"} -->
-    <figure class="wp-block-video aligncenter">
-        <video controls poster="https://$ipfs_gateway/ipfs/$thumbnail_hash" src="https://$dnslink_name/videos/$filename_quoted">
-        </video>
-        <figcaption>
-    Download/play from: <a href="https://$dnslink_name/videos/$filename_quoted">HTTP</a> | <a href="ipns://$dnslink_name/videos/$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
-        </figcaption>
-    </figure>
-    <!-- /wp:video -->
-    '''
+        '''
+        <!-- wp:video {"align":"center"} -->
+        <figure class="wp-block-video aligncenter">
+            <video controls poster="$thumbnail_url" src="https://$dnslink_name/videos/$filename_quoted">
+            </video>
+            <figcaption>
+        Download/play from: <a href="ipns://$dnslink_name/videos/$filename_quoted">IPFS</a> | <a href="https://$dnslink_name/videos/$filename_quoted">HTTP</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
+            </figcaption>
+        </figure>
+        <!-- /wp:video -->
+        '''
         
         template = Template(template_raw)
         html = template.substitute(
@@ -55,28 +61,26 @@ class Wordpress:
             dnslink_name=config["dnslink_name"],
             www_root=config["www_root"],
             filename_quoted=quote(video.get("filename")),
-            ipfs_gateway=config["ipfs_gateway"],
-            thumbnail_hash=video["ipfs_thumbnail_hash"]
+            thumbnail_url=thumbnail["link"]
         )
 
-        url = self.url_root + "/posts/new"
-        data = {
-            "title" : video["title"],
-            "categories": ",".join(categories),
-            "tags": ",".join(tags),
-            "featured_image": image_id,
-            "metadata": { "youtube_id" : video["youtube_id"] }, 
-            "content": html
+        post = WordPressPost()
+        post.title = video["title"]
+        post.content = html
+        post.thumbnail = thumbnail["id"]
+        post.meta = {
+            "youtube_id": video["youtube_id"]
+        }
+        post.terms_names = {
+            "post_tag" : tags,
+            "category": categories
         }
         if as_draft:
-            data["status"] = "draft"
+            post.status = "draft"
 
-        response = requests.post(url,headers=self.headers,data=data)
-        response.raise_for_status()
-        return response.json()
+        # returns new post's ID
+        return self.client.call(NewPost(post))
 
-    
-        
 
 @traced(logging.getLogger(__name__))
 class DNS:
@@ -130,6 +134,9 @@ class IPFS:
 
     def get_file(self, ipfs_hash):
         self.api.get(ipfs_hash)
+        files = os.listdir(".")
+        filename = max(files, key=os.path.getctime)
+        return filename
         
     def update_dnslink(self, force=False):
         if not self.dnslink_update_pending and not force:
@@ -165,11 +172,12 @@ class YoutubeDL:
     @staticmethod
     def download_info(youtube_id):
         cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
-        result = execute(cmd, capture=True, capture_stderr=True)
-        if "has blocked it on copyright grounds" in result.stderr:
-            raise YoutubeDLError()
-        if result.stderr:
-            raise Exception(result.stderr)
+        result = execute(cmd, check=False, capture=True, capture_stderr=True)
+        if not result:
+            if "has blocked it on copyright grounds" in result.stderr:
+                raise YoutubeDLError()
+            else:
+                raise Exception(result.stderr)
 
         video_json = json.load(open(youtube_id + ".info.json"))
         return video_json 
@@ -179,7 +187,7 @@ class YoutubeDL:
     def list_videos(url):
         result = execute(YoutubeDL.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
         if not result:
-            raise YoutubeDLError("youtube-dl error. " + result.stderr)
+            raise YoutubeDLError("youtube-dl error. " + result)
         videos = []
         for video_json in result.splitlines():
             video = json.loads(video_json)
@@ -263,7 +271,10 @@ class Main:
         if download_info:
             with tempfile.TemporaryDirectory() as tmpdir: 
                 os.chdir(tmpdir)
-                info = YoutubeDL.download_info(youtube_id)
+                try:
+                    info = YoutubeDL.download_info(youtube_id)
+                except YoutubeDL.YoutubeDLError:
+                    return
 
             for attr in interesting_attrs:
                 video[attr] = info[attr]
@@ -287,19 +298,18 @@ class Main:
 
     def publish_one(self, youtube_id, as_draft):
         from datetime import datetime
-        try:
-            video = self.download_one(youtube_id)
-        except YoutubeDL.YoutubeDLError:
+        video = self.download_one(youtube_id)
+        if not video:
             return
 
-        categories = set([
+        categories = [
             "Short videos" if video["duration"]/60 <= 20 else "Long videos",
             "Englightenment",
             "Guru",
             "Shiva video",
             "Yoga video",
             video["uploader"]
-        ])
+        ]
         video_tags = set([tag.lower() for tag in video["tags"].split(',')])
         my_tags = set([
             "yoga",
@@ -309,32 +319,28 @@ class Main:
             "shiva",
             "shiva video"
         ])
-        final_tags = video_tags.union(my_tags)
+        final_tags = list(video_tags.union(my_tags))
 
-        dbg()
         wp = Wordpress()
         with tempfile.TemporaryDirectory() as tmpdir:
             os.chdir(tmpdir)
-            result = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
-            with io.open(result["filename"], "rb") as imgfile:#TODO
-                result = wp.upload_image(imgfile, video["title"], youtube_id)
-                image_id = result["id"] #TODO
-        result = wp.publish(video, categories, final_tags, image_id, as_draft)
+            thumbnail_filename = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
+            thumbnail = wp.upload_image(thumbnail_filename, video["title"], youtube_id)
 
+        result = wp.publish(video, categories, final_tags, thumbnail, as_draft)
 
         publication = {}
-        publication["response"] =  json.dumps(result)
+        publication["post_d"] =  json.dumps(result)
         publication["date"] = datetime.now()
         publication["youtube_id"] = youtube_id
-        publication["tags"] = final_tags
-        publication["categories"] = categories
-        return publication
+        publication["tags"] = ",".join(final_tags)
+        publication["categories"] = ",".join(categories)
+        self.db.add_publication(publication)
 
 
     def publish_next(self, as_draft):
         next_video_id = self.db.queue_pop()
         publication = self.publish_one(next_video_id, as_draft)
-        self.db.add_publication(publication)
 
 
     def enqueue(self, url):
@@ -365,6 +371,7 @@ def _main():
 
     if args.verbose:
         logging.basicConfig(
+                 level=logging.DEBUG,
                  stream=sys.stdout,
                  format="%(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s")
         logging.getLogger(__name__).setLevel(TRACE)

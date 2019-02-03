@@ -1,4 +1,3 @@
-easyblogger
 -e git+https://github.com/rg3/youtube-dl.git#egg=youtube-dl
 requests
 dataset
@@ -7,3 +6,4 @@ ipfsapi
 autologging
 google-cloud-dns
 pyyaml
+python-wordpress-xmlrpc
