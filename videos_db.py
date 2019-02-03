@@ -22,10 +22,10 @@ def _publish_wordpress(video, categories, tags, as_draft=False):
 '''
 <!-- wp:video {"align":"center"} -->
 <figure class="wp-block-video aligncenter">
-    <video controls poster="https://$ipfs_gateway/ipfs/$thumbnail_hash" src="https://$dnslink_name/videos/$filename_quoted">
+    <video controls poster="https://$ipfs_gateway/ipfs/$thumbnail_hash" src="https://$dnslink_name/$filename_quoted">
     </video>
     <figcaption>
-Download/play from: <a href="https://$dnslink_name/videos/$filename_quoted">HTTP</a> | <a href="ipns://$dnslink_name/videos/$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
+Download/play from: <a href="https://$dnslink_name/$filename_quoted">HTTP</a> | <a href="ipns://$dnslink_name/$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
     </figcaption>
 </figure>
 <!-- /wp:video -->
@@ -112,7 +112,7 @@ class IPFS:
         if not self.dnslink_update_pending and not force:
             return
 
-        root_hash = self.api.files_stat("/")["Hash"]
+        root_hash = self.api.files_stat("/videos")["Hash"]
         DNS.update(root_hash)  
         self.dnslink_update_pending = False
 
