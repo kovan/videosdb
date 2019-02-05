@@ -24,7 +24,7 @@ class Wordpress:
             config["www_root"] + "/xmlrpc.php",
             config["wp_username"],
             config["wp_pass"])
-    
+
     def upload_image(self, filename, title, youtube_id):
         from wordpress_xmlrpc.compat import xmlrpc_client
         from wordpress_xmlrpc.methods import media, posts
@@ -59,7 +59,7 @@ class Wordpress:
         </figure>
         <!-- /wp:video -->
         '''
-        
+
         template = Template(template_raw)
         html = template.substitute(
             youtube_id=video["youtube_id"],
@@ -95,20 +95,20 @@ class DNS:
         client = dns.Client()
         zone = client.zone(config["dns_zone"])
         records = zone.list_resource_record_sets()
-        
+
         # init transaction
         changes = zone.changes()
         # delete old
         for record in records:
             if record.name == config["dnslink_name"] + "."  and record.record_type == "TXT":
                 changes.delete_record_set(record)
-        #add new 
+        #add new
         record = zone.resource_record_set(config["dnslink_name"] + ".","TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
         changes.add_record_set(record)
         #finish transaction
         changes.create()
 
-        
+
 @traced(logging.getLogger(__name__))
 class IPFS:
     def __init__(self):
@@ -124,7 +124,7 @@ class IPFS:
         self.api.pin_add(file_hash)
 
         if not add_to_dir:
-            return file_hash 
+            return file_hash
 
         src = "/ipfs/"+ file_hash
         dst =  "/videos/" + filename
@@ -142,13 +142,13 @@ class IPFS:
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
-        
+
     def update_dnslink(self, force=False):
         if not self.dnslink_update_pending and not force:
             return
 
         root_hash = self.api.files_stat("/")["Hash"]
-        DNS.update(root_hash)  
+        DNS.update(root_hash)
         self.dnslink_update_pending = False
 
 
@@ -185,7 +185,7 @@ class YoutubeDL:
             raise e
 
         video_json = json.load(open(youtube_id + ".info.json"))
-        return video_json 
+        return video_json
 
 
     @staticmethod
@@ -194,21 +194,21 @@ class YoutubeDL:
         videos = []
         for video_json in result.splitlines():
             video = json.loads(video_json)
-            videos.append(video) 
+            videos.append(video)
         return videos
-    
+
 @traced(logging.getLogger(__name__))
 class DB:
     def __init__(self):
         import dataset
         self.db = dataset.connect("sqlite:///db.db")
-        
+
     def queue_push(self, youtube_id):
         self.db["publish_queue"].insert({"youtube_id":youtube_id})
-    
+
     def queue_pop(self):
         # treat table as a LIFO stack, so that recent videos get published first:
-        row = self.db["publish_queue"].find_one(post_id=None, order_by=["-id"]) 
+        row = self.db["publish_queue"].find_one(post_id=None, order_by=["-id"])
         self.db["publish_queue"].delete(**row)
         return row["youtube_id"]
 
@@ -226,7 +226,7 @@ class DB:
 
     def put_video(self, video):
         self.db["videos"].upsert(video,["youtube_id"], ensure=True)
-    
+
 
 
 @traced(logging.getLogger(__name__))
@@ -241,7 +241,7 @@ class Main:
     def download_all(self):
         for _id in self.db.get_video_ids():
             self.download_one(_id, False)
-    
+
         if self.ipfs:
             self.ipfs.update_dnslink()
 
@@ -262,21 +262,21 @@ class Main:
 
         download_info = False
         for attr in interesting_attrs:
-            if not video.get(attr): 
+            if not video.get(attr):
                 download_info = True
                 break
 
         if download_info:
-            with tempfile.TemporaryDirectory() as tmpdir: 
+            with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
                 info = YoutubeDL.download_info(youtube_id)
 
             for attr in interesting_attrs:
                 video[attr] = info[attr]
-                
-            video["tags"] = ", ".join(video["tags"]) 
 
-        if self.ipfs: 
+            video["tags"] = ", ".join(video["tags"])
+
+        if self.ipfs:
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
                 if not video.get("ipfs_hash"):
@@ -337,7 +337,7 @@ class Main:
         try:
             self.publish_one(next_video_id, as_draft)
         except YoutubeDL.CopyrightError as e:
-            dummy = { 
+            dummy = {
                 "youtube_id": next_video_id,
                 "skipped": True
             }
@@ -362,7 +362,7 @@ def _main():
     parser = argparse.ArgumentParser(description="Download videos from YouTube and publish them on IPFS and/or a Wordpress blog")
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-e", "--enqueue", metavar="URL")
-    parser.add_argument("-p", "--publish-one", metavar="VIDEO-ID") 
+    parser.add_argument("-p", "--publish-one", metavar="VIDEO-ID")
     parser.add_argument("-n", "--publish-next", action="store_true")
     parser.add_argument("-d", "--download-one", metavar="VIDEO-ID")
     parser.add_argument("-a", "--download-all", action="store_true")
