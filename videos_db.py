@@ -177,7 +177,7 @@ class YoutubeDL:
         try:
             result = execute(cmd, capture_stderr=True)
         except executor.ExternalCommandFailed as e:
-            if "has blocked it on copyright grounds" in str(e.command.stderr):
+            if "blocked it on copyright grounds" in str(e.command.stderr):
                 raise YoutubeDL.CopyrightError()
             raise e
 
