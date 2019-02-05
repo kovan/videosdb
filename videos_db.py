@@ -1,5 +1,6 @@
 #!env python3
 from executor import execute
+import executor
 from autologging import traced, TRACE
 import tempfile
 import logging
@@ -11,8 +12,9 @@ import io
 
 
 def dbg():
+    import ipdb
     os.chdir("/tmp")
-    import ipdb; ipdb.set_trace()
+    ipdb.set_trace()
 
 @traced(logging.getLogger(__name__))
 class Wordpress:
@@ -75,8 +77,8 @@ class Wordpress:
             "post_tag" : tags,
             "category": categories
         }
-        if as_draft:
-            post.status = "draft"
+        if not as_draft:
+            post.post_status = "publish"
 
         # returns new post's ID
         return self.client.call(NewPost(post))
@@ -149,7 +151,7 @@ class IPFS:
 
 @traced(logging.getLogger(__name__))
 class YoutubeDL:
-    class YoutubeDLError(Exception):
+    class CopyrightError(Exception):
         pass
 
     BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
@@ -172,12 +174,12 @@ class YoutubeDL:
     @staticmethod
     def download_info(youtube_id):
         cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
-        result = execute(cmd, check=False, capture=True, capture_stderr=True)
-        if not result:
-            if "has blocked it on copyright grounds" in result.stderr:
-                raise YoutubeDLError()
-            else:
-                raise Exception(result.stderr)
+        try:
+            result = execute(cmd, capture_stderr=True)
+        except executor.ExternalCommandFailed as e:
+            if "has blocked it on copyright grounds" in str(e.command.stderr):
+                raise YoutubeDL.CopyrightError()
+            raise e
 
         video_json = json.load(open(youtube_id + ".info.json"))
         return video_json 
@@ -186,8 +188,6 @@ class YoutubeDL:
     @staticmethod
     def list_videos(url):
         result = execute(YoutubeDL.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
-        if not result:
-            raise YoutubeDLError("youtube-dl error. " + result)
         videos = []
         for video_json in result.splitlines():
             video = json.loads(video_json)
@@ -271,10 +271,7 @@ class Main:
         if download_info:
             with tempfile.TemporaryDirectory() as tmpdir: 
                 os.chdir(tmpdir)
-                try:
-                    info = YoutubeDL.download_info(youtube_id)
-                except YoutubeDL.YoutubeDLError:
-                    return
+                info = YoutubeDL.download_info(youtube_id)
 
             for attr in interesting_attrs:
                 video[attr] = info[attr]
@@ -299,8 +296,6 @@ class Main:
     def publish_one(self, youtube_id, as_draft):
         from datetime import datetime
         video = self.download_one(youtube_id)
-        if not video:
-            return
 
         categories = [
             "Short videos" if video["duration"]/60 <= 20 else "Long videos",
@@ -336,11 +331,15 @@ class Main:
         publication["tags"] = ",".join(final_tags)
         publication["categories"] = ",".join(categories)
         self.db.add_publication(publication)
+        return publication
 
 
     def publish_next(self, as_draft):
         next_video_id = self.db.queue_pop()
-        publication = self.publish_one(next_video_id, as_draft)
+        try:
+            publication = self.publish_one(next_video_id, as_draft)
+        except YoutubeDL.CopyrightError as e:
+            self.publish_next(as_draft)
 
 
     def enqueue(self, url):
