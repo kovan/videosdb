@@ -21,9 +21,9 @@ class Wordpress:
     def __init__(self):
         from wordpress_xmlrpc import Client
         self.client = Client(
-            config.www_root + "/xmlrpc.php",
-            config.wp_username,
-            config.wp_pass)
+            config["www_root"] + "/xmlrpc.php",
+            config["wp_username"],
+            config["wp_pass"])
     
     def upload_image(self, filename, title, youtube_id):
         from wordpress_xmlrpc.compat import xmlrpc_client
