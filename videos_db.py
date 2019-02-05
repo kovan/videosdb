@@ -159,24 +159,21 @@ class YoutubeDL:
 
     BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
 
-    @staticmethod
-    def download_video(_id):
+    def download_video(self, _id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
-        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,"https://www.youtube.com/watch?v=" + _id))
+        execute(self.BASE_CMD + "--output '%s' %s" %( filename_format,"https://www.youtube.com/watch?v=" + _id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
 
-    @staticmethod
-    def download_thumbnail(_id):
-        execute(YoutubeDL.BASE_CMD + "--write-thumbnail --skip-download https://www.youtube.com/watch?v=" + _id)
+    def download_thumbnail(self, _id):
+        execute(self.BASE_CMD + "--write-thumbnail --skip-download https://www.youtube.com/watch?v=" + _id)
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
 
-    @staticmethod
-    def download_info(youtube_id):
-        cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
+    def download_info(self, youtube_id):
+        cmd = self.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
         try:
             result = execute(cmd, capture_stderr=True)
         except executor.ExternalCommandFailed as e:
@@ -187,15 +184,14 @@ class YoutubeDL:
         video_json = json.load(open(youtube_id + ".info.json"))
         return video_json
 
-
-    @staticmethod
-    def list_videos(url):
-        result = execute(YoutubeDL.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
+    def list_videos(self, url):
+        result = execute(self.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
         videos = []
         for video_json in result.splitlines():
             video = json.loads(video_json)
             videos.append(video)
         return videos
+
 
 @traced(logging.getLogger(__name__))
 class DB:
@@ -266,10 +262,11 @@ class Main:
                 download_info = True
                 break
 
+        ydl = YoutubeDL()
         if download_info:
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
-                info = YoutubeDL.download_info(youtube_id)
+                info = ydl.download_info(youtube_id)
 
             for attr in interesting_attrs:
                 video[attr] = info[attr]
@@ -280,10 +277,10 @@ class Main:
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
                 if not video.get("ipfs_hash"):
-                    video["filename"] = YoutubeDL.download_video(video["youtube_id"])
+                    video["filename"] = ydl.download_video(video["youtube_id"])
                     video["ipfs_hash"]= self.ipfs.add_file(video["filename"])
                 if not video.get("ipfs_thumbnail_hash"):
-                    thumbnail_filename = YoutubeDL.download_thumbnail(video["youtube_id"])
+                    thumbnail_filename = ydl.download_thumbnail(video["youtube_id"])
                     video["ipfs_thumbnail_hash"] = self.ipfs.add_file(thumbnail_filename, False)
             if update_dnslink:
                 self.db.put_video(video)
@@ -348,7 +345,7 @@ class Main:
     def enqueue(self, url):
         import random
 
-        videos = YoutubeDL.list_videos(url)
+        videos = YoutubeDL().list_videos(url)
         random.shuffle(videos)
 
         for video in videos:
