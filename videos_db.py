@@ -205,18 +205,12 @@ class DB:
     
     def queue_pop(self):
         # treat table as a LIFO stack, so that recent videos get published first:
-        row = self.db["publish_queue"].find_one(order_by=["-id"]) 
-        if not row:
-            #we ran out of videos, reenqueue all:
-            for video in self.db["videos"].all():
-                self.db["publish_queue"].insert({"youtube_id": video["youtube_id"]})
-            row = self.db["publish_queue"].find_one(order_by=["-id"]) 
-        
-        if not row:
-            return None
-
+        row = self.db["publish_queue"].find_one(post_id=None, order_by=["-id"]) 
         self.db["publish_queue"].delete(**row)
         return row["youtube_id"]
+
+    def queue_update(self, publication):
+        self.db["publish_queue"].upsert(publication, ["youtube_id"], ensure=True)
 
     def is_video_in_queue(self, youtube_id):
         return self.db["publish_queue"].find_one(youtube_id=youtube_id) is not None
@@ -230,15 +224,16 @@ class DB:
     def put_video(self, video):
         self.db["videos"].upsert(video,["youtube_id"], ensure=True)
     
-    def add_publication(self, pub):
-        self.db["publications"].insert(pub)
 
 
 @traced(logging.getLogger(__name__))
 class Main:
-    def __init__(self):
+    def __init__(self, enable_ipfs=True):
         self.db = DB()
-        self.ipfs = IPFS()
+        if enable_ipfs:
+            self.ipfs = IPFS()
+        else:
+            self.ipfs = None
 
     def download_all(self):
         for _id in self.db.get_video_ids():
@@ -322,23 +317,28 @@ class Main:
             thumbnail_filename = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
             thumbnail = wp.upload_image(thumbnail_filename, video["title"], youtube_id)
 
-        result = wp.publish(video, categories, final_tags, thumbnail, as_draft)
+        post_id = wp.publish(video, categories, final_tags, thumbnail, as_draft)
 
         publication = {}
-        publication["post_d"] =  json.dumps(result)
-        publication["date"] = datetime.now()
+        publication["post_id"] = post_id
         publication["youtube_id"] = youtube_id
+        publication["publish_date"] = datetime.now()
         publication["tags"] = ",".join(final_tags)
         publication["categories"] = ",".join(categories)
-        self.db.add_publication(publication)
+        self.db.queue_update(publication)
         return publication
 
 
     def publish_next(self, as_draft):
         next_video_id = self.db.queue_pop()
         try:
-            publication = self.publish_one(next_video_id, as_draft)
+            self.publish_one(next_video_id, as_draft)
         except YoutubeDL.CopyrightError as e:
+            dummy = { 
+                "youtube_id": next_video_id,
+                "skipped": True
+            }
+            self.db.queue_update(dummy)
             self.publish_next(as_draft)
 
 
@@ -350,7 +350,7 @@ class Main:
 
         for video in videos:
             yid = video["id"]
-            if self.db.get_video(yid) or self.db.is_video_in_queue(yid):
+            if self.db.is_video_in_queue(yid):
                 continue
             self.db.queue_push(yid)
 
