@@ -204,7 +204,9 @@ class DB:
 
     def queue_pop(self):
         # treat table as a LIFO stack, so that recent videos get published first:
-        row = self.db["publish_queue"].find_one(post_id=None, order_by=["-id"])
+        row = self.db["publish_queue"].find_one(post_id=None, copyright=None, order_by=["-id"])
+        if not row:
+            return None
         self.db["publish_queue"].delete(**row)
         return row["youtube_id"]
 
@@ -283,8 +285,9 @@ class Main:
                     thumbnail_filename = ydl.download_thumbnail(video["youtube_id"])
                     video["ipfs_thumbnail_hash"] = self.ipfs.add_file(thumbnail_filename, False)
             if update_dnslink:
-                self.db.put_video(video)
+                self.ipfs.update_dnslink()
 
+        self.db.put_video(video)
         return video
 
 
@@ -331,12 +334,14 @@ class Main:
 
     def publish_next(self, as_draft):
         next_video_id = self.db.queue_pop()
+        if not next_video_id:
+            return None
         try:
             self.publish_one(next_video_id, as_draft)
         except YoutubeDL.CopyrightError as e:
             dummy = {
                 "youtube_id": next_video_id,
-                "skipped": True
+                "copyright": True
             }
             self.db.queue_update(dummy)
             self.publish_next(as_draft)
@@ -380,7 +385,7 @@ def _main():
 
     if args.only_update_dnslink:
         ipfs = IPFS()
-        ipfs.update_dnslink(true)
+        ipfs.update_dnslink(True)
         return
 
     main = Main()

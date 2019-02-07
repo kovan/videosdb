@@ -1,4 +1,4 @@
-dns_zone: myzone
+dns_zone: spirituality
 dnslink_name: resources.spiritualityresources.net
 ipfs_gateway: ipfs.spiritualityresources.net
 www_root: https://www.spiritualityresources.net
