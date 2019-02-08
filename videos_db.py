@@ -200,12 +200,12 @@ class DB:
         import dataset
         self.db = dataset.connect("sqlite:///db.db")
 
-    def queue_push(self, youtube_id):
-        self.db["publish_queue"].insert({"youtube_id":youtube_id})
+    def queue_push(self, publication):
+        self.db["publish_queue"].insert(publication)
 
     def queue_pop(self):
         # treat table as a LIFO stack, so that recent videos get published first:
-        row = self.db["publish_queue"].find_one(post_id=None, skipped=None, order_by=["-id"])
+        row = self.db["publish_queue"].find_one(published=False, has_copyright=False, order_by=["-id"])
         if not row:
             return None
         self.db["publish_queue"].delete(**row)
@@ -236,6 +236,15 @@ class Main:
             self.ipfs = IPFS()
         else:
             self.ipfs = None
+
+    @staticmethod
+    def _new_publication(yid):
+        return  {
+            "youtube_id": yid,
+            "published": False,
+            "has_copyright": False
+        }
+        
 
     def download_all(self):
         for _id in self.db.get_video_ids():
@@ -323,9 +332,9 @@ class Main:
 
         post_id = wp.publish(video, categories, final_tags, thumbnail, as_draft)
 
-        publication = {}
+        publication = Main._new_publication(youtube_id)
+        publication["published"] = True
         publication["post_id"] = post_id
-        publication["youtube_id"] = youtube_id
         publication["publish_date"] = datetime.now()
         publication["tags"] = ",".join(final_tags)
         publication["categories"] = ",".join(categories)
@@ -340,10 +349,8 @@ class Main:
         try:
             self.publish_one(next_video_id, as_draft)
         except YoutubeDL.CopyrightError as e:
-            dummy = {
-                "youtube_id": next_video_id,
-                "skipped": True
-            }
+            dummy = Main._new_publication(next_video_id)
+            dummy["has_copyright"] = True
             self.db.queue_update(dummy)
             self.publish_next(as_draft)
 
@@ -358,7 +365,8 @@ class Main:
             yid = video["id"]
             if self.db.is_video_in_queue(yid):
                 continue
-            self.db.queue_push(yid)
+            pending_publication = Main._new_publication(yid) 
+            self.db.queue_push(pending_publication)
 
 def _main():
     import argparse
@@ -377,7 +385,8 @@ def _main():
 
     logger = logging.getLogger(__name__)
     handler = logging.handlers.RotatingFileHandler("log", 'a', 100000, 10)
-    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s'))
+    formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
+    handler.setFormatter(formatter)
     logger.addHandler(handler)
 
     if args.verbose:
