@@ -4,6 +4,7 @@ import executor
 from autologging import traced, TRACE
 import tempfile
 import logging
+import logging.handlers
 import json
 import sys
 import os
@@ -204,7 +205,7 @@ class DB:
 
     def queue_pop(self):
         # treat table as a LIFO stack, so that recent videos get published first:
-        row = self.db["publish_queue"].find_one(post_id=None, copyright=None, order_by=["-id"])
+        row = self.db["publish_queue"].find_one(post_id=None, skipped=None, order_by=["-id"])
         if not row:
             return None
         self.db["publish_queue"].delete(**row)
@@ -341,7 +342,7 @@ class Main:
         except YoutubeDL.CopyrightError as e:
             dummy = {
                 "youtube_id": next_video_id,
-                "copyright": True
+                "skipped": True
             }
             self.db.queue_update(dummy)
             self.publish_next(as_draft)
@@ -363,25 +364,28 @@ def _main():
     import argparse
     parser = argparse.ArgumentParser(description="Download videos from YouTube and publish them on IPFS and/or a Wordpress blog")
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-e", "--enqueue", metavar="URL")
     parser.add_argument("-p", "--publish-one", metavar="VIDEO-ID")
     parser.add_argument("-n", "--publish-next", action="store_true")
-    parser.add_argument("-d", "--download-one", metavar="VIDEO-ID")
+    parser.add_argument("-o", "--download-one", metavar="VIDEO-ID")
     parser.add_argument("-a", "--download-all", action="store_true")
     parser.add_argument("-u", "--only-update-dnslink", action="store_true")
     parser.add_argument("--as-draft", action="store_true")
 
     args = parser.parse_args()
 
+    logger = logging.getLogger(__name__)
+    handler = logging.handlers.RotatingFileHandler("log", 'a', 100000, 10)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s'))
+    logger.addHandler(handler)
+
     if args.verbose:
-        logging.basicConfig(
-                 level=logging.DEBUG,
-                 stream=sys.stdout,
-                 format="%(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s")
-        logging.getLogger(__name__).setLevel(TRACE)
         logging.getLogger("executor").setLevel(logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
 
-
+    if args.trace:
+        logger.setLevel(TRACE)
 
     if args.only_update_dnslink:
         ipfs = IPFS()
