@@ -384,6 +384,8 @@ class Main:
         for playlist in playlists:
             if playlist["channel_title"] in config["youtube_excluded_channels"]:
                 continue
+            if playlist["title"] == "Uploads from " + playlist["channel_title"]:
+                continue
 
             playlist_url = "https://www.youtube.com/playlist?list=" + playlist["id"]
             videos = ydl.list_videos(playlist_url)
