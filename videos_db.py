@@ -429,7 +429,8 @@ class Main:
             if self.db.is_video_in_queue(yid):
                 continue
             pending_publication = Main._new_publication(yid) 
-            pending_publication["categories"] = category
+            if category:
+                pending_publication["categories"] = category
             self.db.queue_push(pending_publication)
 
     def _enqueue_channel(self, channel_id):
