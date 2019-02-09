@@ -7,3 +7,19 @@ ipfs_port: 5001
 wp_username: dazzling-williams
 wp_pass: DQLL7kfN8Sdj
 youtube_key: AIzaSyBS_oLkjg3skPbC49VmPit3dPFPPnZDPRQ
+youtube_channels:
+    - UCcYzLCs3zrQIBVHYA1sK2sw
+youtube_excluded_channels:
+    - Sadhguru Tamil
+    - Sadhguru Hindi
+    - Садхгуру — официальный канал на русском
+    - Sadhguru Kannada
+    - Sadhguru Telugu
+    - Sadhguru Malayalam
+    - Sadhguru Marathi
+    - Sadhguru Español
+    - Sadhguru Gujarati
+    - Sadhguru Français
+
+
+    

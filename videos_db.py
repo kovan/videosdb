@@ -194,30 +194,38 @@ class YoutubeDL:
             videos.append(video)
         return videos
 
-    def _get_playlist_title(self, playlist_id):
+    def _get_playlist_info(self, playlist_id):
         url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
         url += "&id=" + playlist_id
         url += "&key=" + config["youtube_key"]
         response = requests.get(url).json()
-        return response["items"][0]["snippet"]["title"]
+        playlist = {
+            "id": playlist_id,
+            "title": response["items"][0]["snippet"]["title"],
+            "channel_title": response["items"][0]["snippet"]["channelTitle"],
+            "item_count": response["items"][0]["contentDetails"]["itemCount"],
+        }
+        return playlist
 
-    def list_playlists(self, url):
-        url = "https://www.googleapis.com/youtube/v3/channelSections?part=snippet%2CcontentDetails&channelId=UCcYzLCs3zrQIBVHYA1sK2sw"
+    def list_playlists(self, channel_id):
+        url = "https://www.googleapis.com/youtube/v3/channelSections?part=snippet%2CcontentDetails" 
+        url += "&channelId=" + channel_id
         url += "&key=" + config["youtube_key"]
         response = requests.get(url).json()
-        playlists = []
+        playlists_ids = []
         for item in response["items"]:
             details = item.get("contentDetails")
             if not details:
                 continue
-            playlists += details["playlists"]
+            playlists_ids += details["playlists"]
 
-        playlists = set(playlists)
-        result = {}
-        for playlist in playlists:
-            result[self._get_playlist_title(playlist)] = playlist   
+        playlist_ids = set(playlists_ids)
+        playlists = []
+        for _id in playlist_ids:
+            playlist = self._get_playlist_info(_id)
+            playlists.append(playlist)
 
-        return result
+        return playlists
 
 
 
@@ -230,13 +238,10 @@ class DB:
     def queue_push(self, publication):
         self.db["publish_queue"].insert(publication)
 
-    def queue_pop(self):
+    def queue_next(self):
         # treat table as a LIFO stack, so that recent videos get published first:
-        row = self.db["publish_queue"].find_one(published=False, has_copyright=False, order_by=["-id"])
-        if not row:
-            return None
-        self.db["publish_queue"].delete(**row)
-        return row["youtube_id"]
+        publication = self.db["publish_queue"].find_one(published=False, has_copyright=False, order_by=["-id"])
+        return publication
 
     def queue_update(self, publication):
         self.db["publish_queue"].upsert(publication, ["youtube_id"], ensure=True)
@@ -328,18 +333,14 @@ class Main:
         return video
 
 
-    def publish_one(self, youtube_id, as_draft):
+    def publish_one(self, publication, as_draft):
         from datetime import datetime
-        video = self.download_one(youtube_id)
+        video = self.download_one(publication["youtube_id"])
 
-        categories = [
-            "Short videos" if video["duration"]/60 <= 20 else "Long videos",
-            #"Englightenment",
-            #"Guru",
-            #"Shiva video",
-            #"Yoga video",
-            video["uploader"]
-        ]
+        categories = publication["categories"].split(",")
+        categories.append("Short videos" if video["duration"]/60 <= 20 else "Long videos")
+        categories.append(video["uploader"])
+            
         video_tags = set([tag.lower() for tag in video["tags"].split(',')])
         my_tags = set([
             "guru"
@@ -354,7 +355,6 @@ class Main:
 
         post_id = wp.publish(video, categories, final_tags, thumbnail, as_draft)
 
-        publication = Main._new_publication(youtube_id)
         publication["published"] = True
         publication["post_id"] = post_id
         publication["publish_date"] = datetime.now()
@@ -365,44 +365,55 @@ class Main:
 
 
     def publish_next(self, as_draft):
-        next_video_id = self.db.queue_pop()
-        if not next_video_id:
+        publication = self.db.queue_next()
+        if not publication:
             return None
         try:
-            self.publish_one(next_video_id, as_draft)
+            self.publish_one(publication, as_draft)
         except YoutubeDL.CopyrightError as e:
-            dummy = Main._new_publication(next_video_id)
-            dummy["has_copyright"] = True
-            self.db.queue_update(dummy)
+            publication["has_copyright"] = True
+            self.db.queue_update(publication)
             self.publish_next(as_draft)
 
 
-    def enqueue(self, url):
+    def enqueue_one(self, channel_id):
         import random
+        ydl = YoutubeDL()
 
-        videos = YoutubeDL().list_playlists(url)
-        return
-        videos = YoutubeDL().list_videos(url)
-        random.shuffle(videos)
-
-        for video in videos:
-            yid = video["id"]
-            if self.db.is_video_in_queue(yid):
+        playlists = ydl.list_playlists(channel_id)
+        for playlist in playlists:
+            if playlist["channel_title"] in config["youtube_excluded_channels"]:
                 continue
-            pending_publication = Main._new_publication(yid) 
-            self.db.queue_push(pending_publication)
+
+            playlist_url = "https://www.youtube.com/playlist?list=" + playlist["id"]
+            videos = ydl.list_videos(playlist_url)
+            random.shuffle(videos)
+
+            for video in videos:
+                yid = video["id"]
+                if self.db.is_video_in_queue(yid):
+                    continue
+                pending_publication = Main._new_publication(yid) 
+                pending_publication["categories"] = playlist["title"]
+                self.db.queue_push(pending_publication)
+
+    def enqueue(self):
+        for channel_id in config["youtube_channels"]:
+            self.enqueue_one(channel_id)
+
+
 
 def _main():
     import argparse
     parser = argparse.ArgumentParser(description="Download videos from YouTube and publish them on IPFS and/or a Wordpress blog")
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-t", "--trace", action="store_true")
-    parser.add_argument("-e", "--enqueue", metavar="URL")
-    parser.add_argument("-p", "--publish-one", metavar="VIDEO-ID")
+    parser.add_argument("-e", "--enqueue", action="store_true")
     parser.add_argument("-n", "--publish-next", action="store_true")
-    parser.add_argument("-o", "--download-one", metavar="VIDEO-ID")
-    parser.add_argument("-a", "--download-all", action="store_true")
-    parser.add_argument("-u", "--only-update-dnslink", action="store_true")
+    parser.add_argument("--enqueue-one", metavar="URL")
+    parser.add_argument("--download-one", metavar="VIDEO-ID")
+    parser.add_argument("--download-all", action="store_true")
+    parser.add_argument("--only-update-dnslink", action="store_true")
     parser.add_argument("--as-draft", action="store_true")
 
     args = parser.parse_args()
@@ -432,16 +443,16 @@ def _main():
     main = Main()
 
     if args.enqueue:
-        main.enqueue(args.enqueue)
+        main.enqueue()
+
+    if args.enqueue_one:
+        main.enqueue_one(args.enqueue_one)
 
     if args.download_all:
         main.download_all()
 
     if args.download_one:
         main.download_one(args.download_one)
-
-    if args.publish_one:
-        main.publish_one(args.publish_one, args.as_draft)
 
     if args.publish_next:
         main.publish_next(args.as_draft)
