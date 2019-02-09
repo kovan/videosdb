@@ -3,7 +3,6 @@ from executor import execute
 import executor
 from autologging import traced, TRACE
 import tempfile
-import requests
 import logging
 import logging.handlers
 import json
@@ -194,7 +193,11 @@ class YoutubeDL:
             videos.append(video)
         return videos
 
-    def _get_playlist_info(self, playlist_id):
+class YoutubeAPI:
+
+    @staticmethod
+    def _get_playlist_info(playlist_id):
+        import requests
         url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
         url += "&id=" + playlist_id
         url += "&key=" + config["youtube_key"]
@@ -204,25 +207,49 @@ class YoutubeDL:
             "title": response["items"][0]["snippet"]["title"],
             "channel_title": response["items"][0]["snippet"]["channelTitle"],
             "item_count": response["items"][0]["contentDetails"]["itemCount"],
-        }
+        } 
         return playlist
 
-    def list_playlists(self, channel_id):
-        url = "https://www.googleapis.com/youtube/v3/channelSections?part=snippet%2CcontentDetails" 
+
+    @staticmethod
+    def _make_request(base_url, channel_id):
+        import requests
+        url = base_url
         url += "&channelId=" + channel_id
         url += "&key=" + config["youtube_key"]
-        response = requests.get(url).json()
-        playlists_ids = []
+        return requests.get(url).json()
+
+        
+    @staticmethod
+    def _get_channnelsection_playlists(channel_id):
+        url = "https://www.googleapis.com/youtube/v3/channelSections?part=snippet%2CcontentDetails" 
+        response = YoutubeAPI._make_request(url, channel_id)
+        playlist_ids = []
         for item in response["items"]:
             details = item.get("contentDetails")
             if not details:
                 continue
-            playlists_ids += details["playlists"]
+            playlist_ids += details["playlists"]
+        return playlist_ids
 
-        playlist_ids = set(playlists_ids)
+    @staticmethod
+    def _get_channel_playlists(channel_id):
+        url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
+        response = YoutubeAPI._make_request(url, channel_id)
+        playlist_ids = []
+        for item in response["items"]:
+            playlist_ids.append(item["id"])
+        return playlist_ids
+
+    @staticmethod
+    def list_playlists(channel_id):
+        ids_channelsection = YoutubeAPI._get_channnelsection_playlists(channel_id) 
+        ids_channel =  YoutubeAPI._get_channel_playlists(channel_id) 
+
+        playlist_ids = set(ids_channelsection + ids_channel)
         playlists = []
         for _id in playlist_ids:
-            playlist = self._get_playlist_info(_id)
+            playlist = YoutubeAPI._get_playlist_info(_id)
             playlists.append(playlist)
 
         return playlists
@@ -375,33 +402,38 @@ class Main:
             self.db.queue_update(publication)
             self.publish_next(as_draft)
 
-
-    def enqueue_one(self, channel_id):
+    def _enqueue_video_list(self, videos, category=""):
         import random
-        ydl = YoutubeDL()
+        random.shuffle(videos)
 
-        playlists = ydl.list_playlists(channel_id)
+        for video in videos:
+            yid = video["id"]
+            if self.db.is_video_in_queue(yid):
+                continue
+            pending_publication = Main._new_publication(yid) 
+            pending_publication["categories"] = category
+            self.db.queue_push(pending_publication)
+
+    def _enqueue_channel(self, channel_id):
+
+        playlists = YoutubeAPI.list_playlists(channel_id)
         for playlist in playlists:
             if playlist["channel_title"] in config["youtube_excluded_channels"]:
                 continue
             if playlist["title"] == "Uploads from " + playlist["channel_title"]:
                 continue
-
             playlist_url = "https://www.youtube.com/playlist?list=" + playlist["id"]
-            videos = ydl.list_videos(playlist_url)
-            random.shuffle(videos)
+            videos = YoutubeDL().list_videos(playlist_url)
+            self._enqueue_video_list(videos, playlist["title"])
 
-            for video in videos:
-                yid = video["id"]
-                if self.db.is_video_in_queue(yid):
-                    continue
-                pending_publication = Main._new_publication(yid) 
-                pending_publication["categories"] = playlist["title"]
-                self.db.queue_push(pending_publication)
+        # enqueue all channel videos that are not in playlists:
+        channel_url = "https://www.youtube.com/channel/" + channel_id
+        videos = YoutubeDL().list_videos(channel_url)
+        self._enqueue_video_list(videos)
 
     def enqueue(self):
         for channel_id in config["youtube_channels"]:
-            self.enqueue_one(channel_id)
+            self._enqueue_channel(channel_id)
 
 
 
@@ -412,7 +444,6 @@ def _main():
     parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-e", "--enqueue", action="store_true")
     parser.add_argument("-n", "--publish-next", action="store_true")
-    parser.add_argument("--enqueue-one", metavar="URL")
     parser.add_argument("--download-one", metavar="VIDEO-ID")
     parser.add_argument("--download-all", action="store_true")
     parser.add_argument("--only-update-dnslink", action="store_true")
@@ -422,7 +453,7 @@ def _main():
 
     logger = logging.getLogger(__name__)
     formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
-    handler = logging.handlers.RotatingFileHandler("log", 'a', 100000, 10)
+    handler = logging.handlers.RotatingFileHandler("log", 'a', 1000000, 10)
     handler2 = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
     handler2.setFormatter(formatter)
@@ -446,9 +477,6 @@ def _main():
 
     if args.enqueue:
         main.enqueue()
-
-    if args.enqueue_one:
-        main.enqueue_one(args.enqueue_one)
 
     if args.download_all:
         main.download_all()
