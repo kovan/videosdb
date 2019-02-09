@@ -389,7 +389,6 @@ class Main:
             
         video_tags = set([tag.lower() for tag in video["tags"].split(',')])
         my_tags = set([
-            "guru"
         ])
         final_tags = list(video_tags.union(my_tags))
 
