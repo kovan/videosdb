@@ -180,7 +180,7 @@ class YoutubeDL:
             result = execute(cmd, capture_stderr=True)
         except executor.ExternalCommandFailed as e:
             if "copyright" in str(e.command.stderr) or \
-               "This video is unavailable" in str(e.command.stderr): 
+               "Unable to extract video title" in str(e.command.stderr): 
                 raise YoutubeDL.UnavailableError()
             raise e
 
