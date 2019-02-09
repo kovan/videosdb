@@ -3,6 +3,7 @@ from executor import execute
 import executor
 from autologging import traced, TRACE
 import tempfile
+import requests
 import logging
 import logging.handlers
 import json
@@ -193,6 +194,32 @@ class YoutubeDL:
             videos.append(video)
         return videos
 
+    def _get_playlist_title(self, playlist_id):
+        url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
+        url += "&id=" + playlist_id
+        url += "&key=" + config["youtube_key"]
+        response = requests.get(url).json()
+        return response["items"][0]["snippet"]["title"]
+
+    def list_playlists(self, url):
+        url = "https://www.googleapis.com/youtube/v3/channelSections?part=snippet%2CcontentDetails&channelId=UCcYzLCs3zrQIBVHYA1sK2sw"
+        url += "&key=" + config["youtube_key"]
+        response = requests.get(url).json()
+        playlists = []
+        for item in response["items"]:
+            details = item.get("contentDetails")
+            if not details:
+                continue
+            playlists += details["playlists"]
+
+        playlists = set(playlists)
+        result = {}
+        for playlist in playlists:
+            result[self._get_playlist_title(playlist)] = playlist   
+
+        return result
+
+
 
 @traced(logging.getLogger(__name__))
 class DB:
@@ -307,10 +334,10 @@ class Main:
 
         categories = [
             "Short videos" if video["duration"]/60 <= 20 else "Long videos",
-            "Englightenment",
-            "Guru",
-            "Shiva video",
-            "Yoga video",
+            #"Englightenment",
+            #"Guru",
+            #"Shiva video",
+            #"Yoga video",
             video["uploader"]
         ]
         video_tags = set([tag.lower() for tag in video["tags"].split(',')])
@@ -353,6 +380,8 @@ class Main:
     def enqueue(self, url):
         import random
 
+        videos = YoutubeDL().list_playlists(url)
+        return
         videos = YoutubeDL().list_videos(url)
         random.shuffle(videos)
 
@@ -379,10 +408,14 @@ def _main():
     args = parser.parse_args()
 
     logger = logging.getLogger(__name__)
-    handler = logging.handlers.RotatingFileHandler("log", 'a', 100000, 10)
     formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
+    handler = logging.handlers.RotatingFileHandler("log", 'a', 100000, 10)
+    handler2 = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
+    handler2.setFormatter(formatter)
     logger.addHandler(handler)
+    logger.addHandler(handler2)
+
 
     if args.verbose:
         logging.getLogger("executor").setLevel(logging.DEBUG)
