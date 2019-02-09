@@ -3,6 +3,7 @@ from executor import execute
 import executor
 from autologging import traced, TRACE
 import tempfile
+import requests
 import logging
 import logging.handlers
 import json
@@ -196,36 +197,39 @@ class YoutubeDL:
 class YoutubeAPI:
 
     @staticmethod
-    def _get_playlist_info(playlist_id):
-        import requests
-        url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
-        url += "&id=" + playlist_id
+    def _make_request(base_url, page_token=""):
+        url = base_url
         url += "&key=" + config["youtube_key"]
-        response = requests.get(url).json()
-        playlist = {
-            "id": playlist_id,
-            "title": response["items"][0]["snippet"]["title"],
-            "channel_title": response["items"][0]["snippet"]["channelTitle"],
-            "item_count": response["items"][0]["contentDetails"]["itemCount"],
-        } 
-        return playlist
+        if page_token:
+            url += "&pageToken=" + page_token
 
+        response = requests.get(url).json()
+        items = response["items"]
+        if "nextPageToken" in response:
+            items += YoutubeAPI._make_request(base_url, response["nextPageToken"])
+        return items
 
     @staticmethod
-    def _make_request(base_url, channel_id):
-        import requests
-        url = base_url
-        url += "&channelId=" + channel_id
-        url += "&key=" + config["youtube_key"]
-        return requests.get(url).json()
+    def _get_playlist_info(playlist_id):
+        url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
+        url += "&id=" + playlist_id
+        items = YoutubeAPI._make_request(url)
+        playlist = {
+            "id": playlist_id,
+            "title": items[0]["snippet"]["title"],
+            "channel_title": items[0]["snippet"]["channelTitle"],
+            "item_count": items[0]["contentDetails"]["itemCount"],
+        } 
+        return playlist
 
         
     @staticmethod
     def _get_channnelsection_playlists(channel_id):
         url = "https://www.googleapis.com/youtube/v3/channelSections?part=snippet%2CcontentDetails" 
-        response = YoutubeAPI._make_request(url, channel_id)
+        url += "&channelId=" + channel_id
+        items = YoutubeAPI._make_request(url)
         playlist_ids = []
-        for item in response["items"]:
+        for item in items:
             details = item.get("contentDetails")
             if not details:
                 continue
@@ -235,9 +239,10 @@ class YoutubeAPI:
     @staticmethod
     def _get_channel_playlists(channel_id):
         url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
-        response = YoutubeAPI._make_request(url, channel_id)
+        url += "&channelId=" + channel_id
+        items = YoutubeAPI._make_request(url)
         playlist_ids = []
-        for item in response["items"]:
+        for item in items:
             playlist_ids.append(item["id"])
         return playlist_ids
 
