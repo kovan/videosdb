@@ -156,7 +156,7 @@ class IPFS:
 
 @traced(logging.getLogger(__name__))
 class YoutubeDL:
-    class CopyrightError(Exception):
+    class UnavailableError(Exception):
         pass
 
     BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
@@ -179,8 +179,9 @@ class YoutubeDL:
         try:
             result = execute(cmd, capture_stderr=True)
         except executor.ExternalCommandFailed as e:
-            if "blocked it on copyright grounds" in str(e.command.stderr):
-                raise YoutubeDL.CopyrightError()
+            if "blocked it on copyright grounds" in str(e.command.stderr) or \
+               "This video is unavailable" in str(e.command.stderr): 
+                raise YoutubeDL.UnavailableError()
             raise e
 
         video_json = json.load(open(youtube_id + ".info.json"))
@@ -272,7 +273,7 @@ class DB:
 
     def queue_next(self):
         # treat table as a LIFO stack, so that recent videos get published first:
-        publication = self.db["publish_queue"].find_one(published=False, has_copyright=False, order_by=["-id"])
+        publication = self.db["publish_queue"].find_one(published=False, unavailable=False, order_by=["-id"])
         return publication
 
     def queue_update(self, publication):
@@ -280,6 +281,9 @@ class DB:
 
     def is_video_in_queue(self, youtube_id):
         return self.db["publish_queue"].find_one(youtube_id=youtube_id) is not None
+
+    def get_queue_video_ids(self):
+        return [video["youtube_id"] for video in self.db["publish_queue"].all()]
 
     def get_video_ids(self):
         return [video["youtube_id"] for video in self.db["videos"].all()]
@@ -306,13 +310,17 @@ class Main:
         return  {
             "youtube_id": yid,
             "published": False,
-            "has_copyright": False
+            "unavailable": False
         }
         
 
     def download_all(self):
-        for _id in self.db.get_video_ids():
-            self.download_one(_id, False)
+        ids = set(self.db.get_video_ids() + self.db.get_queue_video_ids())
+        for _id in ids: 
+            try:
+                self.download_one(_id, False)
+            except YoutubeDL.UnavailableError:
+                continue
 
         if self.ipfs:
             self.ipfs.update_dnslink()
@@ -367,7 +375,13 @@ class Main:
 
     def publish_one(self, publication, as_draft):
         from datetime import datetime
-        video = self.download_one(publication["youtube_id"])
+
+        try:
+            video = self.download_one(publication["youtube_id"])
+        except YoutubeDL.UnavailableError as e:
+            publication["unavailable"] = True
+            self.db.queue_update(publication)
+            return
 
         categories = publication["categories"].split(",")
         categories.append("Short videos" if video["duration"]/60 <= 20 else "Long videos")
@@ -402,8 +416,8 @@ class Main:
             return None
         try:
             self.publish_one(publication, as_draft)
-        except YoutubeDL.CopyrightError as e:
-            publication["has_copyright"] = True
+        except YoutubeDL.UnavailableError as e:
+            publication["unavailable"] = True
             self.db.queue_update(publication)
             self.publish_next(as_draft)
 
