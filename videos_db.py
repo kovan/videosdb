@@ -179,7 +179,7 @@ class YoutubeDL:
         try:
             result = execute(cmd, capture_stderr=True)
         except executor.ExternalCommandFailed as e:
-            if "blocked it on copyright grounds" in str(e.command.stderr) or \
+            if "copyright" in str(e.command.stderr) or \
                "This video is unavailable" in str(e.command.stderr): 
                 raise YoutubeDL.UnavailableError()
             raise e
@@ -420,7 +420,7 @@ class Main:
             self.db.queue_update(publication)
             self.publish_next(as_draft)
 
-    def _enqueue_video_list(self, videos, category=""):
+    def _enqueue_video_list(self, videos, channel="", category=""):
         import random
         random.shuffle(videos)
 
@@ -431,6 +431,8 @@ class Main:
             pending_publication = Main._new_publication(yid) 
             if category:
                 pending_publication["categories"] = category
+            if channel:
+                pending_publication["channel"] = channel
             self.db.queue_push(pending_publication)
 
     def _enqueue_channel(self, channel_id):
@@ -439,11 +441,13 @@ class Main:
         for playlist in playlists:
             if playlist["channel_title"] in config["youtube_excluded_channels"]:
                 continue
-            if playlist["title"] == "Uploads from " + playlist["channel_title"]:
+            if playlist["title"] == "Uploads from " + playlist["channel_title"] or \
+                playlist["title"] == "Liked videos" or \
+                playlist["title"] == "Popular uploads":
                 continue
             playlist_url = "https://www.youtube.com/playlist?list=" + playlist["id"]
             videos = YoutubeDL().list_videos(playlist_url)
-            self._enqueue_video_list(videos, playlist["title"])
+            self._enqueue_video_list(videos, playlist["channel_title"], playlist["title"])
 
         # enqueue all channel videos that are not in playlists:
         channel_url = "https://www.youtube.com/channel/" + channel_id
