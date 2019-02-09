@@ -139,6 +139,10 @@ class IPFS:
 
         return file_hash
 
+    def delete_file(self, filename, _hash):
+        self.api.files_rm(filename)
+        self.api.pin_rm(_hash)
+
     def get_file(self, ipfs_hash):
         self.api.get(ipfs_hash)
         files = os.listdir(".")
@@ -161,21 +165,24 @@ class YoutubeDL:
 
     BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
 
-    def download_video(self, _id):
+    @staticmethod
+    def download_video(_id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
-        execute(self.BASE_CMD + "--output '%s' %s" %( filename_format,"https://www.youtube.com/watch?v=" + _id))
+        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,"https://www.youtube.com/watch?v=" + _id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
 
-    def download_thumbnail(self, _id):
-        execute(self.BASE_CMD + "--write-thumbnail --skip-download https://www.youtube.com/watch?v=" + _id)
+    @staticmethod
+    def download_thumbnail(_id):
+        execute(YoutubeDL.BASE_CMD + "--write-thumbnail --skip-download https://www.youtube.com/watch?v=" + _id)
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
 
-    def download_info(self, youtube_id):
-        cmd = self.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
+    @staticmethod
+    def download_info(youtube_id):
+        cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
         try:
             result = execute(cmd, capture_stderr=True)
         except executor.ExternalCommandFailed as e:
@@ -187,13 +194,16 @@ class YoutubeDL:
         video_json = json.load(open(youtube_id + ".info.json"))
         return video_json
 
-    def list_videos(self, url):
-        result = execute(self.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
+    @staticmethod
+    def list_videos(url):
+        result = execute(YoutubeDL.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
         videos = []
         for video_json in result.splitlines():
             video = json.loads(video_json)
             videos.append(video)
         return videos
+
+
 
 class YoutubeAPI:
 
@@ -273,7 +283,7 @@ class DB:
 
     def queue_next(self):
         # treat table as a LIFO stack, so that recent videos get published first:
-        publication = self.db["publish_queue"].find_one(published=False, unavailable=False, order_by=["-id"])
+        publication = self.db["publish_queue"].find_one(published=False, excluded=False, order_by=["-id"])
         return publication
 
     def queue_update(self, publication):
@@ -310,28 +320,20 @@ class Main:
         return  {
             "youtube_id": yid,
             "published": False,
-            "unavailable": False
+            "excluded": False
         }
         
 
     def download_all(self):
         ids = set(self.db.get_video_ids() + self.db.get_queue_video_ids())
         for _id in ids: 
-            try:
-                self.download_one(_id, False)
-            except YoutubeDL.UnavailableError:
-                continue
+            self.download_one(_id, False)
 
         if self.ipfs:
             self.ipfs.update_dnslink()
 
-
-    def download_one(self, youtube_id, update_dnslink=True):
-        video = self.db.get_video(youtube_id)
-        if not video:
-            video = dict()
-            video["youtube_id"] = youtube_id
-
+    def _fill_info(self, video):
+        
         interesting_attrs = ["title",
                 "description",
                 "uploader",
@@ -346,28 +348,44 @@ class Main:
                 download_info = True
                 break
 
-        ydl = YoutubeDL()
-        if download_info:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                os.chdir(tmpdir)
-                info = ydl.download_info(youtube_id)
+        if not download_info:
+            return
 
-            for attr in interesting_attrs:
-                video[attr] = info[attr]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.chdir(tmpdir)
+            info = YoutubeDL.download_info(video["youtube_id"])
 
-            video["tags"] = ", ".join(video["tags"])
+        for attr in interesting_attrs:
+            video[attr] = info[attr]
 
-        if self.ipfs:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                os.chdir(tmpdir)
-                if not video.get("ipfs_hash"):
-                    video["filename"] = ydl.download_video(video["youtube_id"])
-                    video["ipfs_hash"]= self.ipfs.add_file(video["filename"])
-                if not video.get("ipfs_thumbnail_hash"):
-                    thumbnail_filename = ydl.download_thumbnail(video["youtube_id"])
-                    video["ipfs_thumbnail_hash"] = self.ipfs.add_file(thumbnail_filename, False)
-            if update_dnslink:
-                self.ipfs.update_dnslink()
+        video["tags"] = ", ".join(video["tags"])
+
+
+    def download_one(self, youtube_id, update_dnslink=True):
+        video = self.db.get_video(youtube_id)
+        if not video:
+            video = dict()
+            video["youtube_id"] = youtube_id
+
+        try:
+            self._fill_info(video)
+            if video["uploader"] != config["youtube_channel"]["name"]:
+                return None
+
+            if self.ipfs:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    os.chdir(tmpdir)
+                    if not video.get("ipfs_hash"):
+                        video["filename"] = YoutubeDL.download_video(video["youtube_id"])
+                        video["ipfs_hash"]= self.ipfs.add_file(video["filename"])
+                    if not video.get("ipfs_thumbnail_hash"):
+                        thumbnail_filename = YoutubeDL.download_thumbnail(video["youtube_id"])
+                        video["ipfs_thumbnail_hash"] = self.ipfs.add_file(thumbnail_filename, False)
+                if update_dnslink:
+                    self.ipfs.update_dnslink()
+
+        except YoutubeDL.UnavailableError as e:
+            return None
 
         self.db.put_video(video)
         return video
@@ -376,20 +394,17 @@ class Main:
     def publish_one(self, publication, as_draft):
         from datetime import datetime
 
-        try:
-            video = self.download_one(publication["youtube_id"])
-        except YoutubeDL.UnavailableError as e:
-            publication["unavailable"] = True
-            self.db.queue_update(publication)
-            return
+        video = self.download_one(publication["youtube_id"])
+        if not video:
+            publication["excluded"] = True
+            return False
 
         categories = publication["categories"].split(",")
         categories.append("Short videos" if video["duration"]/60 <= 20 else "Long videos")
         categories.append(video["uploader"])
             
         video_tags = set([tag.lower() for tag in video["tags"].split(',')])
-        my_tags = set([
-        ])
+        my_tags = set([])
         final_tags = list(video_tags.union(my_tags))
 
         wp = Wordpress()
@@ -406,21 +421,18 @@ class Main:
         publication["tags"] = ",".join(final_tags)
         publication["categories"] = ",".join(categories)
         self.db.queue_update(publication)
-        return publication
+        return True
 
 
     def publish_next(self, as_draft):
         publication = self.db.queue_next()
         if not publication:
             return None
-        try:
-            self.publish_one(publication, as_draft)
-        except YoutubeDL.UnavailableError as e:
-            publication["unavailable"] = True
-            self.db.queue_update(publication)
+        result = self.publish_one(publication, as_draft)
+        if not result:
             self.publish_next(as_draft)
 
-    def _enqueue_video_list(self, videos, channel="", category=""):
+    def _enqueue_videos(self, videos, src_channel="", category=""):
         import random
         random.shuffle(videos)
 
@@ -431,32 +443,32 @@ class Main:
             pending_publication = Main._new_publication(yid) 
             if category:
                 pending_publication["categories"] = category
-            if channel:
-                pending_publication["channel"] = channel
+            if src_channel:
+                pending_publication["src_channel"] = src_channel
             self.db.queue_push(pending_publication)
 
     def _enqueue_channel(self, channel_id):
 
         playlists = YoutubeAPI.list_playlists(channel_id)
         for playlist in playlists:
-            if playlist["channel_title"] in config["youtube_excluded_channels"]:
+            if playlist["channel_title"] != config["youtube_channel"]["name"]:
                 continue
             if playlist["title"] == "Uploads from " + playlist["channel_title"] or \
                 playlist["title"] == "Liked videos" or \
                 playlist["title"] == "Popular uploads":
                 continue
             playlist_url = "https://www.youtube.com/playlist?list=" + playlist["id"]
-            videos = YoutubeDL().list_videos(playlist_url)
-            self._enqueue_video_list(videos, playlist["channel_title"], playlist["title"])
+            videos = YoutubeDL.list_videos(playlist_url)
+            self._enqueue_videos(videos, playlist["channel_title"], playlist["title"])
 
         # enqueue all channel videos that are not in playlists:
         channel_url = "https://www.youtube.com/channel/" + channel_id
-        videos = YoutubeDL().list_videos(channel_url)
-        self._enqueue_video_list(videos)
+        videos = YoutubeDL.list_videos(channel_url)
+        self._enqueue_videos(videos)
 
     def enqueue(self):
-        for channel_id in config["youtube_channels"]:
-            self._enqueue_channel(channel_id)
+        channel_id = config["youtube_channel"]["id"]
+        self._enqueue_channel(channel_id)
 
 
 
