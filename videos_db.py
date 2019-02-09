@@ -315,12 +315,7 @@ class Main:
         ]
         video_tags = set([tag.lower() for tag in video["tags"].split(',')])
         my_tags = set([
-            "yoga",
-            "yoga video",
-            "enlightenment",
-            "guru",
-            "shiva",
-            "shiva video"
+            "guru"
         ])
         final_tags = list(video_tags.union(my_tags))
 
