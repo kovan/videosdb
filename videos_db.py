@@ -34,7 +34,7 @@ class Wordpress:
         data = {
             "name": title + ".jpg",
             'type': 'image/jpeg',
-            "description": youtube_id
+            "overwrite": True
         }
 
         with open(filename, 'rb') as img:
@@ -45,9 +45,9 @@ class Wordpress:
 
 
 
-    def publish(self, video, categories, tags, thumbnail, as_draft=False):
+    def publish(self, video, categories, tags, thumbnail, post_id=None, as_draft=False):
         from wordpress_xmlrpc import WordPressPost
-        from wordpress_xmlrpc.methods.posts import NewPost
+        from wordpress_xmlrpc.methods.posts import NewPost, GetPosts, EditPost
         from string import Template
         from urllib.parse import quote
         template_raw = \
@@ -89,7 +89,9 @@ class Wordpress:
         if not as_draft:
             post.post_status = "publish"
 
-        # returns new post's ID
+        if post_id: # it is an edit
+            return self.client.call(EditPost(post_id, post))
+
         return self.client.call(NewPost(post))
 
 
@@ -431,7 +433,7 @@ class Main:
         return video
 
 
-    def publish_one(self, publication, as_draft):
+    def publish_one(self, publication, as_draft=False):
         from datetime import datetime
 
         video = self.download_one(publication["youtube_id"])
@@ -451,7 +453,11 @@ class Main:
             thumbnail_filename = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
             thumbnail = wp.upload_image(thumbnail_filename, video["title"], publication["youtube_id"])
 
-        post_id = wp.publish(video, categories.as_list(), tags.as_list(), thumbnail, as_draft)
+        if publication["published"]:
+            post_id = publication["post_id"]
+        else:
+            post_id = None
+        post_id = wp.publish(video, categories.as_list(), tags.as_list(), thumbnail, post_id, as_draft)
 
         publication["published"] = True
         publication["post_id"] = post_id
@@ -472,15 +478,12 @@ class Main:
                 return
 
     def _enqueue_videos(self, videos, src_channel="", category=None):
-        import random
-        random.shuffle(videos)
 
         for video in videos:
             yid = video["id"]
             publication = self.db.get_publication(yid)
             if not publication: 
                 publication = Main._new_publication(yid) 
-
             
             if category:
                 categories = Taxonomy(publication.get("categories"))
@@ -515,6 +518,11 @@ class Main:
         channel_id = config["youtube_channel"]["id"]
         self._enqueue_channel(channel_id)
 
+    def republish_all(self):
+        for publication in self.db.get_publications():
+            if not publication["published"]:
+                continue
+            self.publish_one(publication) 
 
 
 def _main():
@@ -525,6 +533,7 @@ def _main():
     parser.add_argument("-e", "--enqueue", action="store_true")
     parser.add_argument("-n", "--publish-next", action="store_true")
     parser.add_argument("--publish-all", action="store_true")
+    parser.add_argument("--republish-all", action="store_true")
     parser.add_argument("--download-one", metavar="VIDEO-ID")
     parser.add_argument("--download-all", action="store_true")
     parser.add_argument("--only-update-dnslink", action="store_true")
@@ -562,6 +571,9 @@ def _main():
 
     if args.enqueue:
         main.enqueue()
+
+    if args.republish_all:
+        main.republish_all()
 
     if args.download_all:
         main.download_all()
