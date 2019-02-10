@@ -20,12 +20,13 @@ def dbg():
 
 @traced(logging.getLogger(__name__))
 class Wordpress:
-    def __init__(self):
+    def __init__(self, config):
         from wordpress_xmlrpc import Client
+        self.config = config
         self.client = Client(
-            config["www_root"] + "/xmlrpc.php",
-            config["wp_username"],
-            config["wp_pass"])
+            self.config["www_root"] + "/xmlrpc.php",
+            self.config["wp_username"],
+            self.config["wp_pass"])
 
     def upload_image(self, filename, title):
         from wordpress_xmlrpc.compat import xmlrpc_client
@@ -64,8 +65,8 @@ class Wordpress:
         template = Template(template_raw)
         html = template.substitute(
             youtube_id=video["youtube_id"],
-            dnslink_name=config["dnslink_name"],
-            www_root=config["www_root"],
+            dnslink_name=self.config["dnslink_name"],
+            www_root=self.config["www_root"],
             filename_quoted=quote(video.get("filename")),
             thumbnail_url=thumbnail_url
         )
@@ -95,21 +96,23 @@ class Wordpress:
 
 @traced(logging.getLogger(__name__))
 class DNS:
-    @staticmethod
+    def __init__(self, config):
+        self.config = config
+
     def update(new_root_hash):
         from google.cloud import dns
         client = dns.Client()
-        zone = client.zone(config["dns_zone"])
+        zone = client.zone(self.config["dns_zone"])
         records = zone.list_resource_record_sets()
 
         # init transaction
         changes = zone.changes()
         # delete old
         for record in records:
-            if record.name == config["dnslink_name"] + "."  and record.record_type == "TXT":
+            if record.name == self.config["dnslink_name"] + "."  and record.record_type == "TXT":
                 changes.delete_record_set(record)
         #add new
-        record = zone.resource_record_set(config["dnslink_name"] + ".","TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
+        record = zone.resource_record_set(self.config["dnslink_name"] + ".","TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
         changes.add_record_set(record)
         #finish transaction
         changes.create()
@@ -117,10 +120,11 @@ class DNS:
 
 @traced(logging.getLogger(__name__))
 class IPFS:
-    def __init__(self):
+    def __init__(self, config):
         import ipfsapi
-        self.host = config["ipfs_host"]
-        self.port = config["ipfs_port"]
+        self.config = config
+        self.host = self.config["ipfs_host"]
+        self.port = self.config["ipfs_port"]
         self.dnslink_update_pending = False
         self.api = ipfsapi.connect(self.host, self.port)
 
@@ -156,7 +160,8 @@ class IPFS:
             return
 
         root_hash = self.api.files_stat("/")["Hash"]
-        DNS.update(root_hash)
+        dns = DNS(self.config)
+        dns.update(root_hash)
         self.dnslink_update_pending = False
 
 
@@ -209,25 +214,25 @@ class YoutubeDL:
 
 
 class YoutubeAPI:
+    def __init__(self, config):
+        self.config = config
 
-    @staticmethod
-    def _make_request(base_url, page_token=""):
+    def _make_request(self, base_url, page_token=""):
         url = base_url
-        url += "&key=" + config["youtube_key"]
+        url += "&key=" + self.config["youtube_key"]
         if page_token:
             url += "&pageToken=" + page_token
 
         response = requests.get(url).json()
         items = response["items"]
         if "nextPageToken" in response:
-            items += YoutubeAPI._make_request(base_url, response["nextPageToken"])
+            items += self._make_request(base_url, response["nextPageToken"])
         return items
 
-    @staticmethod
-    def _get_playlist_info(playlist_id):
+    def _get_playlist_info(self, playlist_id):
         url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
         url += "&id=" + playlist_id
-        items = YoutubeAPI._make_request(url)
+        items = self._make_request(url)
         playlist = {
             "id": playlist_id,
             "title": items[0]["snippet"]["title"],
@@ -236,12 +241,10 @@ class YoutubeAPI:
         } 
         return playlist
 
-        
-    @staticmethod
-    def _get_channnelsection_playlists(channel_id):
+    def _get_channnelsection_playlists(self, channel_id):
         url = "https://www.googleapis.com/youtube/v3/channelSections?part=snippet%2CcontentDetails" 
         url += "&channelId=" + channel_id
-        items = YoutubeAPI._make_request(url)
+        items = self._make_request(url)
         playlist_ids = []
         for item in items:
             details = item.get("contentDetails")
@@ -250,25 +253,23 @@ class YoutubeAPI:
             playlist_ids += details["playlists"]
         return playlist_ids
 
-    @staticmethod
-    def _get_channel_playlists(channel_id):
+    def _get_channel_playlists(self, channel_id):
         url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
         url += "&channelId=" + channel_id
-        items = YoutubeAPI._make_request(url)
+        items = self._make_request(url)
         playlist_ids = []
         for item in items:
             playlist_ids.append(item["id"])
         return playlist_ids
 
-    @staticmethod
-    def list_playlists(channel_id):
-        ids_channelsection = YoutubeAPI._get_channnelsection_playlists(channel_id) 
-        ids_channel =  YoutubeAPI._get_channel_playlists(channel_id) 
+    def list_playlists(self, channel_id):
+        ids_channelsection = self._get_channnelsection_playlists(channel_id) 
+        ids_channel =  self._get_channel_playlists(channel_id) 
 
         playlist_ids = set(ids_channelsection + ids_channel)
         playlists = []
         for _id in playlist_ids:
-            playlist = YoutubeAPI._get_playlist_info(_id)
+            playlist = self._get_playlist_info(_id)
             playlists.append(playlist)
 
         return playlists
@@ -328,9 +329,13 @@ class Taxonomy:
 @traced(logging.getLogger(__name__))
 class Main:
     def __init__(self, enable_ipfs=True):
+        import yaml
+        with io.open("config.yaml") as f:
+            self.config = yaml.load(f)
+
         self.db = DB()
         if enable_ipfs:
-            self.ipfs = IPFS()
+            self.ipfs = IPFS(self.config)
         else:
             self.ipfs = None
 
@@ -407,7 +412,7 @@ class Main:
         try:
             self._fill_info(video)
 
-            if video["uploader"] != config["youtube_channel"]["name"]:
+            if video["uploader"] != self.config["youtube_channel"]["name"]:
                 return None
 
             self.db.put_video(video)
@@ -505,9 +510,10 @@ class Main:
 
     def _enqueue_channel(self, channel_id):
 
-        playlists = YoutubeAPI.list_playlists(channel_id)
+        api = YoutubeAPI(self.config)
+        playlists = api.list_playlists(channel_id)
         for playlist in playlists:
-            if playlist["channel_title"] != config["youtube_channel"]["name"]:
+            if playlist["channel_title"] != self.config["youtube_channel"]["name"]:
                 continue
             if playlist["title"] == "Uploads from " + playlist["channel_title"] or \
                 playlist["title"] == "Liked videos" or \
@@ -523,7 +529,7 @@ class Main:
         self._enqueue_videos(videos)
 
     def enqueue(self):
-        channel_id = config["youtube_channel"]["id"]
+        channel_id = self.config["youtube_channel"]["id"]
         self._enqueue_channel(channel_id)
 
     def republish_all(self):
@@ -544,7 +550,6 @@ def _main():
     parser.add_argument("--republish-all", action="store_true")
     parser.add_argument("--download-one", metavar="VIDEO-ID")
     parser.add_argument("--download-all", action="store_true")
-    parser.add_argument("--only-update-dnslink", action="store_true")
     parser.add_argument("--as-draft", action="store_true")
     parser.add_argument("--regen-ipfs-folder", action="store_true")
 
@@ -566,11 +571,6 @@ def _main():
 
     if args.trace:
         logger.setLevel(TRACE)
-
-    if args.only_update_dnslink:
-        ipfs = IPFS()
-        ipfs.update_dnslink(True)
-        return
 
     main = Main()
 

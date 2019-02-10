@@ -25,11 +25,6 @@ class Command(BaseCommand):
         #if args.trace:
             #logger.setLevel(TRACE)
 
-        if options["only_update_dnslink"]:
-            ipfs = IPFS()
-            ipfs.update_dnslink(True)
-            return
-
         main = Main()
 
         if options["regen_ipfs_folder"]:
