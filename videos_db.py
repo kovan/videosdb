@@ -33,7 +33,8 @@ class Wordpress:
 
         data = {
             "name": title + ".jpg",
-            'type': 'image/jpeg'
+            'type': 'image/jpeg',
+            "description": youtube_id
         }
 
         with open(filename, 'rb') as img:
@@ -311,6 +312,8 @@ class Categories:
         self.categories = set([cat.strip() for cat in _str.split(",")])
 
     def serialize(self):
+        if not self.categories:
+            return ""
         return ",".join(self.categories)
 
     def add(self, new_category):
@@ -479,9 +482,11 @@ class Main:
             if not publication: 
                 publication = Main._new_publication(yid) 
 
-            categories = Categories(publication.categories)
-            categories.add(category)
-            publication["categories"] = categories.serialize()
+            
+            if category:
+                categories = Categories(publication.get("categories"))
+                categories.add(category)
+                publication["categories"] = categories.serialize()
 
             if src_channel:
                 publication["src_channel"] = src_channel
