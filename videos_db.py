@@ -307,6 +307,7 @@ class Categories:
     def __init__(self, _str):
         if not _str:
             self.categories = set()
+            return
         self.categories = set([cat.strip() for cat in _str.split(",")])
 
     def serialize(self):
