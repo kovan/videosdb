@@ -313,8 +313,8 @@ class Categories:
     def serialize(self):
         return ",".join(self.categories)
 
-    def ensure(self, new_categories):
-        self.categories = self.categories | new_categories
+    def add(self, new_category):
+        self.categories.add(new_category)
 
     def as_list(self):
         return list(self.categories)
@@ -434,8 +434,8 @@ class Main:
             return False
 
         categories = Categories(publication.get("categories"))
-        categories.ensure("Short videos" if video["duration"]/60 <= 20 else "Long videos")
-        categories.ensure(video["uploader"])
+        categories.add("Short videos" if video["duration"]/60 <= 20 else "Long videos")
+        categories.add(video["uploader"])
             
         video_tags = set([tag.lower() for tag in video["tags"].split(',')])
         my_tags = set([])
@@ -445,7 +445,7 @@ class Main:
         with tempfile.TemporaryDirectory() as tmpdir:
             os.chdir(tmpdir)
             thumbnail_filename = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
-            thumbnail = wp.upload_image(thumbnail_filename, video["title"], youtube_id)
+            thumbnail = wp.upload_image(thumbnail_filename, video["title"], publication["youtube_id"])
 
         post_id = wp.publish(video, categories.as_list(), final_tags, thumbnail, as_draft)
 
@@ -477,7 +477,7 @@ class Main:
                 publication = Main._new_publication(yid) 
 
             categories = Categories(publication.categories)
-            categories.ensure(category)
+            categories.add(category)
             publication["categories"] = categories.serialize()
 
             if src_channel:
