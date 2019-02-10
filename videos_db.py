@@ -81,9 +81,11 @@ class Wordpress:
             "value": video["youtube_id"]
         }]
         post.terms_names = {
-            "post_tag" : tags,
             "category": categories
         }
+        if tags:
+            post.terms_names["post_tag"] = tags
+
         if not as_draft:
             post.post_status = "publish"
 
@@ -190,7 +192,7 @@ class YoutubeDL:
                "Unable to extract video title" in str(e.command.stderr) or \
                "available in your country" in str(e.command.stderr):
                 raise YoutubeDL.UnavailableError()
-            raise e
+            raise
 
         video_json = json.load(open(youtube_id + ".info.json"))
         return video_json
@@ -442,22 +444,18 @@ class Main:
         categories.add("Short videos" if video["duration"]/60 <= 20 else "Long videos")
         categories.add(video["uploader"])
             
-        video_tags = set([tag.lower() for tag in video["tags"].split(',')])
-        my_tags = set([])
-        final_tags = list(video_tags.union(my_tags))
-
         wp = Wordpress()
         with tempfile.TemporaryDirectory() as tmpdir:
             os.chdir(tmpdir)
             thumbnail_filename = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
             thumbnail = wp.upload_image(thumbnail_filename, video["title"], publication["youtube_id"])
 
-        post_id = wp.publish(video, categories.as_list(), final_tags, thumbnail, as_draft)
+        post_id = wp.publish(video, categories.as_list(), video["tags"], thumbnail, as_draft)
 
         publication["published"] = True
         publication["post_id"] = post_id
         publication["publish_date"] = datetime.now()
-        publication["tags"] = ",".join(final_tags)
+        publication["tags"] = video["tags"]
         publication["categories"] = categories.serialize()
         self.db.queue_upsert(publication)
         return True
