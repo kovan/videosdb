@@ -14,8 +14,8 @@ import io
 
 
 def dbg():
-    import ipdb
     os.chdir("/tmp")
+    import ipdb
     ipdb.set_trace()
 
 @traced(logging.getLogger(__name__))
@@ -75,9 +75,10 @@ class Wordpress:
         post.title = video["title"]
         post.content = html
         post.thumbnail = thumbnail["id"]
-        post.meta = {
-            "youtube_id": video["youtube_id"]
-        }
+        post.custom_fields = [{
+            "key": "youtube_id",
+            "value": video["youtube_id"]
+        }]
         post.terms_names = {
             "post_tag" : tags,
             "category": categories
@@ -277,19 +278,16 @@ class DB:
         import dataset
         self.db = dataset.connect("sqlite:///db.db")
 
-    def queue_push(self, publication):
-        self.db["publish_queue"].insert(publication)
-
     def queue_next(self):
         # treat table as a LIFO stack, so that recent videos get published first:
         publication = self.db["publish_queue"].find_one(published=False, excluded=False, order_by=["-id"])
         return publication
 
-    def queue_update(self, publication):
+    def queue_upsert(self, publication):
         self.db["publish_queue"].upsert(publication, ["youtube_id"], ensure=True)
 
-    def is_video_in_queue(self, youtube_id):
-        return self.db["publish_queue"].find_one(youtube_id=youtube_id) is not None
+    def get_publication(self, youtube_id):
+        return self.db["publish_queue"].find_one(youtube_id=youtube_id)
 
     def get_publications(self):
         return self.db["publish_queue"].all()
@@ -304,6 +302,22 @@ class DB:
         self.db["videos"].upsert(video,["youtube_id"], ensure=True)
 
 
+@traced(logging.getLogger(__name__))
+class Categories:
+    def __init__(self, _str):
+        if not _str:
+            self.categories = set()
+        self.categories = set([cat.strip() for cat in _str.split(",")])
+
+    def serialize(self):
+        return ",".join(self.categories)
+
+    def ensure(self, new_categories):
+        self.categories = self.categories | new_categories
+
+    def as_list(self):
+        return list(self.categories)
+        
 
 @traced(logging.getLogger(__name__))
 class Main:
@@ -330,9 +344,7 @@ class Main:
             
 
     def download_all(self):
-        ids1 = [video["youtube_id"] for video in self.db.get_videos()]
-        ids2 = [video["youtube_id"] for video in self.db.get_publications()]
-        ids = set(ids1 + ids2)
+        ids = [video["youtube_id"] for video in self.db.get_videos()]
         for _id in ids: 
             self.download_one(_id, False)
 
@@ -363,7 +375,7 @@ class Main:
 
         download_info = False
         for attr in interesting_attrs:
-            if not video.get(attr):
+            if not attr in video:
                 download_info = True
                 break
 
@@ -378,6 +390,7 @@ class Main:
             video[attr] = info[attr]
 
         video["tags"] = ", ".join(video["tags"])
+        self.db.put_video(video)
 
 
     def download_one(self, youtube_id, update_dnslink=True):
@@ -388,6 +401,7 @@ class Main:
 
         try:
             self._fill_info(video)
+
             if video["uploader"] != config["youtube_channel"]["name"]:
                 return None
 
@@ -418,9 +432,9 @@ class Main:
             publication["excluded"] = True
             return False
 
-        categories = publication["categories"].split(",")
-        categories.append("Short videos" if video["duration"]/60 <= 20 else "Long videos")
-        categories.append(video["uploader"])
+        categories = Categories(publication.get("categories"))
+        categories.ensure("Short videos" if video["duration"]/60 <= 20 else "Long videos")
+        categories.ensure(video["uploader"])
             
         video_tags = set([tag.lower() for tag in video["tags"].split(',')])
         my_tags = set([])
@@ -432,14 +446,14 @@ class Main:
             thumbnail_filename = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
             thumbnail = wp.upload_image(thumbnail_filename, video["title"], youtube_id)
 
-        post_id = wp.publish(video, categories, final_tags, thumbnail, as_draft)
+        post_id = wp.publish(video, categories.as_list(), final_tags, thumbnail, as_draft)
 
         publication["published"] = True
         publication["post_id"] = post_id
         publication["publish_date"] = datetime.now()
         publication["tags"] = ",".join(final_tags)
-        publication["categories"] = ",".join(categories)
-        self.db.queue_update(publication)
+        publication["categories"] = categories.serialize()
+        self.db.queue_upsert(publication)
         return True
 
 
@@ -451,20 +465,24 @@ class Main:
         if not result:
             self.publish_next(as_draft)
 
-    def _enqueue_videos(self, videos, src_channel="", category=""):
+    def _enqueue_videos(self, videos, src_channel="", category=None):
         import random
         random.shuffle(videos)
 
         for video in videos:
             yid = video["id"]
-            if self.db.is_video_in_queue(yid):
-                continue
-            pending_publication = Main._new_publication(yid) 
-            if category:
-                pending_publication["categories"] = category
+            publication = self.db.get_publication(yid)
+            if not publication: 
+                publication = Main._new_publication(yid) 
+
+            categories = Categories(publication.categories)
+            categories.ensure(category)
+            publication["categories"] = categories.serialize()
+
             if src_channel:
-                pending_publication["src_channel"] = src_channel
-            self.db.queue_push(pending_publication)
+                publication["src_channel"] = src_channel
+
+            self.db.queue_upsert(publication)
 
     def _enqueue_channel(self, channel_id):
 
@@ -498,6 +516,7 @@ def _main():
     parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-e", "--enqueue", action="store_true")
     parser.add_argument("-n", "--publish-next", action="store_true")
+    parser.add_argument("--publish-all", action="store_true")
     parser.add_argument("--download-one", metavar="VIDEO-ID")
     parser.add_argument("--download-all", action="store_true")
     parser.add_argument("--only-update-dnslink", action="store_true")
@@ -538,6 +557,9 @@ def _main():
 
     if args.download_all:
         main.download_all()
+
+    if args.publish_all:
+        main.publish_all()
 
     if args.download_one:
         main.download_one(args.download_one)
