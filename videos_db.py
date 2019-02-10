@@ -391,7 +391,6 @@ class Main:
             video[attr] = info[attr]
 
         video["tags"] = ", ".join(video["tags"])
-        self.db.put_video(video)
 
 
     def download_one(self, youtube_id, update_dnslink=True):
@@ -405,6 +404,8 @@ class Main:
 
             if video["uploader"] != config["youtube_channel"]["name"]:
                 return None
+
+            self.db.put_video(video)
 
             if self.ipfs:
                 with tempfile.TemporaryDirectory() as tmpdir:
@@ -431,6 +432,7 @@ class Main:
         video = self.download_one(publication["youtube_id"])
         if not video:
             publication["excluded"] = True
+            self.db.queue_upsert(publication)
             return False
 
         categories = Categories(publication.get("categories"))
@@ -459,12 +461,13 @@ class Main:
 
 
     def publish_next(self, as_draft):
-        publication = self.db.queue_next()
-        if not publication:
-            return None
-        result = self.publish_one(publication, as_draft)
-        if not result:
-            self.publish_next(as_draft)
+        while True:
+            publication = self.db.queue_next()
+            if not publication:
+                return
+            result = self.publish_one(publication, as_draft)
+            if result:
+                return
 
     def _enqueue_videos(self, videos, src_channel="", category=None):
         import random
