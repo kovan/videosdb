@@ -121,14 +121,17 @@ class IPFS:
         self.api = ipfsapi.connect(self.host, self.port)
 
     def add_file(self, filename, add_to_dir=True):
-        from ipfsapi.exceptions import StatusError
         file_hash = self.api.add(filename)["Hash"]
         self.api.pin_add(file_hash)
 
-        if not add_to_dir:
-            return file_hash
+        if add_to_dir:
+            self.add_to_dir(filename, file_hash)
 
-        src = "/ipfs/"+ file_hash
+        return file_hash
+
+    def add_to_dir(self, filename, _hash):
+        from ipfsapi.exceptions import StatusError
+        src = "/ipfs/"+ _hash
         dst =  "/videos/" + filename
         try:
             self.api.files_rm(dst)
@@ -137,11 +140,6 @@ class IPFS:
         self.api.files_cp(src, dst)
         self.dnslink_update_pending = True
 
-        return file_hash
-
-    def delete_file(self, filename, _hash):
-        self.api.files_rm(filename)
-        self.api.pin_rm(_hash)
 
     def get_file(self, ipfs_hash):
         self.api.get(ipfs_hash)
@@ -187,7 +185,8 @@ class YoutubeDL:
             result = execute(cmd, capture_stderr=True)
         except executor.ExternalCommandFailed as e:
             if "copyright" in str(e.command.stderr) or \
-               "Unable to extract video title" in str(e.command.stderr): 
+               "Unable to extract video title" in str(e.command.stderr) or \
+               "available in your country" in str(e.command.stderr):
                 raise YoutubeDL.UnavailableError()
             raise e
 
@@ -292,11 +291,11 @@ class DB:
     def is_video_in_queue(self, youtube_id):
         return self.db["publish_queue"].find_one(youtube_id=youtube_id) is not None
 
-    def get_queue_video_ids(self):
-        return [video["youtube_id"] for video in self.db["publish_queue"].all()]
+    def get_publications(self):
+        return self.db["publish_queue"].all()
 
-    def get_video_ids(self):
-        return [video["youtube_id"] for video in self.db["videos"].all()]
+    def get_videos(self):
+        return self.db["videos"].all()
 
     def get_video(self, youtube_id):
         return self.db["videos"].find_one(youtube_id=youtube_id)
@@ -323,9 +322,17 @@ class Main:
             "excluded": False
         }
         
+    def regen_ipfs_folder(self):
+        self.ipfs.api.files_mkdir("/videos")
+        for video in self.db.get_videos():
+            self.ipfs.add_to_dir(video["filename"], video["ipfs_hash"])
+        #self.ipfs.update_dnslink()
+            
 
     def download_all(self):
-        ids = set(self.db.get_video_ids() + self.db.get_queue_video_ids())
+        ids1 = [video["youtube_id"] for video in self.db.get_videos()]
+        ids2 = [video["youtube_id"] for video in self.db.get_publications()]
+        ids = set(ids1 + ids2)
         for _id in ids: 
             self.download_one(_id, False)
 
@@ -483,6 +490,7 @@ def _main():
     parser.add_argument("--download-all", action="store_true")
     parser.add_argument("--only-update-dnslink", action="store_true")
     parser.add_argument("--as-draft", action="store_true")
+    parser.add_argument("--regen-ipfs-folder", action="store_true")
 
     args = parser.parse_args()
 
@@ -509,6 +517,9 @@ def _main():
         return
 
     main = Main()
+
+    if args.regen_ipfs_folder:
+        main.regen_ipfs_folder()
 
     if args.enqueue:
         main.enqueue()
