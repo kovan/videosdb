@@ -306,23 +306,23 @@ class DB:
 
 
 @traced(logging.getLogger(__name__))
-class Categories:
+class Taxonomy:
     def __init__(self, _str):
         if not _str:
-            self.categories = set()
+            self.items = set()
             return
-        self.categories = set([cat.strip() for cat in _str.split(",")])
+        self.items = set([i.strip() for i in _str.split(",")])
 
     def serialize(self):
-        if not self.categories:
+        if not self.items:
             return ""
-        return ",".join(self.categories)
+        return ",".join(self.items)
 
-    def add(self, new_category):
-        self.categories.add(new_category)
+    def add(self, new_item):
+        self.items.add(new_item)
 
     def as_list(self):
-        return list(self.categories)
+        return list(self.items)
         
 
 @traced(logging.getLogger(__name__))
@@ -440,7 +440,8 @@ class Main:
             self.db.queue_upsert(publication)
             return False
 
-        categories = Categories(publication.get("categories"))
+        tags = Taxonomy(video["tags"])
+        categories = Taxonomy(publication.get("categories"))
         categories.add("Short videos" if video["duration"]/60 <= 20 else "Long videos")
         categories.add(video["uploader"])
             
@@ -450,12 +451,12 @@ class Main:
             thumbnail_filename = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
             thumbnail = wp.upload_image(thumbnail_filename, video["title"], publication["youtube_id"])
 
-        post_id = wp.publish(video, categories.as_list(), video["tags"], thumbnail, as_draft)
+        post_id = wp.publish(video, categories.as_list(), tags.as_list(), thumbnail, as_draft)
 
         publication["published"] = True
         publication["post_id"] = post_id
         publication["publish_date"] = datetime.now()
-        publication["tags"] = video["tags"]
+        publication["tags"] = tags.serialize()
         publication["categories"] = categories.serialize()
         self.db.queue_upsert(publication)
         return True
@@ -482,7 +483,7 @@ class Main:
 
             
             if category:
-                categories = Categories(publication.get("categories"))
+                categories = Taxonomy(publication.get("categories"))
                 categories.add(category)
                 publication["categories"] = categories.serialize()
 
