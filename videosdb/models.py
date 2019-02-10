@@ -36,6 +36,6 @@ class Publication(models.Model):
     publish_date = models.DateTimeField()
     categories = models.ManyToManyField(Category)
     tags = models.ManyToManyField(Tag)
-    published = models.Boolean()
-    excluded = models.Boolean()
+    published = models.BooleanField()
+    excluded = models.BooleanField()
     src_channel = models.CharField(max_length=256)
