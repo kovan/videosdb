@@ -6,3 +6,5 @@ autologging
 google-cloud-dns
 pyyaml
 python-wordpress-xmlrpc
+django
+django_extensions
