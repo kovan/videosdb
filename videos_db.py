@@ -344,9 +344,21 @@ class Main:
         interesting_attrs = ["title",
                 "description",
                 "uploader",
+                "uploader_url",
                 "upload_date",
                 "duration",
                 "channel_url",
+                "ext",
+                "format",
+                "format_note",
+                "fulltitle",
+                "is_live",
+                "playlist",
+                "width",
+                "height",
+                "view_count",
+                "thumbnail",
+                "abr",
                 "tags"]
 
         download_info = False
