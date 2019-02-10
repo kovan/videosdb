@@ -27,25 +27,23 @@ class Wordpress:
             config["wp_username"],
             config["wp_pass"])
 
-    def upload_image(self, filename, title, youtube_id):
+    def upload_image(self, filename, title):
         from wordpress_xmlrpc.compat import xmlrpc_client
         from wordpress_xmlrpc.methods import media, posts
 
         data = {
             "name": title + ".jpg",
             'type': 'image/jpeg',
-            "overwrite": True
         }
 
         with open(filename, 'rb') as img:
             data['bits'] = xmlrpc_client.Binary(img.read())
 
-        response = self.client.call(media.UploadFile(data))
-        return response
+        thumbnail = self.client.call(media.UploadFile(data))
+        return thumbnail
 
 
-
-    def publish(self, video, categories, tags, thumbnail, post_id=None, as_draft=False):
+    def publish(self, video, categories, tags, thumbnail_id, thumbnail_url, post_id=None, as_draft=False):
         from wordpress_xmlrpc import WordPressPost
         from wordpress_xmlrpc.methods.posts import NewPost, GetPosts, EditPost
         from string import Template
@@ -69,13 +67,13 @@ class Wordpress:
             dnslink_name=config["dnslink_name"],
             www_root=config["www_root"],
             filename_quoted=quote(video.get("filename")),
-            thumbnail_url=thumbnail["link"]
+            thumbnail_url=thumbnail_url
         )
 
         post = WordPressPost()
         post.title = video["title"]
         post.content = html
-        post.thumbnail = thumbnail["id"]
+        post.thumbnail = thumbnail_id
         post.custom_fields = [{
             "key": "youtube_id",
             "value": video["youtube_id"]
@@ -448,16 +446,26 @@ class Main:
         categories.add(video["uploader"])
             
         wp = Wordpress()
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
-            thumbnail_filename = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
-            thumbnail = wp.upload_image(thumbnail_filename, video["title"], publication["youtube_id"])
 
         if publication["published"]:
             post_id = publication["post_id"]
         else:
             post_id = None
-        post_id = wp.publish(video, categories.as_list(), tags.as_list(), thumbnail, post_id, as_draft)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.chdir(tmpdir)
+                thumbnail_filename = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
+                thumbnail = wp.upload_image(thumbnail_filename, video["title"])
+                publication["thumbnail_id"] = thumbnail["id"]
+                publication["thumbnail_url"] = thumbnail["link"]
+
+        post_id = wp.publish(
+            video, 
+            categories.as_list(), 
+            tags.as_list(), 
+            publication["thumbnail_id"],
+            publication["thumbnail_url"],
+            post_id, 
+            as_draft)
 
         publication["published"] = True
         publication["post_id"] = post_id
