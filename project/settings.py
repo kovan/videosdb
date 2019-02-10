@@ -31,7 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    "videosdb",
+    "videosdb.apps.VideosdbConfig",
 #    "django_extensions",
     'django.contrib.admin',
     'django.contrib.auth',

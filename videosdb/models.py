@@ -9,12 +9,15 @@ class Category(models.Model):
 
 class Video(models.Model):
     youtube_id = models.CharField(max_length=256)
+    title = models.CharField(max_length=256)
     filename = models.CharField(max_length=4096)
     ipfs_hash = models.CharField(max_length=256)
     ipfs_thumbnail_hash = models.CharField(max_length=256)
-    # these come from Youtube:
+
+# this come from Youtube:
+class VideoDetails(models.Model):
+    video = models.ForeignKey(Video, on_delete=models.CASCADE)
     tags = models.ManyToManyField(Tag)
-    title = models.CharField(max_length=256)
     description = models.CharField(max_length=4096)
     uploader = models.CharField(max_length=256)
     upload_date = models.CharField(max_length=256, null=True)

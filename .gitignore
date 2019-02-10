@@ -1,8 +1,8 @@
 venv
 *.swp
 __pycache__/
-db.db
 
 tmp/
 log
 log.*
+db.sqlite3
