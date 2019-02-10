@@ -328,16 +328,35 @@ class Taxonomy:
 
 @traced(logging.getLogger(__name__))
 class Main:
-    def __init__(self, enable_ipfs=True):
+    def __init__(self, enable_trace=False, enable_ipfs=True):
         import yaml
         with io.open("config.yaml") as f:
             self.config = yaml.load(f)
+        self._configure_logging(enable_trace)
 
         self.db = DB()
         if enable_ipfs:
             self.ipfs = IPFS(self.config)
         else:
             self.ipfs = None
+
+    def _configure_logging(self, enable_trace=False):
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
+        handler = logging.handlers.RotatingFileHandler("log", 'a', 1000000, 10)
+        handler2 = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(formatter)
+        handler2.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.addHandler(handler2)
+
+        #logging.getLogger("executor").setLevel(logging.DEBUG)
+        #logging.getLogger().setLevel(logging.DEBUG)
+
+        if enable_trace:
+            logger.setLevel(TRACE)
 
     @staticmethod
     def _new_publication(yid):
@@ -555,22 +574,6 @@ def _main():
 
     args = parser.parse_args()
 
-    logger = logging.getLogger(__name__)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
-    handler = logging.handlers.RotatingFileHandler("log", 'a', 1000000, 10)
-    handler2 = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(formatter)
-    handler2.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.addHandler(handler2)
-
-
-    if args.verbose:
-        logging.getLogger("executor").setLevel(logging.DEBUG)
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    if args.trace:
-        logger.setLevel(TRACE)
 
     main = Main()
 
@@ -598,7 +601,4 @@ def _main():
 
 
 if __name__ == "__main__":
-    import yaml
-    with io.open("config.yaml") as f:
-        config = yaml.load(f)
     _main()

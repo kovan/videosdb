@@ -4,7 +4,6 @@ from videosdb_code import Main, IPFS
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        #parser.add_argument("-v", "--verbose", action="store_true")
         parser.add_argument("-t", "--trace", action="store_true")
         parser.add_argument("-e", "--enqueue", action="store_true")
         parser.add_argument("-n", "--publish-next", action="store_true")
@@ -18,14 +17,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        #if args.verbose:
-        #    logging.getLogger("executor").setLevel(logging.DEBUG)
-        #    logging.getLogger().setLevel(logging.DEBUG)
-
-        #if args.trace:
-            #logger.setLevel(TRACE)
-
-        main = Main()
+        main = Main(options["trace"])
 
         if options["regen_ipfs_folder"]:
             main.regen_ipfs_folder()
