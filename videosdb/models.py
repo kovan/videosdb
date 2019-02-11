@@ -13,7 +13,7 @@ class Category(models.Model):
 
 class Video(models.Model):
     youtube_id = models.CharField(max_length=16, unique=True)
-    title = models.CharField(max_length=256)
+    title = models.CharField(max_length=256, null=True)
     filename = models.CharField(max_length=4096, null=True)
     ipfs_hash = models.CharField(max_length=256, unique=True, null=True)
     ipfs_thumbnail_hash = models.CharField(max_length=256, null=True)
@@ -32,6 +32,7 @@ class Video(models.Model):
     upload_date = models.CharField(max_length=256, null=True)
     duration = models.IntegerField(null=True)
     channel_url = models.CharField(max_length=1024, null=True)
+    channel_id = models.CharField(max_length=256, null=True)
     uploader_url = models.CharField(max_length=1024, null=True)
     ext = models.CharField(max_length=256, null=True)
     format = models.CharField(max_length=256, null=True)

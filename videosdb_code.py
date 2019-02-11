@@ -5,11 +5,11 @@ from autologging import traced, TRACE
 import tempfile
 import requests
 import logging
-import logging.handlers
 import json
 import sys
 import os
 import io
+from videosdb.models import Video, Category
 
 
 
@@ -81,7 +81,7 @@ class Wordpress:
         }]
 
         if video.categories:
-            post.terms_names["category"] =  [str(c) for c in video.categories]
+            post.terms_names["category"] = [str(c) for c in video.categories]
         
         if video.tags:
             post.terms_names["post_tag"] = [str(t) for t in video.tags]
@@ -176,21 +176,21 @@ class YoutubeDL:
     @staticmethod
     def download_video(_id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
-        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,"https://www.youtube.com/watch?v=" + _id))
+        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,"http://www.youtube.com/watch?v=" + _id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
 
     @staticmethod
     def download_thumbnail(_id):
-        execute(YoutubeDL.BASE_CMD + "--write-thumbnail --skip-download https://www.youtube.com/watch?v=" + _id)
+        execute(YoutubeDL.BASE_CMD + "--write-thumbnail --skip-download http://www.youtube.com/watch?v=" + _id)
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
 
     @staticmethod
     def download_info(youtube_id):
-        cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
+        cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' http://www.youtube.com/watch?v=" + youtube_id
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
@@ -247,9 +247,6 @@ class YoutubeAPI:
 
     def _get_channnelsection_playlists(self, channel_id):
         url = "https://www.googleapis.com/youtube/v3/channelSections?part=snippet%2CcontentDetails" 
-        params = {
-            
-        }
         url += "&channelId=" + channel_id
         items = self._make_request(url)
         playlist_ids = []
@@ -304,7 +301,7 @@ class Main:
             self.ipfs = None
 
     def _configure_logging(self, enable_trace=False):
-        import logging
+        import logging.handlers
         
         logger = logging.getLogger(__name__)
         formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
@@ -319,14 +316,12 @@ class Main:
             logger.setLevel(TRACE)
 
     def regen_ipfs_folder(self):
-        from videosdb.models import Video
         self.ipfs.api.files_mkdir("/videos")
         for video in Video.objects.all():
             self.ipfs.add_to_dir(video.filename, video.ipfs_hash)
             
 
     def publish_one(self, video, as_draft=False):
-        from videosdb.models import Video, Category
         from datetime import datetime
 
         new_categories = [
@@ -359,7 +354,6 @@ class Main:
 
 
     def publish_next(self, as_draft):
-        from videosdb.models import Video
         video = Video.objects.filter(published=False, excluded=False).order_by("-id")[0]
         if not video:
             return
@@ -368,7 +362,6 @@ class Main:
 
     #----------------------------------------
     def download_all(self):
-        from videosdb.models import Video
         for video in Video.objects.all(): 
             self.download_one(video, False)
 
@@ -377,45 +370,55 @@ class Main:
 
 
     def download_one(self, video, update_dnslink=True):
-        try:
-            if self.ipfs:
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    os.chdir(tmpdir)
-                    if not video.ipfs_hash:
-                        video.filename = YoutubeDL.download_video(video.youtube_id)
-                        video.ipfs_hash= self.ipfs.add_file(video.filename)
-                    if not video.ipfs_thumbnail_hash:
-                        thumbnail_filename = YoutubeDL.download_thumbnail(video.youtube_id)
-                        video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
-                if update_dnslink:
-                    self.ipfs.update_dnslink()
+        if not self.ipfs:
+            return
 
-        except YoutubeDL.UnavailableError as e:
-            video.excluded = True
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.chdir(tmpdir)
+            if not video.ipfs_hash:
+                video.filename = YoutubeDL.download_video(video.youtube_id)
+                video.ipfs_hash= self.ipfs.add_file(video.filename)
+            if not video.ipfs_thumbnail_hash:
+                thumbnail_filename = YoutubeDL.download_thumbnail(video.youtube_id)
+                video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
 
-        video.save()
+        if update_dnslink:
+            self.ipfs.update_dnslink()
 
 
     def _enqueue_videos(self, video_ids, category=None):
-        from videosdb.models import Video, Category
         api = YoutubeAPI(self.config)
         for yid in video_ids:
-            info = YoutubeDL.download_info(yid)
-            # some playlists include videos from other channels
-            # for now exclude those videos
-            # in the future maybe exclude whole playlist 
-            if info["channel_id"] != self.config["youtube_channel"]["id"]:
+            video, created = Video.objects.get_or_create(youtube_id=yid)
+            if video.excluded:
                 continue
 
-            video, created = Video.objects.get_or_create(youtube_id=yid)
-            video.parse_youtube_info(info)
-            
-            if category:
-                category, created = Category.objects.get_or_create(name=category)
-                video.categories.add(category)
+            try:
+                if not video.title: #missing info, download:
+                    info = YoutubeDL.download_info(yid)
+                    video.parse_youtube_info(info)
 
-            self.download_one(video, False)
-            video.save()
+                # some playlists include videos from other channels
+                # for now exclude those videos
+                # in the future maybe exclude whole playlist 
+                if video.channel_id != self.config["youtube_channel"]["id"]:
+                    video.excluded = True
+                    video.save()
+                    continue
+                
+                if category:
+                    category, created = Category.objects.get_or_create(name=category)
+                    video.categories.add(category)
+
+                self.download_one(video, False)
+
+            except YoutubeDL.UnavailableError as e:
+                video.excluded = True
+            finally:
+                video.save()
+
+        if self.ipfs:
+            self.ipfs.update_dnslink()
 
     def _enqueue_channel(self, channel_id):
         api = YoutubeAPI(self.config)
@@ -428,13 +431,13 @@ class Main:
                 playlist["title"] == "Popular uploads":
                 continue
 
-            playlist_url = "https://www.youtube.com/playlist?list=" + playlist["id"]
+            playlist_url = "http://www.youtube.com/playlist?list=" + playlist["id"]
             videos = YoutubeDL.list_videos(playlist_url)
             video_ids = [video["id"] for video in videos]
             self._enqueue_videos(video_ids, playlist["title"])
 
         # enqueue all channel videos that are not in playlists:
-        channel_url = "https://www.youtube.com/channel/" + channel_id
+        channel_url = "http://www.youtube.com/channel/" + channel_id
         videos = YoutubeDL.list_videos(channel_url)
         video_ids = [video["id"] for video in videos]
         self._enqueue_videos(video_ids)
@@ -444,53 +447,8 @@ class Main:
         self._enqueue_channel(channel_id)
 
     def republish_all(self):
-        from videosdb.models import Video
 
         for video in Video.objects.filter(published=True):
             self.publish_one(video) 
 
 
-def _main():
-    import argparse
-    parser = argparse.ArgumentParser(description="Download videos from YouTube and publish them on IPFS and/or a Wordpress blog")
-    parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("-t", "--trace", action="store_true")
-    parser.add_argument("-e", "--enqueue", action="store_true")
-    parser.add_argument("-n", "--publish-next", action="store_true")
-    parser.add_argument("--publish-all", action="store_true")
-    parser.add_argument("--republish-all", action="store_true")
-    parser.add_argument("--download-one", metavar="VIDEO-ID")
-    parser.add_argument("--download-all", action="store_true")
-    parser.add_argument("--as-draft", action="store_true")
-    parser.add_argument("--regen-ipfs-folder", action="store_true")
-
-    args = parser.parse_args()
-
-
-    main = Main()
-
-    if args.regen_ipfs_folder:
-        main.regen_ipfs_folder()
-
-    if args.enqueue:
-        main.enqueue()
-
-    if args.republish_all:
-        main.republish_all()
-
-    if args.download_all:
-        main.download_all()
-
-    if args.publish_all:
-        main.publish_all()
-
-    if args.download_one:
-        main.download_one(args.download_one)
-
-    if args.publish_next:
-        main.publish_next(args.as_draft)
-
-
-
-if __name__ == "__main__":
-    _main()
