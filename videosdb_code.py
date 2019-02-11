@@ -332,9 +332,10 @@ class Main:
         import yaml
         with io.open("config.yaml") as f:
             self.config = yaml.load(f)
+            
         self._configure_logging(enable_trace)
-
         self.db = DB()
+
         if enable_ipfs:
             self.ipfs = IPFS(self.config)
         else:
@@ -469,7 +470,7 @@ class Main:
         categories.add("Short videos" if video["duration"]/60 <= 20 else "Long videos")
         categories.add(video["uploader"])
             
-        wp = Wordpress()
+        wp = Wordpress(self.config)
 
         if publication["published"]:
             post_id = publication["post_id"]
