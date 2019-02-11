@@ -5,9 +5,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("-t", "--trace", action="store_true")
-        parser.add_argument("-e", "--enqueue", action="store_true")
+        parser.add_argument("-c", "--check-for-new-videos", action="store_true")
         parser.add_argument("-n", "--publish-next", action="store_true")
-        parser.add_argument("--publish-all", action="store_true")
+        parser.add_argument("-a", "--publish-all", action="store_true")
         parser.add_argument("--republish-all", action="store_true")
         parser.add_argument("--only-update-dnslink", action="store_true")
         parser.add_argument("--as-draft", action="store_true")
@@ -20,8 +20,8 @@ class Command(BaseCommand):
         if options["regen_ipfs_folder"]:
             main.regen_ipfs_folder()
 
-        if options["enqueue"]:
-            main.enqueue()
+        if options["check_for_new_videos"]:
+            main.check_for_new_videos()
 
         if options["republish_all"]:
             main.republish_all()

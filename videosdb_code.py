@@ -283,94 +283,22 @@ class YoutubeAPI:
         url += "&id=" + youtube_id
         items = self._make_request(url)
         if items:
-            return items[0]["snippet"]
+            return items[0]
         return None
 
 
-
 @traced(logging.getLogger(__name__))
-class Main:
-    def __init__(self, enable_trace=False, enable_ipfs=True):
-        import yaml
-        with io.open("config.yaml") as f:
-            self.config = yaml.load(f)
-            
-        self._configure_logging(enable_trace)
-
-        if enable_ipfs:
-            self.ipfs = IPFS(self.config)
-        else:
-            self.ipfs = None
-
-    def _configure_logging(self, enable_trace=False):
-        import logging.handlers
-        
-        logger = logging.getLogger(__name__)
-        formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
-        handler = logging.handlers.RotatingFileHandler("log", 'a', 1000000, 10)
-        handler2 = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(formatter)
-        handler2.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.addHandler(handler2)
-
-        if enable_trace:
-            logger.setLevel(TRACE)
-
-    def regen_ipfs_folder(self):
-        self.ipfs.api.files_mkdir("/videos")
-        for video in Video.objects.all():
-            self.ipfs.add_to_dir(video.filename, video.ipfs_hash)
-            
-
-    def publish_one(self, video, as_draft=False):
-        from datetime import datetime
-
-        new_categories = [
-             "Short videos" if video.duration/60 <= 20 else "Long videos", 
-             video.uploader
-        ]
-        for category in new_categories:
-            category, created = Category.objects.get_or_create(name=category)
-            video.categories.add(category)
-
-        wp = Wordpress(self.config)
-
-        if video.published:
-            post_id = video.post_id
-        else:
-            post_id = None
-            with tempfile.TemporaryDirectory() as tmpdir:
-                os.chdir(tmpdir)
-                thumbnail_filename = self.ipfs.get_file(video.ipfs_thumbnail_hash)
-                thumbnail = wp.upload_image(thumbnail_filename, video.title)
-                video.thumbnail_id = thumbnail["id"]
-                video.thumbnail_url = thumbnail["link"]
-
-        post_id = wp.publish(video, as_draft)
-
-        video.published = True
-        video.post_id = post_id
-        video.publish_date = datetime.now()
-        video.save()
-
-
-    def publish_next(self, as_draft):
-        video = Video.objects.filter(published=False, excluded=False).order_by("-id")[0]
-        if not video:
-            return
-
-        self.publish_one(video, as_draft)
-
-    #----------------------------------------
-
+class Downloader:
+    def __init__(self, config, ipfs):
+        self.config = config
+        self.ipfs = ipfs
 
     def _process_video(self, video, category=None):
 
         api = YoutubeAPI(self.config)
 
         #if new video or missing info, download info:
-        if not video.channel_id: 
+        if not video.full_response:
 
             # dont use YT API in order to save quota.
             #info = api.get_video_info(video.youtube_id)
@@ -378,15 +306,22 @@ class Main:
             #    video.excluded = True
             #    return
             #video.parse_youtubeapi_info(info)
+            #video.title = info["title"]
+            #video.uploader = info["channelTitle"]
+            #video.channel_id = info["channelId"]
+            #video.set_tags(info["tags"])
 
             try:
                 info = YoutubeDL.download_info(video.youtube_id)
+                video.title = info["title"]
+                video.uploader = info["uploader"]
+                video.channel_id = info["channel_id"]
+                video.duration = info["duration"]
+                video.set_tags(info["tags"])
+                video.full_response = json.dumps(info)
             except YoutubeDL.UnavailableError:
                 video.excluded = True
                 return
-            video.parse_youtubedl_info(info)
-
-
 
         # some playlists include videos from other channels
         # for now exclude those videos
@@ -451,15 +386,107 @@ class Main:
         video_ids = [video["id"] for video in videos]
         self._enqueue_videos(video_ids)
 
-    def enqueue(self):
+
+    def check_for_new_videos(self):
         channel_id = self.config["youtube_channel"]["id"]
         self._enqueue_channel(channel_id)
         if self.ipfs:
             self.ipfs.update_dnslink()
 
+
+@traced(logging.getLogger(__name__))
+class Publisher:
+    def __init__(self, config, ipfs):
+        self.config = config
+        self.ipfs = ipfs
+
+    def publish_one(self, video, as_draft=False):
+        from datetime import datetime
+
+        new_categories = [
+             "Short videos" if video.duration/60 <= 20 else "Long videos", 
+             video.uploader
+        ]
+        for category in new_categories:
+            category, created = Category.objects.get_or_create(name=category)
+            video.categories.add(category)
+
+        wp = Wordpress(self.config)
+
+        if not video.published:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.chdir(tmpdir)
+                thumbnail_filename = self.ipfs.get_file(video.ipfs_thumbnail_hash)
+                thumbnail = wp.upload_image(thumbnail_filename, video.title)
+                video.thumbnail_id = thumbnail["id"]
+                video.thumbnail_url = thumbnail["link"]
+
+        post_id = wp.publish(video, as_draft)
+
+        video.published = True
+        video.post_id = post_id
+        video.publish_date = datetime.now()
+        video.save()
+
+
+    def publish_next(self, as_draft):
+        video = Video.objects.filter(published=False, excluded=False).order_by("-id")[0]
+        if not video:
+            return
+
+        self.publish_one(video, as_draft)
+
     def republish_all(self):
 
         for video in Video.objects.filter(published=True):
             self.publish_one(video) 
+
+
+
+@traced(logging.getLogger(__name__))
+class Main:
+    def __init__(self, enable_trace=False, enable_ipfs=True):
+        import yaml
+        with io.open("config.yaml") as f:
+            self.config = yaml.load(f)
+            
+        self._configure_logging(enable_trace)
+
+        if enable_ipfs:
+            self.ipfs = IPFS(self.config)
+        else:
+            self.ipfs = None
+
+    def _configure_logging(self, enable_trace=False):
+        import logging.handlers
+        
+        logger = logging.getLogger(__name__)
+        formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
+        handler = logging.handlers.RotatingFileHandler("log", 'a', 1000000, 10)
+        handler2 = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(formatter)
+        handler2.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.addHandler(handler2)
+
+        if enable_trace:
+            logger.setLevel(TRACE)
+
+    def regen_ipfs_folder(self):
+        self.ipfs.api.files_mkdir("/videos")
+        for video in Video.objects.all():
+            self.ipfs.add_to_dir(video.filename, video.ipfs_hash)
+
+    def check_for_new_videos(self):
+        downloader = Downloader(self.config, self.ipfs)
+        downloader.check_for_new_videos()
+
+    def publish_next(self):
+        publisher = Publisher(self.config, self.ipfs)
+        publisher.publish_next()
+            
+    def publish_all(self):
+        publisher = Publisher(self.config, self.ipfs)
+        publisher.publish_all()
 
 
