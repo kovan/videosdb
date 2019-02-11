@@ -369,33 +369,24 @@ class Main:
             self.ipfs.update_dnslink()
 
 
-    def download_one(self, youtube_id, update_dnslink=True):
-        video = self.db.get_video(youtube_id)
-        if not video:
-            video = dict()
-            video["youtube_id"] = youtube_id
-
+    def download_one(self, video, update_dnslink=True):
         try:
-            self._fill_info(video)
-            self.db.put_video(video)
-
             if self.ipfs:
                 with tempfile.TemporaryDirectory() as tmpdir:
                     os.chdir(tmpdir)
-                    if not video.get("ipfs_hash"):
-                        video["filename"] = YoutubeDL.download_video(video["youtube_id"])
-                        video["ipfs_hash"]= self.ipfs.add_file(video["filename"])
-                    if not video.get("ipfs_thumbnail_hash"):
-                        thumbnail_filename = YoutubeDL.download_thumbnail(video["youtube_id"])
-                        video["ipfs_thumbnail_hash"] = self.ipfs.add_file(thumbnail_filename, False)
+                    if not video.ipfs_hash:
+                        video.filename = YoutubeDL.download_video(video["youtube_id"])
+                        video.ipfs_hash= self.ipfs.add_file(video.filename)
+                    if not video.ipfs_thumbnail_hash:
+                        thumbnail_filename = YoutubeDL.download_thumbnail(video.youtube_id)
+                        video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
                 if update_dnslink:
                     self.ipfs.update_dnslink()
 
         except YoutubeDL.UnavailableError as e:
             return None
 
-        self.db.put_video(video)
-        return video
+        video.save()
 
 
     def publish_one(self, video, as_draft=False):
@@ -454,7 +445,7 @@ class Main:
                 return
 
     def _enqueue_videos(self, video_ids, category=None):
-        from videosdb.models import Video
+        from videosdb.models import Video, Category
         api = YoutubeAPI(self.config)
         for yid in video_ids:
             info = YoutubeDL.download_info(yid)
@@ -468,13 +459,10 @@ class Main:
             video.parse_youtube_info(info)
             
             if category:
-                category, created = Categories.objects.get_or_create(name=category)
+                category, created = Category.objects.get_or_create(name=category)
                 video.categories.add(category)
 
-            if src_channel:
-                video.src_channel = src_channel
-
-            self.download_one(video)
+            self.download_one(video, False)
             video.save()
 
     def _enqueue_channel(self, channel_id):
@@ -496,7 +484,8 @@ class Main:
         # enqueue all channel videos that are not in playlists:
         channel_url = "https://www.youtube.com/channel/" + channel_id
         videos = YoutubeDL.list_videos(channel_url)
-        self._enqueue_videos(videos)
+        video_ids = [video["id"] for video in videos]
+        self._enqueue_videos(video_ids)
 
     def enqueue(self):
         channel_id = self.config["youtube_channel"]["id"]

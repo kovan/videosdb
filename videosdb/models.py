@@ -2,20 +2,20 @@ from django.db import models
 
 
 class Tag(models.Model):
-    name = models.CharField(db_index=True, max_length=256)
+    name = models.CharField(unique=True, max_length=256)
     def _str_(self):
         return self.name
 
 class Category(models.Model):
-    name = models.CharField(db_index=True, max_length=256)
+    name = models.CharField(unique=True, max_length=256)
     def _str_(self):
         return self.name
 
 class Video(models.Model):
-    youtube_id = models.CharField(max_length=16, db_index=True)
+    youtube_id = models.CharField(max_length=16, unique=True)
     title = models.CharField(max_length=256)
     filename = models.CharField(max_length=4096, null=True)
-    ipfs_hash = models.CharField(max_length=256, null=True)
+    ipfs_hash = models.CharField(max_length=256, unique=True, null=True)
     ipfs_thumbnail_hash = models.CharField(max_length=256, null=True)
     publish_date = models.DateTimeField(null=True)
     categories = models.ManyToManyField(Category)
@@ -68,20 +68,8 @@ class Video(models.Model):
 
         for tag in info["tags"]:
             tag_obj, created = Tag.objects.get_or_create(name=tag)
-            if tag_obj not in self.tags:
-                self.tags.add(tag_obj)
+            self.tags.add(tag_obj)
 
         self.save()
 
-
-#class Playlist(models.Model):
-#    youtube_id = models.CharField(max_length=64, db_index=True)
-#    videos = models.ManyToManyField(Video)
-#    title = models.CharField(max_length=1024)
-#    item_count = models.IntegerField()
-#
-#    def _str_(self):
-#        return self.title
-#    def url(self):
-#        return "https://www.youtube.com/playlist?list=" + self.youtube_id
 
