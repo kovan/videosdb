@@ -191,15 +191,17 @@ class YoutubeDL:
     def download_info(youtube_id):
         cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' https://www.youtube.com/watch?v=" + youtube_id
         try:
-            result = execute(cmd, capture_stderr=True)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.chdir(tmpdir)
+                result = execute(cmd, capture_stderr=True)
+                with io.open(youtube_id + ".info.json") as f:
+                    video_json = json.load(f)
         except executor.ExternalCommandFailed as e:
             if "copyright" in str(e.command.stderr) or \
                "Unable to extract video title" in str(e.command.stderr) or \
                "available in your country" in str(e.command.stderr):
                 raise YoutubeDL.UnavailableError()
             raise
-
-        video_json = json.load(open(youtube_id + ".info.json"))
         return video_json
 
     @staticmethod
@@ -223,8 +225,9 @@ class YoutubeAPI:
         if page_token:
             url += "&pageToken=" + page_token
 
-        response = requests.get(url).json()
-        items = response["items"]
+        response = requests.get(url)
+        response.raise_for_status()
+        items = response.json()["items"]
         if "nextPageToken" in response:
             items += self._make_request(base_url, response["nextPageToken"])
         return items
@@ -243,6 +246,9 @@ class YoutubeAPI:
 
     def _get_channnelsection_playlists(self, channel_id):
         url = "https://www.googleapis.com/youtube/v3/channelSections?part=snippet%2CcontentDetails" 
+        params = {
+            
+        }
         url += "&channelId=" + channel_id
         items = self._make_request(url)
         playlist_ids = []
@@ -274,6 +280,11 @@ class YoutubeAPI:
 
         return playlists
 
+    def get_video_info(self, youtube_id):
+        url = "https://www.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics"
+        url += "&id=" + youtube_id
+        items = self._make_request(url)
+        return items[0]
 
 
 @traced(logging.getLogger(__name__))
@@ -284,16 +295,18 @@ class DB:
 
     def queue_next(self):
         # treat table as a LIFO stack, so that recent videos get published first:
-        publication = self.db["publish_queue"].find_one(published=False, excluded=False, order_by=["-id"])
-        return publication
+        #video = video.objects.filter(
+        video = self.db["publish_queue"].find_one(published=False, excluded=False, order_by=["-id"])
+        return video
 
-    def queue_upsert(self, publication):
-        self.db["publish_queue"].upsert(publication, ["youtube_id"], ensure=True)
+    def queue_upsert(self, video):
+        from videosdb.models import video
+        self.db["publish_queue"].upsert(video, ["youtube_id"], ensure=True)
 
-    def get_publication(self, youtube_id):
+    def get_video(self, youtube_id):
         return self.db["publish_queue"].find_one(youtube_id=youtube_id)
 
-    def get_publications(self):
+    def get_videos(self):
         return self.db["publish_queue"].all()
 
     def get_videos(self):
@@ -306,25 +319,6 @@ class DB:
         self.db["videos"].upsert(video,["youtube_id"], ensure=True)
 
 
-@traced(logging.getLogger(__name__))
-class Taxonomy:
-    def __init__(self, _str):
-        if not _str:
-            self.items = set()
-            return
-        self.items = set([i.strip() for i in _str.split(",")])
-
-    def serialize(self):
-        if not self.items:
-            return ""
-        return ",".join(self.items)
-
-    def add(self, new_item):
-        self.items.add(new_item)
-
-    def as_list(self):
-        return list(self.items)
-        
 
 @traced(logging.getLogger(__name__))
 class Main:
@@ -359,14 +353,6 @@ class Main:
         if enable_trace:
             logger.setLevel(TRACE)
 
-    @staticmethod
-    def _new_publication(yid):
-        return  {
-            "youtube_id": yid,
-            "published": False,
-            "excluded": False
-        }
-        
     def regen_ipfs_folder(self):
         self.ipfs.api.files_mkdir("/videos")
         for video in self.db.get_videos():
@@ -382,46 +368,6 @@ class Main:
         if self.ipfs:
             self.ipfs.update_dnslink()
 
-    def _fill_info(self, video):
-        
-        interesting_attrs = ["title",
-                "description",
-                "uploader",
-                "uploader_url",
-                "upload_date",
-                "duration",
-                "channel_url",
-                "ext",
-                "format",
-                "format_note",
-                "fulltitle",
-                "is_live",
-                "playlist",
-                "width",
-                "height",
-                "view_count",
-                "thumbnail",
-                "abr",
-                "tags"]
-
-        download_info = False
-        for attr in interesting_attrs:
-            if not attr in video:
-                download_info = True
-                break
-
-        if not download_info:
-            return
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
-            info = YoutubeDL.download_info(video["youtube_id"])
-
-        for attr in interesting_attrs:
-            video[attr] = info[attr]
-
-        video["tags"] = ", ".join(video["tags"])
-
 
     def download_one(self, youtube_id, update_dnslink=True):
         video = self.db.get_video(youtube_id)
@@ -431,10 +377,6 @@ class Main:
 
         try:
             self._fill_info(video)
-
-            if video["uploader"] != self.config["youtube_channel"]["name"]:
-                return None
-
             self.db.put_video(video)
 
             if self.ipfs:
@@ -456,80 +398,86 @@ class Main:
         return video
 
 
-    def publish_one(self, publication, as_draft=False):
+    def publish_one(self, video, as_draft=False):
+        from videosdb.models import video
         from datetime import datetime
 
-        video = self.download_one(publication["youtube_id"])
+        video = self.download_one(video["youtube_id"])
         if not video:
-            publication["excluded"] = True
-            self.db.queue_upsert(publication)
+            video["excluded"] = True
+            self.db.queue_upsert(video)
             return False
 
         tags = Taxonomy(video["tags"])
-        categories = Taxonomy(publication.get("categories"))
+        categories = Taxonomy(video.get("categories"))
         categories.add("Short videos" if video["duration"]/60 <= 20 else "Long videos")
         categories.add(video["uploader"])
             
         wp = Wordpress(self.config)
 
-        if publication["published"]:
-            post_id = publication["post_id"]
+        if video["published"]:
+            post_id = video["post_id"]
         else:
             post_id = None
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
                 thumbnail_filename = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
                 thumbnail = wp.upload_image(thumbnail_filename, video["title"])
-                publication["thumbnail_id"] = thumbnail["id"]
-                publication["thumbnail_url"] = thumbnail["link"]
+                video["thumbnail_id"] = thumbnail["id"]
+                video["thumbnail_url"] = thumbnail["link"]
 
         post_id = wp.publish(
             video, 
             categories.as_list(), 
             tags.as_list(), 
-            publication["thumbnail_id"],
-            publication["thumbnail_url"],
+            video["thumbnail_id"],
+            video["thumbnail_url"],
             post_id, 
             as_draft)
 
-        publication["published"] = True
-        publication["post_id"] = post_id
-        publication["publish_date"] = datetime.now()
-        publication["tags"] = tags.serialize()
-        publication["categories"] = categories.serialize()
-        self.db.queue_upsert(publication)
+        video["published"] = True
+        video["post_id"] = post_id
+        video["publish_date"] = datetime.now()
+        video["tags"] = tags.serialize()
+        video["categories"] = categories.serialize()
+        self.db.queue_upsert(video)
         return True
 
 
     def publish_next(self, as_draft):
         while True:
-            publication = self.db.queue_next()
-            if not publication:
+            video = self.db.queue_next()
+            if not video:
                 return
-            result = self.publish_one(publication, as_draft)
+            result = self.publish_one(video, as_draft)
             if result:
                 return
 
-    def _enqueue_videos(self, videos, src_channel="", category=None):
+    def _enqueue_videos(self, video_ids, category=None):
+        from videosdb.models import Video
+        api = YoutubeAPI(self.config)
+        for yid in video_ids:
+            info = YoutubeDL.download_info(yid)
+            # some playlists include videos from other channels
+            # for now exclude those videos
+            # in the future maybe exclude whole playlist 
+            if info["channel_id"] != self.config["youtube_channel"]["id"]:
+                continue
 
-        for video in videos:
-            yid = video["id"]
-            publication = self.db.get_publication(yid)
-            if not publication: 
-                publication = Main._new_publication(yid) 
+            video, created = Video.objects.get_or_create(youtube_id=yid)
+            video.parse_youtube_info(info)
             
             if category:
-                categories = Taxonomy(publication.get("categories"))
-                categories.add(category)
-                publication["categories"] = categories.serialize()
+                category, created = Categories.objects.get_or_create(name=category)
+                video.categories.add(category)
 
             if src_channel:
-                publication["src_channel"] = src_channel
+                video.src_channel = src_channel
 
-            self.db.queue_upsert(publication)
+            self.download_one(video)
+            video.save()
 
     def _enqueue_channel(self, channel_id):
-
         api = YoutubeAPI(self.config)
         playlists = api.list_playlists(channel_id)
         for playlist in playlists:
@@ -539,9 +487,11 @@ class Main:
                 playlist["title"] == "Liked videos" or \
                 playlist["title"] == "Popular uploads":
                 continue
+
             playlist_url = "https://www.youtube.com/playlist?list=" + playlist["id"]
             videos = YoutubeDL.list_videos(playlist_url)
-            self._enqueue_videos(videos, playlist["channel_title"], playlist["title"])
+            video_ids = [video["id"] for video in videos]
+            self._enqueue_videos(video_ids, playlist["title"])
 
         # enqueue all channel videos that are not in playlists:
         channel_url = "https://www.youtube.com/channel/" + channel_id
@@ -553,10 +503,10 @@ class Main:
         self._enqueue_channel(channel_id)
 
     def republish_all(self):
-        for publication in self.db.get_publications():
-            if not publication["published"]:
+        for video in self.db.get_videos():
+            if not video["published"]:
                 continue
-            self.publish_one(publication) 
+            self.publish_one(video) 
 
 
 def _main():
