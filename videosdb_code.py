@@ -44,7 +44,7 @@ class Wordpress:
         return thumbnail
 
 
-    def publish(self, video, categories, tags, thumbnail_id, thumbnail_url, post_id=None, as_draft=False):
+    def publish(self, video, as_draft=False):
         from wordpress_xmlrpc import WordPressPost
         from wordpress_xmlrpc.methods.posts import NewPost, GetPosts, EditPost
         from string import Template
@@ -64,26 +64,27 @@ class Wordpress:
 
         template = Template(template_raw)
         html = template.substitute(
-            youtube_id=video["youtube_id"],
+            youtube_id=video.youtube_id,
             dnslink_name=self.config["dnslink_name"],
             www_root=self.config["www_root"],
-            filename_quoted=quote(video.get("filename")),
-            thumbnail_url=thumbnail_url
+            filename_quoted=quote(video.filename),
+            thumbnail_url=video.thumbnail_url
         )
 
         post = WordPressPost()
-        post.title = video["title"]
+        post.title = video.title
         post.content = html
-        post.thumbnail = thumbnail_id
+        post.thumbnail = video.thumbnail_id
         post.custom_fields = [{
             "key": "youtube_id",
-            "value": video["youtube_id"]
+            "value": video.youtube_id
         }]
-        post.terms_names = {
-            "category": categories
-        }
-        if tags:
-            post.terms_names["post_tag"] = tags
+
+        if video.categories:
+            post.terms_names["category"] =  [str(c) for c in video.categories]
+        
+        if video.tags:
+            post.terms_names["post_tag"] = [str(t) for t in video.tags]
 
         if not as_draft:
             post.post_status = "publish"
@@ -287,38 +288,6 @@ class YoutubeAPI:
         return items[0]
 
 
-@traced(logging.getLogger(__name__))
-class DB:
-    def __init__(self):
-        import dataset
-        self.db = dataset.connect("sqlite:///db.db")
-
-    def queue_next(self):
-        # treat table as a LIFO stack, so that recent videos get published first:
-        #video = video.objects.filter(
-        video = self.db["publish_queue"].find_one(published=False, excluded=False, order_by=["-id"])
-        return video
-
-    def queue_upsert(self, video):
-        from videosdb.models import video
-        self.db["publish_queue"].upsert(video, ["youtube_id"], ensure=True)
-
-    def get_video(self, youtube_id):
-        return self.db["publish_queue"].find_one(youtube_id=youtube_id)
-
-    def get_videos(self):
-        return self.db["publish_queue"].all()
-
-    def get_videos(self):
-        return self.db["videos"].all()
-
-    def get_video(self, youtube_id):
-        return self.db["videos"].find_one(youtube_id=youtube_id)
-
-    def put_video(self, video):
-        self.db["videos"].upsert(video,["youtube_id"], ensure=True)
-
-
 
 @traced(logging.getLogger(__name__))
 class Main:
@@ -328,7 +297,6 @@ class Main:
             self.config = yaml.load(f)
             
         self._configure_logging(enable_trace)
-        self.db = DB()
 
         if enable_ipfs:
             self.ipfs = IPFS(self.config)
@@ -347,23 +315,62 @@ class Main:
         logger.addHandler(handler)
         logger.addHandler(handler2)
 
-        #logging.getLogger("executor").setLevel(logging.DEBUG)
-        #logging.getLogger().setLevel(logging.DEBUG)
-
         if enable_trace:
             logger.setLevel(TRACE)
 
     def regen_ipfs_folder(self):
+        from videosdb.models import Video
         self.ipfs.api.files_mkdir("/videos")
-        for video in self.db.get_videos():
-            self.ipfs.add_to_dir(video["filename"], video["ipfs_hash"])
-        #self.ipfs.update_dnslink()
+        for video in Video.objects.all():
+            self.ipfs.add_to_dir(video.filename, video.ipfs_hash)
             
 
+    def publish_one(self, video, as_draft=False):
+        from videosdb.models import Video, Category
+        from datetime import datetime
+
+        new_categories = [
+             "Short videos" if video.duration/60 <= 20 else "Long videos", 
+             video.uploader
+        ]
+        for category in new_categories:
+            category, created = Category.objects.get_or_create(name=category)
+            video.categories.add(category)
+
+        wp = Wordpress(self.config)
+
+        if video.published:
+            post_id = video.post_id
+        else:
+            post_id = None
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.chdir(tmpdir)
+                thumbnail_filename = self.ipfs.get_file(video.ipfs_thumbnail_hash)
+                thumbnail = wp.upload_image(thumbnail_filename, video.title)
+                video.thumbnail_id = thumbnail["id"]
+                video.thumbnail_url = thumbnail["link"]
+
+        post_id = wp.publish(video, as_draft)
+
+        video.published = True
+        video.post_id = post_id
+        video.publish_date = datetime.now()
+        video.save()
+
+
+    def publish_next(self, as_draft):
+        from videosdb.models import Video
+        video = Video.objects.filter(published=False, excluded=False).order_by("-id")[0]
+        if not video:
+            return
+
+        self.publish_one(video, as_draft)
+
+    #----------------------------------------
     def download_all(self):
-        ids = [video["youtube_id"] for video in self.db.get_videos()]
-        for _id in ids: 
-            self.download_one(_id, False)
+        from videosdb.models import Video
+        for video in Video.objects.all(): 
+            self.download_one(video, False)
 
         if self.ipfs:
             self.ipfs.update_dnslink()
@@ -375,7 +382,7 @@ class Main:
                 with tempfile.TemporaryDirectory() as tmpdir:
                     os.chdir(tmpdir)
                     if not video.ipfs_hash:
-                        video.filename = YoutubeDL.download_video(video["youtube_id"])
+                        video.filename = YoutubeDL.download_video(video.youtube_id)
                         video.ipfs_hash= self.ipfs.add_file(video.filename)
                     if not video.ipfs_thumbnail_hash:
                         thumbnail_filename = YoutubeDL.download_thumbnail(video.youtube_id)
@@ -384,65 +391,10 @@ class Main:
                     self.ipfs.update_dnslink()
 
         except YoutubeDL.UnavailableError as e:
-            return None
+            video.excluded = True
 
         video.save()
 
-
-    def publish_one(self, video, as_draft=False):
-        from videosdb.models import video
-        from datetime import datetime
-
-        video = self.download_one(video["youtube_id"])
-        if not video:
-            video["excluded"] = True
-            self.db.queue_upsert(video)
-            return False
-
-        tags = Taxonomy(video["tags"])
-        categories = Taxonomy(video.get("categories"))
-        categories.add("Short videos" if video["duration"]/60 <= 20 else "Long videos")
-        categories.add(video["uploader"])
-            
-        wp = Wordpress(self.config)
-
-        if video["published"]:
-            post_id = video["post_id"]
-        else:
-            post_id = None
-            with tempfile.TemporaryDirectory() as tmpdir:
-                os.chdir(tmpdir)
-                thumbnail_filename = self.ipfs.get_file(video["ipfs_thumbnail_hash"])
-                thumbnail = wp.upload_image(thumbnail_filename, video["title"])
-                video["thumbnail_id"] = thumbnail["id"]
-                video["thumbnail_url"] = thumbnail["link"]
-
-        post_id = wp.publish(
-            video, 
-            categories.as_list(), 
-            tags.as_list(), 
-            video["thumbnail_id"],
-            video["thumbnail_url"],
-            post_id, 
-            as_draft)
-
-        video["published"] = True
-        video["post_id"] = post_id
-        video["publish_date"] = datetime.now()
-        video["tags"] = tags.serialize()
-        video["categories"] = categories.serialize()
-        self.db.queue_upsert(video)
-        return True
-
-
-    def publish_next(self, as_draft):
-        while True:
-            video = self.db.queue_next()
-            if not video:
-                return
-            result = self.publish_one(video, as_draft)
-            if result:
-                return
 
     def _enqueue_videos(self, video_ids, category=None):
         from videosdb.models import Video, Category
@@ -492,9 +444,9 @@ class Main:
         self._enqueue_channel(channel_id)
 
     def republish_all(self):
-        for video in self.db.get_videos():
-            if not video["published"]:
-                continue
+        from videosdb.models import Video
+
+        for video in Video.objects.filter(published=True):
             self.publish_one(video) 
 
 

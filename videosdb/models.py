@@ -3,12 +3,12 @@ from django.db import models
 
 class Tag(models.Model):
     name = models.CharField(unique=True, max_length=256)
-    def _str_(self):
+    def __str__(self):
         return self.name
 
 class Category(models.Model):
     name = models.CharField(unique=True, max_length=256)
-    def _str_(self):
+    def __str__(self):
         return self.name
 
 class Video(models.Model):
@@ -22,6 +22,9 @@ class Video(models.Model):
     published = models.BooleanField(default=False)
     excluded = models.BooleanField(default=False)
     post_id = models.IntegerField(null=True)
+    thumbnail_id = models.IntegerField(null=True)
+    thumbnail_url = models.CharField(null=True, max_length=1024)
+
     #these come from youtube:
     tags = models.ManyToManyField(Tag)
     description = models.CharField(max_length=4096, null=True)
@@ -40,7 +43,7 @@ class Video(models.Model):
     abr = models.IntegerField(null=True)
     thumbnail = models.CharField(max_length=1024, null=True)
 
-    def _str_(self):
+    def __str__(self):
         return self.title
 
     def parse_youtube_info(self, info):
