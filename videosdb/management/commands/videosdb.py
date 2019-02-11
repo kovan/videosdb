@@ -9,8 +9,6 @@ class Command(BaseCommand):
         parser.add_argument("-n", "--publish-next", action="store_true")
         parser.add_argument("--publish-all", action="store_true")
         parser.add_argument("--republish-all", action="store_true")
-        parser.add_argument("--download-one", metavar="VIDEO-ID")
-        parser.add_argument("--download-all", action="store_true")
         parser.add_argument("--only-update-dnslink", action="store_true")
         parser.add_argument("--as-draft", action="store_true")
         parser.add_argument("--regen-ipfs-folder", action="store_true")
@@ -28,14 +26,8 @@ class Command(BaseCommand):
         if options["republish_all"]:
             main.republish_all()
 
-        if options["download_all"]:
-            main.download_all()
-
         if options["publish_all"]:
             main.publish_all()
-
-        if options["download_one"]:
-            main.download_one(options["download_one"])
 
         if options["publish_next"]:
             main.publish_next(options["as_draft"])

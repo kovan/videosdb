@@ -282,7 +282,9 @@ class YoutubeAPI:
         url = "https://www.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics"
         url += "&id=" + youtube_id
         items = self._make_request(url)
-        return items[0]
+        if items:
+            return items[0]["snippet"]
+        return None
 
 
 
@@ -361,64 +363,71 @@ class Main:
         self.publish_one(video, as_draft)
 
     #----------------------------------------
-    def download_all(self):
-        for video in Video.objects.all(): 
-            self.download_one(video, False)
-
-        if self.ipfs:
-            self.ipfs.update_dnslink()
 
 
-    def download_one(self, video, update_dnslink=True):
-        if not self.ipfs:
+    def _process_video(self, video, category=None):
+
+        api = YoutubeAPI(self.config)
+
+        #if new video or missing info, download info:
+        if not video.channel_id: 
+
+            # dont use YT API in order to save quota.
+            #info = api.get_video_info(video.youtube_id)
+            #if not info:
+            #    video.excluded = True
+            #    return
+            #video.parse_youtubeapi_info(info)
+
+            try:
+                info = YoutubeDL.download_info(video.youtube_id)
+            except YoutubeDL.UnavailableError:
+                video.excluded = True
+                return
+            video.parse_youtubedl_info(info)
+
+
+
+        # some playlists include videos from other channels
+        # for now exclude those videos
+        # in the future maybe exclude whole playlist 
+        if video.channel_id != self.config["youtube_channel"]["id"]:
+            video.excluded = True
             return
+        
+        if category:
+            category, created = Category.objects.get_or_create(name=category)
+            video.categories.add(category)
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
+
+        try:
             if not video.ipfs_hash:
-                video.filename = YoutubeDL.download_video(video.youtube_id)
-                video.ipfs_hash= self.ipfs.add_file(video.filename)
-            if not video.ipfs_thumbnail_hash:
-                thumbnail_filename = YoutubeDL.download_thumbnail(video.youtube_id)
-                video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    os.chdir(tmpdir)
+                    video.filename = YoutubeDL.download_video(video.youtube_id)
+                    video.ipfs_hash= self.ipfs.add_file(video.filename)
 
-        if update_dnslink:
-            self.ipfs.update_dnslink()
+            if not video.ipfs_thumbnail_hash:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    os.chdir(tmpdir)
+                    thumbnail_filename = YoutubeDL.download_thumbnail(video.youtube_id)
+                    video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
+                 
+        except YoutubeDL.UnavailableError as e:
+            video.excluded = True
+
+
 
 
     def _enqueue_videos(self, video_ids, category=None):
-        api = YoutubeAPI(self.config)
         for yid in video_ids:
             video, created = Video.objects.get_or_create(youtube_id=yid)
             if video.excluded:
                 continue
+            self._process_video(video, category)
+            video.save()
 
-            try:
-                if not video.title: #missing info, download:
-                    info = YoutubeDL.download_info(yid)
-                    video.parse_youtube_info(info)
 
-                # some playlists include videos from other channels
-                # for now exclude those videos
-                # in the future maybe exclude whole playlist 
-                if video.channel_id != self.config["youtube_channel"]["id"]:
-                    video.excluded = True
-                    video.save()
-                    continue
-                
-                if category:
-                    category, created = Category.objects.get_or_create(name=category)
-                    video.categories.add(category)
-
-                self.download_one(video, False)
-
-            except YoutubeDL.UnavailableError as e:
-                video.excluded = True
-            finally:
-                video.save()
-
-        if self.ipfs:
-            self.ipfs.update_dnslink()
 
     def _enqueue_channel(self, channel_id):
         api = YoutubeAPI(self.config)
@@ -445,6 +454,8 @@ class Main:
     def enqueue(self):
         channel_id = self.config["youtube_channel"]["id"]
         self._enqueue_channel(channel_id)
+        if self.ipfs:
+            self.ipfs.update_dnslink()
 
     def republish_all(self):
 

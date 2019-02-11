@@ -24,53 +24,34 @@ class Video(models.Model):
     post_id = models.IntegerField(null=True)
     thumbnail_id = models.IntegerField(null=True)
     thumbnail_url = models.CharField(null=True, max_length=1024)
-
-    #these come from youtube:
     tags = models.ManyToManyField(Tag)
-    description = models.CharField(max_length=4096, null=True)
     uploader = models.CharField(max_length=256, null=True)
-    upload_date = models.CharField(max_length=256, null=True)
-    duration = models.IntegerField(null=True)
-    channel_url = models.CharField(max_length=1024, null=True)
     channel_id = models.CharField(max_length=256, null=True)
-    uploader_url = models.CharField(max_length=1024, null=True)
-    ext = models.CharField(max_length=256, null=True)
-    format = models.CharField(max_length=256, null=True)
-    format_note = models.CharField(max_length=256, null=True)
-    fulltitle = models.CharField(max_length=256, null=True)
-    width = models.IntegerField(null=True)
-    height = models.IntegerField(null=True)
-    view_count = models.IntegerField(null=True)
-    abr = models.IntegerField(null=True)
-    thumbnail = models.CharField(max_length=1024, null=True)
+    full_response = models.CharField(max_length=4096, null=True)
+
 
     def __str__(self):
         return self.title
 
-    def parse_youtube_info(self, info):
-        interesting_attrs = ["title",
-                "description",
-                "uploader",
-                "uploader_url",
-                "upload_date",
-                "duration",
-                "channel_url",
-                "ext",
-                "format",
-                "format_note",
-                "fulltitle",
-                "is_live",
-                "playlist",
-                "width",
-                "height",
-                "view_count",
-                "thumbnail",
-                "abr"]
+    def parse_youtubeapi_info(self, info):
+        import json
+        self.title = info["title"]
+        self.uploader = info["channelTitle"]
+        self.channel_id = info["channelId"]
+        self.full_response = json.dumps(info)
+        self.set_tags(info["tags"])
 
-        for attr in interesting_attrs:
-            setattr(self, attr, info[attr])
+    def parse_youtubedl_info(self, info):
+        import json
+        self.title = info["title"]
+        self.uploader = info["uploader"]
+        self.channel_id = info["channel_id"]
+        self.full_response = json.dumps(info)
+        self.set_tags(info["tags"])
 
-        for tag in info["tags"]:
+
+    def set_tags(self, tags):
+        for tag in tags:
             tag_obj, created = Tag.objects.get_or_create(name=tag)
             self.tags.add(tag_obj)
 
