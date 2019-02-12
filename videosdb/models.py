@@ -17,7 +17,9 @@ class Video(models.Model):
     filename = models.CharField(max_length=4096, null=True)
     ipfs_hash = models.CharField(max_length=256, unique=True, null=True)
     ipfs_thumbnail_hash = models.CharField(max_length=256, null=True)
-    publish_date = models.DateTimeField(null=True)
+    added_date = models.DateTimeField(auto_now_add=True)
+    modified_date = models.DateTimeField(auto_now=True)
+    published_date = models.DateTimeField(null=True)
     categories = models.ManyToManyField(Category)
     published = models.BooleanField(default=False)
     excluded = models.BooleanField(default=False)
@@ -29,7 +31,6 @@ class Video(models.Model):
     channel_id = models.CharField(max_length=256, null=True)
     duration = models.IntegerField(null=True)
     full_response = models.CharField(max_length=4096, null=True)
-
 
     def __str__(self):
         return self.youtube_id + " - " + self.title

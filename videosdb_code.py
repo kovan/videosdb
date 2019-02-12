@@ -12,7 +12,6 @@ import io
 from videosdb.models import Video, Category
 
 
-
 def dbg():
     os.chdir("/tmp")
     import ipdb
@@ -80,40 +79,43 @@ class Wordpress:
             "value": video.youtube_id
         }]
 
+        post.terms_names = {}
+
         if video.categories:
-            post.terms_names["category"] = [str(c) for c in video.categories]
+            post.terms_names["category"] = [str(c) for c in video.categories.all()]
         
         if video.tags:
-            post.terms_names["post_tag"] = [str(t) for t in video.tags]
+            post.terms_names["post_tag"] = [str(t) for t in video.tags.all()]
 
         if not as_draft:
             post.post_status = "publish"
 
-        if post_id: # it is an edit
-            return self.client.call(EditPost(post_id, post))
+        if video.published:
+            return self.client.call(EditPost(video.post_id, post))
 
         return self.client.call(NewPost(post))
 
 
 @traced(logging.getLogger(__name__))
 class DNS:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, dns_zone, record_name):
+        self.dns_zone = dns_zone
+        self.record_name = record_name
 
     def update(new_root_hash):
         from google.cloud import dns
         client = dns.Client()
-        zone = client.zone(self.config["dns_zone"])
+        zone = client.zone(self.dns_zone)
         records = zone.list_resource_record_sets()
 
         # init transaction
         changes = zone.changes()
         # delete old
         for record in records:
-            if record.name == self.config["dnslink_name"] + "."  and record.record_type == "TXT":
+            if record.name == self.record_name + "."  and record.record_type == "TXT":
                 changes.delete_record_set(record)
         #add new
-        record = zone.resource_record_set(self.config["dnslink_name"] + ".","TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
+        record = zone.resource_record_set(self.record_name + ".","TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
         changes.add_record_set(record)
         #finish transaction
         changes.create()
@@ -161,7 +163,7 @@ class IPFS:
             return
 
         root_hash = self.api.files_stat("/")["Hash"]
-        dns = DNS(self.config)
+        dns = DNS(self.config["dns_zone"], self.config["dnslink_name"])
         dns.update(root_hash)
         self.dnslink_update_pending = False
 
@@ -217,12 +219,12 @@ class YoutubeDL:
 
 
 class YoutubeAPI:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, yt_key):
+        self.yt_key = yt_key
 
     def _make_request(self, base_url, page_token=""):
         url = base_url
-        url += "&key=" + self.config["youtube_key"]
+        url += "&key=" + self.yt_key
         if page_token:
             url += "&pageToken=" + page_token
 
@@ -292,16 +294,15 @@ class Downloader:
     def __init__(self, config, ipfs):
         self.config = config
         self.ipfs = ipfs
+        self.yt_api = YoutubeAPI(config["youtube_key"])
 
     def _process_video(self, video, category=None):
 
-        api = YoutubeAPI(self.config)
-
         #if new video or missing info, download info:
-        if not video.full_response:
-
+        if not video.title:
             # dont use YT API in order to save quota.
-            #info = api.get_video_info(video.youtube_id)
+            #
+            #info = self.yt_api.get_video_info(video.youtube_id)
             #if not info:
             #    video.excluded = True
             #    return
@@ -311,17 +312,13 @@ class Downloader:
             #video.channel_id = info["channelId"]
             #video.set_tags(info["tags"])
 
-            try:
-                info = YoutubeDL.download_info(video.youtube_id)
-                video.title = info["title"]
-                video.uploader = info["uploader"]
-                video.channel_id = info["channel_id"]
-                video.duration = info["duration"]
-                video.set_tags(info["tags"])
-                video.full_response = json.dumps(info)
-            except YoutubeDL.UnavailableError:
-                video.excluded = True
-                return
+            info = YoutubeDL.download_info(video.youtube_id)
+            video.title = info["title"]
+            video.uploader = info["uploader"]
+            video.channel_id = info["channel_id"]
+            video.duration = info["duration"]
+            video.set_tags(info["tags"])
+            video.full_response = json.dumps(info)
 
         # some playlists include videos from other channels
         # for now exclude those videos
@@ -335,38 +332,38 @@ class Downloader:
             video.categories.add(category)
 
 
-        try:
-            if not video.ipfs_hash:
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    os.chdir(tmpdir)
-                    video.filename = YoutubeDL.download_video(video.youtube_id)
-                    video.ipfs_hash= self.ipfs.add_file(video.filename)
+        if not self.ipfs:
+            return
 
-            if not video.ipfs_thumbnail_hash:
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    os.chdir(tmpdir)
-                    thumbnail_filename = YoutubeDL.download_thumbnail(video.youtube_id)
-                    video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
+        if not video.ipfs_hash:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.chdir(tmpdir)
+                video.filename = YoutubeDL.download_video(video.youtube_id)
+                video.ipfs_hash= self.ipfs.add_file(video.filename)
+
+        if not video.ipfs_thumbnail_hash:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.chdir(tmpdir)
+                thumbnail_filename = YoutubeDL.download_thumbnail(video.youtube_id)
+                video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
                  
-        except YoutubeDL.UnavailableError as e:
-            video.excluded = True
 
 
-
-
-    def _enqueue_videos(self, video_ids, category=None):
+    def enqueue_videos(self, video_ids, category=None):
         for yid in video_ids:
             video, created = Video.objects.get_or_create(youtube_id=yid)
             if video.excluded:
                 continue
-            self._process_video(video, category)
+            try:
+                self._process_video(video, category)
+            except YoutubeDL.UnavailableError:
+                video.excluded = True
             video.save()
 
 
 
-    def _enqueue_channel(self, channel_id):
-        api = YoutubeAPI(self.config)
-        playlists = api.list_playlists(channel_id)
+    def enqueue_channel(self, channel_id):
+        playlists = self.yt_api.list_playlists(channel_id)
         for playlist in playlists:
             if playlist["channel_title"] != self.config["youtube_channel"]["name"]:
                 continue
@@ -378,18 +375,18 @@ class Downloader:
             playlist_url = "http://www.youtube.com/playlist?list=" + playlist["id"]
             videos = YoutubeDL.list_videos(playlist_url)
             video_ids = [video["id"] for video in videos]
-            self._enqueue_videos(video_ids, playlist["title"])
+            self.enqueue_videos(video_ids, playlist["title"])
 
         # enqueue all channel videos that are not in playlists:
         channel_url = "http://www.youtube.com/channel/" + channel_id
         videos = YoutubeDL.list_videos(channel_url)
         video_ids = [video["id"] for video in videos]
-        self._enqueue_videos(video_ids)
+        self.enqueue_videos(video_ids)
 
 
     def check_for_new_videos(self):
         channel_id = self.config["youtube_channel"]["id"]
-        self._enqueue_channel(channel_id)
+        self.enqueue_channel(channel_id)
         if self.ipfs:
             self.ipfs.update_dnslink()
 
@@ -425,7 +422,7 @@ class Publisher:
 
         video.published = True
         video.post_id = post_id
-        video.publish_date = datetime.now()
+        video.published_date = datetime.now()
         video.save()
 
 
@@ -481,9 +478,9 @@ class Main:
         downloader = Downloader(self.config, self.ipfs)
         downloader.check_for_new_videos()
 
-    def publish_next(self):
+    def publish_next(self, as_draft):
         publisher = Publisher(self.config, self.ipfs)
-        publisher.publish_next()
+        publisher.publish_next(as_draft)
             
     def publish_all(self):
         publisher = Publisher(self.config, self.ipfs)
