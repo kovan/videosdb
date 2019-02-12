@@ -109,6 +109,9 @@ class DNS:
 
     def update(self, new_root_hash):
         from google.cloud import dns
+        if not self.dns_zone:
+            return
+
         client = dns.Client()
         zone = client.zone(self.dns_zone)
         records = zone.list_resource_record_sets()
