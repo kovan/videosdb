@@ -478,7 +478,8 @@ class Main:
         
         logger = logging.getLogger(__name__)
         formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
-        os.makedirs("logs")
+        if not os.path.exists("logs"):
+            os.makedirs("logs")
         handler = logging.handlers.RotatingFileHandler("./logs/log", 'a', 1000000, 10)
         handler2 = logging.StreamHandler(sys.stdout)
         handler.setFormatter(formatter)
