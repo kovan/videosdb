@@ -29,7 +29,7 @@ class Wordpress:
 
     def upload_image(self, filename, title):
         from wordpress_xmlrpc.compat import xmlrpc_client
-        from wordpress_xmlrpc.methods import media, posts
+        from wordpress_xmlrpc.methods import media
 
         data = {
             "name": title + ".jpg",
@@ -42,8 +42,12 @@ class Wordpress:
         thumbnail = self.client.call(media.UploadFile(data))
         return thumbnail
 
+    def find_image(self, image_id):
+        from wordpress_xmlrpc.methods import media
+        return self.client.call(media.GetMediaItem(image_id))
+        
 
-    def publish(self, video, thumbnail_url, as_draft=False):
+    def publish(self, video, as_draft):
         from wordpress_xmlrpc import WordPressPost
         from wordpress_xmlrpc.methods.posts import NewPost, GetPosts, EditPost
         from string import Template
@@ -61,13 +65,14 @@ class Wordpress:
         <!-- /wp:video -->
         '''
 
+        thumbnail = self.find_image(video.thumbnail_id)
         template = Template(template_raw)
         html = template.substitute(
             youtube_id=video.youtube_id,
             dnslink_name=self.config["dnslink_name"],
             www_root=self.config["www_root"],
             filename_quoted=quote(video.filename),
-            thumbnail_url=thumbnail_url
+            thumbnail_url=thumbnail.link
         )
 
         post = WordPressPost()
@@ -429,11 +434,11 @@ class Publisher:
 
 
     def publish_next(self, as_draft=False):
-        video = Video.objects.filter(published=False, excluded=False).order_by("-id")[0]
-        if not video:
+        pending_videos = Video.objects.filter(published=False, excluded=False).order_by("-id")
+        if not pending_videos:
             return False
 
-        self.publish_one(video, as_draft)
+        self.publish_one(pending_videos[0], as_draft)
         return True
 
 
