@@ -25,7 +25,6 @@ class Video(models.Model):
     excluded = models.BooleanField(default=False)
     post_id = models.IntegerField(null=True)
     thumbnail_id = models.IntegerField(null=True)
-    thumbnail_url = models.CharField(null=True, max_length=1024)
     tags = models.ManyToManyField(Tag)
     uploader = models.CharField(max_length=256, null=True)
     channel_id = models.CharField(max_length=256, null=True)

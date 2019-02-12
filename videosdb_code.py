@@ -43,7 +43,7 @@ class Wordpress:
         return thumbnail
 
 
-    def publish(self, video, as_draft=False):
+    def publish(self, video, thumbnail_url, as_draft=False):
         from wordpress_xmlrpc import WordPressPost
         from wordpress_xmlrpc.methods.posts import NewPost, GetPosts, EditPost
         from string import Template
@@ -67,7 +67,7 @@ class Wordpress:
             dnslink_name=self.config["dnslink_name"],
             www_root=self.config["www_root"],
             filename_quoted=quote(video.filename),
-            thumbnail_url=video.thumbnail_url
+            thumbnail_url=thumbnail_url
         )
 
         post = WordPressPost()
@@ -296,66 +296,68 @@ class Downloader:
         self.ipfs = ipfs
         self.yt_api = YoutubeAPI(config["youtube_key"])
 
-    def _process_video(self, video, category=None):
 
-        #if new video or missing info, download info:
-        if not video.title:
-            # dont use YT API in order to save quota.
-            #
-            #info = self.yt_api.get_video_info(video.youtube_id)
-            #if not info:
-            #    video.excluded = True
-            #    return
-            #video.parse_youtubeapi_info(info)
-            #video.title = info["title"]
-            #video.uploader = info["channelTitle"]
-            #video.channel_id = info["channelId"]
-            #video.set_tags(info["tags"])
+    def enqueue_videos(self, video_ids, category=None):
 
-            info = YoutubeDL.download_info(video.youtube_id)
-            video.title = info["title"]
-            video.uploader = info["uploader"]
-            video.channel_id = info["channel_id"]
-            video.duration = info["duration"]
-            video.set_tags(info["tags"])
-            video.full_response = json.dumps(info)
+        def process_video(video, category=None):
 
-        # some playlists include videos from other channels
-        # for now exclude those videos
-        # in the future maybe exclude whole playlist 
-        if video.channel_id != self.config["youtube_channel"]["id"]:
-            video.excluded = True
-            return
-        
-        if category:
-            category, created = Category.objects.get_or_create(name=category)
-            video.categories.add(category)
+            #if new video or missing info, download info:
+            if not video.title:
+                info = YoutubeDL.download_info(video.youtube_id)
+                video.title = info["title"]
+                video.uploader = info["uploader"]
+                video.channel_id = info["channel_id"]
+                video.duration = info["duration"]
+                video.set_tags(info["tags"])
+                video.full_response = json.dumps(info)
+                # dont use YT API in order to save quota.
+                #
+                #info = self.yt_api.get_video_info(video.youtube_id)
+                #if not info:
+                #    video.excluded = True
+                #    return
+                #video.parse_youtubeapi_info(info)
+                #video.title = info["title"]
+                #video.uploader = info["channelTitle"]
+                #video.channel_id = info["channelId"]
+                #video.set_tags(info["tags"])
 
 
-        if not self.ipfs:
-            return
+            # some playlists include videos from other channels
+            # for now exclude those videos
+            # in the future maybe exclude whole playlist 
+            if video.channel_id != self.config["youtube_channel"]["id"]:
+                video.excluded = True
+                return
+            
+            if category:
+                category, created = Category.objects.get_or_create(name=category)
+                video.categories.add(category)
 
-        if not video.ipfs_hash:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                os.chdir(tmpdir)
-                video.filename = YoutubeDL.download_video(video.youtube_id)
-                video.ipfs_hash= self.ipfs.add_file(video.filename)
 
-        if not video.ipfs_thumbnail_hash:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                os.chdir(tmpdir)
-                thumbnail_filename = YoutubeDL.download_thumbnail(video.youtube_id)
-                video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
+            if not self.ipfs:
+                return
+
+            if not video.ipfs_hash:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    os.chdir(tmpdir)
+                    video.filename = YoutubeDL.download_video(video.youtube_id)
+                    video.ipfs_hash= self.ipfs.add_file(video.filename)
+
+            if not video.ipfs_thumbnail_hash:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    os.chdir(tmpdir)
+                    thumbnail_filename = YoutubeDL.download_thumbnail(video.youtube_id)
+                    video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
                  
 
 
-    def enqueue_videos(self, video_ids, category=None):
         for yid in video_ids:
             video, created = Video.objects.get_or_create(youtube_id=yid)
             if video.excluded:
                 continue
             try:
-                self._process_video(video, category)
+                process_video(video, category)
             except YoutubeDL.UnavailableError:
                 video.excluded = True
             video.save()
@@ -397,6 +399,7 @@ class Publisher:
         self.config = config
         self.ipfs = ipfs
 
+
     def publish_one(self, video, as_draft=False):
         from datetime import datetime
 
@@ -416,7 +419,6 @@ class Publisher:
                 thumbnail_filename = self.ipfs.get_file(video.ipfs_thumbnail_hash)
                 thumbnail = wp.upload_image(thumbnail_filename, video.title)
                 video.thumbnail_id = thumbnail["id"]
-                video.thumbnail_url = thumbnail["link"]
 
         post_id = wp.publish(video, as_draft)
 
@@ -426,17 +428,31 @@ class Publisher:
         video.save()
 
 
-    def publish_next(self, as_draft):
+    def publish_next(self, as_draft=False):
         video = Video.objects.filter(published=False, excluded=False).order_by("-id")[0]
         if not video:
-            return
+            return False
 
         self.publish_one(video, as_draft)
+        return True
+
+
+    def publish_all(self):
+        while self.publish_next():
+            pass
+        
 
     def republish_all(self):
-
         for video in Video.objects.filter(published=True):
             self.publish_one(video) 
+
+    def reset_published(self):
+        for video in Video.objects.filter(published=True):
+            video.published = False
+            video.published_date = None
+            video.post_id = None
+            video.thumbnail_id = None
+            video.save()
 
 
 
