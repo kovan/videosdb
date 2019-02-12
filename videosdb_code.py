@@ -107,7 +107,7 @@ class DNS:
         self.dns_zone = dns_zone
         self.record_name = record_name
 
-    def update(new_root_hash):
+    def update(self, new_root_hash):
         from google.cloud import dns
         client = dns.Client()
         zone = client.zone(self.dns_zone)
@@ -463,11 +463,8 @@ class Publisher:
 
 @traced(logging.getLogger(__name__))
 class Main:
-    def __init__(self, enable_trace=False, enable_ipfs=True):
-        import yaml
-        with io.open("config.yaml") as f:
-            self.config = yaml.load(f)
-            
+    def __init__(self, config, enable_trace=False, enable_ipfs=True):
+        self.config = config
         self._configure_logging(enable_trace)
 
         if enable_ipfs:

@@ -12,10 +12,16 @@ class Command(BaseCommand):
         parser.add_argument("--only-update-dnslink", action="store_true")
         parser.add_argument("--as-draft", action="store_true")
         parser.add_argument("--regen-ipfs-folder", action="store_true")
+        parser.add_argument("--update-dnslink", action="store_true")
 
     def handle(self, *args, **options):
 
-        main = Main(options["trace"])
+        import yaml
+        import io
+        with io.open("config.yaml") as f:
+            config = yaml.load(f)
+
+        main = Main(config, options["trace"])
 
         if options["regen_ipfs_folder"]:
             main.regen_ipfs_folder()
@@ -31,6 +37,10 @@ class Command(BaseCommand):
 
         if options["publish_next"]:
             main.publish_next(options["as_draft"])
+
+        if options["update_dnslink"]:
+            ipfs = IPFS(config)
+            ipfs.update_dnslink(True)
 
         
 
