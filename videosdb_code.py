@@ -302,9 +302,9 @@ class Downloader:
         self.yt_api = YoutubeAPI(config["youtube_key"])
 
 
-    def enqueue_videos(self, video_ids, category=None):
+    def enqueue_videos(self, video_ids, category_name=None):
 
-        def process_video(video, category=None):
+        def process_video(video):
 
             #if new video or missing info, download info:
             if not video.title:
@@ -335,11 +335,6 @@ class Downloader:
                 video.excluded = True
                 return
             
-            if category:
-                category, created = Category.objects.get_or_create(name=category)
-                video.categories.add(category)
-
-
             if not self.ipfs:
                 return
 
@@ -362,10 +357,15 @@ class Downloader:
             if video.excluded:
                 continue
             try:
-                process_video(video, category)
+                process_video(video)
+                if category_name:
+                    category, created = Category.objects.get_or_create(name=category_name)
+                    video.categories.add(category)
+
             except YoutubeDL.UnavailableError:
                 video.excluded = True
-            video.save()
+            finally:
+                video.save()
 
 
 
