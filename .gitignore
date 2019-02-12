@@ -1,9 +1,7 @@
 venv
 *.swp
 __pycache__/
-
 tmp/
-log
-log.*
+logs/
 db.sqlite3
 db.sqlite3-journal

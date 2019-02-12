@@ -1,5 +1,4 @@
 -e git+https://github.com/rg3/youtube-dl.git#egg=youtube-dl
-dataset
 executor
 ipfsapi
 autologging
@@ -7,4 +6,3 @@ google-cloud-dns
 pyyaml
 python-wordpress-xmlrpc
 django
-django_extensions

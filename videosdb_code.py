@@ -474,10 +474,12 @@ class Main:
 
     def _configure_logging(self, enable_trace=False):
         import logging.handlers
+        import pathlib
         
         logger = logging.getLogger(__name__)
         formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
-        handler = logging.handlers.RotatingFileHandler("log", 'a', 1000000, 10)
+        os.makedirs("logs")
+        handler = logging.handlers.RotatingFileHandler("./logs/log", 'a', 1000000, 10)
         handler2 = logging.StreamHandler(sys.stdout)
         handler.setFormatter(formatter)
         handler2.setFormatter(formatter)

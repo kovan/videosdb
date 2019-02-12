@@ -17,8 +17,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         import yaml
-        import io
-        with io.open("config.yaml") as f:
+        with open("config.yaml") as f:
             config = yaml.load(f)
 
         main = Main(config, options["trace"])
