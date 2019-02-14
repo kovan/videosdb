@@ -56,10 +56,10 @@ class Wordpress:
         '''
         <!-- wp:video {"align":"center"} -->
         <figure class="wp-block-video aligncenter">
-            <video controls preload="auto" poster="$thumbnail_url" src="https://$dnslink_name/videos/$filename_quoted">
+            <video controls preload="none" poster="$thumbnail_url" src="https://$ipfs_gateway/ipfs/$ipfs_hash?filename=$filename_quoted">
             </video>
             <figcaption>
-        Download/play from: <a href="ipns://$dnslink_name/videos/$filename_quoted">IPFS</a> | <a href="https://$dnslink_name/videos/$filename_quoted">HTTP</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
+        Download/play from: <a href="https://$ipfs_gateway/ipfs/$ipfs_hash?filename=$filename_quoted">HTTP</a> | <a href="ipns://$ipfs_hash?filename=$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
             </figcaption>
         </figure>
         <!-- /wp:video -->
@@ -69,9 +69,10 @@ class Wordpress:
         template = Template(template_raw)
         html = template.substitute(
             youtube_id=video.youtube_id,
-            dnslink_name=self.config["dnslink_name"],
+            ipfs_gateway=self.config["ipfs_gateway"],
             www_root=self.config["www_root"],
             filename_quoted=quote(video.filename),
+            ipfs_hash=video.ipfs_hash,
             thumbnail_url=thumbnail.link
         )
 
@@ -137,13 +138,13 @@ class IPFS:
         self.api = ipfsapi.connect(self.host, self.port)
 
     def add_file(self, filename, add_to_dir=True):
-        file_hash = self.api.add(filename)["Hash"]
-        self.api.pin_add(file_hash)
+        ipfs_hash = self.api.add(filename)["Hash"]
+        self.api.pin_add(ipfs_hash)
 
         if add_to_dir:
-            self.add_to_dir(filename, file_hash)
+            self.add_to_dir(filename, ipfs_hash)
 
-        return file_hash
+        return ipfs_hash
 
     def add_to_dir(self, filename, _hash):
         from ipfsapi.exceptions import StatusError
