@@ -45,7 +45,11 @@ class Wordpress:
     def find_image(self, image_id):
         from wordpress_xmlrpc.methods import media
         return self.client.call(media.GetMediaItem(image_id))
-        
+    
+    def delete(self, video):
+        from wordpress_xmlrpc.methods.posts import DeletePost
+        return self.client.call(DeletePost(video.post_id))
+
 
     def publish(self, video, as_draft):
         from wordpress_xmlrpc import WordPressPost
@@ -442,9 +446,13 @@ class Publisher:
         pending_videos = Video.objects.filter(published=False, excluded=False).order_by("-id")
         if not pending_videos:
             #if there are no new videos left, republish oldest ones:
-            pending_videos = Video.objects.filter(excluded=False).order_by("-published_date")
+            pending_videos = Video.objects.filter(excluded=False).order_by("published_date")
             if not pending_videos:
                 return False
+            self.wordpress.delete(pending_videos[0])
+            pending_videos[0].published = False
+            pending_videos[0].save()
+            
 
         self.publish_one(pending_videos[0], as_draft)
         return True
