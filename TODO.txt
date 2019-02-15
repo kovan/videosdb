@@ -1,0 +1,14 @@
+TODO
+------------------------
+- link de los videos directo a IPFS para que no haya q esperar a actualizar dnslink
+- no precargar videos
+
+
+
+
+
+IDEA-STORM
+------------------------
+- pasar a kubernetes todo
+- dejar de lado wordpress y hacer frontend en Django
+

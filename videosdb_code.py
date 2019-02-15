@@ -56,10 +56,10 @@ class Wordpress:
         '''
         <!-- wp:video {"align":"center"} -->
         <figure class="wp-block-video aligncenter">
-            <video controls poster="$thumbnail_url" src="https://$dnslink_name/videos/$filename_quoted">
+            <video controls preload="none" poster="$thumbnail_url" src="https://$ipfs_gateway/ipfs/$ipfs_hash?filename=$filename_quoted">
             </video>
             <figcaption>
-        Download/play from: <a href="ipns://$dnslink_name/videos/$filename_quoted">IPFS</a> | <a href="https://$dnslink_name/videos/$filename_quoted">HTTP</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
+        Download/play from: <a href="https://$ipfs_gateway/ipfs/$ipfs_hash?filename=$filename_quoted">HTTP</a> | <a href="ipns://$ipfs_hash?filename=$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
             </figcaption>
         </figure>
         <!-- /wp:video -->
@@ -69,9 +69,10 @@ class Wordpress:
         template = Template(template_raw)
         html = template.substitute(
             youtube_id=video.youtube_id,
-            dnslink_name=self.config["dnslink_name"],
+            ipfs_gateway=self.config["ipfs_gateway"],
             www_root=self.config["www_root"],
             filename_quoted=quote(video.filename),
+            ipfs_hash=video.ipfs_hash,
             thumbnail_url=thumbnail.link
         )
 
@@ -140,13 +141,13 @@ class IPFS:
         self.api = ipfsapi.connect(self.host, self.port)
 
     def add_file(self, filename, add_to_dir=True):
-        file_hash = self.api.add(filename)["Hash"]
-        self.api.pin_add(file_hash)
+        ipfs_hash = self.api.add(filename)["Hash"]
+        self.api.pin_add(ipfs_hash)
 
         if add_to_dir:
-            self.add_to_dir(filename, file_hash)
+            self.add_to_dir(filename, ipfs_hash)
 
-        return file_hash
+        return ipfs_hash
 
     def add_to_dir(self, filename, _hash):
         from ipfsapi.exceptions import StatusError
@@ -397,13 +398,17 @@ class Downloader:
         if self.ipfs:
             self.ipfs.update_dnslink()
 
+    def regen_ipfs_folder(self):
+        self.ipfs.api.files_mkdir("/videos")
+        for video in Video.objects.all():
+            self.ipfs.add_to_dir(video.filename, video.ipfs_hash)
 
 @traced(logging.getLogger(__name__))
 class Publisher:
     def __init__(self, config, ipfs):
         self.config = config
         self.ipfs = ipfs
-
+        self.wordpress = Wordpress(config)
 
     def publish_one(self, video, as_draft=False):
         from datetime import datetime
@@ -416,16 +421,15 @@ class Publisher:
             category, created = Category.objects.get_or_create(name=category)
             video.categories.add(category)
 
-        wp = Wordpress(self.config)
 
         if not video.published:
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
                 thumbnail_filename = self.ipfs.get_file(video.ipfs_thumbnail_hash)
-                thumbnail = wp.upload_image(thumbnail_filename, video.title)
+                thumbnail = self.wordpress.upload_image(thumbnail_filename, video.title)
                 video.thumbnail_id = thumbnail["id"]
 
-        post_id = wp.publish(video, as_draft)
+        post_id = self.wordpress.publish(video, as_draft)
 
         video.published = True
         video.post_id = post_id
@@ -467,16 +471,10 @@ class Publisher:
 
 @traced(logging.getLogger(__name__))
 class Main:
-    def __init__(self, config, enable_trace=False, enable_ipfs=True):
+    def __init__(self, config):
         self.config = config
-        self._configure_logging(enable_trace)
 
-        if enable_ipfs:
-            self.ipfs = IPFS(self.config)
-        else:
-            self.ipfs = None
-
-    def _configure_logging(self, enable_trace=False):
+    def configure_logging(self, enable_trace=False):
         import logging.handlers
         import pathlib
         
@@ -493,22 +491,5 @@ class Main:
 
         if enable_trace:
             logger.setLevel(TRACE)
-
-    def regen_ipfs_folder(self):
-        self.ipfs.api.files_mkdir("/videos")
-        for video in Video.objects.all():
-            self.ipfs.add_to_dir(video.filename, video.ipfs_hash)
-
-    def check_for_new_videos(self):
-        downloader = Downloader(self.config, self.ipfs)
-        downloader.check_for_new_videos()
-
-    def publish_next(self, as_draft):
-        publisher = Publisher(self.config, self.ipfs)
-        publisher.publish_next(as_draft)
-            
-    def publish_all(self):
-        publisher = Publisher(self.config, self.ipfs)
-        publisher.publish_all()
 
 
