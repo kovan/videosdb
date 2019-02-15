@@ -377,21 +377,18 @@ class Downloader:
         for playlist in playlists:
             if playlist["channel_title"] != self.config["youtube_channel"]["name"]:
                 continue
-            if playlist["title"] == "Uploads from " + playlist["channel_title"] or \
-                playlist["title"] == "Liked videos" or \
+            if playlist["title"] == "Liked videos" or \
                 playlist["title"] == "Popular uploads":
                 continue
 
             playlist_url = "http://www.youtube.com/playlist?list=" + playlist["id"]
             videos = YoutubeDL.list_videos(playlist_url)
             video_ids = [video["id"] for video in videos]
-            self.enqueue_videos(video_ids, playlist["title"])
 
-        # enqueue all channel videos that are not in playlists:
-        channel_url = "http://www.youtube.com/channel/" + channel_id
-        videos = YoutubeDL.list_videos(channel_url)
-        video_ids = [video["id"] for video in videos]
-        self.enqueue_videos(video_ids)
+            if playlist["title"] == "Uploads from " + playlist["channel_title"]:
+                self.enqueue_videos(video_ids)
+            else:
+                self.enqueue_videos(video_ids, playlist["title"])
 
 
     def check_for_new_videos(self):
@@ -437,9 +434,13 @@ class Publisher:
 
 
     def publish_next(self, as_draft=False):
+        #first publish newer videos:
         pending_videos = Video.objects.filter(published=False, excluded=False).order_by("-id")
         if not pending_videos:
-            return False
+            #if there are no new videos left, republish oldest ones:
+            pending_videos = Video.objects.filter(excluded=False).order_by("-published_date")
+            if not pending_videos:
+                return False
 
         self.publish_one(pending_videos[0], as_draft)
         return True
