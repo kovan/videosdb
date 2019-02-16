@@ -426,7 +426,7 @@ class Publisher:
             video.categories.add(category)
 
 
-        if not video.published:
+        if not video.thumbnail_id:
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
                 thumbnail_filename = self.ipfs.get_file(video.ipfs_thumbnail_hash)
