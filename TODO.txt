@@ -2,6 +2,7 @@ TODO
 ------------------------
 - ajustar thumbnail para videos 4:3
 - eliminar atributo preload/no preload
+- migrar a dominio enlightehment.yoga
 
 
 
@@ -11,13 +12,16 @@ IDEA-STORM
 ------------------------
 - pasar a kubernetes todo
 - dejar de lado wordpress y hacer frontend en Django
-- publicar todo como web estática + JS para buscar y filtrar.
-- 
+- publicar todo como web estática + JS para buscar y filtrar:
+  - React o sólo JQuery? meteor?
+- hacer una app Ethereum que genere la web bajo un subdominio estilo nombrecanal.myapp.com y cobrar pasta
+- deshacerme de docker y dejar un nginx frontal, un nginx backend para wordpress y un mysql
+
 
 TEMAS:
 ------
 
-Asia: push sidebar
+Ansia: push sidebar
 Crocante: push sidebar
 
 
