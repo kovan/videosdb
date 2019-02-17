@@ -44,7 +44,11 @@ class Wordpress:
 
     def find_image(self, image_id):
         from wordpress_xmlrpc.methods import media
-        return self.client.call(media.GetMediaItem(image_id))
+        from xmlrpc.client import Fault
+        try:
+            return self.client.call(media.GetMediaItem(image_id))
+        except Fault as e:
+            return None
     
     def delete(self, video):
         from wordpress_xmlrpc.methods.posts import DeletePost
