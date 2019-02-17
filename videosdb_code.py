@@ -60,7 +60,7 @@ class Wordpress:
         '''
         <!-- wp:video {"align":"center"} -->
         <figure class="wp-block-video aligncenter">
-            <video controls preload="none" poster="$thumbnail_url" src="https://$ipfs_gateway/ipfs/$ipfs_hash?filename=$filename_quoted">
+            <video controls poster="$thumbnail_url" src="https://$ipfs_gateway/ipfs/$ipfs_hash?filename=$filename_quoted">
             </video>
             <figcaption>
         Download/play from: <a href="https://$ipfs_gateway/ipfs/$ipfs_hash?filename=$filename_quoted">HTTP</a> | <a href="ipns://$ipfs_hash?filename=$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>

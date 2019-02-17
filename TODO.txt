@@ -1,7 +1,7 @@
 TODO
 ------------------------
-- link de los videos directo a IPFS para que no haya q esperar a actualizar dnslink
-- no precargar videos
+- ajustar thumbnail para videos 4:3
+- eliminar atributo preload/no preload
 
 
 
@@ -11,4 +11,62 @@ IDEA-STORM
 ------------------------
 - pasar a kubernetes todo
 - dejar de lado wordpress y hacer frontend en Django
+- publicar todo como web estática + JS para buscar y filtrar.
+- 
+
+TEMAS:
+------
+
+Asia: push sidebar
+Crocante: push sidebar
+
+
+KEYWORDS:
+--------
+
+guru
+enlightenment
+yoga
+yoga video
+shiva
+shiva video
+
+
+KEYWORDS BROAD:
+--------------
+
+spirituality resources
+spirituality
+sadhguru
+enlightement
+spiritual process
+yoga
+guru
+guru india
+spirituality vs religion
+spirituality videos
+sadhguru videos
+spirituality and mental health
+spirituality articles
+spirituality blog
+spirituality beyond religion
+spirituality consciousness
+shiva
+spiritual path
+sadhguru youtube
+inner engineering
+sadhguru debate
+sadhguru interview
+truth
+wisdom
+
+ADDITIONAL CSS para temas con push sidebar
+--------------
+
+.widget_archive li, .widget_categories li {
+text-align: left;
+}
+.widget_archive li a, .widget_categories li a {
+  float: none;
+}
 
