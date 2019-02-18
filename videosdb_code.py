@@ -419,7 +419,7 @@ class Publisher:
         self.wordpress = Wordpress(config)
 
     def publish_one(self, video, as_draft=False):
-        from datetime import datetime
+        from django.utils import timezone
 
         new_categories = [
              "Short videos" if video.duration/60 <= 20 else "Long videos", 
@@ -441,7 +441,7 @@ class Publisher:
 
         video.published = True
         video.post_id = post_id
-        video.published_date = datetime.now()
+        video.published_date = timezone.now()
         video.save()
 
 
@@ -462,9 +462,10 @@ class Publisher:
         return True
 
 
-    def publish_all(self):
-        while self.publish_next():
-            pass
+    def publish_all(self, as_draft=False):
+        videos = Video.objects.filter(excluded=False)
+        for video in videos:
+            self.publish_one(video, as_draft)
         
 
     def republish_all(self):
