@@ -1,8 +1,4 @@
-#pipenv activate
-#source venv/bin/activate
-pipenv shell
-pipenv install
-#pip install -q -r requirements.freezed.txt
+pipenv run pipenv install
 #export AUTOLOGGING_TRACED_NOOP=1 # disable autologging
-./manage.py videosdb -t --check-for-new-videos
-./manage.py videosdb -t --publish-next
+pipenv run python manage.py videosdb -t --check-for-new-videos
+pipenv run python manage.py videosdb -t --publish-next
