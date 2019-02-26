@@ -217,9 +217,11 @@ class YoutubeDL:
                 with io.open(youtube_id + ".info.json") as f:
                     video_json = json.load(f)
         except executor.ExternalCommandFailed as e:
-            if "copyright" in str(e.command.stderr) or \
-               "Unable to extract video title" in str(e.command.stderr) or \
-               "available in your country" in str(e.command.stderr):
+            out = str(e.command.stderr)
+            if "copyright" in out or \
+               "Unable to extract video title" in out or \
+               "available in your country" in out or \
+               "video is unavailable" in out:
                 raise YoutubeDL.UnavailableError()
             raise
         return video_json
