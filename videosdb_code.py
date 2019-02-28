@@ -482,7 +482,7 @@ class Publisher:
 
 
 @traced(logging.getLogger(__name__))
-def configure_logging(self, enable_trace=False):
+def configure_logging(enable_trace):
     import logging.handlers
     import pathlib
     
