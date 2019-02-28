@@ -1,49 +1,14 @@
+import videosdb_code
 from django.core.management.base import BaseCommand, CommandError
-from videosdb_code import Main, IPFS, Downloader, Publisher
 
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_argument("-t", "--trace", action="store_true")
-        parser.add_argument("-c", "--check-for-new-videos", action="store_true")
-        parser.add_argument("-n", "--publish-next", action="store_true")
-        parser.add_argument("-a", "--publish-all", action="store_true")
-        parser.add_argument("--republish-all", action="store_true")
-        parser.add_argument("--as-draft", action="store_true")
-        parser.add_argument("--regen-ipfs-folder", action="store_true")
-        parser.add_argument("--update-dnslink", action="store_true")
+        videosdb_code.add_arguments(parser)
 
     def handle(self, *args, **options):
+        videosdb_code.handle(*args, **options)
 
-        import yaml
-        with open("config.yaml") as f:
-            config = yaml.load(f)
-
-        ipfs = IPFS(config)
-        main = Main(config)
-        main.configure_logging(options["trace"])
-
-        downloader = Downloader(config, ipfs)
-        publisher = Publisher(config, ipfs)
-
-
-        if options["regen_ipfs_folder"]:
-            downloader.regen_ipfs_folder()
-
-        if options["check_for_new_videos"]:
-            downloader.check_for_new_videos()
-
-        if options["republish_all"]:
-            publisher.republish_all()
-
-        if options["publish_all"]:
-            publisher.publish_all()
-
-        if options["publish_next"]:
-            publisher.publish_next(options["as_draft"])
-
-        if options["update_dnslink"]:
-            ipfs.update_dnslink(True)
 
         
 

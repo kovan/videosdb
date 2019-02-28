@@ -482,26 +482,65 @@ class Publisher:
 
 
 @traced(logging.getLogger(__name__))
-class Main:
-    def __init__(self, config):
-        self.config = config
+def configure_logging(self, enable_trace=False):
+    import logging.handlers
+    import pathlib
+    
+    logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
+    if not os.path.exists("logs"):
+        os.makedirs("logs")
+    handler = logging.handlers.RotatingFileHandler("./logs/log", 'a', 1000000, 10)
+    handler2 = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+    handler2.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.addHandler(handler2)
 
-    def configure_logging(self, enable_trace=False):
-        import logging.handlers
-        import pathlib
-        
-        logger = logging.getLogger(__name__)
-        formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
-        if not os.path.exists("logs"):
-            os.makedirs("logs")
-        handler = logging.handlers.RotatingFileHandler("./logs/log", 'a', 1000000, 10)
-        handler2 = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(formatter)
-        handler2.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.addHandler(handler2)
+    if enable_trace:
+        logger.setLevel(TRACE)
 
-        if enable_trace:
-            logger.setLevel(TRACE)
+@traced(logging.getLogger(__name__))
+def add_arguments(parser):
+    parser.add_argument("-t", "--trace", action="store_true")
+    parser.add_argument("-c", "--check-for-new-videos", action="store_true")
+    parser.add_argument("-n", "--publish-next", action="store_true")
+    parser.add_argument("-a", "--publish-all", action="store_true")
+    parser.add_argument("--republish-all", action="store_true")
+    parser.add_argument("--as-draft", action="store_true")
+    parser.add_argument("--regen-ipfs-folder", action="store_true")
+    parser.add_argument("--update-dnslink", action="store_true")
+
+
+@traced(logging.getLogger(__name__))
+def handle(*args, **options):
+    import yaml
+    with open("config.yaml") as f:
+        config = yaml.safe_load(f)
+
+    ipfs = IPFS(config)
+    configure_logging(options["trace"])
+
+    downloader = Downloader(config, ipfs)
+    publisher = Publisher(config, ipfs)
+
+
+    if options["regen_ipfs_folder"]:
+        downloader.regen_ipfs_folder()
+
+    if options["check_for_new_videos"]:
+        downloader.check_for_new_videos()
+
+    if options["republish_all"]:
+        publisher.republish_all()
+
+    if options["publish_all"]:
+        publisher.publish_all()
+
+    if options["publish_next"]:
+        publisher.publish_next(options["as_draft"])
+
+    if options["update_dnslink"]:
+        ipfs.update_dnslink(True)
 
 
