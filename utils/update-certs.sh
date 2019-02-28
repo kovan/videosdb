@@ -1,6 +1,7 @@
-DST=/var/lib/docker/volumes/global-nginx-proxy_dhparam/_data
+DOMAIN=enlightenment.yoga
+SRC=/etc/letsencrypt/live/$DOMAIN
+DST=/var/lib/docker/volumes/global-nginx-proxy_certs/_data
+
 certbot renew --quiet
-cp /etc/letsencrypt/live/ipfs.spiritualityresources.net/privkey.pem $DST/privkey.pem
-cp /etc/letsencrypt/live/ipfs.spiritualityresources.net/fullchain.pem $DST/fullchain.pem
-cp /etc/letsencrypt/live/resources.spiritualityresources.net/privkey.pem $DST/privkey-res.pem
-cp /etc/letsencrypt/live/resources.spiritualityresources.net/fullchain.pem $DST/fullchain-res.pem
+cp $SRC/fullchain.pem $DST/$DOMAIN.fullchain.pem
+cp $SRC/privkey.pem $DST/$DOMAIN.privkey.pem
