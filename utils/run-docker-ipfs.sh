@@ -13,4 +13,5 @@ CID=$(docker run -d --name ipfs-node \
    -v $DIR2:/export -v $DIR1:/data/ipfs \
    -p 4001:4001 -p 5001:5001 \
   jbenet/go-ipfs:latest)
+sleep 3
 docker exec $CID ipfs config profile apply server
