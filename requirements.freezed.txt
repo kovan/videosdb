@@ -63,4 +63,4 @@ uritemplate==3.0.0
 urllib3==1.22
 verboselogs==1.7
 wcwidth==0.1.7
--e git+https://github.com/rg3/youtube-dl.git@6f5c1807f43b9dfd17fdc6932ae7ecb6c77fb1a0#egg=youtube_dl
+-e git+https://github.com/rg3/youtube-dl.git#egg=youtube_dl
