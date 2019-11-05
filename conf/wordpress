@@ -1,0 +1,17 @@
+server {
+ listen 80;
+ root /var/www/html/wordpress;
+ index index.php;
+ server_name 192.168.0.2;
+ access_log /var/log/nginx/wordpress.access_log;
+ error_log /var/log/nginx/wordpress.error_log
+ notice;
+ location / {
+  try_files $uri $uri/ /index.php?$args;
+ }
+ location ~ \.php$
+ {
+  include snippets/fastcgi-php.conf;
+  fastcgi_pass unix:/var/run/php/php7.0-fpm.sock;
+ }
+}

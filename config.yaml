@@ -4,8 +4,8 @@ ipfs_gateway: ipfs.enlightenment.yoga
 www_root: https://www.enlightenment.yoga
 ipfs_host: localhost
 ipfs_port: 5001
-wp_username: lucid-torvalds 
-wp_pass: CFoC6PN5MGD8
+wp_username: k
+wp_pass: ZRULPXsazvQ!D5EUCQ 
 youtube_key: AIzaSyBsIizPhqltPhmgBmeBAgQrntWHKc2zfAo #AIzaSyBS_oLkjg3skPbC49VmPit3dPFPPnZDPRQ
 youtube_channel:
     id: UCcYzLCs3zrQIBVHYA1sK2sw
