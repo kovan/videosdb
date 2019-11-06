@@ -1,12 +1,12 @@
 dns_zone: myzone
 dnslink_name: videos.enlightenment.yoga
 ipfs_gateway: ipfs.enlightenment.yoga
-www_root: https://www.enlightenment.yoga
+www_root: http://www.enlightenment.yoga
 ipfs_host: localhost
 ipfs_port: 5001
 wp_username: k
 wp_pass: ZRULPXsazvQ!D5EUCQ 
-youtube_key: AIzaSyBsIizPhqltPhmgBmeBAgQrntWHKc2zfAo #AIzaSyBS_oLkjg3skPbC49VmPit3dPFPPnZDPRQ
+youtube_key: AIzaSyAs_U192_UpBeazTVuNwXphyAsmDeS9N_o
 youtube_channel:
     id: UCcYzLCs3zrQIBVHYA1sK2sw
     name: Sadhguru

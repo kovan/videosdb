@@ -113,7 +113,7 @@ class DNS:
         self.dns_zone = dns_zone
         self.record_name = record_name
 
-    def update(self, new_root_hash):
+    def update_dnslink(self, new_root_hash):
         from google.cloud import dns
         if not self.dns_zone:
             return
@@ -133,6 +133,7 @@ class DNS:
         changes.add_record_set(record)
         #finish transaction
         changes.create()
+
 
 
 @traced(logging.getLogger(__name__))
@@ -178,7 +179,7 @@ class IPFS:
 
         root_hash = self.api.files_stat("/")["Hash"]
         dns = DNS(self.config["dns_zone"], self.config["dnslink_name"])
-        dns.update(root_hash)
+        dns.update_dnslink(root_hash)
         self.dnslink_update_pending = False
 
 
@@ -187,7 +188,7 @@ class YoutubeDL:
     class UnavailableError(Exception):
         pass
 
-    BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
+    BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors --limit-rate 1M "
 
     @staticmethod
     def download_video(_id):
@@ -343,6 +344,10 @@ class Downloader:
             # for now exclude those videos
             # in the future maybe exclude whole playlist 
             if video.channel_id != self.config["youtube_channel"]["id"]:
+                video.excluded = True
+                return
+
+            if video.duration > (3600 * 4) : #4h
                 video.excluded = True
                 return
             
@@ -542,5 +547,6 @@ def handle(*args, **options):
 
     if options["update_dnslink"]:
         ipfs.update_dnslink(True)
+
 
 
