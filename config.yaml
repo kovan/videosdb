@@ -1,7 +1,7 @@
 dns_zone: myzone
 dnslink_name: videos.enlightenment.yoga
 ipfs_gateway: ipfs.enlightenment.yoga
-www_root: http://www.enlightenment.yoga
+www_root: https://www.enlightenment.yoga
 ipfs_host: localhost
 ipfs_port: 5001
 wp_username: k

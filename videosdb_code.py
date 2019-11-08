@@ -188,7 +188,7 @@ class YoutubeDL:
     class UnavailableError(Exception):
         pass
 
-    BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors --limit-rate 1M "
+    BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
 
     @staticmethod
     def download_video(_id):
@@ -451,7 +451,7 @@ class Publisher:
 
     def publish_next(self, as_draft=False):
         #first publish newer videos:
-        pending_videos = Video.objects.filter(published=False, excluded=False).order_by("-id")
+        pending_videos = Video.objects.filter(published=False, excluded=False).exclude(ipfs_hash=None).order_by("-id")
         if not pending_videos:
             #if there are no new videos left, republish oldest ones:
             pending_videos = Video.objects.filter(excluded=False).order_by("published_date")
@@ -467,7 +467,7 @@ class Publisher:
 
 
     def publish_all(self, as_draft=False):
-        videos = Video.objects.filter(excluded=False)
+        videos = Video.objects.filter(excluded=False).exclude(ipfs_hash=None)
         for video in videos:
             self.publish_one(video, as_draft)
         
