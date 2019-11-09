@@ -118,6 +118,7 @@ class DNS:
         if not self.dns_zone:
             return
 
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "creds.json"
         client = dns.Client()
         zone = client.zone(self.dns_zone)
         records = zone.list_resource_record_sets()
