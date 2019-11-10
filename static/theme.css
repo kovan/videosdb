@@ -10,15 +10,16 @@
     display: none
 }
 
+.border-fixed {
+	width: 0;
+}
 
 
 html {
     margin-top: -60px !important;
-    }
 }
 
 
 video {
   object-fit: contain !important;
-  }
 }
