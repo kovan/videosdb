@@ -22,7 +22,6 @@
 # m h  dom mon dow   command
 
 SHELL=/usr/bin/zsh
-30 5 * * * cd /home/k/prj/blog-prod && git pull -q && zsh run.sh
-* * * * 1 sudo zsh /home/k/prj/blog-prod/utils/update-certs.sh
+30 5 * * * cd /home/pi/videosdb && git pull -q && zsh run.sh
 
 
