@@ -109,16 +109,15 @@ class Wordpress:
 
 @traced(logging.getLogger(__name__))
 class DNS:
-    def __init__(self, dns_zone, record_name):
+    def __init__(self, dns_zone):
         self.dns_zone = dns_zone
-        self.record_name = record_name
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "creds.json"
 
-    def update_dnslink(self, new_root_hash):
+    def _update_record(self, record_name, record_type, ttl, new_value):
         from google.cloud import dns
         if not self.dns_zone:
             return
 
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "creds.json"
         client = dns.Client()
         zone = client.zone(self.dns_zone)
         records = zone.list_resource_record_sets()
@@ -127,14 +126,19 @@ class DNS:
         changes = zone.changes()
         # delete old
         for record in records:
-            if record.name == self.record_name + "."  and record.record_type == "TXT":
+            if record.name == record_name + "."  and record.record_type == record_type:
                 changes.delete_record_set(record)
         #add new
-        record = zone.resource_record_set(self.record_name + ".","TXT", 300, ["dnslink=/ipfs/"+ new_root_hash,])
+        record = zone.resource_record_set(record_name + ".",record_type, ttl, [new_value,])
         changes.add_record_set(record)
         #finish transaction
         changes.create()
 
+    def update_dnslink(self, record_name, new_root_hash):
+        self._update_record(record_name, "TXT", 300, "dnslink=/ipfs/"+ new_root_hash)
+
+    def update_ip(self, record_name, new_ip):
+        self._update_record(record_name, "A", 300, new_ip)
 
 
 @traced(logging.getLogger(__name__))
@@ -179,8 +183,8 @@ class IPFS:
             return
 
         root_hash = self.api.files_stat("/")["Hash"]
-        dns = DNS(self.config["dns_zone"], self.config["dnslink_name"])
-        dns.update_dnslink(root_hash)
+        dns = DNS(self.config["dns_zone"])
+        dns.update_dnslink(self.config["dnslink"], root_hash)
         self.dnslink_update_pending = False
 
 
@@ -516,6 +520,7 @@ def add_arguments(parser):
     parser.add_argument("--as-draft", action="store_true")
     parser.add_argument("--regen-ipfs-folder", action="store_true")
     parser.add_argument("--update-dnslink", action="store_true")
+    parser.add_argument("--update-ip", action="store")
 
 
 @traced(logging.getLogger(__name__))
@@ -524,18 +529,28 @@ def handle(*args, **options):
     with open("config.yaml") as f:
         config = yaml.safe_load(f)
 
-    ipfs = IPFS(config)
     configure_logging(options["trace"])
 
-    downloader = Downloader(config, ipfs)
-    publisher = Publisher(config, ipfs)
+    if options["update_ip"]:
+        dns = DNS(config["dns_zone"])
+        dns.update_ip(config["dns_root"], options["update_ip"])
+        dns.update_ip(config["ipfs_gateway"], options["update_ip"])
+        dns.update_ip(config["dnslink"], options["update_ip"])
 
+    ipfs = IPFS(config)
+
+    if options["update_dnslink"]:
+        ipfs.update_dnslink(True)
+
+    downloader = Downloader(config, ipfs)
 
     if options["regen_ipfs_folder"]:
         downloader.regen_ipfs_folder()
 
     if options["check_for_new_videos"]:
         downloader.check_for_new_videos()
+
+    publisher = Publisher(config, ipfs)
 
     if options["republish_all"]:
         publisher.republish_all()
@@ -546,8 +561,7 @@ def handle(*args, **options):
     if options["publish_next"]:
         publisher.publish_next(options["as_draft"])
 
-    if options["update_dnslink"]:
-        ipfs.update_dnslink(True)
 
+        
 
 
