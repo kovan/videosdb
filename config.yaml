@@ -3,11 +3,12 @@ dns_root: enlightenment.yoga
 dnslink: videos.enlightenment.yoga
 ipfs_gateway: ipfs.enlightenment.yoga
 www_root: https://www.enlightenment.yoga
-ipfs_host: localhost
+ipfs_host: 127.0.0.1
 ipfs_port: 5001
 wp_username: k
 wp_pass: ZRULPXsazvQ!D5EUCQ 
 youtube_key: AIzaSyAs_U192_UpBeazTVuNwXphyAsmDeS9N_o
+proxy: http://34.69.149.164:3128
 youtube_channel:
     id: UCcYzLCs3zrQIBVHYA1sK2sw
     name: Sadhguru

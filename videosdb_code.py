@@ -46,7 +46,7 @@ class Wordpress:
         from wordpress_xmlrpc.methods import media
         from xmlrpc.client import Fault
         return self.client.call(media.GetMediaItem(image_id))
-    
+
     def delete(self, video):
         from wordpress_xmlrpc.methods.posts import DeletePost
         return self.client.call(DeletePost(video.post_id))
@@ -145,10 +145,12 @@ class DNS:
 class IPFS:
     def __init__(self, config):
         import ipfsapi
+
         self.config = config
         self.host = self.config["ipfs_host"]
         self.port = self.config["ipfs_port"]
         self.dnslink_update_pending = False
+#        self.api = ipfsapi.connect("/ip4/%s/tcp/%s/http" %(self.host, self.port))
         self.api = ipfsapi.connect(self.host, self.port)
 
     def add_file(self, filename, add_to_dir=True):
@@ -193,26 +195,24 @@ class YoutubeDL:
     class UnavailableError(Exception):
         pass
 
-    BASE_CMD =  "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
+    def __init__(self, proxy):
+        self.BASE_CMD = "youtube-dl --proxy " + proxy + " --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
 
-    @staticmethod
-    def download_video(_id):
+    def download_video(self, _id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
-        execute(YoutubeDL.BASE_CMD + "--output '%s' %s" %( filename_format,"http://www.youtube.com/watch?v=" + _id))
+        execute(self.BASE_CMD + "--output '%s' %s" %( filename_format,"http://www.youtube.com/watch?v=" + _id))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
 
-    @staticmethod
-    def download_thumbnail(_id):
-        execute(YoutubeDL.BASE_CMD + "--write-thumbnail --skip-download http://www.youtube.com/watch?v=" + _id)
+    def download_thumbnail(self, _id):
+        execute(self.BASE_CMD + "--write-thumbnail --skip-download http://www.youtube.com/watch?v=" + _id)
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
 
-    @staticmethod
-    def download_info(youtube_id):
-        cmd = YoutubeDL.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' http://www.youtube.com/watch?v=" + youtube_id
+    def download_info(self, youtube_id):
+        cmd = self.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' http://www.youtube.com/watch?v=" + youtube_id
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
@@ -225,13 +225,12 @@ class YoutubeDL:
                "Unable to extract video title" in out or \
                "available in your country" in out or \
                "video is unavailable" in out:
-                raise YoutubeDL.UnavailableError()
+                raise self.UnavailableError()
             raise
         return video_json
 
-    @staticmethod
-    def list_videos(url):
-        result = execute(YoutubeDL.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
+    def list_videos(self, url):
+        result = execute(self.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
         videos = []
         for video_json in result.splitlines():
             video = json.loads(video_json)
@@ -317,6 +316,7 @@ class Downloader:
         self.config = config
         self.ipfs = ipfs
         self.yt_api = YoutubeAPI(config["youtube_key"])
+        self.yt_dl = YoutubeDL(config["proxy"])
 
 
     def enqueue_videos(self, video_ids, category_name=None):
@@ -325,7 +325,7 @@ class Downloader:
 
             #if new video or missing info, download info:
             if not video.title:
-                info = YoutubeDL.download_info(video.youtube_id)
+                info = self.yt_dl.download_info(video.youtube_id)
                 video.title = info["title"]
                 video.uploader = info["uploader"]
                 video.channel_id = info["channel_id"]
@@ -352,9 +352,9 @@ class Downloader:
                 video.excluded = True
                 return
 
-            if video.duration > (3600 * 4) : #4h
-                video.excluded = True
-                return
+            #if video.duration > (3600 * 4) : #4h
+            #    video.excluded = True
+            #    return
             
             if not self.ipfs:
                 return
@@ -362,13 +362,13 @@ class Downloader:
             if not video.ipfs_hash:
                 with tempfile.TemporaryDirectory() as tmpdir:
                     os.chdir(tmpdir)
-                    video.filename = YoutubeDL.download_video(video.youtube_id)
+                    video.filename = self.yt_dl.download_video(video.youtube_id)
                     video.ipfs_hash= self.ipfs.add_file(video.filename)
 
             if not video.ipfs_thumbnail_hash:
                 with tempfile.TemporaryDirectory() as tmpdir:
                     os.chdir(tmpdir)
-                    thumbnail_filename = YoutubeDL.download_thumbnail(video.youtube_id)
+                    thumbnail_filename = self.yt_dl.download_thumbnail(video.youtube_id)
                     video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
                  
 
@@ -383,7 +383,7 @@ class Downloader:
                     category, created = Category.objects.get_or_create(name=category_name)
                     video.categories.add(category)
 
-            except YoutubeDL.UnavailableError:
+            except self.yt_dl.UnavailableError:
                 video.excluded = True
             finally:
                 video.save()
@@ -400,7 +400,7 @@ class Downloader:
                 continue
 
             playlist_url = "http://www.youtube.com/playlist?list=" + playlist["id"]
-            videos = YoutubeDL.list_videos(playlist_url)
+            videos = self.yt_dl.list_videos(playlist_url)
             video_ids = [video["id"] for video in videos]
 
             if playlist["title"] == "Uploads from " + playlist["channel_title"]:
@@ -414,6 +414,10 @@ class Downloader:
         self.enqueue_channel(channel_id)
         if self.ipfs:
             self.ipfs.update_dnslink()
+
+    def download_pending(self):
+        videos = Video.objects.filter(excluded=False, ipfs_hash=None)
+        self.enqueue_videos([v.youtube_id for v in videos])
 
     def regen_ipfs_folder(self):
         self.ipfs.api.files_mkdir("/videos")
@@ -459,7 +463,7 @@ class Publisher:
         pending_videos = Video.objects.filter(published=False, excluded=False).exclude(ipfs_hash=None).order_by("-id")
         if not pending_videos:
             #if there are no new videos left, republish oldest ones:
-            pending_videos = Video.objects.filter(excluded=False).order_by("published_date")
+            pending_videos = Video.objects.filter(excluded=False).exclude(ipfs_hash=None).order_by("published_date")
             if not pending_videos:
                 return False
             self.wordpress.delete(pending_videos[0])
@@ -514,6 +518,7 @@ def configure_logging(enable_trace):
 def add_arguments(parser):
     parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
+    parser.add_argument("-d", "--download-pending", action="store_true")
     parser.add_argument("-n", "--publish-next", action="store_true")
     parser.add_argument("-a", "--publish-all", action="store_true")
     parser.add_argument("--republish-all", action="store_true")
@@ -549,6 +554,9 @@ def handle(*args, **options):
 
     if options["check_for_new_videos"]:
         downloader.check_for_new_videos()
+
+    if options["download_pending"]:
+        downloader.download_pending()
 
     publisher = Publisher(config, ipfs)
 
