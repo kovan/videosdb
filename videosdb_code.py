@@ -144,18 +144,18 @@ class DNS:
 @traced(logging.getLogger(__name__))
 class IPFS:
     def __init__(self, config):
-        import ipfsapi
+        import ipfshttpclient
 
         self.config = config
         self.host = self.config["ipfs_host"]
         self.port = self.config["ipfs_port"]
         self.dnslink_update_pending = False
-#        self.api = ipfsapi.connect("/ip4/%s/tcp/%s/http" %(self.host, self.port))
-        self.api = ipfsapi.connect(self.host, self.port)
+        self.api = ipfshttpclient.connect("/ip4/%s/tcp/%s/http" %(self.host, self.port))
+#        self.api = ipfsapi.connect(self.host, self.port)
 
     def add_file(self, filename, add_to_dir=True):
         ipfs_hash = self.api.add(filename)["Hash"]
-        self.api.pin_add(ipfs_hash)
+        self.api.pin.add(ipfs_hash)
 
         if add_to_dir:
             self.add_to_dir(filename, ipfs_hash)
@@ -163,14 +163,14 @@ class IPFS:
         return ipfs_hash
 
     def add_to_dir(self, filename, _hash):
-        from ipfsapi.exceptions import StatusError
+        from ipfshttpclient.exceptions import StatusError
         src = "/ipfs/"+ _hash
         dst =  "/videos/" + filename
         try:
-            self.api.files_rm(dst)
+            self.api.files.rm(dst)
         except StatusError:
             pass
-        self.api.files_cp(src, dst)
+        self.api.files.cp(src, dst)
         self.dnslink_update_pending = True
 
 
@@ -184,7 +184,7 @@ class IPFS:
         if not self.dnslink_update_pending and not force:
             return
 
-        root_hash = self.api.files_stat("/")["Hash"]
+        root_hash = self.api.files.stat("/")["Hash"]
         dns = DNS(self.config["dns_zone"])
         dns.update_dnslink(self.config["dnslink"], root_hash)
         self.dnslink_update_pending = False
@@ -408,6 +408,9 @@ class Downloader:
             else:
                 self.enqueue_videos(video_ids, playlist["title"])
 
+    def download_one(self, _id):
+       self.enqueue_videos([_id]) 
+
 
     def check_for_new_videos(self):
         channel_id = self.config["youtube_channel"]["id"]
@@ -420,7 +423,7 @@ class Downloader:
         self.enqueue_videos([v.youtube_id for v in videos])
 
     def regen_ipfs_folder(self):
-        self.ipfs.api.files_mkdir("/videos")
+        self.ipfs.api.files.mkdir("/videos")
         for video in Video.objects.all():
             self.ipfs.add_to_dir(video.filename, video.ipfs_hash)
 
@@ -521,6 +524,7 @@ def add_arguments(parser):
     parser.add_argument("-d", "--download-pending", action="store_true")
     parser.add_argument("-n", "--publish-next", action="store_true")
     parser.add_argument("-a", "--publish-all", action="store_true")
+    parser.add_argument("--download-one", action="store")
     parser.add_argument("--republish-all", action="store_true")
     parser.add_argument("--as-draft", action="store_true")
     parser.add_argument("--regen-ipfs-folder", action="store_true")
@@ -548,6 +552,9 @@ def handle(*args, **options):
         ipfs.update_dnslink(True)
 
     downloader = Downloader(config, ipfs)
+
+    if options["download_one"]:
+        downloader.download_one(options["download_one"])
 
     if options["regen_ipfs_folder"]:
         downloader.regen_ipfs_folder()
