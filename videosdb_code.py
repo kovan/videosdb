@@ -200,7 +200,12 @@ class YoutubeDL:
 
     def download_video(self, _id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
-        execute(self.BASE_CMD + "--output '%s' %s" %( filename_format,"http://www.youtube.com/watch?v=" + _id))
+        cmd = self.BASE_CMD + "--output '%s' %s" %( filename_format,"http://www.youtube.com/watch?v=" + _id)
+        logging.info(cmd)
+        try:
+            execute(cmd)
+        except executor.ExternalCommandFailed as e:
+            raise self.UnavailableError()
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
