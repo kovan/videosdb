@@ -111,7 +111,7 @@ class Wordpress:
 class DNS:
     def __init__(self, dns_zone):
         self.dns_zone = dns_zone
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "creds.json"
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getcwd() + "/creds.json"
 
     def _update_record(self, record_name, record_type, ttl, new_value):
         from google.cloud import dns
@@ -184,7 +184,7 @@ class IPFS:
         if not self.dnslink_update_pending and not force:
             return
 
-        root_hash = self.api.files.stat("/")["Hash"]
+        root_hash = self.api.files.stat("/videos")["Hash"]
         dns = DNS(self.config["dns_zone"])
         dns.update_dnslink(self.config["dnslink"], root_hash)
         self.dnslink_update_pending = False
