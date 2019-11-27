@@ -8,7 +8,7 @@ ipfs_port: 5001
 wp_username: k
 wp_pass: ZRULPXsazvQ!D5EUCQ 
 youtube_key: AIzaSyAs_U192_UpBeazTVuNwXphyAsmDeS9N_o
-proxy: http://34.69.149.164:3128
+proxy: http://10.132.0.2:3128
 youtube_channel:
     id: UCcYzLCs3zrQIBVHYA1sK2sw
     name: Sadhguru
