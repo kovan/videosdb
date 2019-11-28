@@ -111,7 +111,8 @@ class Wordpress:
 class DNS:
     def __init__(self, dns_zone):
         self.dns_zone = dns_zone
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getcwd() + "/creds.json"
+        path = os.path.dirname(sys.modules[__name__].__file__)
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = path + "/creds.json"
 
     def _update_record(self, record_name, record_type, ttl, new_value):
         from google.cloud import dns
