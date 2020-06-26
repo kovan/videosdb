@@ -69,22 +69,30 @@ class Wordpress:
         </figure>
         <!-- /wp:video -->
         '''
+        template_raw = \
+                '''
+                <!-- wp:core-embed/youtube {"url":"https://www.youtube.com/watch?v=$youtube_id","type":"video","providerNameSlug":"youtube","className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
+                <figure class="wp-block-embed-youtube wp-block-embed is-type-video is-provider-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">
+                https://www.youtube.com/watch?v=$youtube_id
+                </div></figure>
+                <!-- /wp:core-embed/youtube -->
+                '''
 
-        thumbnail = self.find_image(video.thumbnail_id)
+        #thumbnail = self.find_image(video.thumbnail_id)
         template = Template(template_raw)
         html = template.substitute(
             youtube_id=video.youtube_id,
-            ipfs_gateway=self.config["ipfs_gateway"],
-            www_root=self.config["www_root"],
-            filename_quoted=quote(video.filename),
-            ipfs_hash=video.ipfs_hash,
-            thumbnail_url=thumbnail.link
+        #    ipfs_gateway=self.config["ipfs_gateway"],
+        #    www_root=self.config["www_root"],
+        #    filename_quoted=quote(video.filename),
+        #    ipfs_hash=video.ipfs_hash,
+        #    thumbnail_url=thumbnail.link
         )
 
         post = WordPressPost()
         post.title = video.title
         post.content = html
-        post.thumbnail = video.thumbnail_id
+        #post.thumbnail = video.thumbnail_id
         post.custom_fields = [{
             "key": "youtube_id",
             "value": video.youtube_id
@@ -456,8 +464,9 @@ class Publisher:
             category, created = Category.objects.get_or_create(name=category)
             video.categories.add(category)
 
+        
 
-        if not video.thumbnail_id:
+        if self.ipfs and not video.thumbnail_id:
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
                 thumbnail_filename = self.ipfs.get_file(video.ipfs_thumbnail_hash)
@@ -474,10 +483,10 @@ class Publisher:
 
     def publish_next(self, as_draft=False):
         #first publish newer videos:
-        pending_videos = Video.objects.filter(published=False, excluded=False).exclude(ipfs_hash=None).order_by("-id")
+        pending_videos = Video.objects.filter(published=False, excluded=False).order_by("-id")
         if not pending_videos:
             #if there are no new videos left, republish oldest ones:
-            pending_videos = Video.objects.filter(excluded=False).exclude(ipfs_hash=None).order_by("published_date")
+            pending_videos = Video.objects.filter(excluded=False).order_by("published_date")
             if not pending_videos:
                 return False
             self.wordpress.delete(pending_videos[0])
@@ -490,7 +499,7 @@ class Publisher:
 
 
     def publish_all(self, as_draft=False):
-        videos = Video.objects.filter(excluded=False).exclude(ipfs_hash=None)
+        videos = Video.objects.filter(excluded=False)
         for video in videos:
             self.publish_one(video, as_draft)
         
