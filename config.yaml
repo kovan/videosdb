@@ -1,14 +1,14 @@
 dns_zone: myzone
-dns_root: enlightenment.yoga
-dnslink: videos.enlightenment.yoga
-ipfs_gateway: ipfs.enlightenment.yoga
-www_root: https://www.enlightenment.yoga
-ipfs_host: 127.0.0.1
-ipfs_port: 5001
-wp_username: k
-wp_pass: ZRULPXsazvQ!D5EUCQ 
-youtube_key: AIzaSyAs_U192_UpBeazTVuNwXphyAsmDeS9N_o
-proxy: http://10.132.0.2:3128
+#dns_root: enlightenment.yoga
+#dnslink: videos.enlightenment.yoga
+#ipfs_gateway: ipfs.enlightenment.yoga
+www_root: https://www.spirituality.ws
+#ipfs_host: 127.0.0.1
+#ipfs_port: 5001
+wp_username: xaum.io@gmail.com
+wp_pass: Hb+d6KAH
+youtube_key: AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU
+proxy: #http://10.132.0.2:3128
 youtube_channel:
     id: UCcYzLCs3zrQIBVHYA1sK2sw
     name: Sadhguru
