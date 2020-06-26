@@ -197,7 +197,10 @@ class YoutubeDL:
         pass
 
     def __init__(self, proxy):
-        self.BASE_CMD = "youtube-dl --proxy " + proxy + " --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
+        if proxy:
+            self.BASE_CMD = "youtube-dl --proxy " + proxy + " --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
+        else:
+            self.BASE_CMD = "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
 
     def download_video(self, _id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
@@ -236,7 +239,9 @@ class YoutubeDL:
         return video_json
 
     def list_videos(self, url):
-        result = execute(self.BASE_CMD + "--flat-playlist --playlist-random -j " + url, check=False, capture=True, capture_stderr=True)
+        cmd = self.BASE_CMD + "--flat-playlist --playlist-random -j " + url
+        print(cmd)
+        result = execute(cmd, check=False, capture=True, capture_stderr=True)
         videos = []
         for video_json in result.splitlines():
             video = json.loads(video_json)
@@ -552,7 +557,7 @@ def handle(*args, **options):
         dns.update_ip(config["ipfs_gateway"], options["update_ip"])
         dns.update_ip(config["dnslink"], options["update_ip"])
 
-    ipfs = IPFS(config)
+    ipfs = None #IPFS(config)
 
     if options["update_dnslink"]:
         ipfs.update_dnslink(True)
