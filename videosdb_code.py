@@ -206,9 +206,9 @@ class YoutubeDL:
 
     def __init__(self, proxy):
         if proxy:
-            self.BASE_CMD = "youtube-dl --proxy " + proxy + " --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
+            self.BASE_CMD = "youtube-dl --cookies yt-cookies.txt --proxy " + proxy + " --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
         else:
-            self.BASE_CMD = "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
+            self.BASE_CMD = "youtube-dl --cookies yt-cookies.txt --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
 
     def download_video(self, _id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
@@ -270,9 +270,10 @@ class YoutubeAPI:
 
         response = requests.get(url)
         response.raise_for_status()
-        items = response.json()["items"]
-        if "nextPageToken" in response:
-            items += self._make_request(base_url, response["nextPageToken"])
+        json = response.json()
+        items = json["items"]
+        if "nextPageToken" in json:
+            items += self._make_request(base_url, json["nextPageToken"])
         return items
 
     def _get_playlist_info(self, playlist_id):
@@ -327,6 +328,16 @@ class YoutubeAPI:
         if items:
             return items[0]
         return None
+
+    def list_playlist_videos(self, playlist_id):
+        url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet"
+        url += "&playlistId=" + playlist_id
+        items = self._make_request(url)
+        video_ids = []
+        for item in items:
+            video_ids.append(item["snippet"]["resourceId"]["videoId"])
+        return video_ids
+
 
 
 @traced(logging.getLogger(__name__))
@@ -391,7 +402,6 @@ class Downloader:
                     video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
                  
 
-
         for yid in video_ids:
             video, created = Video.objects.get_or_create(youtube_id=yid)
             if video.excluded:
@@ -418,11 +428,10 @@ class Downloader:
                 playlist["title"] == "Popular uploads":
                 continue
 
-            playlist_url = "http://www.youtube.com/playlist?list=" + playlist["id"]
-            videos = self.yt_dl.list_videos(playlist_url)
-            video_ids = [video["id"] for video in videos]
+            video_ids = self.yt_api.list_playlist_videos(playlist["id"])
 
             if playlist["title"] == "Uploads from " + playlist["channel_title"]:
+                print(len(video_ids))
                 self.enqueue_videos(video_ids)
             else:
                 self.enqueue_videos(video_ids, playlist["title"])
