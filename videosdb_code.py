@@ -264,10 +264,11 @@ class YoutubeAPI:
 
     def _make_request(self, base_url, page_token=""):
         url = base_url
-        url += "&key=" + self.yt_key
         if page_token:
             url += "&pageToken=" + page_token
+        url += "&key=" + self.yt_key
 
+        print("request: " + url)
         response = requests.get(url)
         response.raise_for_status()
         json = response.json()
@@ -277,19 +278,18 @@ class YoutubeAPI:
         return items
 
     def _get_playlist_info(self, playlist_id):
-        url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
+        url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet"
         url += "&id=" + playlist_id
         items = self._make_request(url)
         playlist = {
             "id": playlist_id,
             "title": items[0]["snippet"]["title"],
-            "channel_title": items[0]["snippet"]["channelTitle"],
-            "item_count": items[0]["contentDetails"]["itemCount"],
+            "channel_title": items[0]["snippet"]["channelTitle"]
         } 
         return playlist
 
     def _get_channnelsection_playlists(self, channel_id):
-        url = "https://www.googleapis.com/youtube/v3/channelSections?part=snippet%2CcontentDetails" 
+        url = "https://www.googleapis.com/youtube/v3/channelSections?part=contentDetails" 
         url += "&channelId=" + channel_id
         items = self._make_request(url)
         playlist_ids = []
@@ -322,11 +322,12 @@ class YoutubeAPI:
         return playlists
 
     def get_video_info(self, youtube_id):
-        url = "https://www.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics"
+        url = "https://www.googleapis.com/youtube/v3/videos?part=snippet"
         url += "&id=" + youtube_id
         items = self._make_request(url)
         if items:
-            return items[0]
+            video_info = items[0]["snippet"]
+            return video_info
         return None
 
     def list_playlist_videos(self, playlist_id):
@@ -355,24 +356,26 @@ class Downloader:
 
             #if new video or missing info, download info:
             if not video.title:
-                info = self.yt_dl.download_info(video.youtube_id)
-                video.title = info["title"]
-                video.uploader = info["uploader"]
-                video.channel_id = info["channel_id"]
-                video.duration = info["duration"]
-                video.set_tags(info["tags"])
-                video.full_response = json.dumps(info)
+                #info = self.yt_dl.download_info(video.youtube_id)
+                #video.title = info["title"]
+                #video.uploader = info["uploader"]
+                #video.channel_id = info["channel_id"]
+                #video.duration = info["duration"]
+                #video.set_tags(info["tags"])
+                #video.full_response = json.dumps(info)
                 # dont use YT API in order to save quota.
                 #
-                #info = self.yt_api.get_video_info(video.youtube_id)
-                #if not info:
-                #    video.excluded = True
-                #    return
-                #video.parse_youtubeapi_info(info)
-                #video.title = info["title"]
-                #video.uploader = info["channelTitle"]
-                #video.channel_id = info["channelId"]
-                #video.set_tags(info["tags"])
+                info = self.yt_api.get_video_info(video.youtube_id)
+                if not info:
+                    video.excluded = True
+                    return
+
+                video.title = info["title"]
+                video.description = info["description"]
+                video.uploader = info["channelTitle"]
+                video.channel_id = info["channelId"]
+                if "tags" in info:
+                    video.set_tags(info["tags"])
 
 
             # some playlists include videos from other channels
@@ -382,10 +385,6 @@ class Downloader:
                 video.excluded = True
                 return
 
-            #if video.duration > (3600 * 4) : #4h
-            #    video.excluded = True
-            #    return
-            
             if not self.ipfs:
                 return
 
@@ -447,8 +446,8 @@ class Downloader:
             self.ipfs.update_dnslink()
 
     def download_pending(self):
-        videos = Video.objects.filter(excluded=False, ipfs_hash=None)
-        self.enqueue_videos([v.youtube_id for v in videos])
+        videos = Video.objects.filter(excluded=False)
+        self.enqueue_videos([v.youtube_id for v in videos if not v.title])
 
     def regen_ipfs_folder(self):
         self.ipfs.api.files.mkdir("/videos")
@@ -466,7 +465,6 @@ class Publisher:
         from django.utils import timezone
 
         new_categories = [
-             "Short videos" if video.duration/60 <= 20 else "Long videos", 
              video.uploader
         ]
         for category in new_categories:
