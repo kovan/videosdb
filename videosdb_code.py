@@ -206,9 +206,9 @@ class YoutubeDL:
 
     def __init__(self, proxy):
         if proxy:
-            self.BASE_CMD = "youtube-dl --cookies yt-cookies.txt --proxy " + proxy + " --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
+            self.BASE_CMD = "youtube-dl --proxy " + proxy + " --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
         else:
-            self.BASE_CMD = "youtube-dl --cookies yt-cookies.txt --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
+            self.BASE_CMD = "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
 
     def download_video(self, _id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
@@ -376,6 +376,7 @@ class Downloader:
                 video.channel_id = info["channelId"]
                 if "tags" in info:
                     video.set_tags(info["tags"])
+                video.full_response = json.dumps(info)
 
 
             # some playlists include videos from other channels
