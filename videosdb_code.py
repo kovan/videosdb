@@ -58,18 +58,6 @@ class Wordpress:
         from string import Template
         from urllib.parse import quote
         template_raw = \
-        '''
-        <!-- wp:video {"align":"center"} -->
-        <figure class="wp-block-video aligncenter">
-            <video controls poster="$thumbnail_url" src="https://$ipfs_gateway/ipfs/$ipfs_hash?filename=$filename_quoted">
-            </video>
-            <figcaption>
-        Download/play from: <a href="https://$ipfs_gateway/ipfs/$ipfs_hash?filename=$filename_quoted">HTTP</a> | <a href="ipns://$ipfs_hash?filename=$filename_quoted">IPFS</a> | <a href="https://www.youtube.com/watch?v=$youtube_id">YouTube</a>
-            </figcaption>
-        </figure>
-        <!-- /wp:video -->
-        '''
-        template_raw = \
                 '''
                 <!-- wp:core-embed/youtube {"url":"https://www.youtube.com/watch?v=$youtube_id","type":"video","providerNameSlug":"youtube","className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
                 <figure class="wp-block-embed-youtube wp-block-embed is-type-video is-provider-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">
@@ -82,11 +70,6 @@ class Wordpress:
         template = Template(template_raw)
         html = template.substitute(
             youtube_id=video.youtube_id,
-        #    ipfs_gateway=self.config["ipfs_gateway"],
-        #    www_root=self.config["www_root"],
-        #    filename_quoted=quote(video.filename),
-        #    ipfs_hash=video.ipfs_hash,
-        #    thumbnail_url=thumbnail.link
         )
 
         post = WordPressPost()
@@ -114,147 +97,6 @@ class Wordpress:
 
         return self.client.call(NewPost(post))
 
-
-@traced(logging.getLogger(__name__))
-class DNS:
-    def __init__(self, dns_zone):
-        self.dns_zone = dns_zone
-        path = os.path.dirname(sys.modules[__name__].__file__)
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = path + "/creds.json"
-
-    def _update_record(self, record_name, record_type, ttl, new_value):
-        from google.cloud import dns
-        if not self.dns_zone:
-            return
-
-        client = dns.Client()
-        zone = client.zone(self.dns_zone)
-        records = zone.list_resource_record_sets()
-
-        # init transaction
-        changes = zone.changes()
-        # delete old
-        for record in records:
-            if record.name == record_name + "."  and record.record_type == record_type:
-                changes.delete_record_set(record)
-        #add new
-        record = zone.resource_record_set(record_name + ".",record_type, ttl, [new_value,])
-        changes.add_record_set(record)
-        #finish transaction
-        changes.create()
-
-    def update_dnslink(self, record_name, new_root_hash):
-        self._update_record(record_name, "TXT", 300, "dnslink=/ipfs/"+ new_root_hash)
-
-    def update_ip(self, record_name, new_ip):
-        self._update_record(record_name, "A", 300, new_ip)
-
-
-@traced(logging.getLogger(__name__))
-class IPFS:
-    def __init__(self, config):
-        import ipfshttpclient
-
-        self.config = config
-        self.host = self.config["ipfs_host"]
-        self.port = self.config["ipfs_port"]
-        self.dnslink_update_pending = False
-        self.api = ipfshttpclient.connect("/ip4/%s/tcp/%s/http" %(self.host, self.port))
-#        self.api = ipfsapi.connect(self.host, self.port)
-
-    def add_file(self, filename, add_to_dir=True):
-        ipfs_hash = self.api.add(filename)["Hash"]
-        self.api.pin.add(ipfs_hash)
-
-        if add_to_dir:
-            self.add_to_dir(filename, ipfs_hash)
-
-        return ipfs_hash
-
-    def add_to_dir(self, filename, _hash):
-        from ipfshttpclient.exceptions import StatusError
-        src = "/ipfs/"+ _hash
-        dst =  "/videos/" + filename
-        try:
-            self.api.files.rm(dst)
-        except StatusError:
-            pass
-        self.api.files.cp(src, dst)
-        self.dnslink_update_pending = True
-
-
-    def get_file(self, ipfs_hash):
-        self.api.get(ipfs_hash)
-        files = os.listdir(".")
-        filename = max(files, key=os.path.getctime)
-        return filename
-
-    def update_dnslink(self, force=False):
-        if not self.dnslink_update_pending and not force:
-            return
-
-        root_hash = self.api.files.stat("/videos")["Hash"]
-        dns = DNS(self.config["dns_zone"])
-        dns.update_dnslink(self.config["dnslink"], root_hash)
-        self.dnslink_update_pending = False
-
-
-@traced(logging.getLogger(__name__))
-class YoutubeDL:
-    class UnavailableError(Exception):
-        pass
-
-    def __init__(self, proxy):
-        if proxy:
-            self.BASE_CMD = "youtube-dl --proxy " + proxy + " --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
-        else:
-            self.BASE_CMD = "youtube-dl --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors " #--limit-rate 1M "
-
-    def download_video(self, _id):
-        filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
-        cmd = self.BASE_CMD + "--output '%s' %s" %( filename_format,"http://www.youtube.com/watch?v=" + _id)
-        logging.info(cmd)
-        try:
-            execute(cmd)
-        except executor.ExternalCommandFailed as e:
-            raise self.UnavailableError()
-        files = os.listdir(".")
-        filename = max(files, key=os.path.getctime)
-        return filename
-
-    def download_thumbnail(self, _id):
-        execute(self.BASE_CMD + "--write-thumbnail --skip-download http://www.youtube.com/watch?v=" + _id)
-        files = os.listdir(".")
-        filename = max(files, key=os.path.getctime)
-        return filename
-
-    def download_info(self, youtube_id):
-        cmd = self.BASE_CMD + "--write-info-json --skip-download --output '%(id)s' http://www.youtube.com/watch?v=" + youtube_id
-        try:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                os.chdir(tmpdir)
-                result = execute(cmd, capture_stderr=True)
-                with io.open(youtube_id + ".info.json") as f:
-                    video_json = json.load(f)
-        except executor.ExternalCommandFailed as e:
-            out = str(e.command.stderr)
-            if "copyright" in out or \
-               "Unable to extract video title" in out or \
-               "available in your country" in out or \
-               "video is unavailable" in out:
-                raise self.UnavailableError()
-            raise
-        return video_json
-
-    def list_videos(self, url):
-        cmd = self.BASE_CMD + "--flat-playlist --playlist-random -j " + url
-        print(cmd)
-        result = execute(cmd, check=False, capture=True, capture_stderr=True)
-        videos = []
-        for video_json in result.splitlines():
-            video = json.loads(video_json)
-            videos.append(video)
-        return videos
 
 
 
@@ -343,11 +185,9 @@ class YoutubeAPI:
 
 @traced(logging.getLogger(__name__))
 class Downloader:
-    def __init__(self, config, ipfs):
+    def __init__(self, config):
         self.config = config
-        self.ipfs = ipfs
         self.yt_api = YoutubeAPI(config["youtube_key"])
-        self.yt_dl = YoutubeDL(config["proxy"])
 
 
     def enqueue_videos(self, video_ids, category_name=None):
@@ -356,15 +196,6 @@ class Downloader:
 
             #if new video or missing info, download info:
             if not video.title:
-                #info = self.yt_dl.download_info(video.youtube_id)
-                #video.title = info["title"]
-                #video.uploader = info["uploader"]
-                #video.channel_id = info["channel_id"]
-                #video.duration = info["duration"]
-                #video.set_tags(info["tags"])
-                #video.full_response = json.dumps(info)
-                # dont use YT API in order to save quota.
-                #
                 info = self.yt_api.get_video_info(video.youtube_id)
                 if not info:
                     video.excluded = True
@@ -385,21 +216,6 @@ class Downloader:
             if video.channel_id != self.config["youtube_channel"]["id"]:
                 video.excluded = True
                 return
-
-            if not self.ipfs:
-                return
-
-            if not video.ipfs_hash:
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    os.chdir(tmpdir)
-                    video.filename = self.yt_dl.download_video(video.youtube_id)
-                    video.ipfs_hash= self.ipfs.add_file(video.filename)
-
-            if not video.ipfs_thumbnail_hash:
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    os.chdir(tmpdir)
-                    thumbnail_filename = self.yt_dl.download_thumbnail(video.youtube_id)
-                    video.ipfs_thumbnail_hash = self.ipfs.add_file(thumbnail_filename, False)
                  
 
         for yid in video_ids:
@@ -412,8 +228,6 @@ class Downloader:
                     category, created = Category.objects.get_or_create(name=category_name)
                     video.categories.add(category)
 
-            except self.yt_dl.UnavailableError:
-                video.excluded = True
             finally:
                 video.save()
 
@@ -443,23 +257,16 @@ class Downloader:
     def check_for_new_videos(self):
         channel_id = self.config["youtube_channel"]["id"]
         self.enqueue_channel(channel_id)
-        if self.ipfs:
-            self.ipfs.update_dnslink()
 
     def download_pending(self):
         videos = Video.objects.filter(excluded=False)
         self.enqueue_videos([v.youtube_id for v in videos if not v.title])
 
-    def regen_ipfs_folder(self):
-        self.ipfs.api.files.mkdir("/videos")
-        for video in Video.objects.all():
-            self.ipfs.add_to_dir(video.filename, video.ipfs_hash)
 
 @traced(logging.getLogger(__name__))
 class Publisher:
-    def __init__(self, config, ipfs):
+    def __init__(self, config):
         self.config = config
-        self.ipfs = ipfs
         self.wordpress = Wordpress(config)
 
     def publish_one(self, video, as_draft=False):
@@ -471,15 +278,6 @@ class Publisher:
         for category in new_categories:
             category, created = Category.objects.get_or_create(name=category)
             video.categories.add(category)
-
-        
-
-        if self.ipfs and not video.thumbnail_id:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                os.chdir(tmpdir)
-                thumbnail_filename = self.ipfs.get_file(video.ipfs_thumbnail_hash)
-                thumbnail = self.wordpress.upload_image(thumbnail_filename, video.title)
-                video.thumbnail_id = thumbnail["id"]
 
         post_id = self.wordpress.publish(video, as_draft)
 
@@ -549,15 +347,10 @@ def configure_logging(enable_trace):
 def add_arguments(parser):
     parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
-    parser.add_argument("-d", "--download-pending", action="store_true")
     parser.add_argument("-n", "--publish-next", action="store_true")
     parser.add_argument("-a", "--publish-all", action="store_true")
-    parser.add_argument("--download-one", action="store")
     parser.add_argument("--republish-all", action="store_true")
     parser.add_argument("--as-draft", action="store_true")
-    parser.add_argument("--regen-ipfs-folder", action="store_true")
-    parser.add_argument("--update-dnslink", action="store_true")
-    parser.add_argument("--update-ip", action="store")
 
 
 @traced(logging.getLogger(__name__))
@@ -568,32 +361,12 @@ def handle(*args, **options):
 
     configure_logging(options["trace"])
 
-    if options["update_ip"]:
-        dns = DNS(config["dns_zone"])
-        dns.update_ip(config["dns_root"], options["update_ip"])
-        dns.update_ip(config["ipfs_gateway"], options["update_ip"])
-        dns.update_ip(config["dnslink"], options["update_ip"])
-
-    ipfs = None #IPFS(config)
-
-    if options["update_dnslink"]:
-        ipfs.update_dnslink(True)
-
-    downloader = Downloader(config, ipfs)
-
-    if options["download_one"]:
-        downloader.download_one(options["download_one"])
-
-    if options["regen_ipfs_folder"]:
-        downloader.regen_ipfs_folder()
+    downloader = Downloader(config)
 
     if options["check_for_new_videos"]:
         downloader.check_for_new_videos()
 
-    if options["download_pending"]:
-        downloader.download_pending()
-
-    publisher = Publisher(config, ipfs)
+    publisher = Publisher(config)
 
     if options["republish_all"]:
         publisher.republish_all()

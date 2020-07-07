@@ -64,13 +64,3 @@ sadhguru interview
 truth
 wisdom
 
-ADDITIONAL CSS para temas con push sidebar
---------------
-
-.widget_archive li, .widget_categories li {
-text-align: left;
-}
-.widget_archive li a, .widget_categories li a {
-  float: none;
-}
-
