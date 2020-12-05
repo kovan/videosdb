@@ -139,6 +139,8 @@ class YoutubeAPI:
             details = item.get("contentDetails")
             if not details:
                 continue
+            if not "playlists" in details:
+                continue
             playlist_ids += details["playlists"]
         return playlist_ids
 
