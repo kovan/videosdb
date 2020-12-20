@@ -57,4 +57,3 @@ varint==1.0.2
 verboselogs==1.7
 wcwidth==0.1.7
 wrapt==1.11.2
--e git+https://github.com/rg3/youtube-dl.git@ea07412ebf6fff7c17bcac9960cfe4e92ed62f12#egg=youtube_dl
