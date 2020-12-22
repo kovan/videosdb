@@ -1,4 +1,4 @@
 export AUTOLOGGING_TRACED_NOOP=1 # disable autologging
 source venv/bin/activate
-./manage.py videosdb -t --check-for-new-videos
-./manage.py videosdb -t --publish-next
+./manage.py videosdb --check-for-new-videos
+./manage.py videosdb --publish-next
