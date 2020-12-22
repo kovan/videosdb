@@ -1,14 +1,10 @@
 #!env python3
-from executor import execute
-import executor
-from autologging import traced, TRACE
-import tempfile
-import requests
 import logging
 import json
 import sys
 import os
-import io
+import requests
+from autologging import traced, TRACE
 from videosdb.models import Video, Category
 
 
