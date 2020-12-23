@@ -212,6 +212,7 @@ class Downloader:
     def enqueue_videos(self, video_ids, category_name=None):
 
         def process_video(video):
+            from django.utils.dateparse import parse_datetime
 
             #if new video or missing info, download info:
             if not video.title:
@@ -224,6 +225,7 @@ class Downloader:
                 video.description = info["description"]
                 video.uploader = info["channelTitle"]
                 video.channel_id = info["channelId"]
+                video.yt_published_date = parse_datetime(info["publishedAt"])
                 if "tags" in info:
                     video.set_tags(info["tags"])
                 video.full_response = json.dumps(info)
