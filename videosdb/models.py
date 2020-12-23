@@ -21,6 +21,7 @@ class Video(models.Model):
     added_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
     published_date = models.DateTimeField(null=True)
+    yt_published_date = models.DateTimeField(null=True)
     categories = models.ManyToManyField(Category)
     published = models.BooleanField(default=False)
     excluded = models.BooleanField(default=False)
