@@ -71,7 +71,7 @@ https://www.youtube.com/watch?v=$youtube_id
         template = Template(template_raw)
         html = template.substitute(
             youtube_id=video.youtube_id,
-	    transcript= "" if not video.transcript else "TRANSCRIPT: " + video.transcript
+	        transcript= "" if not video.transcript else "TRANSCRIPT: " + video.transcript
         )
 
         post = WordPressPost()
@@ -96,7 +96,7 @@ https://www.youtube.com/watch?v=$youtube_id
 
         print ("publishing " + str(video.post_id))
         
-        if video.published:
+        if video.post_id:
             return self.client.call(EditPost(video.post_id, post))
 
         return self.client.call(NewPost(post))
@@ -297,55 +297,22 @@ class Publisher:
         if type(video) is not Video:
             video = Video.objects.get(youtube_id=video)
 
-        new_categories = []
-        for category in new_categories:
-            category, created = Category.objects.get_or_create(name=category)
-            video.categories.add(category)
-
         post_id = self.wordpress.publish(video, as_draft)
-
-        video.published = True
         video.post_id = post_id
         video.published_date = timezone.now()
         video.save()
 
 
-    def publish_next(self, as_draft=False):
-        #first publish newer videos:
-        pending_videos = Video.objects.filter(published=False, excluded=False).order_by("-id")
-        if not pending_videos:
-            #if there are no new videos left, republish oldest ones:
-            pending_videos = Video.objects.filter(excluded=False).order_by("published_date")
-            if not pending_videos:
-                return False
-            self.wordpress.delete(pending_videos[0])
-            pending_videos[0].published = False
-            pending_videos[0].save()
-            
-
-        self.publish_one(pending_videos[0], as_draft)
-        return True
-
-
-    def publish_all(self, as_draft=False):
-        videos = Video.objects.filter(excluded=False)
-        for video in videos:
-            self.publish_one(video, as_draft)
-        
     def sync_wordpress(self):
-        pass
-        
+        videos = Video.objects.filter(excluded=False).order_by("yt_published_date")
+        for video in videos:
+            if not video.published_date or video.modified_date >= video.published_date: # has been modified
+                self.publish_one(video)
+
     def republish_all(self):
         for video in Video.objects.filter(published=True):
             self.publish_one(video) 
 
-    def reset_published(self):
-        for video in Video.objects.filter(published=True):
-            video.published = False
-            video.published_date = None
-            video.post_id = None
-            video.thumbnail_id = None
-            video.save()
 
 
 
@@ -397,12 +364,6 @@ def handle(*args, **options):
 
     if options["republish_all"]:
         publisher.republish_all()
-
-    if options["publish_all"]:
-        publisher.publish_all()
-
-    if options["publish_next"]:
-        publisher.publish_next(options["as_draft"])
 
     if options["sync_wordpress"]:
         publisher.sync_wordpress()
