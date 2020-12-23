@@ -48,24 +48,30 @@ class Wordpress:
         return self.client.call(DeletePost(video.post_id))
 
 
-    def publish(self, video, as_draft):
+    def publish(self, video: Video, as_draft: bool):
+        import xmlrpc
         from wordpress_xmlrpc import WordPressPost
         from wordpress_xmlrpc.methods.posts import NewPost, GetPosts, EditPost
         from string import Template
         from urllib.parse import quote
         template_raw = \
                 '''
-                <!-- wp:core-embed/youtube {"url":"https://www.youtube.com/watch?v=$youtube_id","type":"video","providerNameSlug":"youtube","className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
-                <figure class="wp-block-embed-youtube wp-block-embed is-type-video is-provider-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">
-                https://www.youtube.com/watch?v=$youtube_id
-                </div></figure>
-                <!-- /wp:core-embed/youtube -->
+<!-- wp:embed {"url":"https://www.youtube.com/watch?v=$youtube_id","type":"video","providerNameSlug":"youtube","responsive":true,"className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
+<figure class="wp-block-embed is-type-video is-provider-youtube wp-block-embed-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">
+https://www.youtube.com/watch?v=$youtube_id
+</div></figure>
+<!-- /wp:embed -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">$transcript</p>
+<!-- /wp:paragraph -->
                 '''
 
         #thumbnail = self.find_image(video.thumbnail_id)
         template = Template(template_raw)
         html = template.substitute(
             youtube_id=video.youtube_id,
+	    transcript= "" if not video.transcript else "TRANSCRIPT: " + video.transcript
         )
 
         post = WordPressPost()
@@ -88,6 +94,8 @@ class Wordpress:
         if not as_draft:
             post.post_status = "publish"
 
+        print ("publishing " + str(video.post_id))
+        
         if video.published:
             return self.client.call(EditPost(video.post_id, post))
 
@@ -179,6 +187,19 @@ class YoutubeAPI:
             video_ids.append(item["snippet"]["resourceId"]["videoId"])
         return video_ids
 
+    def get_video_transcript(self, youtube_id):
+        from youtube_transcript_api import YouTubeTranscriptApi
+        try:
+            t = YouTubeTranscriptApi.get_transcript(youtube_id)
+        except Exception:
+            return None
+
+        result = ""
+        for d in t:
+            result += d["text"] + " "
+        return result.capitalize() + "."
+
+
 
 
 @traced(logging.getLogger(__name__))
@@ -207,7 +228,6 @@ class Downloader:
                     video.set_tags(info["tags"])
                 video.full_response = json.dumps(info)
 
-
             # some playlists include videos from other channels
             # for now exclude those videos
             # in the future maybe exclude whole playlist 
@@ -215,6 +235,9 @@ class Downloader:
                 video.excluded = True
                 return
                  
+            if not video.transcript:
+                video.transcript = self.yt_api.get_video_transcript(video.youtube_id)
+
 
         for yid in video_ids:
             video, created = Video.objects.get_or_create(youtube_id=yid)
@@ -269,10 +292,10 @@ class Publisher:
 
     def publish_one(self, video, as_draft=False):
         from django.utils import timezone
+        if type(video) is not Video:
+            video = Video.objects.get(youtube_id=video)
 
-        new_categories = [
-             video.uploader
-        ]
+        new_categories = []
         for category in new_categories:
             category, created = Category.objects.get_or_create(name=category)
             video.categories.add(category)
@@ -307,7 +330,9 @@ class Publisher:
         for video in videos:
             self.publish_one(video, as_draft)
         
-
+    def sync_wordpress(self):
+        pass
+        
     def republish_all(self):
         for video in Video.objects.filter(published=True):
             self.publish_one(video) 
@@ -345,8 +370,10 @@ def configure_logging(enable_trace):
 def add_arguments(parser):
     parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
+    parser.add_argument("-s", "--sync-wordpress", action="store_true")
     parser.add_argument("-n", "--publish-next", action="store_true")
     parser.add_argument("-a", "--publish-all", action="store_true")
+    parser.add_argument("-o", "--publish-one", dest="video_id")
     parser.add_argument("--republish-all", action="store_true")
     parser.add_argument("--as-draft", action="store_true")
 
@@ -375,6 +402,11 @@ def handle(*args, **options):
     if options["publish_next"]:
         publisher.publish_next(options["as_draft"])
 
+    if options["sync_wordpress"]:
+        publisher.sync_wordpress()
+        
+    if options["video_id"]:
+        publisher.publish_one(options["video_id"], options["as_draft"])
 
         
 

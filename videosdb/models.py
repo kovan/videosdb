@@ -31,6 +31,7 @@ class Video(models.Model):
     channel_id = models.CharField(max_length=256, null=True)
     duration = models.IntegerField(null=True)
     full_response = models.CharField(max_length=4096, null=True)
+    transcript = models.TextField(null=True)
 
     def __str__(self):
         return self.youtube_id + " - " + self.title
