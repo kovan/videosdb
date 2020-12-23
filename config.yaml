@@ -2,7 +2,7 @@ dns_zone: myzone
 #dns_root: enlightenment.yoga
 #dnslink: videos.enlightenment.yoga
 #ipfs_gateway: ipfs.enlightenment.yoga
-www_root: https://www.spirituality.ws
+www_root: https://www.sadhguru.digital
 #ipfs_host: 127.0.0.1
 #ipfs_port: 5001
 wp_username: xaum.io@gmail.com

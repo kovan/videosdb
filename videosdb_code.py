@@ -97,9 +97,10 @@ https://www.youtube.com/watch?v=$youtube_id
         print ("publishing " + str(video.post_id))
         
         if video.post_id:
-            return self.client.call(EditPost(video.post_id, post))
+            self.client.call(EditPost(video.post_id, post))
+            return video.post_id
 
-        return self.client.call(NewPost(post))
+        return int(self.client.call(NewPost(post)))
 
 
 

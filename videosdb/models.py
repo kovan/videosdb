@@ -22,7 +22,7 @@ class Video(models.Model):
     yt_published_date = models.DateTimeField(null=True)
     categories = models.ManyToManyField(Category)
     excluded = models.BooleanField(default=False)
-    post_id = models.CharField(max_length=32, null=True)
+    post_id = models.IntegerField(null=True)
     tags = models.ManyToManyField(Tag)
     uploader = models.CharField(max_length=256, null=True)
     channel_id = models.CharField(max_length=256, null=True)
