@@ -4,3 +4,4 @@ google-cloud-dns
 pyyaml
 python-wordpress-xmlrpc
 django
+youtube_transcript_api
