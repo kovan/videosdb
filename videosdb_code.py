@@ -62,22 +62,37 @@ https://www.youtube.com/watch?v=$youtube_id
 </div></figure>
 <!-- /wp:embed -->
 
+<!-- wp:paragraph -->
+<p></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:separator -->
+<hr class="wp-block-separator"/>
+<!-- /wp:separator -->
+
+<!-- wp:spacer -->
+<div style="height:100px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->
+
 <!-- wp:paragraph {"fontSize":"small"} -->
 <p class="has-small-font-size">$transcript</p>
 <!-- /wp:paragraph -->
                 '''
 
-        #thumbnail = self.find_image(video.thumbnail_id)
+        # leave part of description specific to this video:
+        description = ""
+        if video.description:
+            description = video.description[:video.description.find("#Sadhguru")]
         template = Template(template_raw)
         html = template.substitute(
             youtube_id=video.youtube_id,
-	        transcript= "" if not video.transcript else "TRANSCRIPT: " + video.transcript
+            description=description,
+            transcript= "" if not video.transcript else "<strong>Transcript:</strong> " + video.transcript
         )
 
         post = WordPressPost()
         post.title = video.title
         post.content = html
-        #post.thumbnail = video.thumbnail_id
         post.custom_fields = [{
             "key": "youtube_id",
             "value": video.youtube_id
@@ -298,7 +313,6 @@ class Publisher:
         if type(video) is not Video:
             video = Video.objects.get(youtube_id=video)
 
-
         try:
             pub = Publication.objects.get(video=video)
             self.wordpress.publish(video, pub.post_id, as_draft)
@@ -306,9 +320,8 @@ class Publisher:
             pub = Publication()
             pub.video = video
             pub.post_id = self.wordpress.publish(video, 0, as_draft)
-        finally:
-            pub.published_date = timezone.now()
-            pub.save()
+        pub.published_date = timezone.now()
+        pub.save()
 
 
     def sync_wordpress(self):
