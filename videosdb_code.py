@@ -98,7 +98,7 @@ https://www.youtube.com/watch?v=$youtube_id
         
         if post_id:
             self.client.call(EditPost(post_id, post))
-            return video.post_id
+            return post_id
 
         return int(self.client.call(NewPost(post)))
 
