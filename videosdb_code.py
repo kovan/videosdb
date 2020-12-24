@@ -5,7 +5,7 @@ import sys
 import os
 import requests
 from autologging import traced, TRACE
-from videosdb.models import Video, Category
+from videosdb.models import Video, Category, Publication
 
 
 def dbg():
@@ -43,12 +43,12 @@ class Wordpress:
         from xmlrpc.client import Fault
         return self.client.call(media.GetMediaItem(image_id))
 
-    def delete(self, video):
+    def delete(self, post_id):
         from wordpress_xmlrpc.methods.posts import DeletePost
-        return self.client.call(DeletePost(video.post_id))
+        return self.client.call(DeletePost(post_id))
 
 
-    def publish(self, video: Video, as_draft: bool):
+    def publish(self, video: Video, post_id, as_draft: bool):
         import xmlrpc
         from wordpress_xmlrpc import WordPressPost
         from wordpress_xmlrpc.methods.posts import NewPost, GetPosts, EditPost
@@ -94,10 +94,10 @@ https://www.youtube.com/watch?v=$youtube_id
         if not as_draft:
             post.post_status = "publish"
 
-        print ("publishing " + str(video.post_id))
+        print ("publishing " + str(post_id))
         
-        if video.post_id:
-            self.client.call(EditPost(video.post_id, post))
+        if post_id:
+            self.client.call(EditPost(post_id, post))
             return video.post_id
 
         return int(self.client.call(NewPost(post)))
@@ -298,16 +298,26 @@ class Publisher:
         if type(video) is not Video:
             video = Video.objects.get(youtube_id=video)
 
-        post_id = self.wordpress.publish(video, as_draft)
-        video.post_id = post_id
-        video.published_date = timezone.now()
-        video.save()
+
+        try:
+            pub = Publication.objects.get(video=video)
+            self.wordpress.publish(video, pub.post_id, as_draft)
+        except Publication.DoesNotExist:
+            pub = Publication()
+            pub.video = video
+            pub.post_id = self.wordpress.publish(video, 0, as_draft)
+        finally:
+            pub.published_date = timezone.now()
+            pub.save()
 
 
     def sync_wordpress(self):
         videos = Video.objects.filter(excluded=False).order_by("yt_published_date")
         for video in videos:
-            if not video.published_date or video.modified_date >= video.published_date: # has been modified
+            if hasattr(video, "publication"):
+                if video.publication.published_date < video.modified_date:
+                    self.publish_one(video)
+            else:
                 self.publish_one(video)
 
     def republish_all(self):
@@ -341,7 +351,6 @@ def add_arguments(parser):
     parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
     parser.add_argument("-s", "--sync-wordpress", action="store_true")
-    parser.add_argument("-n", "--publish-next", action="store_true")
     parser.add_argument("-a", "--publish-all", action="store_true")
     parser.add_argument("-o", "--publish-one", dest="video_id")
     parser.add_argument("--republish-all", action="store_true")

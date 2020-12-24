@@ -15,14 +15,11 @@ class Video(models.Model):
     youtube_id = models.CharField(max_length=16, unique=True)
     title = models.CharField(max_length=256, null=True)
     description = models.CharField(max_length=4096, null=True)
-    filename = models.CharField(max_length=4096, null=True)
     added_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
-    published_date = models.DateTimeField(null=True)
     yt_published_date = models.DateTimeField(null=True)
     categories = models.ManyToManyField(Category)
     excluded = models.BooleanField(default=False)
-    post_id = models.IntegerField(null=True)
     tags = models.ManyToManyField(Tag)
     uploader = models.CharField(max_length=256, null=True)
     channel_id = models.CharField(max_length=256, null=True)
@@ -39,4 +36,11 @@ class Video(models.Model):
             self.tags.add(tag_obj)
         self.save()
 
+class Publication(models.Model):
+    video = models.OneToOneField(
+            Video,
+            on_delete = models.CASCADE,
+            primary_key = True)
+    published_date = models.DateTimeField()
+    post_id = models.IntegerField()
 
