@@ -1,6 +1,0 @@
-ipython
-ipdb
-pylint
-django_extensions
-
-pip-autoremove
