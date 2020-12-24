@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ipfshttpclient = "*"
+Autologging = "*"
+google-cloud-dns = "*"
+PyYAML = "*"
+python-wordpress-xmlrpc = "*"
+Django = "*"
+youtube-transcript-api = "*"
+
+[requires]
+python_version = "3"
+
+[dev-packages]
+ipython = "*"
+ipdb = "*"
+pylint = "*"
+django-extensions = "*"
+pip-autoremove = "*"
