@@ -1,6 +1,7 @@
 from django.test import TestCase
+from django.utils import timezone
 from videosdb.models import Video, Category
-from videosdb_code  import Downloader, Wordpress
+from videosdb_code  import Publisher, Downloader, Wordpress, Publication
 import yaml
 import os
 
@@ -20,7 +21,29 @@ def dbg():
     #    dl.check_for_new_videos()
         #self.assertIs
 
-class APITest(TestCase):
-    def test_api_works(self):
-        wp = Wordpress(config)
-        response = wp.set_menus({})
+#class APITest(TestCase):
+#    def test_api_works(self):
+#        wp = Wordpress(config)
+#        response = wp.set_menus({})
+
+class PublisherTest(TestCase):
+    def test_publish_one(self):
+        v = Video()
+        v.youtube_id = "xxxxxxxxxxx"
+        v.title = "New video title"
+        v.description = "Description of the new video"
+        v.excluded = False
+        v.uploader = "Sadhguru"
+        v.channel_id = "UCcYzLCs3zrQIBVHYA1sK2sw"
+        v.yt_published_date = timezone.now()
+        v.save()
+        publisher = Publisher(config)
+        p = publisher.publish_one(v, True)
+
+        Publication.objects.get(post_id=p.post_id)
+        w = Wordpress(config)
+        post = w.get(p.post_id)
+        self.assertEqual(post.title,  v.title)
+        w.delete(post.id)
+        p.delete()
+        v.delete()

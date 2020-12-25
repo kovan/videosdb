@@ -47,6 +47,9 @@ class Wordpress:
         from wordpress_xmlrpc.methods.posts import DeletePost
         return self.client.call(DeletePost(post_id))
 
+    def get(self, post_id):
+        from wordpress_xmlrpc.methods.posts import GetPost
+        return self.client.call(GetPost(post_id))
 
     def publish(self, video: Video, post_id, as_draft: bool):
         import xmlrpc
@@ -63,7 +66,7 @@ https://www.youtube.com/watch?v=$youtube_id
 <!-- /wp:embed -->
 
 <!-- wp:paragraph -->
-<p></p>
+<p>$description</p>
 <!-- /wp:paragraph -->
 
 <!-- wp:separator -->
@@ -83,6 +86,8 @@ https://www.youtube.com/watch?v=$youtube_id
         description = ""
         if video.description:
             description = video.description[:video.description.find("#Sadhguru")]
+            
+
         template = Template(template_raw)
         html = template.substitute(
             youtube_id=video.youtube_id,
@@ -109,7 +114,7 @@ https://www.youtube.com/watch?v=$youtube_id
         if not as_draft:
             post.post_status = "publish"
 
-        print ("publishing " + str(post_id))
+        logging.debug("publishing " + str(post_id))
         
         if post_id:
             self.client.call(EditPost(post_id, post))
@@ -130,7 +135,7 @@ class YoutubeAPI:
             url += "&pageToken=" + page_token
         url += "&key=" + self.yt_key
 
-        print("request: " + url)
+        logging.debug("request: " + url)
         response = requests.get(url)
         response.raise_for_status()
         json = response.json()
@@ -284,7 +289,6 @@ class Downloader:
             video_ids = self.yt_api.list_playlist_videos(playlist["id"])
 
             if playlist["title"] == "Uploads from " + playlist["channel_title"]:
-                print(len(video_ids))
                 self.enqueue_videos(video_ids)
             else:
                 self.enqueue_videos(video_ids, playlist["title"])
@@ -322,6 +326,8 @@ class Publisher:
             pub.post_id = self.wordpress.publish(video, 0, as_draft)
         pub.published_date = timezone.now()
         pub.save()
+
+        return pub
 
 
     def sync_wordpress(self):
