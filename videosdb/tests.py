@@ -51,6 +51,10 @@ class PublisherTest(TestCase):
         self.assertIn(v.youtube_id, post.content)
         if v.transcript:
             self.assertIn(v.transcript, post.content)
+
         w.delete(post.id)
         p.delete()
         v.delete()
+
+    def test_sync(self):
+        pass
