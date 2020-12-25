@@ -85,7 +85,11 @@ https://www.youtube.com/watch?v=$youtube_id
         # leave part of description specific to this video:
         description = ""
         if video.description:
-            description = video.description[:video.description.find("#Sadhguru")]
+            pos = video.description.find("#Sadhguru")
+            if pos != -1:
+                description = video.description[:pos]
+            else:
+                description = video.description
             
 
         template = Template(template_raw)

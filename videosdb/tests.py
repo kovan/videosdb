@@ -32,18 +32,25 @@ class PublisherTest(TestCase):
         v.youtube_id = "xxxxxxxxxxx"
         v.title = "New video title"
         v.description = "Description of the new video"
+        v.transcript = "This is the transcript"
         v.excluded = False
         v.uploader = "Sadhguru"
         v.channel_id = "UCcYzLCs3zrQIBVHYA1sK2sw"
         v.yt_published_date = timezone.now()
         v.save()
         publisher = Publisher(config)
-        p = publisher.publish_one(v, True)
+        p = publisher.publish_one(v)
 
         Publication.objects.get(post_id=p.post_id)
         w = Wordpress(config)
         post = w.get(p.post_id)
-        self.assertEqual(post.title,  v.title)
+        self.assertEqual(post.title, v.title)
+        self.assertEqual(post.custom_fields[0]["key"], "youtube_id" )
+        self.assertEqual(post.custom_fields[0]["value"], v.youtube_id )
+        self.assertIn(v.description, post.content)
+        self.assertIn(v.youtube_id, post.content)
+        if v.transcript:
+            self.assertIn(v.transcript, post.content)
         w.delete(post.id)
         p.delete()
         v.delete()
