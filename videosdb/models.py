@@ -14,7 +14,7 @@ class Category(models.Model):
 class Video(models.Model):
     youtube_id = models.CharField(max_length=16, unique=True)
     title = models.CharField(max_length=256, null=True)
-    description = models.CharField(max_length=4096, null=True)
+    description = models.TextField(null=True)
     added_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
     yt_published_date = models.DateTimeField(null=True)

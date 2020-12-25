@@ -90,7 +90,8 @@ https://www.youtube.com/watch?v=$youtube_id
                 description = video.description[:pos]
             else:
                 description = video.description
-            
+            description = description.replace("\n", "<br/>")
+
 
         template = Template(template_raw)
         html = template.substitute(

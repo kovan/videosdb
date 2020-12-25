@@ -5,3 +5,4 @@ logs/
 db.sqlite3
 db.sqlite3-journal
 config.yaml
+dbtest.sqlite3
