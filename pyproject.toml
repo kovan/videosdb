@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "videosdb"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+Django = "^3.1.4"
+ipfshttpclient = "^0.6.1"
+Autologging = "^1.3.2"
+google-cloud-dns = "^0.32.1"
+PyYAML = "^5.3.1"
+python-wordpress-xmlrpc = "^2.3"
+youtube-transcript-api = "^0.3.1"
+Jinja2 = "^2.11.2"
+
+[tool.poetry.dev-dependencies]
+ipython = "^7.19.0"
+ipdb = "^0.13.4"
+pylint = "^2.6.0"
+django-extensions = "^3.1.0"
+pip-autoremove = "^0.9.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
