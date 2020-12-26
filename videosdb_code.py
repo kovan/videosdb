@@ -58,7 +58,6 @@ class Wordpress:
 
     def find_image(self, image_id):
         from wordpress_xmlrpc.methods import media
-        from xmlrpc.client import Fault
         return self.client.call(media.GetMediaItem(image_id))
 
     def delete(self, post_id):
@@ -70,10 +69,9 @@ class Wordpress:
         return self.client.call(GetPost(post_id))
 
     def publish(self, video: Video, post_id, as_draft: bool):
-        import xmlrpc
         from wordpress_xmlrpc import WordPressPost
-        from wordpress_xmlrpc.methods.posts import NewPost, GetPosts, EditPost
-        import jinja2 
+        from wordpress_xmlrpc.methods.posts import NewPost, EditPost
+        import jinja2
         template_raw = \
                 '''
 <!-- wp:embed {"url":"https://www.youtube.com/watch?v={{youtube_id}}","type":"video","providerNameSlug":"youtube","responsive":true,"className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
@@ -379,7 +377,6 @@ class Publisher:
 @traced(logging.getLogger(__name__))
 def configure_logging(enable_trace):
     import logging.handlers
-    import pathlib
     
     logger = logging.getLogger(__name__)
     formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
