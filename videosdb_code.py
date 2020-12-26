@@ -48,7 +48,6 @@ class Wordpress:
 
     def find_image(self, image_id):
         from wordpress_xmlrpc.methods import media
-        from xmlrpc.client import Fault
         return self.client.call(media.GetMediaItem(image_id))
 
     def delete(self, post_id):
@@ -60,10 +59,9 @@ class Wordpress:
         return self.client.call(GetPost(post_id))
 
     def publish(self, video: Video, post_id, as_draft: bool):
-        import xmlrpc
         from wordpress_xmlrpc import WordPressPost
-        from wordpress_xmlrpc.methods.posts import NewPost, GetPosts, EditPost
-        import jinja2 
+        from wordpress_xmlrpc.methods.posts import NewPost, EditPost
+        import jinja2
         template_raw = \
                 '''
 <!-- wp:embed {"url":"https://www.youtube.com/watch?v={{youtube_id}}","type":"video","providerNameSlug":"youtube","responsive":true,"className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
@@ -104,9 +102,9 @@ https://www.youtube.com/watch?v={{youtube_id}}
             description = ""
 
         if video.transcript:
-           transcript = _sentence_case(video.transcript)
+            transcript = _sentence_case(video.transcript)
         else:
-           transcript = ""
+            transcript = ""
 
         template = jinja2.Template(template_raw)
         html = template.render(
@@ -277,7 +275,7 @@ class Downloader:
             if video.channel_id != self.config["youtube_channel"]["id"]:
                 video.excluded = True
                 return
-                 
+
             if not video.transcript:
                 video.transcript = self.yt_api.get_video_transcript(video.youtube_id)
 
@@ -314,7 +312,7 @@ class Downloader:
                 self.enqueue_videos(video_ids, playlist["title"])
 
     def download_one(self, _id):
-       self.enqueue_videos([_id]) 
+        self.enqueue_videos([_id]) 
 
 
     def check_for_new_videos(self):
@@ -369,7 +367,6 @@ class Publisher:
 @traced(logging.getLogger(__name__))
 def configure_logging(enable_trace):
     import logging.handlers
-    import pathlib
     
     logger = logging.getLogger(__name__)
     formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
@@ -416,10 +413,6 @@ def handle(*args, **options):
 
     if options["sync_wordpress"]:
         publisher.sync_wordpress()
-        
+     
     if options["video_id"]:
         publisher.publish_one(options["video_id"], options["as_draft"])
-
-        
-
-
