@@ -11,6 +11,7 @@ PyYAML = "*"
 python-wordpress-xmlrpc = "*"
 Django = "*"
 youtube-transcript-api = "*"
+jinja2 = "*"
 
 [requires]
 python_version = "3"
