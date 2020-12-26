@@ -55,19 +55,20 @@ class Wordpress:
         import xmlrpc
         from wordpress_xmlrpc import WordPressPost
         from wordpress_xmlrpc.methods.posts import NewPost, GetPosts, EditPost
-        from string import Template
-        from urllib.parse import quote
+        import jinja2 
         template_raw = \
                 '''
-<!-- wp:embed {"url":"https://www.youtube.com/watch?v=$youtube_id","type":"video","providerNameSlug":"youtube","responsive":true,"className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
+<!-- wp:embed {"url":"https://www.youtube.com/watch?v={{youtube_id}}","type":"video","providerNameSlug":"youtube","responsive":true,"className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
 <figure class="wp-block-embed is-type-video is-provider-youtube wp-block-embed-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">
-https://www.youtube.com/watch?v=$youtube_id
+https://www.youtube.com/watch?v={{youtube_id}}
 </div></figure>
 <!-- /wp:embed -->
 
 <!-- wp:paragraph -->
-<p>$description</p>
+<p>{{description| urlize | replace("\n", "<br/>")}}</p>
 <!-- /wp:paragraph -->
+
+{% if transcript %}
 
 <!-- wp:separator -->
 <hr class="wp-block-separator"/>
@@ -78,26 +79,26 @@ https://www.youtube.com/watch?v=$youtube_id
 <!-- /wp:spacer -->
 
 <!-- wp:paragraph {"fontSize":"small"} -->
-<p class="has-small-font-size">$transcript</p>
+<p class="has-small-font-size"><strong>Transcript: </strong> {{transcript}}</p>
 <!-- /wp:paragraph -->
+
+{% endif %}
                 '''
 
-        # leave part of description specific to this video:
         description = ""
         if video.description:
+            # leave part of description specific to this video:
             pos = video.description.find("#Sadhguru")
             if pos != -1:
                 description = video.description[:pos]
             else:
                 description = video.description
-            description = description.replace("\n", "<br/>")
 
-
-        template = Template(template_raw)
-        html = template.substitute(
+        template = jinja2.Template(template_raw)
+        html = template.render(
             youtube_id=video.youtube_id,
             description=description,
-            transcript= "" if not video.transcript else "<strong>Transcript:</strong> " + video.transcript
+            transcript=video.transcript
         )
 
         post = WordPressPost()
