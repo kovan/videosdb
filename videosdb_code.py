@@ -13,6 +13,25 @@ def dbg():
     import ipdb
     ipdb.set_trace()
 
+def _sentence_case(text):
+    import re
+    # Split into sentences. Therefore, find all text that ends
+    # with punctuation followed by white space or end of string.
+#    sentences = re.findall('[^.!?]+[.!?](?:\s|\Z)', text)
+
+    # Capitalize the first letter of each sentence
+#    sentences = [x[0].upper() + x[1:] for x in sentences]
+
+    # Combine sentences
+#    return ''.join(sentences)
+
+    punc_filter = re.compile('([.!?]\s*)')
+    split_with_punctuation = punc_filter.split(text)
+
+    final = ''.join([i.capitalize() for i in split_with_punctuation])
+    return final
+
+
 @traced(logging.getLogger(__name__))
 class Wordpress:
     def __init__(self, config):
@@ -22,7 +41,6 @@ class Wordpress:
             self.config["www_root"] + "/xmlrpc.php",
             self.config["wp_username"],
             self.config["wp_pass"])
-
     def upload_image(self, filename, title):
         from wordpress_xmlrpc.compat import xmlrpc_client
         from wordpress_xmlrpc.methods import media
@@ -85,7 +103,6 @@ https://www.youtube.com/watch?v={{youtube_id}}
 {% endif %}
                 '''
 
-        description = ""
         if video.description:
             # leave part of description specific to this video:
             pos = video.description.find("#Sadhguru")
@@ -93,12 +110,19 @@ https://www.youtube.com/watch?v={{youtube_id}}
                 description = video.description[:pos]
             else:
                 description = video.description
+        else:
+            description = ""
+
+        if video.transcript:
+           transcript = _sentence_case(video.transcript)
+        else:
+           transcript = ""
 
         template = jinja2.Template(template_raw)
         html = template.render(
             youtube_id=video.youtube_id,
             description=description,
-            transcript=video.transcript
+            transcript=transcript
         )
 
         post = WordPressPost()
@@ -346,8 +370,8 @@ class Publisher:
                 self.publish_one(video)
 
     def republish_all(self):
-        for video in Video.objects.filter(published=True):
-            self.publish_one(video) 
+        for pub in Publication.objects.all():
+            self.publish_one(pub.video) 
 
 
 
