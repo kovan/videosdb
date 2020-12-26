@@ -15,16 +15,6 @@ def dbg():
 
 def _sentence_case(text):
     import re
-    # Split into sentences. Therefore, find all text that ends
-    # with punctuation followed by white space or end of string.
-#    sentences = re.findall('[^.!?]+[.!?](?:\s|\Z)', text)
-
-    # Capitalize the first letter of each sentence
-#    sentences = [x[0].upper() + x[1:] for x in sentences]
-
-    # Combine sentences
-#    return ''.join(sentences)
-
     punc_filter = re.compile('([.!?]\s*)')
     split_with_punctuation = punc_filter.split(text)
 
@@ -83,7 +73,7 @@ https://www.youtube.com/watch?v={{youtube_id}}
 <!-- /wp:embed -->
 
 <!-- wp:paragraph -->
-<p>{{description| urlize | replace("\n", "<br/>")}}</p>
+<p> {{description| urlize | replace("\n", "<br/>")}}</p>
 <!-- /wp:paragraph -->
 
 {% if transcript %}
