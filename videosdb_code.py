@@ -124,6 +124,7 @@ https://www.youtube.com/watch?v={{youtube_id}}
         )
 
         post = WordPressPost()
+        post.excerpt = description
         post.title = video.title
         post.content = html
         post.custom_fields = [{
