@@ -86,13 +86,17 @@ https://www.youtube.com/watch?v={{youtube_id}}
 
 {% if transcript %}
 
-<!-- wp:separator -->
-<hr class="wp-block-separator"/>
-<!-- /wp:separator -->
+<!-- wp:more -->
+<!--more-->
+<!-- /wp:more -->
 
 <!-- wp:spacer -->
 <div style="height:100px" aria-hidden="true" class="wp-block-spacer"></div>
 <!-- /wp:spacer -->
+
+<!-- wp:separator -->
+<hr class="wp-block-separator"/>
+<!-- /wp:separator -->
 
 <!-- wp:paragraph {"fontSize":"small"} -->
 <p class="has-small-font-size"><strong>Transcript: </strong> {{transcript}}</p>
