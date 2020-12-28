@@ -1,0 +1,429 @@
+#!env python3
+import logging
+import re
+import json
+import sys
+import os
+import requests
+from autologging import traced, TRACE
+from django.conf import settings
+from videosdb.models import Video, Category, Publication
+
+
+def dbg():
+    os.chdir("/tmp")
+    import ipdb
+    ipdb.set_trace()
+
+def _sentence_case(text):
+    punc_filter = re.compile(r'([.!?]\s*)')
+    split_with_punctuation = punc_filter.split(text)
+
+    final = ''.join([i.capitalize() for i in split_with_punctuation])
+    return final
+
+
+@traced(logging.getLogger(__name__))
+class Wordpress:
+    def __init__(self):
+        from wordpress_xmlrpc import Client
+        self.client = Client(
+            settings.WWW_ROOT +   "/xmlrpc.php",
+            settings.WP_USERNAME,
+            settings.WP_PASS)
+
+    def upload_image(self, filename, title):
+        from wordpress_xmlrpc.compat import xmlrpc_client
+        from wordpress_xmlrpc.methods import media
+
+        data = {
+            "name": title + ".jpg",
+            'type': 'image/jpeg',
+        }
+
+        with open(filename, 'rb') as img:
+            data['bits'] = xmlrpc_client.Binary(img.read())
+
+        thumbnail = self.client.call(media.UploadFile(data))
+        return thumbnail
+
+    def find_image(self, image_id):
+        from wordpress_xmlrpc.methods import media
+        return self.client.call(media.GetMediaItem(image_id))
+
+    def delete(self, post_id):
+        from wordpress_xmlrpc.methods.posts import DeletePost
+        return self.client.call(DeletePost(post_id))
+
+    def get(self, post_id):
+        from wordpress_xmlrpc.methods.posts import GetPost
+        return self.client.call(GetPost(post_id))
+
+    def get_all(self, filter):
+        from wordpress_xmlrpc.methods.posts import GetPosts
+        return self.client.call(GetPosts(filter))
+
+    def publish(self, video: Video, post_id, as_draft: bool):
+        from wordpress_xmlrpc import WordPressPost
+        from wordpress_xmlrpc.methods.posts import NewPost, EditPost
+        import jinja2
+        template_raw = \
+                '''
+<!-- wp:embed {"url":"https://www.youtube.com/watch?v={{youtube_id}}","type":"video","providerNameSlug":"youtube","responsive":true,"className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
+<figure class="wp-block-embed is-type-video is-provider-youtube wp-block-embed-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">
+https://www.youtube.com/watch?v={{youtube_id}}
+</div></figure>
+<!-- /wp:embed -->
+
+<!-- wp:paragraph -->
+<p> {{description| urlize | replace("\n", "<br/>")}}</p>
+<!-- /wp:paragraph -->
+
+{% if transcript %}
+
+<!-- wp:more -->
+<!--more-->
+<!-- /wp:more -->
+
+<!-- wp:spacer -->
+<div style="height:100px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->
+
+<!-- wp:separator -->
+<hr class="wp-block-separator"/>
+<!-- /wp:separator -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><strong>Transcript: </strong> {{transcript}}</p>
+<!-- /wp:paragraph -->
+
+{% endif %}
+                '''
+        description = ""
+        if video.description:
+            # leave part of description specific to this video:
+            match = re.search(settings.TRUNCATE_DESCRIPTION_AFTER, video.description)
+            if match and match.start() != -1:
+                description = video.description[:match.start()]
+            else:
+                description = video.description
+
+        transcript = ""
+        if video.transcript:
+            transcript = _sentence_case(video.transcript)
+
+
+        template = jinja2.Template(template_raw)
+        html = template.render(
+            youtube_id=video.youtube_id,
+            description=description,
+            transcript=transcript
+        )
+
+        post = WordPressPost()
+        post.excerpt = description
+        post.title = video.title
+        post.content = html
+        post.custom_fields = [{
+            "key": "youtube_id",
+            "value": video.youtube_id
+        }]
+
+        post.terms_names = {}
+
+        if video.categories:
+            post.terms_names["category"] = [str(c) for c in video.categories.all()]
+        
+        if video.tags:
+            post.terms_names["post_tag"] = [str(t) for t in video.tags.all()]
+
+        if not as_draft:
+            post.post_status = "publish"
+
+        logging.debug("publishing " + str(post_id))
+        
+        if post_id:
+            self.client.call(EditPost(post_id, post))
+            return post_id
+
+        return int(self.client.call(NewPost(post)))
+
+
+
+
+class YoutubeAPI:
+    def __init__(self, yt_key):
+        self.yt_key = yt_key
+
+    def _make_request(self, base_url, page_token=""):
+        url = base_url
+        if page_token:
+            url += "&pageToken=" + page_token
+        url += "&key=" + self.yt_key
+
+        logging.debug("request: " + url)
+        response = requests.get(url)
+        response.raise_for_status()
+        json = response.json()
+        items = json["items"]
+        if "nextPageToken" in json:
+            items += self._make_request(base_url, json["nextPageToken"])
+        return items
+
+    def _get_playlist_info(self, playlist_id):
+        url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet"
+        url += "&id=" + playlist_id
+        items = self._make_request(url)
+        playlist = {
+            "id": playlist_id,
+            "title": items[0]["snippet"]["title"],
+            "channel_title": items[0]["snippet"]["channelTitle"]
+        } 
+        return playlist
+
+    def _get_channnelsection_playlists(self, channel_id):
+        url = "https://www.googleapis.com/youtube/v3/channelSections?part=contentDetails" 
+        url += "&channelId=" + channel_id
+        items = self._make_request(url)
+        playlist_ids = []
+        for item in items:
+            details = item.get("contentDetails")
+            if not details:
+                continue
+            if not "playlists" in details:
+                continue
+            playlist_ids += details["playlists"]
+        return playlist_ids
+
+    def _get_channel_playlists(self, channel_id):
+        url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
+        url += "&channelId=" + channel_id
+        items = self._make_request(url)
+        playlist_ids = []
+        for item in items:
+            playlist_ids.append(item["id"])
+        return playlist_ids
+
+    def list_playlists(self, channel_id):
+        ids_channelsection = self._get_channnelsection_playlists(channel_id) 
+        ids_channel =  self._get_channel_playlists(channel_id) 
+
+        playlist_ids = set(ids_channelsection + ids_channel)
+        playlists = []
+        for _id in playlist_ids:
+            playlist = self._get_playlist_info(_id)
+            playlists.append(playlist)
+
+        return playlists
+
+    def get_video_info(self, youtube_id):
+        url = "https://www.googleapis.com/youtube/v3/videos?part=snippet"
+        url += "&id=" + youtube_id
+        items = self._make_request(url)
+        if items:
+            video_info = items[0]["snippet"]
+            return video_info
+        return None
+
+    def list_playlist_videos(self, playlist_id):
+        url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet"
+        url += "&playlistId=" + playlist_id
+        items = self._make_request(url)
+        video_ids = []
+        for item in items:
+            video_ids.append(item["snippet"]["resourceId"]["videoId"])
+        return video_ids
+
+    def get_video_transcript(self, youtube_id):
+        from youtube_transcript_api import YouTubeTranscriptApi
+        try:
+            t = YouTubeTranscriptApi.get_transcript(youtube_id)
+        except Exception:
+            return None
+
+        result = ""
+        for d in t:
+            result += d["text"] + " "
+        return result.capitalize() + "."
+
+
+
+
+@traced(logging.getLogger(__name__))
+class Downloader:
+    def __init__(self):
+        self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
+
+
+    def enqueue_videos(self, video_ids, category_name=None):
+
+        def process_video(video):
+            from django.utils.dateparse import parse_datetime
+
+            #if new video or missing info, download info:
+            if not video.title:
+                info = self.yt_api.get_video_info(video.youtube_id)
+                if not info:
+                    video.excluded = True
+                    return
+
+                video.title = info["title"]
+                video.description = info["description"]
+                video.uploader = info["channelTitle"]
+                video.channel_id = info["channelId"]
+                video.yt_published_date = parse_datetime(info["publishedAt"])
+                if "tags" in info:
+                    video.set_tags(info["tags"])
+                video.full_response = json.dumps(info)
+
+            # some playlists include videos from other channels
+            # for now exclude those videos
+            # in the future maybe exclude whole playlist 
+            if video.channel_id != settings.YOUTUBE_CHANNEL["id"]:
+                video.excluded = True
+                return
+
+            if not video.transcript:
+                video.transcript = self.yt_api.get_video_transcript(video.youtube_id)
+
+
+        for yid in video_ids:
+            video, created = Video.objects.get_or_create(youtube_id=yid)
+            if video.excluded:
+                continue
+            try:
+                process_video(video)
+                if category_name:
+                    category, created = Category.objects.get_or_create(name=category_name)
+                    video.categories.add(category)
+
+            finally:
+                video.save()
+
+
+
+    def enqueue_channel(self, channel_id):
+        playlists = self.yt_api.list_playlists(channel_id)
+        for playlist in playlists:
+            if playlist["channel_title"] != settings.YOUTUBE_CHANNEL["name"]:
+                continue
+            if playlist["title"] == "Liked videos" or \
+                playlist["title"] == "Popular uploads":
+                continue
+
+            video_ids = self.yt_api.list_playlist_videos(playlist["id"])
+
+            if playlist["title"] == "Uploads from " + playlist["channel_title"]:
+                self.enqueue_videos(video_ids)
+            else:
+                self.enqueue_videos(video_ids, playlist["title"])
+
+    def download_one(self, _id):
+        self.enqueue_videos([_id]) 
+
+
+    def check_for_new_videos(self):
+        channel_id = settings.YOUTUBE_CHANNEL["id"]
+        self.enqueue_channel(channel_id)
+
+    def download_pending(self):
+        videos = Video.objects.filter(excluded=False)
+        self.enqueue_videos([v.youtube_id for v in videos if not v.title])
+
+
+@traced(logging.getLogger(__name__))
+class Publisher:
+    def __init__(self):
+        self.wordpress = Wordpress()
+
+    def publish_one(self, video, as_draft=False):
+        from django.utils import timezone
+        if type(video) is not Video:
+            video = Video.objects.get(youtube_id=video)
+
+        try:
+            pub = Publication.objects.get(video=video)
+            self.wordpress.publish(video, pub.post_id, as_draft)
+        except Publication.DoesNotExist:
+            pub = Publication()
+            pub.video = video
+            pub.post_id = self.wordpress.publish(video, 0, as_draft)
+        pub.published_date = timezone.now()
+        pub.save()
+
+        return pub
+
+    def unpublish_one(self, publication):
+        self.wordpress.delete(publication.post_id)
+        publication.delete()
+
+
+    def sync_wordpress(self):
+        videos = Video.objects.filter(excluded=False).order_by("yt_published_date")
+        for video in videos:
+            if not hasattr(video, "publication") \
+                or video.publication.published_date < video.modified_date: 
+                    self.publish_one(video)
+
+        for pub in Publication.objects.all():
+            if pub.video not in videos:
+                self.unpublish_one(pub)
+
+            
+
+    def republish_all(self):
+        for pub in Publication.objects.all():
+            self.publish_one(pub.video) 
+
+
+
+
+@traced(logging.getLogger(__name__))
+def configure_logging(enable_trace):
+    import logging.handlers
+    
+    logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
+    if not os.path.exists("logs"):
+        os.makedirs("logs")
+    handler = logging.handlers.RotatingFileHandler("./logs/log", 'a', 1000000, 10)
+    handler2 = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+    handler2.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.addHandler(handler2)
+
+    if enable_trace:
+        logger.setLevel(TRACE)
+
+@traced(logging.getLogger(__name__))
+def add_arguments(parser):
+    parser.add_argument("-t", "--trace", action="store_true")
+    parser.add_argument("-c", "--check-for-new-videos", action="store_true")
+    parser.add_argument("-s", "--sync-wordpress", action="store_true")
+    parser.add_argument("-a", "--publish-all", action="store_true")
+    parser.add_argument("-o", "--publish-one", dest="video_id")
+    parser.add_argument("--republish-all", action="store_true")
+    parser.add_argument("--as-draft", action="store_true")
+
+
+@traced(logging.getLogger(__name__))
+def handle(*args, **options):
+
+    configure_logging(options["trace"])
+
+    downloader = Downloader()
+
+    if options["check_for_new_videos"]:
+        downloader.check_for_new_videos()
+
+    publisher = Publisher()
+
+    if options["republish_all"]:
+        publisher.republish_all()
+
+    if options["sync_wordpress"]:
+        publisher.sync_wordpress()
+     
+    if options["video_id"]:
+        publisher.publish_one(options["video_id"], options["as_draft"])
