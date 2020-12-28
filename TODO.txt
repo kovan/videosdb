@@ -1,9 +1,14 @@
 TODO
 ------------------------
-- ajustar thumbnail para videos 4:3
-- eliminar atributo preload/no preload
-- migrar a dominio enlightehment.yoga
-
+- usar google-api-python-client para peticiones a youtube
+  - cuando de error por pasar la cuota nunca se debería poner excluded=True
+- añadir algún test para el Downloader
+- integrar bien en Django el videosdb_code.py y el config.yaml
+  - separar clases en ficheros separados
+- Wordpress: mejoras para encontrar videos:
+  - buscador filtros por rangos de fechas, visitas, idioma, palabras en campos... etc.
+  - carrusel de videos destacados al entrar¿?
+  - vista de cuadrícula de videos
 
 
 
