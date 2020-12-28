@@ -76,7 +76,7 @@ https://www.youtube.com/watch?v={{youtube_id}}
 <!-- /wp:embed -->
 
 <!-- wp:paragraph -->
-<p>{{description| urlize | replace("\n", "<br/>")}}</p>
+<p> {{description| urlize | replace("\n", "<br/>")}}</p>
 <!-- /wp:paragraph -->
 
 {% if transcript %}
