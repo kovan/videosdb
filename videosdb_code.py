@@ -15,6 +15,7 @@ def dbg():
 
 def _sentence_case(text):
     import re
+
     punc_filter = re.compile('([.!?]\s*)')
     split_with_punctuation = punc_filter.split(text)
 
@@ -58,6 +59,10 @@ class Wordpress:
         from wordpress_xmlrpc.methods.posts import GetPost
         return self.client.call(GetPost(post_id))
 
+    def get_all(self, filter):
+        from wordpress_xmlrpc.methods.posts import GetPosts
+        return self.client.call(GetPosts(filter))
+
     def publish(self, video: Video, post_id, as_draft: bool):
         from wordpress_xmlrpc import WordPressPost
         from wordpress_xmlrpc.methods.posts import NewPost, EditPost
@@ -97,7 +102,7 @@ https://www.youtube.com/watch?v={{youtube_id}}
 
         if video.description:
             # leave part of description specific to this video:
-            pos = video.description.find("#Sadhguru")
+            pos = video.description.find(self.config["truncate_description_after"])
             if pos != -1:
                 description = video.description[:pos]
             else:
@@ -352,15 +357,23 @@ class Publisher:
 
         return pub
 
+    def unpublish_one(self, publication):
+        self.wordpress.delete(publication.post_id)
+        publication.delete()
+
 
     def sync_wordpress(self):
         videos = Video.objects.filter(excluded=False).order_by("yt_published_date")
         for video in videos:
-            if hasattr(video, "publication"):
-                if video.publication.published_date < video.modified_date:
+            if not hasattr(video, "publication") \
+                or video.publication.published_date < video.modified_date: 
                     self.publish_one(video)
-            else:
-                self.publish_one(video)
+
+        for pub in Publication.objects.all():
+            if pub.video not in videos:
+                self.unpublish_one(pub)
+
+            
 
     def republish_all(self):
         for pub in Publication.objects.all():
