@@ -1,5 +1,6 @@
 #!env python3
 import logging
+import re
 import json
 import sys
 import os
@@ -14,8 +15,6 @@ def dbg():
     ipdb.set_trace()
 
 def _sentence_case(text):
-    import re
-
     punc_filter = re.compile('([.!?]\s*)')
     split_with_punctuation = punc_filter.split(text)
 
@@ -102,9 +101,9 @@ https://www.youtube.com/watch?v={{youtube_id}}
 
         if video.description:
             # leave part of description specific to this video:
-            pos = video.description.find(self.config["truncate_description_after"])
-            if pos != -1:
-                description = video.description[:pos]
+            match = re.search(self.config["truncate_description_after"], video.description)
+            if match.start() != -1:
+                description = video.description[:match.start()]
             else:
                 description = video.description
         else:

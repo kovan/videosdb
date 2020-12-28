@@ -28,10 +28,11 @@ def dbg():
 
 class PublisherTest(TestCase):
     def test_publish_one(self):
+        config["truncate_description_after"] = r"c|Click"
         v = Video()
         v.youtube_id = "xxxxxxxxxxx"
         v.title = "New video title"
-        v.description = "Description of the new video"
+        v.description = "Description of the video click this should be hidden"
         v.transcript = "This is the transcript"
         v.excluded = False
         v.uploader = "Sadhguru"
@@ -47,7 +48,8 @@ class PublisherTest(TestCase):
         self.assertEqual(post.title, v.title)
         self.assertEqual(post.custom_fields[0]["key"], "youtube_id" )
         self.assertEqual(post.custom_fields[0]["value"], v.youtube_id )
-        self.assertIn(v.description, post.content)
+        self.assertIn("Description of the video", post.content)
+        self.assertNotIn("this should be hidden", post.content)
         self.assertIn(v.youtube_id, post.content)
         if v.transcript:
             self.assertIn(v.transcript, post.content)
