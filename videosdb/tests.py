@@ -1,11 +1,11 @@
 from django.test import TestCase
 from django.utils import timezone
 from videosdb.models import Video, Category
-from videosdb_code  import Publisher, Downloader, Wordpress, Publication
-import yaml
+from videosdb.backend.code  import Publisher, Downloader, Wordpress, Publication
+
 import os
 
-config = yaml.load(open("config.yaml"))
+
 
 def dbg():
     os.chdir("/tmp")
@@ -28,7 +28,7 @@ def dbg():
 
 class PublisherTest(TestCase):
     def test_publish_one(self):
-        config["truncate_description_after"] = r"c|Click"
+
         v = Video()
         v.youtube_id = "xxxxxxxxxxx"
         v.title = "New video title"
@@ -39,11 +39,12 @@ class PublisherTest(TestCase):
         v.channel_id = "UCcYzLCs3zrQIBVHYA1sK2sw"
         v.yt_published_date = timezone.now()
         v.save()
-        publisher = Publisher(config)
-        p = publisher.publish_one(v)
+        publisher = Publisher()
+        with self.settings(TRUNCATE_DESCRIPTION_AFTER=r"(c|C)lick"):
+            p = publisher.publish_one(v)
 
         Publication.objects.get(post_id=p.post_id)
-        w = Wordpress(config)
+        w = Wordpress()
         post = w.get(p.post_id)
         self.assertEqual(post.title, v.title)
         self.assertEqual(post.custom_fields[0]["key"], "youtube_id" )

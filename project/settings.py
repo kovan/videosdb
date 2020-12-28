@@ -123,3 +123,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+WWW_ROOT= "http://192.168.0.19"
+WP_USERNAME = "k"
+WP_PASS = "k"
+YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
+YOUTUBE_CHANNEL = {
+    "id": "UCcYzLCs3zrQIBVHYA1sK2sw",
+    "name": "Sadhguru"
+}
+TRUNCATE_DESCRIPTION_AFTER = "#Sadhguru"

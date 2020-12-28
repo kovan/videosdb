@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["test"],
+            "args": ["test", "--noinput"],
             "console": "integratedTerminal"
         }
     ]
