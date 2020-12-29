@@ -1,4 +1,3 @@
-#!env python3
 import logging
 import re
 import json
@@ -110,7 +109,7 @@ https://www.youtube.com/watch?v={{youtube_id}}
 
         transcript = ""
         if video.transcript:
-            transcript = _sentence_case(video.transcript)
+            transcript = video.transcript
 
 
         template = jinja2.Template(template_raw)
@@ -244,7 +243,7 @@ class YoutubeAPI:
         result = ""
         for d in t:
             result += d["text"] + " "
-        return result.capitalize() + "."
+        return _sentence_case(result.capitalize() + ".")
 
 
 

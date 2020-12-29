@@ -1,25 +1,46 @@
 from django.test import TestCase
+from unittest.mock import MagicMock, Mock, create_autospec
 from django.utils import timezone
 from videosdb.models import Video, Category
-from videosdb.backend.code  import Publisher, Downloader, Wordpress, Publication
+from videosdb.backend.code  import Publisher, Downloader, Wordpress, Publication, dbg, YoutubeAPI
 
 import os
+import json
 
 
-
-def dbg():
-    os.chdir("/tmp")
-    import ipdb
-    ipdb.set_trace()
+class DownloaderTest(TestCase):
 
 
-#class DownloaderTestCase(TestCase):
-#    def setUp(self):
+    def test_check_for_videos(self):
+        test_channel = {"id": "id", "name": "name"}
+        test_playlist = {
+            'channel_title': 'name', 
+            'id': 'playlist_id', 
+            'title': 'Playlist title'
+        }
+        test_file = os.path.dirname(__file__) + "/test_data/test_video_info.json"
+        test_video_info = json.loads(open(test_file).read())
 
-    #def test_check_for_videos(self):
-    #    dl = Downloader(self.config, None)
-    #    dl.check_for_new_videos()
-        #self.assertIs
+        yt_api_mock = create_autospec(YoutubeAPI, spec_set=True)
+        yt_api_mock.list_playlists = MagicMock(return_value=[test_playlist])
+        yt_api_mock.list_playlist_videos = MagicMock(return_value=["id1"])
+        yt_api_mock.get_video_info = MagicMock(return_value=test_video_info)
+        yt_api_mock.get_video_transcript = MagicMock(return_value="hello")
+
+        dl = Downloader()
+        dl.yt_api = yt_api_mock
+        with self.settings(YOUTUBE_CHANNEL=test_channel):
+            dl.check_for_new_videos()
+
+        v = Video.objects.get(youtube_id="id1")
+        self.assertEqual(v.title, "my title")
+        self.assertEqual(v.transcript,  "hello")
+        c = Category.objects.get(name=test_playlist["title"])
+        self.assertEqual(v.categories.get(), c)
+        self.assertEqual([t.name for t in v.tags.all()], test_video_info["tags"])
+        
+
+    
 
 #class APITest(TestCase):
 #    def test_api_works(self):
@@ -35,7 +56,7 @@ class PublisherTest(TestCase):
         v.description = "Description of the video click this should be hidden"
         v.transcript = "This is the transcript"
         v.excluded = False
-        v.uploader = "Sadhguru"
+        v.uploader = "Uploader"
         v.channel_id = "UCcYzLCs3zrQIBVHYA1sK2sw"
         v.yt_published_date = timezone.now()
         v.save()
@@ -59,5 +80,4 @@ class PublisherTest(TestCase):
         p.delete()
         v.delete()
 
-    def test_sync(self):
-        pass
+
