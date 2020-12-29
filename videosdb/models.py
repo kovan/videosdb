@@ -26,7 +26,6 @@ class Video(models.Model):
     duration = models.IntegerField(null=True)
     full_response = models.CharField(max_length=4096, null=True)
     transcript = models.TextField(null=True)
-    thumbnail_id = models.IntegerField(null=True)
 
     def __str__(self):
         return self.youtube_id + " - " + self.title
@@ -44,4 +43,5 @@ class Publication(models.Model):
             primary_key = True)
     published_date = models.DateTimeField(null=True)
     post_id = models.IntegerField(null=True)
+    thumbnail_id = models.IntegerField(null=True)
 

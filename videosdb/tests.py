@@ -74,7 +74,7 @@ class PublisherTest(TestCase):
         v.save()
 
         with self.settings(TRUNCATE_DESCRIPTION_AFTER=r"(c|C)lick"):
-            p = self.publisher.publish_one(v, False)
+            p = self.publisher.publish_one(v)
 
         Publication.objects.get(post_id=p.post_id)
 
@@ -85,7 +85,7 @@ class PublisherTest(TestCase):
         self.assertIn("Description of the video", post.content)
         self.assertNotIn("this should be hidden", post.content)
         self.assertIn(v.youtube_id, post.content)
-        self.assertTrue(p.thumbnail_id)
+        self.assertTrue(post.thumbnail)
         if v.transcript:
             self.assertIn(v.transcript, post.content)
 

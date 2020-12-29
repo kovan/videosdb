@@ -67,42 +67,11 @@ class Wordpress:
         from wordpress_xmlrpc.methods.posts import GetPosts
         return self.client.call(GetPosts(filter))
 
-    def publish(self, video: Video, post_id, as_draft: bool, thumbnail_id = 0):
+    def publish(self, video: Video, post_id = 0, thumbnail_id = 0):
         from wordpress_xmlrpc import WordPressPost
         from wordpress_xmlrpc.methods.posts import NewPost, EditPost
         import jinja2
-        template_raw = \
-                '''
-<!-- wp:embed {"url":"https://www.youtube.com/watch?v={{youtube_id}}","type":"video","providerNameSlug":"youtube","responsive":true,"className":"wp-embed-aspect-16-9 wp-has-aspect-ratio"} -->
-<figure class="wp-block-embed is-type-video is-provider-youtube wp-block-embed-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">
-https://www.youtube.com/watch?v={{youtube_id}}
-</div></figure>
-<!-- /wp:embed -->
-
-<!-- wp:paragraph -->
-<p> {{description| urlize | replace("\n", "<br/>")}}</p>
-<!-- /wp:paragraph -->
-
-{% if transcript %}
-
-<!-- wp:more -->
-<!--more-->
-<!-- /wp:more -->
-
-<!-- wp:spacer -->
-<div style="height:100px" aria-hidden="true" class="wp-block-spacer"></div>
-<!-- /wp:spacer -->
-
-<!-- wp:separator -->
-<hr class="wp-block-separator"/>
-<!-- /wp:separator -->
-
-<!-- wp:paragraph {"fontSize":"small"} -->
-<p class="has-small-font-size"><strong>Transcript: </strong> {{transcript}}</p>
-<!-- /wp:paragraph -->
-
-{% endif %}
-                '''
+        template_raw = open(os.path.dirname(__file__) + "/post.jinja2").read()
         description = ""
         if video.description:
             # leave part of description specific to this video:
@@ -129,7 +98,7 @@ https://www.youtube.com/watch?v={{youtube_id}}
         post.title = video.title
         post.content = html
         if thumbnail_id:
-            post.thumbnail_id = thumbnail_id
+            post.thumbnail = thumbnail_id
         post.custom_fields = [{
             "key": "youtube_id",
             "value": video.youtube_id
@@ -143,8 +112,7 @@ https://www.youtube.com/watch?v={{youtube_id}}
         if video.tags:
             post.terms_names["post_tag"] = [str(t) for t in video.tags.all()]
 
-        if not as_draft:
-            post.post_status = "publish"
+        post.post_status = "publish"
 
         logging.debug("publishing " + str(post_id))
         
@@ -344,7 +312,7 @@ class Publisher:
     def __init__(self):
         self.wordpress = Wordpress()
 
-    def publish_one(self, video, as_draft=False):
+    def publish_one(self, video):
         from django.utils import timezone
         if type(video) is not Video:
             video = Video.objects.get(youtube_id=video)
@@ -353,11 +321,10 @@ class Publisher:
         if created:
             url = video.full_response["thumbnails"]["default"]["url"]
             file = requests.get(url,stream=True)
-            thumbnail_id = self.wordpress.upload_image(file.raw, video.youtube_id)
-            pub.thumbnail_id = thumbnail_id
-            pub.post_id = self.wordpress.publish(video, 0, as_draft)
+            pub.thumbnail_id = self.wordpress.upload_image(file.raw, video.youtube_id)
+            pub.post_id = self.wordpress.publish(video, 0, pub.thumbnail_id)
         else:
-            self.wordpress.publish(video, pub.post_id, as_draft)
+            self.wordpress.publish(video, pub.post_id, pub.thumbnail_id)
 
         pub.published_date = timezone.now()
         pub.save()
@@ -415,7 +382,6 @@ def add_arguments(parser):
     parser.add_argument("-a", "--publish-all", action="store_true")
     parser.add_argument("-o", "--publish-one", dest="video_id")
     parser.add_argument("--republish-all", action="store_true")
-    parser.add_argument("--as-draft", action="store_true")
 
 
 @traced(logging.getLogger(__name__))
@@ -437,4 +403,4 @@ def handle(*args, **options):
         publisher.sync_wordpress()
      
     if options["video_id"]:
-        publisher.publish_one(options["video_id"], options["as_draft"])
+        publisher.publish_one(options["video_id"])
