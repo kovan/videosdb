@@ -4,7 +4,7 @@ from autologging import traced, TRACE
 from videosdb.models import Video, Publication
 from .wordpress import Wordpress
 
-@traced(logging.getLogger(__name__))
+@traced(logging.getLogger("videosdb"))
 class Publisher:
     def __init__(self):
         self.wordpress = Wordpress()

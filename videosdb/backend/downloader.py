@@ -6,7 +6,7 @@ from .youtube_api import YoutubeAPI
 from django.conf import settings
 
 
-@traced(logging.getLogger(__name__))
+@traced(logging.getLogger("videosdb"))
 class Downloader:
     def __init__(self):
         self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)

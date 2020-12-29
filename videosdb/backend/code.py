@@ -12,11 +12,11 @@ def dbg():
     import ipdb
     ipdb.set_trace()
 
-@traced(logging.getLogger(__name__))
+@traced(logging.getLogger("videosdb"))
 def configure_logging(enable_trace):
     import logging.handlers
     
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger("videosdb")
     formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
     if not os.path.exists("logs"):
         os.makedirs("logs")
@@ -30,7 +30,7 @@ def configure_logging(enable_trace):
     if enable_trace:
         logger.setLevel(TRACE)
 
-@traced(logging.getLogger(__name__))
+@traced(logging.getLogger("videosdb"))
 def add_arguments(parser):
     parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
@@ -40,7 +40,7 @@ def add_arguments(parser):
     parser.add_argument("--republish-all", action="store_true")
 
 
-@traced(logging.getLogger(__name__))
+@traced(logging.getLogger("videosdb"))
 def handle(*args, **options):
 
     configure_logging(options["trace"])

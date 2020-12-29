@@ -7,7 +7,7 @@ from django.conf import settings
 
 
 
-@traced(logging.getLogger(__name__))
+@traced(logging.getLogger("videosdb"))
 class Wordpress:
     def __init__(self):
         from wordpress_xmlrpc import Client
