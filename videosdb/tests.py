@@ -1,11 +1,17 @@
-from django.test import TestCase
-from unittest.mock import MagicMock, Mock, create_autospec
-from django.utils import timezone
-from videosdb.models import Video, Category
-from videosdb.backend.code  import Publisher, Downloader, Wordpress, Publication, dbg, YoutubeAPI
-
 import os
 import json
+
+
+from django.test import TestCase
+from unittest.mock import MagicMock,create_autospec
+from django.utils import timezone
+from videosdb.models import Video, Category, Publication
+from videosdb.backend.downloader import Downloader
+from videosdb.backend.publisher import Publisher
+from videosdb.backend.youtube_api import YoutubeAPI
+from videosdb.backend.wordpress import Wordpress
+
+
 
 TEST_VIDEO_INFO = os.path.dirname(__file__) + "/test_data/test_video_info.json"
 
@@ -40,13 +46,6 @@ class DownloaderTest(TestCase):
         self.assertEqual(v.categories.get(), c)
         self.assertEqual([t.name for t in v.tags.all()], test_video_info["tags"])
         
-
-    
-
-#class APITest(TestCase):
-#    def test_api_works(self):
-#        wp = Wordpress(config)
-#        response = wp.set_menus({})
 
 class PublisherTest(TestCase):
     def setUp(self):
