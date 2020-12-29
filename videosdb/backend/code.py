@@ -31,20 +31,25 @@ class Wordpress:
             settings.WP_USERNAME,
             settings.WP_PASS)
 
-    def upload_image(self, filename, title):
+    def upload_image(self, file, title):
         from wordpress_xmlrpc.compat import xmlrpc_client
         from wordpress_xmlrpc.methods import media
+
+        images = self.client.call(media.GetMediaLibrary({
+           # number=1,
+            "parent_id":0
+        }))
+        found = [img for img in images if img.title == title + ".jpg"]
+        if found: # do not reupload
+            return int(found[0].id)
 
         data = {
             "name": title + ".jpg",
             'type': 'image/jpeg',
+            "bits": xmlrpc_client.Binary(file.read())
         }
 
-        with open(filename, 'rb') as img:
-            data['bits'] = xmlrpc_client.Binary(img.read())
-
-        thumbnail = self.client.call(media.UploadFile(data))
-        return thumbnail
+        return self.client.call(media.UploadFile(data))
 
     def find_image(self, image_id):
         from wordpress_xmlrpc.methods import media
@@ -62,7 +67,7 @@ class Wordpress:
         from wordpress_xmlrpc.methods.posts import GetPosts
         return self.client.call(GetPosts(filter))
 
-    def publish(self, video: Video, post_id, as_draft: bool):
+    def publish(self, video: Video, post_id, as_draft: bool, thumbnail_id = 0):
         from wordpress_xmlrpc import WordPressPost
         from wordpress_xmlrpc.methods.posts import NewPost, EditPost
         import jinja2
@@ -123,6 +128,8 @@ https://www.youtube.com/watch?v={{youtube_id}}
         post.excerpt = description
         post.title = video.title
         post.content = html
+        if thumbnail_id:
+            post.thumbnail_id = thumbnail_id
         post.custom_fields = [{
             "key": "youtube_id",
             "value": video.youtube_id
@@ -342,13 +349,16 @@ class Publisher:
         if type(video) is not Video:
             video = Video.objects.get(youtube_id=video)
 
-        try:
-            pub = Publication.objects.get(video=video)
-            self.wordpress.publish(video, pub.post_id, as_draft)
-        except Publication.DoesNotExist:
-            pub = Publication()
-            pub.video = video
+        pub, created = Publication.objects.get_or_create(video=video)
+        if created:
+            url = video.full_response["thumbnails"]["default"]["url"]
+            file = requests.get(url,stream=True)
+            thumbnail_id = self.wordpress.upload_image(file.raw, video.youtube_id)
+            pub.thumbnail_id = thumbnail_id
             pub.post_id = self.wordpress.publish(video, 0, as_draft)
+        else:
+            self.wordpress.publish(video, pub.post_id, as_draft)
+
         pub.published_date = timezone.now()
         pub.save()
 

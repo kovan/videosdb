@@ -7,6 +7,7 @@ from videosdb.backend.code  import Publisher, Downloader, Wordpress, Publication
 import os
 import json
 
+TEST_VIDEO_INFO = os.path.dirname(__file__) + "/test_data/test_video_info.json"
 
 class DownloaderTest(TestCase):
 
@@ -18,8 +19,8 @@ class DownloaderTest(TestCase):
             'id': 'playlist_id', 
             'title': 'Playlist title'
         }
-        test_file = os.path.dirname(__file__) + "/test_data/test_video_info.json"
-        test_video_info = json.loads(open(test_file).read())
+        
+        test_video_info = json.loads(open(TEST_VIDEO_INFO).read())
 
         yt_api_mock = create_autospec(YoutubeAPI, spec_set=True)
         yt_api_mock.list_playlists = MagicMock(return_value=[test_playlist])
@@ -48,6 +49,16 @@ class DownloaderTest(TestCase):
 #        response = wp.set_menus({})
 
 class PublisherTest(TestCase):
+    def setUp(self):
+        self.publisher = Publisher()
+        self.wordpress = Wordpress()
+        self.thumbnails_uploaded = []
+
+    def tearDown(self):
+        for t in self.thumbnails_uploaded:
+            self.wordpress.dele
+
+
     def test_publish_one(self):
 
         v = Video()
@@ -58,25 +69,27 @@ class PublisherTest(TestCase):
         v.excluded = False
         v.uploader = "Uploader"
         v.channel_id = "UCcYzLCs3zrQIBVHYA1sK2sw"
+        v.full_response = json.loads(open(TEST_VIDEO_INFO).read())
         v.yt_published_date = timezone.now()
         v.save()
-        publisher = Publisher()
+
         with self.settings(TRUNCATE_DESCRIPTION_AFTER=r"(c|C)lick"):
-            p = publisher.publish_one(v)
+            p = self.publisher.publish_one(v, False)
 
         Publication.objects.get(post_id=p.post_id)
-        w = Wordpress()
-        post = w.get(p.post_id)
+
+        post = self.wordpress.get(p.post_id)
         self.assertEqual(post.title, v.title)
         self.assertEqual(post.custom_fields[0]["key"], "youtube_id" )
         self.assertEqual(post.custom_fields[0]["value"], v.youtube_id )
         self.assertIn("Description of the video", post.content)
         self.assertNotIn("this should be hidden", post.content)
         self.assertIn(v.youtube_id, post.content)
+        self.assertTrue(p.thumbnail_id)
         if v.transcript:
             self.assertIn(v.transcript, post.content)
 
-        w.delete(post.id)
+        self.wordpress.delete(post.id)
         p.delete()
         v.delete()
 
