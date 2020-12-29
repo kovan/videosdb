@@ -274,30 +274,32 @@ class Downloader:
                 if "tags" in info:
                     video.set_tags(info["tags"])
                 video.full_response = json.dumps(info)
+                video.save()
 
             # some playlists include videos from other channels
             # for now exclude those videos
             # in the future maybe exclude whole playlist 
             if video.channel_id != settings.YOUTUBE_CHANNEL["id"]:
                 video.excluded = True
+                video.save()
                 return
 
             if not video.transcript:
                 video.transcript = self.yt_api.get_video_transcript(video.youtube_id)
+                video.save()
 
 
         for yid in video_ids:
             video, created = Video.objects.get_or_create(youtube_id=yid)
             if video.excluded:
                 continue
-            try:
-                process_video(video)
-                if category_name:
-                    category, created = Category.objects.get_or_create(name=category_name)
-                    video.categories.add(category)
 
-            finally:
+            process_video(video)
+            if category_name:
+                category, created = Category.objects.get_or_create(name=category_name)
+                video.categories.add(category)
                 video.save()
+
 
 
 
