@@ -51,11 +51,11 @@ class PublisherTest(TestCase):
     def setUp(self):
         self.publisher = Publisher()
         self.wordpress = Wordpress()
-        self.thumbnails_uploaded = []
+        self.new_posts = []
 
     def tearDown(self):
-        for t in self.thumbnails_uploaded:
-            self.wordpress.dele
+        for post_id in self.new_posts:
+            self.wordpress.delete(post_id)
 
 
     def test_publish_one(self):
@@ -78,6 +78,7 @@ class PublisherTest(TestCase):
         Publication.objects.get(post_id=p.post_id)
 
         post = self.wordpress.get(p.post_id)
+        self.new_posts.append(p.post_id)
         self.assertEqual(post.title, v.title)
         self.assertEqual(post.custom_fields[0]["key"], "youtube_id" )
         self.assertEqual(post.custom_fields[0]["value"], v.youtube_id )
@@ -88,7 +89,6 @@ class PublisherTest(TestCase):
         if v.transcript:
             self.assertIn(v.transcript, post.content)
 
-        self.wordpress.delete(post.id)
         p.delete()
         v.delete()
 
