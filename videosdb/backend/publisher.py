@@ -1,5 +1,6 @@
 import logging
 import requests
+import json
 from autologging import traced, TRACE
 from videosdb.models import Video, Publication
 from .wordpress import Wordpress
@@ -14,14 +15,19 @@ class Publisher:
         if type(video) is not Video:
             video = Video.objects.get(youtube_id=video)
 
-        pub, created = Publication.objects.get_or_create(video=video)
-        if created:
-            url = video.full_response["thumbnails"]["default"]["url"]
-            file = requests.get(url,stream=True)
-            pub.thumbnail_id = self.wordpress.upload_image(file.raw, video.youtube_id)
-            pub.post_id = self.wordpress.publish(video, 0, pub.thumbnail_id)
-        else:
+        
+        if Publication.objects.filter(video=video).count():
+            pub = Publication.objects.get(video=video)
             self.wordpress.publish(video, pub.post_id, pub.thumbnail_id)
+        else:
+            pub = Publication(video=video)
+            if video.full_response:
+                url = json.loads(video.full_response)["thumbnails"]["default"]["url"]
+                file = requests.get(url,stream=True)
+                pub.thumbnail_id = self.wordpress.upload_image(file.raw, video.youtube_id)
+            pub.post_id = self.wordpress.publish(video, 0, pub.thumbnail_id)
+        
+            
 
         pub.published_date = timezone.now()
         pub.save()

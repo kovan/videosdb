@@ -34,7 +34,7 @@ class Wordpress:
             "bits": xmlrpc_client.Binary(file.read())
         }
 
-        return self.client.call(media.UploadFile(data))
+        return self.client.call(media.UploadFile(data))["id"]
 
     def find_image(self, image_id):
         from wordpress_xmlrpc.methods import media

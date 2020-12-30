@@ -11,6 +11,15 @@
             "program": "manage.py",
             "args": ["test", "--noinput"],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Django: sync-wordpress",
+            "type": "python",
+            "request": "launch",
+            "program": "manage.py",
+            "args": ["videosdb", "--sync-wordpress"],
+            "console": "integratedTerminal"
         }
+
     ]
 }
