@@ -35,7 +35,9 @@ def add_arguments(parser):
     parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
     parser.add_argument("-s", "--sync-wordpress", action="store_true")
-    parser.add_argument("-a", "--publish-all", action="store_true")
+    parser.add_argument("-d", "--download-one", dest="dl_video_id")
+    parser.add_argument("-a", "--download-all", action="store_true")
+    parser.add_argument("-p", "--publish-all", action="store_true")
     parser.add_argument("-o", "--publish-one", dest="video_id")
     parser.add_argument("--republish-all", action="store_true")
 
@@ -49,6 +51,13 @@ def handle(*args, **options):
 
     if options["check_for_new_videos"]:
         downloader.check_for_new_videos()
+
+    if options["download_all"]:
+        downloader.download_all()
+
+    if options["dl_video_id"]:
+        downloader.download_one(options["dl_video_id"])
+
 
     publisher = Publisher()
 

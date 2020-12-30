@@ -1,25 +1,32 @@
+import os
 import logging
 import json
-import requests
+from urllib.request import urlretrieve
+from urllib.error import HTTPError
 from autologging import traced, TRACE
 from videosdb.models import Video, Category
 from django.conf import settings
 from django.core.files import File
 from .youtube_api import YoutubeAPI
 
+
 @traced(logging.getLogger("videosdb"))
 class Downloader:
     def __init__(self):
         self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
+        if not os.path.exists(settings.MEDIA_ROOT):
+            os.mkdir(settings.MEDIA_ROOT)        
 
 
     def enqueue_videos(self, video_ids, category_name=None):
 
-        def process_video(video):
+        def process_video(video: Video):
             from django.utils.dateparse import parse_datetime
 
             #if new video or missing info, download info:
-            if not video.title:
+            if not video.full_response \
+                or not video.title \
+                    or not video.yt_published_date:
                 info = self.yt_api.get_video_info(video.youtube_id)
                 if not info:
                     video.excluded = True
@@ -32,10 +39,36 @@ class Downloader:
                 video.yt_published_date = parse_datetime(info["publishedAt"])
                 if "tags" in info:
                     video.set_tags(info["tags"])
-                url = info["thumbnails"]["standard"]["url"]
-                video.thumbnail = File(requests.get(url, stream=True))
                 video.full_response = json.dumps(info)
                 video.save()
+
+            if not video.thumbnail:
+                info = json.loads(video.full_response)
+                if "thumbnails" in info:
+                    thumbnails = info["thumbnails"]
+                    if "standard" in thumbnails:
+                        tn = thumbnails["standard"]
+                    elif "high" in thumbnails:
+                        tn = thumbnails["high"]
+                    elif "default" in thumbnails:
+                        tn = thumbnails["default"]
+                    elif "low" in thumbnails:
+                        tn = thumbnails["low"]
+                    else:
+                        tn = None
+                    
+                    if tn:
+                        url = tn["url"]
+                        try:
+                            tempname, _ = urlretrieve(url, "%s/%s.jpg" % (settings.MEDIA_ROOT, video.youtube_id))
+                            f =  File(open(tempname, 'rb'))
+                            video.thumbnail = f
+                            video.save()
+                            f.close()
+                        except HTTPError:
+                            video.thumbnail = None
+
+
 
             # some playlists include videos from other channels
             # for now exclude those videos
@@ -80,8 +113,12 @@ class Downloader:
             else:
                 self.enqueue_videos(video_ids, playlist["title"])
 
-    def download_one(self, _id):
-        self.enqueue_videos([_id]) 
+    def download_one(self, youtube_id):
+        self.enqueue_videos([youtube_id]) 
+
+    def download_all(self):
+        all = Video.objects.filter(excluded=False)
+        self.enqueue_videos([v.youtube_id for v in all]) 
 
 
     def check_for_new_videos(self):

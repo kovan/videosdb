@@ -16,7 +16,7 @@ TEST_VIDEO_INFO = settings.BASE_DIR + "/videosdb/test_data/test_video_info.json"
 
 class DownloaderTest(TestCase):
 
-
+    @override_settings(MEDIA_ROOT="test_media")
     def test_check_for_videos(self):
         test_channel = {"id": "id", "name": "name"}
         test_playlist = {
@@ -40,6 +40,7 @@ class DownloaderTest(TestCase):
         v = Video.objects.get(youtube_id="id1")
         self.assertEqual(v.title, "my title")
         self.assertEqual(v.transcript,  "hello")
+        self.assertTrue(v.thumbnail)
         c = Category.objects.get(name=test_playlist["title"])
         self.assertEqual(v.categories.get(), c)
         self.assertEqual([t.name for t in v.tags.all()], test_video_info["tags"])
@@ -50,6 +51,8 @@ class PublisherTest(TestCase):
         self.publisher = Publisher()
         self.wordpress = Wordpress()
         self.new_posts = []
+        if not os.path.exists(settings.MEDIA_ROOT):
+            os.mkdir(settings.MEDIA_ROOT)        
 
     def tearDown(self):
         for post_id in self.new_posts:
@@ -72,8 +75,6 @@ class PublisherTest(TestCase):
         v.yt_published_date = timezone.now()
         
         f = settings.BASE_DIR + "/videosdb/test_data/sample_thumbnail.jpg"
-        if not os.path.exists(settings.MEDIA_ROOT):
-            os.mkdir(settings.MEDIA_ROOT)
         f2 = shutil.copy(f, settings.MEDIA_ROOT+"/sample_thumbnail.jpg")
         v.thumbnail = File(open(f2, "rb"))
         v.save()
@@ -82,8 +83,9 @@ class PublisherTest(TestCase):
         with self.settings(TRUNCATE_DESCRIPTION_AFTER=r"(c|C)lick"):
             p = self.publisher.publish_one(v)
 
-        Publication.objects.get(post_id=p.post_id)
-
+        
+        self.assertTrue(Publication.objects.filter(post_id=p.post_id).count())
+        self.assertTrue(p.thumbnail_id)
         post = self.wordpress.get(p.post_id)
         self.new_posts.append(p.post_id)
         self.assertEqual(post.title, v.title)

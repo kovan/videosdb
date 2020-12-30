@@ -13,7 +13,7 @@ class Publisher:
         if type(video) is not Video:
             video = Video.objects.get(youtube_id=video)
 
-        
+      
         if Publication.objects.filter(video=video).count():
             pub = Publication.objects.get(video=video)
             self.wordpress.publish(video, pub.post_id, pub.thumbnail_id)
@@ -21,7 +21,11 @@ class Publisher:
             pub = Publication(video=video)
             if video.thumbnail:
                 pub.thumbnail_id = self.wordpress.upload_image(video.thumbnail.open(), video.youtube_id)
+
             pub.post_id = self.wordpress.publish(video, 0, pub.thumbnail_id)
+        if video.thumbnail:
+            pub.thumbnail_id = self.wordpress.upload_image(video.thumbnail.open(), video.youtube_id)
+
         
         pub.published_date = timezone.now()
         pub.save()
