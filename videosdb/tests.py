@@ -1,7 +1,8 @@
 import os
 import json
-
-
+import shutil
+from django.core.files import File
+from django.conf import settings
 from django.test import TestCase
 from unittest.mock import MagicMock,create_autospec
 from django.utils import timezone
@@ -11,9 +12,7 @@ from videosdb.backend.publisher import Publisher
 from videosdb.backend.youtube_api import YoutubeAPI
 from videosdb.backend.wordpress import Wordpress
 
-
-
-TEST_VIDEO_INFO = os.path.dirname(__file__) + "/test_data/test_video_info.json"
+TEST_VIDEO_INFO = settings.BASE_DIR + "/videosdb/test_data/test_video_info.json"
 
 class DownloaderTest(TestCase):
 
@@ -25,7 +24,6 @@ class DownloaderTest(TestCase):
             'id': 'playlist_id', 
             'title': 'Playlist title'
         }
-        
         test_video_info = json.loads(open(TEST_VIDEO_INFO).read())
 
         yt_api_mock = create_autospec(YoutubeAPI, spec_set=True)
@@ -57,6 +55,8 @@ class PublisherTest(TestCase):
         for post_id in self.new_posts:
             self.wordpress.delete(post_id)
 
+        shutil.rmtree(settings.BASE_DIR+"/media")
+
 
     def test_publish_one(self):
 
@@ -70,7 +70,14 @@ class PublisherTest(TestCase):
         v.channel_id = "UCcYzLCs3zrQIBVHYA1sK2sw"
         v.full_response = json.loads(open(TEST_VIDEO_INFO).read())
         v.yt_published_date = timezone.now()
+        
+        f = settings.BASE_DIR + "/videosdb/test_data/sample_thumbnail.jpg"
+        if not os.path.exists(settings.BASE_DIR+"/media"):
+            os.mkdir(settings.BASE_DIR+"/media")
+        f2 = shutil.copy(f, settings.BASE_DIR+"/media/sample_thumbnail.jpg")
+        v.thumbnail = File(open(f2, "rb"))
         v.save()
+        v.thumbnail.close()
 
         with self.settings(TRUNCATE_DESCRIPTION_AFTER=r"(c|C)lick"):
             p = self.publisher.publish_one(v)

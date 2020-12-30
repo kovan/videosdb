@@ -124,6 +124,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+MEDIA_ROOT = "media"
 
 WWW_ROOT= "http://192.168.0.19"
 WP_USERNAME = "k"

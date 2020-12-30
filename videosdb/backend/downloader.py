@@ -1,10 +1,11 @@
 import logging
 import json
+import requests
 from autologging import traced, TRACE
 from videosdb.models import Video, Category
-from .youtube_api import YoutubeAPI
 from django.conf import settings
-
+from django.core.files import File
+from .youtube_api import YoutubeAPI
 
 @traced(logging.getLogger("videosdb"))
 class Downloader:
@@ -31,6 +32,8 @@ class Downloader:
                 video.yt_published_date = parse_datetime(info["publishedAt"])
                 if "tags" in info:
                     video.set_tags(info["tags"])
+                url = info["thumbnails"]["standard"]["url"]
+                video.thumbnail = File(requests.get(url, stream=True))
                 video.full_response = json.dumps(info)
                 video.save()
 

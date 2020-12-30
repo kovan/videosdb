@@ -1,6 +1,4 @@
 import logging
-import requests
-import json
 from autologging import traced, TRACE
 from videosdb.models import Video, Publication
 from .wordpress import Wordpress
@@ -21,14 +19,10 @@ class Publisher:
             self.wordpress.publish(video, pub.post_id, pub.thumbnail_id)
         else:
             pub = Publication(video=video)
-            if video.full_response:
-                url = json.loads(video.full_response)["thumbnails"]["default"]["url"]
-                file = requests.get(url,stream=True)
-                pub.thumbnail_id = self.wordpress.upload_image(file.raw, video.youtube_id)
+            if video.thumbnail:
+                pub.thumbnail_id = self.wordpress.upload_image(video.thumbnail.open(), video.youtube_id)
             pub.post_id = self.wordpress.publish(video, 0, pub.thumbnail_id)
         
-            
-
         pub.published_date = timezone.now()
         pub.save()
 
@@ -43,6 +37,7 @@ class Publisher:
         videos = Video.objects.filter(excluded=False).order_by("yt_published_date")
         for video in videos:
             if not hasattr(video, "publication") \
+                or not video.publication.published_date \
                 or video.publication.published_date < video.modified_date: 
                     self.publish_one(video)
 

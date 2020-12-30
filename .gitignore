@@ -7,3 +7,4 @@ db.sqlite3-journal
 config.yaml
 dbtest.sqlite3
 dbtest.sqlite3-journal
+media/
