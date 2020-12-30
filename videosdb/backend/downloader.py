@@ -65,6 +65,7 @@ class Downloader:
                             video.thumbnail = f
                             video.save()
                             f.close()
+                            os.remove(tempname)
                         except HTTPError:
                             video.thumbnail = None
 

@@ -14,9 +14,9 @@ from videosdb.backend.wordpress import Wordpress
 
 TEST_VIDEO_INFO = settings.BASE_DIR + "/videosdb/test_data/test_video_info.json"
 
+@override_settings(MEDIA_ROOT="test_media")
 class DownloaderTest(TestCase):
 
-    @override_settings(MEDIA_ROOT="test_media")
     def test_check_for_videos(self):
         test_channel = {"id": "id", "name": "name"}
         test_playlist = {
@@ -44,6 +44,11 @@ class DownloaderTest(TestCase):
         c = Category.objects.get(name=test_playlist["title"])
         self.assertEqual(v.categories.get(), c)
         self.assertEqual([t.name for t in v.tags.all()], test_video_info["tags"])
+
+    # def test_download_thumbnail(self):
+    #     dl = Downloader()
+    #     dl.download_one("CR5HtTsUl5E")
+
         
 @override_settings(MEDIA_ROOT="test_media")
 class PublisherTest(TestCase):
