@@ -3,8 +3,8 @@ import json
 import shutil
 from django.core.files import File
 from django.conf import settings
-from django.test import TestCase
-from unittest.mock import MagicMock,create_autospec
+from django.test import TestCase, override_settings
+from unittest.mock import MagicMock, create_autospec
 from django.utils import timezone
 from videosdb.models import Video, Category, Publication
 from videosdb.backend.downloader import Downloader
@@ -44,7 +44,7 @@ class DownloaderTest(TestCase):
         self.assertEqual(v.categories.get(), c)
         self.assertEqual([t.name for t in v.tags.all()], test_video_info["tags"])
         
-
+@override_settings(MEDIA_ROOT="test_media")
 class PublisherTest(TestCase):
     def setUp(self):
         self.publisher = Publisher()
@@ -55,7 +55,7 @@ class PublisherTest(TestCase):
         for post_id in self.new_posts:
             self.wordpress.delete(post_id)
 
-        shutil.rmtree(settings.BASE_DIR+"/media")
+        shutil.rmtree(settings.MEDIA_ROOT)
 
 
     def test_publish_one(self):
@@ -72,9 +72,9 @@ class PublisherTest(TestCase):
         v.yt_published_date = timezone.now()
         
         f = settings.BASE_DIR + "/videosdb/test_data/sample_thumbnail.jpg"
-        if not os.path.exists(settings.BASE_DIR+"/media"):
-            os.mkdir(settings.BASE_DIR+"/media")
-        f2 = shutil.copy(f, settings.BASE_DIR+"/media/sample_thumbnail.jpg")
+        if not os.path.exists(settings.MEDIA_ROOT):
+            os.mkdir(settings.MEDIA_ROOT)
+        f2 = shutil.copy(f, settings.MEDIA_ROOT+"/sample_thumbnail.jpg")
         v.thumbnail = File(open(f2, "rb"))
         v.save()
         v.thumbnail.close()
