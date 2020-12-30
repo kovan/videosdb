@@ -23,9 +23,6 @@ class Publisher:
                 pub.thumbnail_id = self.wordpress.upload_image(video.thumbnail.open(), video.youtube_id)
 
             pub.post_id = self.wordpress.publish(video, 0, pub.thumbnail_id)
-        if video.thumbnail:
-            pub.thumbnail_id = self.wordpress.upload_image(video.thumbnail.open(), video.youtube_id)
-
         
         pub.published_date = timezone.now()
         pub.save()
