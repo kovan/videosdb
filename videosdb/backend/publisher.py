@@ -16,10 +16,6 @@ class Publisher:
       
         if Publication.objects.filter(video=video).count():
             pub = Publication.objects.get(video=video)
-            if video.thumbnail:
-                f = video.thumbnail.open()
-                self.wordpress.upload_image(f.open(), video.youtube_id)
-                f.close()
             self.wordpress.publish(video, pub.post_id, pub.thumbnail_id)
         else:
             pub = Publication(video=video)
