@@ -5,6 +5,15 @@ TODO
   - carrusel de videos destacados al entrar¿?
   - vista de cuadrícula de videos
   - video aleatorio botón
+  - paginación precisa (meter´nº de pag. a mano) de 10 en 10, 100 en 100... etc.
+  - top vistos: dia, mes semana, año.
+  - con datos de YT:
+    - top likes en youtube.
+    - top referenciados en Google
+    - top comentados
+    - mas nuevos
+    - mas viejos
+  
 
 
 
