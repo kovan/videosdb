@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from videosdb import views
+#from django.views.generic import TemplateView
 
 router = routers.DefaultRouter()
 router.register(r'categories', views.CategoryViewSet)
@@ -26,6 +27,7 @@ router.register(r'videos', views.VideoViewSet)
 
 
 urlpatterns = [
+#    path('', TemplateView.as_view(template_name='index.html')),
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
