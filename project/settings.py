@@ -25,13 +25,14 @@ SECRET_KEY = '4!_fouo%ikguf72o=em+(v0m)pdo7^8ae*vw$xs9&+l-dsa#*u'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["192.168.0.19"]
 
 
 # Application definition
 
 INSTALLED_APPS = [
     "videosdb.apps.VideosdbConfig",
+    "rest_framework",
     "django_extensions",
     'django.contrib.admin',
     'django.contrib.auth',

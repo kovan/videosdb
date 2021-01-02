@@ -121,6 +121,17 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "djangorestframework"
+version = "3.12.2"
+description = "Web APIs for Django, made easy."
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[package.dependencies]
+django = ">=2.2"
+
+[[package]]
 name = "google-api-core"
 version = "1.24.1"
 description = "Google API client core library"
@@ -617,7 +628,7 @@ requests = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "389dd1813429f959a5d2ceab53e6db314a2fd7576b99ecb6dfd376ab4e7f0ae2"
+content-hash = "23f208dab50c864460d8135c966b7d62c68bddd084dc84f2b9bacf41a8dd4d52"
 
 [metadata.files]
 appnope = [
@@ -672,6 +683,9 @@ django = [
 django-extensions = [
     {file = "django-extensions-3.1.0.tar.gz", hash = "sha256:7cd002495ff0a0e5eb6cdd6be759600905b4e4079232ea27618fc46bdd853651"},
     {file = "django_extensions-3.1.0-py3-none-any.whl", hash = "sha256:c7f88625a53f631745d4f2bef9ec4dcb999ed59476393bdbbe99db8596778846"},
+]
+djangorestframework = [
+    {file = "djangorestframework-3.12.2-py3-none-any.whl", hash = "sha256:0209bafcb7b5010fdfec784034f059d512256424de2a0f084cb82b096d6dd6a7"},
 ]
 google-api-core = [
     {file = "google-api-core-1.24.1.tar.gz", hash = "sha256:0f1dee446db2685863c3c493a90fefa5fc7f4defaf8e1a320b50ccaddfb5d469"},
