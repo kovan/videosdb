@@ -5,7 +5,7 @@ from django.utils.text import slugify
 
 class Tag(models.Model):
     name = models.CharField(unique=True, max_length=256)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, null=True)
     def __str__(self):
         return self.name
 
@@ -15,7 +15,7 @@ class Tag(models.Model):
 
 class Category(models.Model):
     name = models.CharField(unique=True, max_length=256)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, null=True)
     def __str__(self):
         return self.name
     def save(self, *args, **kwargs):
@@ -38,7 +38,7 @@ class Video(models.Model):
     full_response = models.CharField(max_length=4096, null=True)
     transcript = models.TextField(null=True)
     thumbnail = models.FileField(null =True)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, null=True)
 
     def __str__(self):
         return self.youtube_id + " - " + self.title
