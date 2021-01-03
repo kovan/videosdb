@@ -122,8 +122,19 @@ USE_L10N = True
 USE_TZ = True
 
 CORS_ORIGIN_WHITELIST = [
-        'http://localhost:3000'
-              ]
+    'http://192.168.0.19:5000',
+    'http://192.168.0.19:8000',
+]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    "DEFAULT_PERMISSION_CLASSES":   [
+            "rest_framework.permissions.AllowAny"
+    ]
+}
+
+#CORS_ORIGIN_ALLOW_ALL = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
