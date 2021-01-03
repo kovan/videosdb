@@ -1,15 +1,26 @@
 from django.db import models
+# Import slugify to generate slugs from strings
+from django.utils.text import slugify 
 
 
 class Tag(models.Model):
     name = models.CharField(unique=True, max_length=256)
+    slug = models.SlugField(unique=True)
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super(Tag, self).save(*args, **kwargs)
+
 class Category(models.Model):
     name = models.CharField(unique=True, max_length=256)
+    slug = models.SlugField(unique=True)
     def __str__(self):
         return self.name
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super(Category, self).save(*args, **kwargs)
 
 class Video(models.Model):
     youtube_id = models.CharField(max_length=16, unique=True)
@@ -27,6 +38,7 @@ class Video(models.Model):
     full_response = models.CharField(max_length=4096, null=True)
     transcript = models.TextField(null=True)
     thumbnail = models.FileField(null =True)
+    slug = models.SlugField(unique=True)
 
     def __str__(self):
         return self.youtube_id + " - " + self.title
@@ -36,6 +48,10 @@ class Video(models.Model):
             tag_obj, created = Tag.objects.get_or_create(name=tag)
             self.tags.add(tag_obj)
         self.save()
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super(Video, self).save(*args, **kwargs)
 
 class Publication(models.Model):
     video = models.OneToOneField(
