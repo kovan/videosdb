@@ -22,7 +22,7 @@ from videosdb import views
 router = routers.DefaultRouter()
 router.register(r'categories', views.CategoryViewSet)
 router.register(r'tags', views.TagViewSet)
-router.register(r'videos', views.VideoViewSet)
+router.register(r'publications', views.PublicationViewSet)
 
 
 
