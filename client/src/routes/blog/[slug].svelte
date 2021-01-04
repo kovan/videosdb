@@ -1,9 +1,11 @@
 <script context="module">
+	import axios from "axios";
 	export async function preload({ params }) {
 		// the `slug` parameter is available because
 		// this file is called [slug].svelte
-		const res = await this.fetch(`blog/${params.slug}.json`);
-		const data = await res.json();
+		const res = await axios.get(`http://localhost:8000/api/publications/${params.slug}/`);
+		//const res = await this.fetch(`blog/${params.slug}.json`);
+		const data = res.data
 
 		if (res.status === 200) {
 			return { post: data };
@@ -60,5 +62,7 @@
 <h1>{post.title}</h1>
 
 <div class="content">
-	{@html post.html}
+	<pre>
+		{post.description}
+	</pre>
 </div>

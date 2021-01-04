@@ -143,9 +143,9 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = "media"
 
-WWW_ROOT= "http://192.168.0.19"
+WWW_ROOT= "http://localhost:8000"
 WP_USERNAME = "k"
-WP_PASS = "k"
+WP_PASS = "aeoI90nSmWv9bi99C1"
 YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
 YOUTUBE_CHANNEL = {
     "id": "UCcYzLCs3zrQIBVHYA1sK2sw",

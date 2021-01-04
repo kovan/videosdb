@@ -1,10 +1,6 @@
-import posts from './_posts.js';
 import axios from "axios";
-// fetch("http://localhost:8000/api/publications")
-// .then(response => response.json())
-// .then(data => console.log(data));
 
-let contents = "";
+let contents = "{}";
 axios.get("http://localhost:8000/api/publications")
   .then(function (response) {
 	  contents = JSON.stringify(response.data.results);
