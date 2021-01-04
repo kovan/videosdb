@@ -42,7 +42,7 @@ class Downloader:
                 video.full_response = json.dumps(info)
                 video.save()
 
-            if not video.thumbnail:
+            if not video.thumbnail and video.full_response:
                 info = json.loads(video.full_response)
                 if "thumbnails" in info:
                     thumbnails = info["thumbnails"]
@@ -68,7 +68,6 @@ class Downloader:
                             os.remove(tempname)
                         except HTTPError:
                             video.thumbnail = None
-
 
 
             # some playlists include videos from other channels
