@@ -80,10 +80,7 @@ export default {
   },
   mounted() {
     return getCategories().then((cats) => {
-      cats.forEach( cat => {
-        this.essentialLinks.push(cat)
-      })
-
+      this.essentialLinks = cats;
     });
   }
 }
