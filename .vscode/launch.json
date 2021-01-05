@@ -4,20 +4,30 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        // {
+        //     "name": "Launch via NPM",
+        //     "request": "launch",
+        //     "runtimeArgs": [
+        //         "dev"
+        //     ],
+        //     "runtimeExecutable": "quasar",
+        //     "skipFiles": [
+        //         "<node_internals>/**"
+        //     ],
+        //     "type": "pwa-node",
+        //     "cwd": "${workspaceFolder}/client"
+        // },
         {
-            "name": "Launch via NPM",
+            "type": "chrome",
             "request": "launch",
-            "runtimeArgs": [
-                "run",
-                "dev"
-            ],
-            "runtimeExecutable": "npm",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "pwa-node",
-            "cwd": "${workspaceFolder}/client"
-        },
+            "name": "Quasar App: chrome",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}/client/src",
+            "breakOnLoad": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./src/*": "${webRoot}/*"
+            }
+        }        
         {
             "name": "Django: Tests",
             "type": "python",
