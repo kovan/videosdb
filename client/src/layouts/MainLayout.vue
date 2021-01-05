@@ -49,7 +49,7 @@
 <script>
 import EssentialLink from 'components/EssentialLink.vue'
 
-const linksData = [
+let linksData = [
   {
     title: 'Docs',
     caption: 'quasar.dev',
@@ -96,18 +96,22 @@ const linksData = [
 
 import axios from 'axios'
 
-axios.get("http://localhost:8000/api/publications/")
-  .then(function (response) {
-    // handle success
-    console.log(response);
+async function getCategories() {
+  let categories = {}
+  const response = await axios.get("http://localhost:8000/api/categories/")
+  categories = response.data.results.map((category) => {
+    return {
+      title: category.name,
+      caption: '',
+      icon: 'public',
+      link: 'http://localhost:8000/api/categories/' + category.slug
+    }
   })
-  .catch(function (error) {
-    // handle error
-    console.log(error);
-  })
-  .then(function () {
-    // always executed
-  });
+
+  console.log(categories)
+  return categories
+}
+
 
 export default {
   name: 'MainLayout',
@@ -115,7 +119,7 @@ export default {
   data () {
     return {
       leftDrawerOpen: false,
-      essentialLinks: linksData
+      essentialLinks: getCategories()
     }
   }
 }
