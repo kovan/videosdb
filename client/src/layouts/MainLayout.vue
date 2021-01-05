@@ -94,6 +94,21 @@ const linksData = [
   }
 ];
 
+import axios from 'axios'
+
+axios.get("http://localhost:8000/api/publications/")
+  .then(function (response) {
+    // handle success
+    console.log(response);
+  })
+  .catch(function (error) {
+    // handle error
+    console.log(error);
+  })
+  .then(function () {
+    // always executed
+  });
+
 export default {
   name: 'MainLayout',
   components: { EssentialLink },

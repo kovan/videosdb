@@ -123,7 +123,8 @@ USE_TZ = True
 
 CORS_ORIGIN_WHITELIST = [
     'http://192.168.0.19:5000',
-    'http://192.168.0.19:8000',
+    'http://localhost:8000',
+    'http://localhost:8080'
 ]
 
 REST_FRAMEWORK = {
