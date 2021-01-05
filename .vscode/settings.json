@@ -1,5 +1,14 @@
 {
     "editor.fontSize": 13,
     "terminal.integrated.fontSize": 13,
-    "python.pythonPath": "/home/k/.cache/pypoetry/virtualenvs/videosdb-PpeLVbD3-py3.8/bin/python"
+    "python.pythonPath": "/home/k/.cache/pypoetry/virtualenvs/videosdb-PpeLVbD3-py3.8/bin/python",
+
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": true
+    },
+    "vetur.format.defaultFormatter.html": "prettyhtml",
+    "vetur.format.defaultFormatter.js": "prettier-eslint"
+
 }
