@@ -29,8 +29,7 @@ class Downloader:
                     or not video.yt_published_date:
                 info = self.yt_api.get_video_info(video.youtube_id)
                 if not info:
-                    video.excluded = True
-                    return
+                    raise Exception("API not working")
 
                 video.title = info["title"]
                 video.description = info["description"]
@@ -80,7 +79,8 @@ class Downloader:
 
             if not video.transcript:
                 video.transcript = self.yt_api.get_video_transcript(video.youtube_id)
-                video.save()
+                if video.transcript:
+                    video.save()
 
 
         for yid in video_ids:

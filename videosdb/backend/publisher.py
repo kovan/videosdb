@@ -2,6 +2,7 @@ import logging
 from autologging import traced, TRACE
 from videosdb.models import Video, Publication
 from .wordpress import Wordpress
+#import videosdb.backend.code
 
 @traced(logging.getLogger("videosdb"))
 class Publisher:
