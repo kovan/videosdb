@@ -15,7 +15,7 @@ class DB {
         });
     }
     async getPublications() {
-        let result = await this.db.select().from('videosdb_video').limit(10);
+        let result = await this.db.select().from('videosdb_video').where({ excluded: false }).limit(10);
         return result;
     }
 
