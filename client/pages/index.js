@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
 
-export default function Home() {
+export default function Home(publications) {
   return (
     <div className={styles.container}>
       <Head>
@@ -18,7 +18,11 @@ export default function Home() {
           Get started by editing{' '}
           <code className={styles.code}>pages/index.js</code>
         </p>
-
+        <ul>
+          {publications.data.map((pub) => (
+            <li>{pub.title}</li>
+          ))}
+        </ul>
         <div className={styles.grid}>
           <a href="https://nextjs.org/docs" className={styles.card}>
             <h3>Documentation &rarr;</h3>
@@ -47,6 +51,7 @@ export default function Home() {
               Instantly deploy your Next.js site to a public URL with Vercel.
             </p>
           </a>
+
         </div>
       </main>
 
@@ -62,4 +67,22 @@ export default function Home() {
       </footer>
     </div>
   )
+}
+
+export async function getStaticProps(context) {
+  const res = await fetch(`http://localhost:8000/api/publications/`)
+  const data = await res.json()
+  const publications = data.results;
+
+  if (!data) {
+    return {
+      notFound: true,
+    }
+  }
+
+  return {
+    props: {
+      data: publications
+    }, // will be passed to the page component as props
+  }
 }

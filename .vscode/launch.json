@@ -4,36 +4,44 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        // {
-        //     "name": "Launch via NPM",
-        //     "request": "launch",
-        //     "runtimeArgs": [
-        //         "dev"
-        //     ],
-        //     "runtimeExecutable": "quasar",
-        //     "skipFiles": [
-        //         "<node_internals>/**"
-        //     ],
-        //     "type": "pwa-node",
-        //     "cwd": "${workspaceFolder}/client"
-        // },
         {
-            "type": "chrome",
-            "request": "launch",
-            "name": "Quasar App: chrome",
-            "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}/client/src",
-            "breakOnLoad": true,
+            "type": "node",
+            "request": "attach",
+            "name": "Attach Program",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
             "sourceMapPathOverrides": {
-                "webpack:///./src/*": "${webRoot}/*"
-            }
-        }        
+                "webpack:///./*": "${workspaceRoot}/client/*",
+            },
+            "port": 9229
+        },
+        {
+            "name": "Debug via NPM",
+            "request": "launch",
+            "runtimeArgs": [
+                "next",
+                "dev"
+            ],
+            "runtimeExecutable": "npx",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "pwa-node",
+            "cwd": "${workspaceFolder}/client",
+            "sourceMapPathOverrides": {
+                "webpack:///./*": "${workspaceRoot}/client/*",
+            },
+        },
         {
             "name": "Django: Tests",
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["test", "--noinput"],
+            "args": [
+                "test",
+                "--noinput"
+            ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
         },
@@ -42,7 +50,10 @@
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["videosdb", "--sync-wordpress"],
+            "args": [
+                "videosdb",
+                "--sync-wordpress"
+            ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
         },
@@ -51,7 +62,11 @@
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["videosdb", "--publish-one", "CR5HtTsUl5E"],
+            "args": [
+                "videosdb",
+                "--publish-one",
+                "CR5HtTsUl5E"
+            ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
         },
@@ -60,7 +75,11 @@
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["videosdb", "--download-one", "CR5HtTsUl5E"],
+            "args": [
+                "videosdb",
+                "--download-one",
+                "CR5HtTsUl5E"
+            ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
         },
@@ -69,10 +88,12 @@
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["videosdb", "--download-all"],
+            "args": [
+                "videosdb",
+                "--download-all"
+            ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
         }
-
     ]
 }
