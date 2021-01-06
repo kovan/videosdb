@@ -1,5 +1,7 @@
 import Head from 'next/head'
+import Link from 'next/link'
 import styles from '../styles/Home.module.css'
+import db from '../utils/db.js'
 
 export default function Home(publications) {
   return (
@@ -20,7 +22,10 @@ export default function Home(publications) {
         </p>
         <ul>
           {publications.data.map((pub) => (
-            <li>{pub.title}</li>
+            <>
+              <li>{pub.title}</li>
+              <li><Link href={'/videos/' + pub.slug}><a>{pub.id}</a></Link></li>
+            </>
           ))}
         </ul>
         <div className={styles.grid}>
@@ -65,20 +70,12 @@ export default function Home(publications) {
           <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
         </a>
       </footer>
-    </div>
-  )
+    </div>)
 }
 
-export async function getStaticProps(context) {
-  const res = await fetch(`http://localhost:8000/api/publications/`)
-  const data = await res.json()
-  const publications = data.results;
+export async function getServerSideProps(context) {
 
-  if (!data) {
-    return {
-      notFound: true,
-    }
-  }
+  let publications = await db.getPublications()
 
   return {
     props: {

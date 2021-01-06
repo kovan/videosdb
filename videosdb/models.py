@@ -46,6 +46,8 @@ class Video(models.Model):
     full_response = models.TextField(null=True)
     transcript = models.TextField(null=True)
     thumbnail = models.FileField(null=True)
+    slug = models.SlugField(unique=True, null=True)
+    published_date = models.DateTimeField(null=True)
 
     def __str__(self):
         return self.youtube_id + " - " + self.title
@@ -56,18 +58,7 @@ class Video(models.Model):
             self.tags.add(tag_obj)
         self.save()
 
-
-class Publication(models.Model):
-    video = models.OneToOneField(
-        Video,
-        on_delete=models.CASCADE,
-        primary_key=True)
-    published_date = models.DateTimeField(null=True)
-    post_id = models.IntegerField(null=True)
-    thumbnail_id = models.IntegerField(null=True)
-    slug = models.SlugField(unique=True, null=True)
-
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = uuslug(self.video.title, instance=self)
-        super(Publication, self).save(*args, **kwargs)
+        if not self.slug and self.title:
+            self.slug = uuslug(self.title, instance=self)
+        super(Video, self).save(*args, **kwargs)

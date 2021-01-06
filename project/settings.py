@@ -86,18 +86,11 @@ DATABASES = {
         'PASSWORD': 'mypass',
         'HOST': 'localhost',
         'PORT': '',
+        'TEST': {
+            "NAME": "test_videosdb",
+        },
     }
 }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#         'TEST': {
-#             "NAME": "dbtest.sqlite3",
-#         },
-#     }
-# }
 
 
 # Password validation

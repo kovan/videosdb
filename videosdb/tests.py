@@ -6,9 +6,8 @@ from django.conf import settings
 from django.test import TestCase, override_settings
 from unittest.mock import create_autospec, patch
 from django.utils import timezone
-from videosdb.models import Video, Category, Publication
+from videosdb.models import Video, Category
 from videosdb.backend.downloader import Downloader
-from videosdb.backend.publisher import Publisher
 from videosdb.backend.youtube_api import YoutubeAPI
 
 
@@ -75,54 +74,3 @@ class DownloaderTest(TestCase):
         self.assertEqual(v.categories.get(), c)
         self.assertEqual([t.name for t in v.tags.all()],
                          test_video_info["tags"])
-
-    # def test_download_thumbnail(self):
-    #     dl = Downloader()
-    #     dl.download_one("CR5HtTsUl5E")
-
-
-# @override_settings(MEDIA_ROOT="test_media")
-
-# class PublisherTest(TestCase):
-#     @patch("videosdb.backend.wordpress.Wordpress")
-#     def setUp(self, wp_mock):
-# #         wp_mock = create_autospec(Wordpress, spec_set=True)
-#         #wp_mock = create_autospec(Wordpress, spec_set=True)
-#         #Publisher.__init__ = None
-#         self.publisher = Publisher()
-#         #self.publisher.wordpress = wp_mock
-# #         #self.wordpress = Wordpress()
-# #         self.new_posts = []
-# #         if not os.path.exists(settings.MEDIA_ROOT):
-# #             os.mkdir(settings.MEDIA_ROOT)
-#         self.v = _create_test_video()
-
-#     def tearDown(self):
-# #         for post_id in self.new_posts:
-# #             self.wordpress.delete(post_id)
-
-# #         shutil.rmtree(settings.MEDIA_ROOT)
-#         self.v.delete()
-
-
-#     def test_publish_one(self):
-
-#         with self.settings(TRUNCATE_DESCRIPTION_AFTER=r"(c|C)lick"):
-#             pub = self.publisher.publish_one(self.v)
-
-# #         self.assertTrue(Publication.objects.filter(post_id=pub.post_id).count())
-# #         self.assertTrue(pub.thumbnail_id)
-
-# #         # post = self.wordpress.get(pub.post_id)
-# #         # self.new_posts.append(pub.post_id)
-# #         # self.assertEqual(post.title, self.v.title)
-# #         # self.assertEqual(post.custom_fields[0]["key"], "youtube_id" )
-# #         # self.assertEqual(post.custom_fields[0]["value"], self.v.youtube_id )
-# #         # self.assertIn("Description of the video", post.content)
-# #         # self.assertNotIn("this should be hidden", post.content)
-# #         # self.assertIn(self.v.youtube_id, post.content)
-# #         # self.assertTrue(post.thumbnail)
-# #         # if self.v.transcript:
-# #         #     self.assertIn(self.v.transcript, post.content)
-
-# #         pub.delete()

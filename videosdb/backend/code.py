@@ -12,15 +12,18 @@ def dbg():
     import ipdb
     ipdb.set_trace()
 
+
 @traced(logging.getLogger("videosdb"))
 def configure_logging(enable_trace):
     import logging.handlers
-    
+
     logger = logging.getLogger("videosdb")
-    formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
     if not os.path.exists("logs"):
         os.makedirs("logs")
-    handler = logging.handlers.RotatingFileHandler("./logs/log", 'a', 1000000, 10)
+    handler = logging.handlers.RotatingFileHandler(
+        "./logs/log", 'a', 1000000, 10)
     handler2 = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
     handler2.setFormatter(formatter)
@@ -30,16 +33,17 @@ def configure_logging(enable_trace):
     if enable_trace:
         logger.setLevel(TRACE)
 
+
 @traced(logging.getLogger("videosdb"))
 def add_arguments(parser):
     parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
-    parser.add_argument("-s", "--sync-wordpress", action="store_true")
+    #parser.add_argument("-s", "--sync", action="store_true")
     parser.add_argument("-d", "--download-one", dest="dl_video_id")
     parser.add_argument("-a", "--download-all", action="store_true")
-    parser.add_argument("-p", "--publish-all", action="store_true")
-    parser.add_argument("-o", "--publish-one", dest="video_id")
-    parser.add_argument("--republish-all", action="store_true")
+    #parser.add_argument("-p", "--publish-all", action="store_true")
+    #parser.add_argument("-o", "--publish-one", dest="video_id")
+    #parser.add_argument("--republish-all", action="store_true")
 
 
 @traced(logging.getLogger("videosdb"))
@@ -58,14 +62,13 @@ def handle(*args, **options):
     if options["dl_video_id"]:
         downloader.download_one(options["dl_video_id"])
 
+    # publisher = Publisher()
 
-    publisher = Publisher()
+    # if options["republish_all"]:
+    #     publisher.republish_all()
 
-    if options["republish_all"]:
-        publisher.republish_all()
+    # if options["sync"]:
+    #     publisher.sync()
 
-    if options["sync_wordpress"]:
-        publisher.sync_wordpress()
-     
-    if options["video_id"]:
-        publisher.publish_one(options["video_id"])
+    # if options["video_id"]:
+    #     publisher.publish_one(options["video_id"])
