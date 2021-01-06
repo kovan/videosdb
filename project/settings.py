@@ -80,13 +80,24 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        'TEST': {
-            "NAME": "dbtest.sqlite3",
-        },
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'videosdb',
+        'USER': 'myuser',
+        'PASSWORD': 'mypass',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#         'TEST': {
+#             "NAME": "dbtest.sqlite3",
+#         },
+#     }
+# }
 
 
 # Password validation
@@ -131,11 +142,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     "DEFAULT_PERMISSION_CLASSES":   [
-            "rest_framework.permissions.AllowAny"
+        "rest_framework.permissions.AllowAny"
     ]
 }
 
-#CORS_ORIGIN_ALLOW_ALL = True
+# CORS_ORIGIN_ALLOW_ALL = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
@@ -144,7 +155,7 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = "media"
 
-WWW_ROOT= "http://localhost:8000"
+WWW_ROOT = "http://localhost:8000"
 WP_USERNAME = "k"
 WP_PASS = "aeoI90nSmWv9bi99C1"
 YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
