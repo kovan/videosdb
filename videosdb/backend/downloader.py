@@ -25,7 +25,7 @@ class Downloader:
             # if new video or missing info, download info:
             if not video.full_response \
                 or not video.title \
-                    or not video.yt_published_date:
+                    or not video.like_count:
                 info = self.yt_api.get_video_info(video.youtube_id)
                 if not info:
                     video.excluded = True

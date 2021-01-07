@@ -24,7 +24,7 @@ export default function Home(videos) {
           {videos.data.map((pub) => (
             <>
               <li key={pub.id}>
-                <Link href={`/${encodeURIComponent(pub.slug)}`}>
+                <Link href={`/videos/${encodeURIComponent(pub.slug)}`}>
                   <a>{pub.title}</a>
                 </Link>
               </li>

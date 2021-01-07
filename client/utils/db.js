@@ -21,7 +21,9 @@ class DB {
 
     async getVideo(slug) {
         let result = await this.db.select().from('videosdb_video').where({ slug: slug });
-        return result;
+        if (result.length > 0)
+            return result[0]
+        return null
     }
 
 }
