@@ -27,9 +27,9 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "sourceMapPathOverrides": {
-                "webpack:///./*": "${workspaceRoot}/client/*",
-            },
+            // "sourceMapPathOverrides": {
+            //     "webpack:///./*": "${workspaceRoot}/client/*",
+            // },
             "port": 9229
         },
         {
