@@ -42,12 +42,18 @@ class Video(models.Model):
     tags = models.ManyToManyField(Tag)
     uploader = models.CharField(max_length=256, null=True)
     channel_id = models.CharField(max_length=256, null=True)
-    duration = models.IntegerField(null=True)
+    duration = models.CharField(max_length=256, null=True)
     full_response = models.TextField(null=True)
     transcript = models.TextField(null=True)
     thumbnail = models.FileField(null=True)
     slug = models.SlugField(unique=True, max_length=4096, null=True)
     published_date = models.DateTimeField(null=True)
+    view_count = models.IntegerField(null=True)
+    like_count = models.IntegerField(null=True)
+    dislike_count = models.IntegerField(null=True)
+    favorite_count = models.IntegerField(null=True)
+    comment_count = models.IntegerField(null=True)
+    definition = models.CharField(max_length=256, null=True)
 
     def __str__(self):
         return self.youtube_id + " - " + self.title

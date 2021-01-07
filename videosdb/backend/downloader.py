@@ -15,15 +15,14 @@ class Downloader:
     def __init__(self):
         self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
         if not os.path.exists(settings.MEDIA_ROOT):
-            os.mkdir(settings.MEDIA_ROOT)        
-
+            os.mkdir(settings.MEDIA_ROOT)
 
     def enqueue_videos(self, video_ids, category_name=None):
 
         def process_video(video: Video):
             from django.utils.dateparse import parse_datetime
 
-            #if new video or missing info, download info:
+            # if new video or missing info, download info:
             if not video.full_response \
                 or not video.title \
                     or not video.yt_published_date:
@@ -37,6 +36,14 @@ class Downloader:
                 video.uploader = info["channelTitle"]
                 video.channel_id = info["channelId"]
                 video.yt_published_date = parse_datetime(info["publishedAt"])
+                video.view_count = int(info["viewCount"])
+                video.like_count = int(info["likeCount"])
+                video.dislike_count = int(info["dislikeCount"])
+                video.favorite_count = int(info["favoriteCount"])
+                video.comment_count = int(info["commentCount"])
+                video.definition = info["definition"]
+                video.duration = info["duration"]
+
                 if "tags" in info:
                     video.set_tags(info["tags"])
                 video.full_response = json.dumps(info)
@@ -56,12 +63,13 @@ class Downloader:
                         tn = thumbnails["low"]
                     else:
                         tn = None
-                    
+
                     if tn:
                         url = tn["url"]
                         try:
-                            tempname, _ = urlretrieve(url, "%s/%s.jpg" % (settings.MEDIA_ROOT, video.youtube_id))
-                            f =  File(open(tempname, 'rb'))
+                            tempname, _ = urlretrieve(
+                                url, "%s/%s.jpg" % (settings.MEDIA_ROOT, video.youtube_id))
+                            f = File(open(tempname, 'rb'))
                             video.thumbnail = f
                             video.save()
                             f.close()
@@ -69,20 +77,18 @@ class Downloader:
                         except HTTPError:
                             video.thumbnail = None
 
-
-
             # some playlists include videos from other channels
             # for now exclude those videos
-            # in the future maybe exclude whole playlist 
+            # in the future maybe exclude whole playlist
             if video.channel_id != settings.YOUTUBE_CHANNEL["id"]:
                 video.excluded = True
                 video.save()
                 return
 
             if not video.transcript:
-                video.transcript = self.yt_api.get_video_transcript(video.youtube_id)
+                video.transcript = self.yt_api.get_video_transcript(
+                    video.youtube_id)
                 video.save()
-
 
         for yid in video_ids:
             video, created = Video.objects.get_or_create(youtube_id=yid)
@@ -91,12 +97,10 @@ class Downloader:
 
             process_video(video)
             if category_name:
-                category, created = Category.objects.get_or_create(name=category_name)
+                category, created = Category.objects.get_or_create(
+                    name=category_name)
                 video.categories.add(category)
                 video.save()
-
-
-
 
     def enqueue_channel(self, channel_id):
         playlists = self.yt_api.list_playlists(channel_id)
@@ -104,7 +108,7 @@ class Downloader:
             if playlist["channel_title"] != settings.YOUTUBE_CHANNEL["name"]:
                 continue
             if playlist["title"] == "Liked videos" or \
-                playlist["title"] == "Popular uploads":
+                    playlist["title"] == "Popular uploads":
                 continue
 
             video_ids = self.yt_api.list_playlist_videos(playlist["id"])
@@ -115,12 +119,11 @@ class Downloader:
                 self.enqueue_videos(video_ids, playlist["title"])
 
     def download_one(self, youtube_id):
-        self.enqueue_videos([youtube_id]) 
+        self.enqueue_videos([youtube_id])
 
     def download_all(self):
         all = Video.objects.filter(excluded=False)
-        self.enqueue_videos([v.youtube_id for v in all]) 
-
+        self.enqueue_videos([v.youtube_id for v in all])
 
     def check_for_new_videos(self):
         channel_id = settings.YOUTUBE_CHANNEL["id"]
@@ -129,4 +132,3 @@ class Downloader:
     def download_pending(self):
         videos = Video.objects.filter(excluded=False)
         self.enqueue_videos([v.youtube_id for v in videos if not v.title])
-
