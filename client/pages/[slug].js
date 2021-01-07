@@ -16,7 +16,7 @@ export default function Home(publications) {
         <h1 className={styles.title}>
           Welcome to <a href="https://nextjs.org">Next.js!</a>
         </h1>
-        
+
       </main>
 
       <footer className={styles.footer}>
@@ -35,11 +35,11 @@ export default function Home(publications) {
 
 export async function getServerSideProps(context) {
 
-    let publications = await db.getPublication(slug)
+  let publications = await db.getVideo(context.query.slug)
 
-    return {
-        props: {
-            data: publications
-        }, // will be passed to the page component as props
-    }
+  return {
+    props: {
+      data: publications
+    }, // will be passed to the page component as props
+  }
 }

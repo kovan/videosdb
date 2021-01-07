@@ -6,7 +6,8 @@ from django.utils.text import slugify
 
 class Tag(models.Model):
     name = models.CharField(unique=True, max_length=256)
-    slug = models.SlugField(unique=True, max_length=256, null=True)
+    slug = models.SlugField(unique=True, max_length=256,
+                            null=True, db_index=True)
 
     def __str__(self):
         return self.name
@@ -19,7 +20,8 @@ class Tag(models.Model):
 
 class Category(models.Model):
     name = models.CharField(unique=True, max_length=256)
-    slug = models.SlugField(unique=True, max_length=256, null=True)
+    slug = models.SlugField(unique=True, max_length=256,
+                            null=True, db_index=True)
 
     def __str__(self):
         return self.name
@@ -31,7 +33,7 @@ class Category(models.Model):
 
 
 class Video(models.Model):
-    youtube_id = models.CharField(max_length=16, unique=True)
+    youtube_id = models.CharField(max_length=16, unique=True, db_index=True)
     title = models.CharField(max_length=256, null=True)
     description = models.TextField(null=True)
     added_date = models.DateTimeField(auto_now_add=True)
@@ -46,7 +48,8 @@ class Video(models.Model):
     full_response = models.TextField(null=True)
     transcript = models.TextField(null=True)
     thumbnail = models.FileField(null=True)
-    slug = models.SlugField(unique=True, max_length=4096, null=True)
+    slug = models.SlugField(unique=True, max_length=4096,
+                            null=True, db_index=True)
     published_date = models.DateTimeField(null=True)
     view_count = models.IntegerField(null=True)
     like_count = models.IntegerField(null=True)

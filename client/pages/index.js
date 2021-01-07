@@ -23,8 +23,11 @@ export default function Home(publications) {
         <ul>
           {publications.data.map((pub) => (
             <>
-              <li>{pub.title}</li>
-              <li><Link href={'/videos/' + pub.slug}><a>{pub.id}</a></Link></li>
+              <li key={pub.id}>
+                <Link href={`/${encodeURIComponent(pub.slug)}`}>
+                  <a>{pub.title}</a>
+                </Link>
+              </li>
             </>
           ))}
         </ul>
