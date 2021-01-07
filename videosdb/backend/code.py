@@ -4,7 +4,6 @@ import os
 from autologging import traced, TRACE
 from django.conf import settings
 from .downloader import Downloader
-from .publisher import Publisher
 
 
 def dbg():
@@ -38,12 +37,8 @@ def configure_logging(enable_trace):
 def add_arguments(parser):
     parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
-    #parser.add_argument("-s", "--sync", action="store_true")
     parser.add_argument("-d", "--download-one", dest="dl_video_id")
     parser.add_argument("-a", "--download-all", action="store_true")
-    #parser.add_argument("-p", "--publish-all", action="store_true")
-    #parser.add_argument("-o", "--publish-one", dest="video_id")
-    #parser.add_argument("--republish-all", action="store_true")
 
 
 @traced(logging.getLogger("videosdb"))
@@ -61,14 +56,3 @@ def handle(*args, **options):
 
     if options["dl_video_id"]:
         downloader.download_one(options["dl_video_id"])
-
-    # publisher = Publisher()
-
-    # if options["republish_all"]:
-    #     publisher.republish_all()
-
-    # if options["sync"]:
-    #     publisher.sync()
-
-    # if options["video_id"]:
-    #     publisher.publish_one(options["video_id"])

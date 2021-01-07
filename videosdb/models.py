@@ -1,10 +1,11 @@
+from dirtyfields import DirtyFieldsMixin
 from uuslug import uuslug
 from django.db import models
 # Import slugify to generate slugs from strings
 from django.utils.text import slugify
 
 
-class Tag(models.Model):
+class Tag(DirtyFieldsMixin, models.Model):
     name = models.CharField(unique=True, max_length=256)
     slug = models.SlugField(unique=True, max_length=256,
                             null=True, db_index=True)
@@ -18,7 +19,7 @@ class Tag(models.Model):
         super(Tag, self).save(*args, **kwargs)
 
 
-class Category(models.Model):
+class Category(DirtyFieldsMixin, models.Model):
     name = models.CharField(unique=True, max_length=256)
     slug = models.SlugField(unique=True, max_length=256,
                             null=True, db_index=True)
@@ -32,7 +33,10 @@ class Category(models.Model):
         super(Category, self).save(*args, **kwargs)
 
 
-class Video(models.Model):
+class Video(DirtyFieldsMixin, models.Model):
+    class Meta:
+        ordering = ['-yt_published_date']
+
     youtube_id = models.CharField(max_length=16, unique=True, db_index=True)
     title = models.CharField(max_length=256, null=True)
     description = models.TextField(null=True)

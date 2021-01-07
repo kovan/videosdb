@@ -3,7 +3,7 @@ import json
 import shutil
 from django.core.files import File
 from django.conf import settings
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, tag
 from unittest.mock import create_autospec, patch
 from django.utils import timezone
 from videosdb.models import Video, Category
@@ -14,13 +14,8 @@ from videosdb.backend.youtube_api import YoutubeAPI
 @override_settings(MEDIA_ROOT="test_media")
 def _create_test_video():
     v = Video()
-    v.youtube_id = "xxxxxxxxxxx"
-    v.title = "New video title"
-    v.description = "Description of the video click this should be hidden"
-    v.transcript = "This is the transcript"
+    v.youtube_id = "id1"
     v.excluded = False
-    v.uploader = "Uploader"
-    v.channel_id = "UCcYzLCs3zrQIBVHYA1sK2sw"
     v.full_response = json.loads(open(TEST_VIDEO_INFO).read())
     v.yt_published_date = timezone.now()
 
@@ -74,3 +69,7 @@ class DownloaderTest(TestCase):
         self.assertEqual(v.categories.get(), c)
         self.assertEqual([t.name for t in v.tags.all()],
                          test_video_info["tags"])
+
+    @tag("consume-quota")
+    def test_download(self):
+        pass

@@ -3,6 +3,8 @@ import logging
 import requests
 from youtube_transcript_api import YouTubeTranscriptApi
 
+logger = logging.getLogger("videosdb")
+
 
 def _sentence_case(text):
     punc_filter = re.compile(r'([.!?]\s*)')
@@ -22,7 +24,7 @@ class YoutubeAPI:
             url += "&pageToken=" + page_token
         url += "&key=" + self.yt_key
 
-        logging.debug("request: " + url)
+        logger.debug("request: " + url)
         response = requests.get(url)
         response.raise_for_status()
         json = response.json()

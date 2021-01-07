@@ -93,6 +93,18 @@
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Django: check",
+            "type": "python",
+            "request": "launch",
+            "program": "manage.py",
+            "args": [
+                "videosdb",
+                "-c"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
