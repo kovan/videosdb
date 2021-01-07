@@ -3,7 +3,7 @@ import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 import db from '../utils/db.js'
 
-export default function Home(publications) {
+export default function Home(videos) {
   return (
     <div className={styles.container}>
       <Head>
@@ -21,7 +21,7 @@ export default function Home(publications) {
           <code className={styles.code}>pages/index.js</code>
         </p>
         <ul>
-          {publications.data.map((pub) => (
+          {videos.data.map((pub) => (
             <>
               <li key={pub.id}>
                 <Link href={`/${encodeURIComponent(pub.slug)}`}>
@@ -78,11 +78,11 @@ export default function Home(publications) {
 
 export async function getServerSideProps(context) {
 
-  let publications = await db.getPublications()
+  let videos = await db.getVideos()
 
   return {
     props: {
-      data: publications
+      data: videos
     }, // will be passed to the page component as props
   }
 }

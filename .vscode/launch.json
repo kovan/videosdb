@@ -5,6 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug via NPM",
+            "request": "launch",
+            "runtimeExecutable": "${workspaceFolder}/client/node_modules/next/dist/bin/next",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "cwd": "${workspaceFolder}/client",
+            "sourceMapPathOverrides": {
+                "webpack:///./*": "${workspaceRoot}/client/*",
+            },
+            "env": {
+                "NODE_OPTIONS": "--inspect"
+            }
+        },
+        {
             "type": "node",
             "request": "attach",
             "name": "Attach Program",
@@ -15,23 +31,6 @@
                 "webpack:///./*": "${workspaceRoot}/client/*",
             },
             "port": 9229
-        },
-        {
-            "name": "Debug via NPM",
-            "request": "launch",
-            "runtimeArgs": [
-                "next",
-                "dev"
-            ],
-            "runtimeExecutable": "npx",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "pwa-node",
-            "cwd": "${workspaceFolder}/client",
-            "sourceMapPathOverrides": {
-                "webpack:///./*": "${workspaceRoot}/client/*",
-            },
         },
         {
             "name": "Django: Tests",

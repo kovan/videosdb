@@ -14,8 +14,13 @@ class DB {
             }
         });
     }
-    async getPublications() {
+    async getVideos() {
         let result = await this.db.select().from('videosdb_video').where({ excluded: false }).limit(10);
+        return result;
+    }
+
+    async getVideo(slug) {
+        let result = await this.db.select().from('videosdb_video').where({ slug: slug });
         return result;
     }
 
