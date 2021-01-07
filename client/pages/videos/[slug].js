@@ -1,11 +1,9 @@
 import Head from 'next/head'
 import Link from 'next/link'
-import styles from '../../styles/Home.module.css'
 import db from '../../utils/db.js'
 
 
 export default function Video(data) {
-  debugger
   return (
     <div>
       <Head>
@@ -13,7 +11,10 @@ export default function Video(data) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <h1> HELLO
+      <p>
+        Title:
+      </p>
+      <h1>
         {data.data.title}
       </h1>
 
