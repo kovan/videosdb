@@ -7,7 +7,7 @@ import {
   ListItem,
   makeStyles
 } from '@material-ui/core';
-import Link from 'next/link';
+import Link from 'Link'
 
 const useStyles = makeStyles((theme) => ({
   item: {
@@ -57,9 +57,9 @@ const NavItem = ({
       {...rest}
     >
       <Button
-        // activeClassName={classes.active}
+        activeClassName={classes.active}
         className={classes.button}
-        // component={Link}
+        component={Link}
         to={href}
       >
         {Icon && (
