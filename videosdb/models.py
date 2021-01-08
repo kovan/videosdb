@@ -1,3 +1,4 @@
+from dirtyfields import DirtyFieldsMixin
 from django.db import models
 
 
@@ -11,7 +12,7 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-class Video(models.Model):
+class Video(DirtyFieldsMixin, models.Model):
     youtube_id = models.CharField(max_length=16, unique=True)
     title = models.CharField(max_length=256, null=True)
     description = models.TextField(null=True)
@@ -29,13 +30,19 @@ class Video(models.Model):
     thumbnail = models.FileField(null =True)
 
     def __str__(self):
-        return self.youtube_id + " - " + self.title
+        return str(self.youtube_id) + " - " + str(self.title)
 
     def set_tags(self, tags):
         for tag in tags:
             tag_obj, created = Tag.objects.get_or_create(name=tag)
             self.tags.add(tag_obj)
         self.save()
+
+    def save(self, *args, **kwargs):
+        if self.is_dirty():
+            super(Video, self).save(*args, **kwargs)
+            print("SAVED video: "  + str(self))
+
 
 class Publication(models.Model):
     video = models.OneToOneField(

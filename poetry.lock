@@ -83,6 +83,18 @@ argon2 = ["argon2-cffi (>=16.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-dirtyfields"
+version = "1.4.1"
+description = "Tracking dirty fields on a Django model instance (actively maintained)"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+Django = ">=1.11"
+pytz = ">=2015.7"
+
+[[package]]
 name = "django-extensions"
 version = "3.1.0"
 description = "Extensions for Django"
@@ -344,7 +356,7 @@ requests = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "7bccbcb218ffbae840c1f79d191bcbb5bcea6afa8ba0d6de5bde967f220b14fd"
+content-hash = "541f5b8995e80ff67169359d7f506263d70f49f8757996ef6ee1d62d213e651a"
 
 [metadata.files]
 appnope = [
@@ -383,6 +395,9 @@ decorator = [
 django = [
     {file = "Django-3.1.4-py3-none-any.whl", hash = "sha256:5c866205f15e7a7123f1eec6ab939d22d5bde1416635cab259684af66d8e48a2"},
     {file = "Django-3.1.4.tar.gz", hash = "sha256:edb10b5c45e7e9c0fb1dc00b76ec7449aca258a39ffd613dbd078c51d19c9f03"},
+]
+django-dirtyfields = [
+    {file = "django-dirtyfields-1.4.1.tar.gz", hash = "sha256:466d5f8bea81dadc158756eec0a176bce1f36ace45e9607e196875fa01baa605"},
 ]
 django-extensions = [
     {file = "django-extensions-3.1.0.tar.gz", hash = "sha256:7cd002495ff0a0e5eb6cdd6be759600905b4e4079232ea27618fc46bdd853651"},
