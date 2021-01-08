@@ -60,7 +60,7 @@ const NavItem = ({
         activeClassName={classes.active}
         className={classes.button}
         component={Link}
-        to={href}
+        href={href}
       >
         {Icon && (
           <Icon

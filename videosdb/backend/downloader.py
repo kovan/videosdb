@@ -29,31 +29,35 @@ class Downloader:
                     or not video.like_count:
 
                 info = self.yt_api.get_video_info(video.youtube_id)
-                if not info:
-                    raise Exception("Youtube API not working")
+                if info:
 
-                video.title = info["title"]
-                video.description = info["description"]
-                video.uploader = info["channelTitle"]
-                video.channel_id = info["channelId"]
-                video.yt_published_date = parse_datetime(info["publishedAt"])
-                video.view_count = int(info["viewCount"])
-                video.like_count = int(info["likeCount"])
-                video.dislike_count = int(info["dislikeCount"])
-                video.favorite_count = int(info["favoriteCount"])
-                video.comment_count = int(info["commentCount"])
-                video.definition = info["definition"]
-                video.duration = info["duration"]
+                    video.title = info["title"]
+                    video.description = info["description"]
+                    video.uploader = info["channelTitle"]
+                    video.channel_id = info["channelId"]
+                    video.yt_published_date = parse_datetime(
+                        info["publishedAt"])
+                    video.view_count = int(info["viewCount"])
+                    video.like_count = int(info["likeCount"])
+                    video.dislike_count = int(info["dislikeCount"])
+                    video.favorite_count = int(info["favoriteCount"])
+                    video.comment_count = int(info["commentCount"])
+                    video.definition = info["definition"]
+                    video.duration = info["duration"]
 
-                if "tags" in info:
-                    video.set_tags(info["tags"])
-                video.full_response = json.dumps(info)
+                    if "tags" in info:
+                        video.set_tags(info["tags"])
+                    video.full_response = json.dumps(info)
+                else:
+                    video.excluded = True
 
             # some playlists include videos from other channels
             # for now exclude those videos
             # in the future maybe exclude whole playlist
             if video.channel_id != settings.YOUTUBE_CHANNEL["id"]:
                 video.excluded = True
+
+            if video.excluded:
                 if video.is_dirty():
                     video.save()
                 return
