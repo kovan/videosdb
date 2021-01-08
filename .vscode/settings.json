@@ -6,5 +6,13 @@
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
         "source.fixAll": true
-    }
+    },
+    "search.useGlobalIgnoreFiles": true,
+    "search.exclude": {
+        "**/.git": true,
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/tmp": true,
+        "**/.next": true
+    },
 }

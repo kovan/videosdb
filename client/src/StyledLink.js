@@ -24,7 +24,7 @@ NextComposed.propTypes = {
 
 // A styled version of the Next.js Link component:
 // https://nextjs.org/docs/#with-link
-function Link(props) {
+function StyledLink(props) {
     const {
         href,
         activeClassName = 'active',
@@ -49,7 +49,7 @@ function Link(props) {
     );
 }
 
-Link.propTypes = {
+StyledLink.propTypes = {
     activeClassName: PropTypes.string,
     as: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     className: PropTypes.string,
@@ -60,4 +60,4 @@ Link.propTypes = {
     prefetch: PropTypes.bool,
 };
 
-export default React.forwardRef((props, ref) => <Link {...props} innerRef={ref} />);
+export default React.forwardRef((props, ref) => <StyledLink {...props} innerRef={ref} />);

@@ -173,7 +173,7 @@ const LoginView = () => {
                   {' '}
                   <Link
                     component={RouterLink}
-                    to="/register"
+                    href="/register"
                     variant="h6"
                   >
                     Sign up

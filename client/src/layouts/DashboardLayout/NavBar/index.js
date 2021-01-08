@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/router'
+
 import PropTypes from 'prop-types';
 import {
   Avatar,
@@ -91,14 +93,14 @@ const useStyles = makeStyles(() => ({
 
 const NavBar = ({ onMobileClose, openMobile }) => {
   const classes = useStyles();
-  const location = useLocation();
+  const router = useRouter();
 
   useEffect(() => {
     if (openMobile && onMobileClose) {
       onMobileClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [router.pathname]);
 
   const content = (
     <Box
@@ -112,12 +114,12 @@ const NavBar = ({ onMobileClose, openMobile }) => {
         flexDirection="column"
         p={2}
       >
-        <Avatar
+        {/* <Avatar
           className={classes.avatar}
-          component={RouterLink}
+          component={Link}
           src={user.avatar}
           to="/app/account"
-        />
+        /> */}
         <Typography
           className={classes.name}
           color="textPrimary"
@@ -215,7 +217,7 @@ NavBar.propTypes = {
 };
 
 NavBar.defaultProps = {
-  onMobileClose: () => {},
+  onMobileClose: () => { },
   openMobile: false
 };
 

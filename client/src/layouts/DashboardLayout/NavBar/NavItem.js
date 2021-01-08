@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink as RouterLink } from 'react-router-dom';
+// import { NavLink as RouterLink } from 'react-router-dom';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
 import {
@@ -7,6 +7,7 @@ import {
   ListItem,
   makeStyles
 } from '@material-ui/core';
+import Link from 'next/link';
 
 const useStyles = makeStyles((theme) => ({
   item: {
@@ -56,9 +57,9 @@ const NavItem = ({
       {...rest}
     >
       <Button
-        activeClassName={classes.active}
+        // activeClassName={classes.active}
         className={classes.button}
-        component={RouterLink}
+        // component={Link}
         to={href}
       >
         {Icon && (

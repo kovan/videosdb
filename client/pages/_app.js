@@ -7,7 +7,7 @@ import '../src/mixins/chartjs';
 import theme from '../src/theme';
 import PropTypes from 'prop-types';
 import Head from 'next/head';
-
+import MainLayout from '../src/layouts/MainLayout';
 
 export default function MyApp(props) {
   const { Component, pageProps } = props;
@@ -28,7 +28,8 @@ export default function MyApp(props) {
       </Head>
       <ThemeProvider theme={theme}>
         <GlobalStyles />
-        <Component {...pageProps} />
+        <MainLayout />
+        {/* <Component {...pageProps} /> */}
       </ThemeProvider>
     </React.Fragment>
   );
