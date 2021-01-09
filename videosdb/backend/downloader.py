@@ -28,17 +28,18 @@ class Downloader:
                 or not video.title \
                     or not video.yt_published_date:
                 info = self.yt_api.get_video_info(video.youtube_id)
-                if not info:
-                    raise Exception("API not working")
+                if info:
 
-                video.title = info["title"]
-                video.description = info["description"]
-                video.uploader = info["channelTitle"]
-                video.channel_id = info["channelId"]
-                video.yt_published_date = parse_datetime(info["publishedAt"])
-                if "tags" in info:
-                    video.set_tags(info["tags"])
-                video.full_response = json.dumps(info)
+                    video.title = info["title"]
+                    video.description = info["description"]
+                    video.uploader = info["channelTitle"]
+                    video.channel_id = info["channelId"]
+                    video.yt_published_date = parse_datetime(info["publishedAt"])
+                    if "tags" in info:
+                        video.set_tags(info["tags"])
+                    video.full_response = json.dumps(info)
+                else:
+                    video.excluded = True
                 video.save()
 
             if not video.thumbnail and video.full_response:

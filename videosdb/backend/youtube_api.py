@@ -3,6 +3,8 @@ import logging
 import requests
 from youtube_transcript_api import YouTubeTranscriptApi
 
+logger = logging.getLogger("videosdb")
+
 def _sentence_case(text):
     punc_filter = re.compile(r'([.!?]\s*)')
     split_with_punctuation = punc_filter.split(text)
@@ -20,13 +22,14 @@ class YoutubeAPI:
             url += "&pageToken=" + page_token
         url += "&key=" + self.yt_key
 
-        logging.debug("request: " + url)
+        logger.debug("request: " + url)
         response = requests.get(url)
         response.raise_for_status()
         json = response.json()
         items = json["items"]
         if "nextPageToken" in json:
             items += self._make_request(base_url, json["nextPageToken"])
+        #logger.debug(items)
         return items
 
     def _get_playlist_info(self, playlist_id):
