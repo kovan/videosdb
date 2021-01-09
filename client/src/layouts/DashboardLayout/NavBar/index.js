@@ -34,44 +34,44 @@ const user = {
 
 const items = [
   {
-    href: '/app/dashboard',
+    href: '/',
     icon: BarChartIcon,
-    title: 'Dashboard'
+    title: 'Latest videos'
   },
   {
-    href: '/app/customers',
+    href: '/random-video',
     icon: UsersIcon,
-    title: 'Customers'
+    title: 'Random video'
   },
   {
-    href: '/app/products',
+    href: '/most-viewed',
     icon: ShoppingBagIcon,
-    title: 'Products'
+    title: 'Most viewed videos'
   },
   {
-    href: '/app/account',
+    href: '/most-liked',
     icon: UserIcon,
-    title: 'Account'
+    title: 'Most liked videos'
   },
   {
-    href: '/app/settings',
+    href: '/most-favorited',
     icon: SettingsIcon,
-    title: 'Settings'
+    title: 'Most favorited videos'
   },
   {
-    href: '/login',
+    href: '/most-commented',
     icon: LockIcon,
-    title: 'Login'
+    title: 'Most commented videos'
   },
   {
-    href: '/register',
+    href: '/search',
     icon: UserPlusIcon,
-    title: 'Register'
+    title: 'Search'
   },
   {
-    href: '/404',
+    href: '/categories',
     icon: AlertCircleIcon,
-    title: 'Error'
+    title: 'Categories'
   }
 ];
 
@@ -91,7 +91,8 @@ const useStyles = makeStyles(() => ({
   }
 }));
 
-const NavBar = ({ onMobileClose, openMobile }) => {
+const NavBar = (props) => {
+  const { onMobileClose, openMobile } = props;
   const classes = useStyles();
   const router = useRouter();
 
@@ -145,6 +146,19 @@ const NavBar = ({ onMobileClose, openMobile }) => {
               icon={item.icon}
             />
           ))}
+        </List>
+      </Box>
+      <Divider />
+      <Box p={2}>
+        <List>
+          {/* {categories.map((item) => (
+            <NavItem
+              href={item.href}
+              key={item.title}
+              title={item.title}
+            // icon={item.icon}
+            />
+          ))} */}
         </List>
       </Box>
       <Box flexGrow={1} />

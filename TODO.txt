@@ -16,7 +16,7 @@ TODO
 
 UI:
 --------------
-- inicio (basado en dashboard)
+X inicio (basado en dashboard) (de moemnto NO)
   - latest video (highlighted)
   - video explorer button (grande) (lleva a explorador de videos)
   - view random video button
@@ -77,10 +77,13 @@ estructura Next.js:
   search.js
 
 sidebar:
- - search field
- - go to random video
- - video explorer
- - advanced search
+ - latest videos
+ - random video 
+ - top viewed
+ - top liked
+ - top favourited
+ - top commented
+ - search field / advanced search
  - categories:
     - cat1
     - cat2
