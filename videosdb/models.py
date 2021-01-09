@@ -63,7 +63,7 @@ class Video(DirtyFieldsMixin, models.Model):
     definition = models.CharField(max_length=256, null=True)
 
     def __str__(self):
-        return self.youtube_id + " - " + self.title
+        return str(self.youtube_id) + " - " + str(self.title)
 
     def set_tags(self, tags):
         for tag in tags:

@@ -13,8 +13,83 @@ TODO
     - top comentados
     - mas nuevos
     - mas viejos
-  
 
+UI:
+--------------
+- inicio (basado en dashboard)
+  - latest video (highlighted)
+  - video explorer button (grande) (lleva a explorador de videos)
+  - view random video button
+  - latest videos
+    - thumbnail, titulo video, date published on YT
+  - top viewed videos (lista), cada item:
+    - thumbnail, titulo video, view count
+  - top liked videos:  
+    - thumbnail, titulo video, lie count
+  - top favourited videos:  
+    - thumbnail, titulo video, favorite count
+  - top commented videos:
+    - thumbnail, titulo video, comment count
+
+- explorador de videos (basado en customers)
+   - cada video que se pueda ver directamente
+   - el paginador debe permitir meter el nº de pagina directamente
+   - ordenar por todos (up y down)
+     - titulo
+     - estadisticas y duración.
+     - fecha de publicacion
+   - filtro (texftield) todo en uno: titulo, descripción, tags, categorias
+
+- buscador avanzado (basado en settings). 
+  - Campos:
+    - titulo
+    - categorias
+    - tags
+    - descripcion
+    - transcripcion
+  - ordenar:
+    - fecha de publicacion
+    - estadisticas
+
+*** general:
+ - cada video al pinchar lleva a la página del video, donde se muestra:
+   - video
+   - titulo
+   - categorias a las que pertenece
+   - tags que tiene
+   - descripcion
+   - transcripcion
+   - estadísticas (visitas, etc.)
+   - botones compartir redes sociales
+   - related videos ¿? no se si habrá manera de hacerlo
+- las categorias se muestran en la barra lateral, y al pinchar lleva a un explorador de videos de esa categoría
+- los tags más usados lo mismo.
+- los META deben estár bien con título y descripcion.
+
+estructura Next.js:
+- pages
+  - video
+  - category
+  - tag
+  index.js
+  dashboard.js
+  explorer.js
+  search.js
+
+sidebar:
+ - search field
+ - go to random video
+ - video explorer
+ - advanced search
+ - categories:
+    - cat1
+    - cat2
+    ...etc.
+
+footer:
+- contacto
+- link al canal de youtube de sadhguru
+- instalar google analytics
 
 
 
