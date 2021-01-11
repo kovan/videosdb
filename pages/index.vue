@@ -1,22 +1,28 @@
 <template lang="pug">
+
+
+
   v-container
-    v-row
-      template(v-for='n in 4')
-        v-col.mt-2(:key='n' cols='12')
-          strong Category {{ n }}
-        v-col(v-for='j in 6' :key='`${n}${j}`' cols='6' md='2')
-          v-sheet(height='150')
-            client-only
-              vue-plyr
-                div(data-plyr-provider='youtube' data-plyr-embed-id='bTqVqk7FSmY')
+    v-container.grey.lighten-5.mb-6(align='center', fluid=true)
+      v-row(align='center' no-gutters='' style='height: 150px;')
+        v-col(v-for='video in videos' :key='youtube_id')
+          v-card.pa-2(outlined='' tile='')
+            //- iframe(
+            //-   width='560' 
+            //-   height='315' 
+            //-   :src="'https:/www.youtube.com/embed/' +video.youtube_id"
+            //-   frameborder='0' 
+            //-   allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' 
+            //-   allowfullscreen='')
+
+            | {{video.title}}
 
 
 
-
-        v-card-actions
-          v-spacer
-            v-btn(color='primary' nuxt='' to='/inspire')
-              | Continue
+          v-card-actions
+            v-spacer
+              v-btn(color='primary' nuxt='' to='/inspire')
+                | Continue
 </template>
 
 <script>
@@ -31,14 +37,17 @@ export default {
   },
   data() {
     return {
-      categories : []
+      videos : []
     }
   },
   async fetch() { 
-    this.categories = await this.$http.$get(
+    this.videos = await this.$http.$get(
        'http://localhost:8000/api/videos/'
      )
-     
+    
+    this.videos = this.videos.results
+    
+    console.log("CATS: " +this.videos)
      
   }
 }
