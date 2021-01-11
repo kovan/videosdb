@@ -15,7 +15,8 @@
     "@nuxtjs/axios": "^5.12.2",
     "core-js": "^3.6.5",
     "knex": "^0.21.15",
-    "nuxt": "^2.14.6"
+    "nuxt": "^2.14.6",
+    "vue-plyr": "^7.0.0"
   },
   "devDependencies": {
     "@nuxtjs/vuetify": "^1.11.2",

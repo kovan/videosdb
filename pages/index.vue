@@ -6,6 +6,10 @@
           strong Category {{ n }}
         v-col(v-for='j in 6' :key='`${n}${j}`' cols='6' md='2')
           v-sheet(height='150')
+            client-only
+              vue-plyr
+                div(data-plyr-provider='youtube' data-plyr-embed-id='bTqVqk7FSmY')
+
 
 
 
@@ -30,9 +34,9 @@ export default {
       categories : []
     }
   },
-  async fetch() { debugger
+  async fetch() { 
     this.categories = await this.$http.$get(
-       'http://localhost:8000/api/categories/'
+       'http://localhost:8000/api/videos/'
      )
      
      
