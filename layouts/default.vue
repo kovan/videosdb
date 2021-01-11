@@ -44,7 +44,7 @@ export default {
       items: [
         {
           icon: 'mdi-apps',
-          title: 'Welcome',
+          title: 'Latest videos',
           to: '/'
         },
         {
