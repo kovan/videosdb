@@ -3,12 +3,19 @@ from uuslug import uuslug
 from django.db import models
 # Import slugify to generate slugs from strings
 from django.utils.text import slugify
+import json
 
 
 class Tag(DirtyFieldsMixin, models.Model):
     name = models.CharField(unique=True, max_length=256)
     slug = models.SlugField(unique=True, max_length=256,
                             null=True, db_index=True)
+
+    class Meta:
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["slug"])
+        ]
 
     def __str__(self):
         return self.name
@@ -24,6 +31,12 @@ class Category(DirtyFieldsMixin, models.Model):
     slug = models.SlugField(unique=True, max_length=256,
                             null=True, db_index=True)
 
+    class Meta:
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["slug"])
+        ]
+
     def __str__(self):
         return self.name
 
@@ -36,8 +49,13 @@ class Category(DirtyFieldsMixin, models.Model):
 class Video(DirtyFieldsMixin, models.Model):
     class Meta:
         ordering = ['-yt_published_date']
+        indexes = [
+            models.Index(fields=["youtube_id"]),
+            models.Index(fields=["slug"])
+        ]
 
-    youtube_id = models.CharField(max_length=16, unique=True, db_index=True)
+    youtube_id = models.CharField(
+        max_length=16, unique=True, db_index=True)
     title = models.CharField(max_length=256, null=True)
     description = models.TextField(null=True)
     added_date = models.DateTimeField(auto_now_add=True)
@@ -75,3 +93,12 @@ class Video(DirtyFieldsMixin, models.Model):
         if not self.slug and self.title:
             self.slug = uuslug(self.title, instance=self)
         super(Video, self).save(*args, **kwargs)
+
+    @property
+    def thumbnails(self):
+        if not self.full_response:
+            return None
+        full_response = json.loads(self.full_response)
+        if "thumbnails" in full_response:
+            return full_response["thumbnails"]
+        return None

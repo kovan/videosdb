@@ -25,8 +25,9 @@ SECRET_KEY = '4!_fouo%ikguf72o=em+(v0m)pdo7^8ae*vw$xs9&+l-dsa#*u'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.0.19", "localhost"]
+#ALLOWED_HOSTS = ["192.168.0.19", "localhost"]
 
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -51,7 +53,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'project.urls'
@@ -128,7 +129,8 @@ USE_TZ = True
 CORS_ORIGIN_WHITELIST = [
     'http://192.168.0.19:5000',
     'http://localhost:8000',
-    'http://localhost:8080'
+    'http://localhost:8080',
+    'http://localhost:3000'
 ]
 
 REST_FRAMEWORK = {
@@ -139,7 +141,6 @@ REST_FRAMEWORK = {
     ]
 }
 
-# CORS_ORIGIN_ALLOW_ALL = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
