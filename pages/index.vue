@@ -5,7 +5,7 @@
   v-container
     v-container.grey.lighten-5.mb-6(align='center', fluid=true)
       v-row(align='center' no-gutters style='height: 150px;')
-        v-col(v-for='video in this.videos' :key='youtube_id')
+        v-col(v-for='video in this.videos' :key='video.youtube_id')
           v-card.pa-2(outlined tile)
             //- iframe(
             //-   width='560' 
@@ -38,12 +38,10 @@ export default {
 
   async asyncData() { 
     let videos = await axios.get(
-       'http://localhost:8000/api/videos/'
-     )
+       'http://localhost:8000/api/videos/')
 
     videos = videos.data.results
     
-    console.log("Videos2: " +videos)
     return {videos}
   }
 }
