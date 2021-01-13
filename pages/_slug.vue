@@ -16,7 +16,7 @@ export default {
  
   async asyncData({params}) { 
     let video = await axios.get(
-       'http://localhost:8000/api/videos/' + params.video
+       'http://localhost:8000/api/videos/' + params.slug +"/"
      )
 
     video = video.data
