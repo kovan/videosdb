@@ -36,6 +36,7 @@ class TagViewSet(viewsets.ModelViewSet):
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
+    pagination_class = None
     lookup_field = "slug"
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
