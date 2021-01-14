@@ -5,12 +5,14 @@ from youtube_transcript_api import YouTubeTranscriptApi
 
 logger = logging.getLogger("videosdb")
 
+
 def _sentence_case(text):
     punc_filter = re.compile(r'([.!?]\s*)')
     split_with_punctuation = punc_filter.split(text)
 
     final = ''.join([i.capitalize() for i in split_with_punctuation])
     return final
+
 
 class YoutubeAPI:
     def __init__(self, yt_key):
@@ -29,7 +31,7 @@ class YoutubeAPI:
         items = json["items"]
         if "nextPageToken" in json:
             items += self._make_request(base_url, json["nextPageToken"])
-        #logger.debug(items)
+        # logger.debug(items)
         return items
 
     def _get_playlist_info(self, playlist_id):
@@ -40,11 +42,11 @@ class YoutubeAPI:
             "id": playlist_id,
             "title": items[0]["snippet"]["title"],
             "channel_title": items[0]["snippet"]["channelTitle"]
-        } 
+        }
         return playlist
 
     def _get_channnelsection_playlists(self, channel_id):
-        url = "https://www.googleapis.com/youtube/v3/channelSections?part=contentDetails" 
+        url = "https://www.googleapis.com/youtube/v3/channelSections?part=contentDetails"
         url += "&channelId=" + channel_id
         items = self._make_request(url)
         playlist_ids = []
@@ -67,8 +69,8 @@ class YoutubeAPI:
         return playlist_ids
 
     def list_playlists(self, channel_id):
-        ids_channelsection = self._get_channnelsection_playlists(channel_id) 
-        ids_channel =  self._get_channel_playlists(channel_id) 
+        ids_channelsection = self._get_channnelsection_playlists(channel_id)
+        ids_channel = self._get_channel_playlists(channel_id)
 
         playlist_ids = set(ids_channelsection + ids_channel)
         playlists = []
@@ -79,11 +81,15 @@ class YoutubeAPI:
         return playlists
 
     def get_video_info(self, youtube_id):
-        url = "https://www.googleapis.com/youtube/v3/videos?part=snippet"
+        url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics"
         url += "&id=" + youtube_id
         items = self._make_request(url)
         if items:
-            video_info = items[0]["snippet"]
+            video_info = {
+                **items[0]["snippet"],
+                **items[0]["contentDetails"],
+                **items[0]["statistics"],
+            }
             return video_info
         return None
 
@@ -106,4 +112,3 @@ class YoutubeAPI:
         for d in t:
             result += d["text"] + " "
         return _sentence_case(result.capitalize() + ".")
-

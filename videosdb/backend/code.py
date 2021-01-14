@@ -12,15 +12,18 @@ def dbg():
     import ipdb
     ipdb.set_trace()
 
+
 @traced(logging.getLogger("videosdb"))
 def configure_logging(enable_trace):
     import logging.handlers
-    
+
     logger = logging.getLogger("videosdb")
-    formatter = logging.Formatter('%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
     if not os.path.exists("logs"):
         os.makedirs("logs")
-    handler = logging.handlers.RotatingFileHandler("./logs/log", 'a', 1000000, 10)
+    handler = logging.handlers.RotatingFileHandler(
+        "./logs/log", 'a', 1000000, 10)
     handler2 = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
     handler2.setFormatter(formatter)
@@ -29,6 +32,7 @@ def configure_logging(enable_trace):
 
     if enable_trace:
         logger.setLevel(TRACE)
+
 
 @traced(logging.getLogger("videosdb"))
 def add_arguments(parser):
@@ -47,25 +51,26 @@ def handle(*args, **options):
 
     configure_logging(options["trace"])
 
-    downloader = Downloader()
-
     if options["check_for_new_videos"]:
+        downloader = Downloader()
         downloader.check_for_new_videos()
 
     if options["download_all"]:
+        downloader = Downloader()
         downloader.download_all()
 
     if options["dl_video_id"]:
+        downloader = Downloader()
         downloader.download_one(options["dl_video_id"])
 
-
-    publisher = Publisher()
-
     if options["republish_all"]:
+        publisher = Publisher()
         publisher.republish_all()
 
     if options["sync_wordpress"]:
+        publisher = Publisher()
         publisher.sync_wordpress()
-     
+
     if options["video_id"]:
+        publisher = Publisher()
         publisher.publish_one(options["video_id"])

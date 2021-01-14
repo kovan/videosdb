@@ -25,13 +25,15 @@ SECRET_KEY = '4!_fouo%ikguf72o=em+(v0m)pdo7^8ae*vw$xs9&+l-dsa#*u'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+#ALLOWED_HOSTS = ["192.168.0.19", "localhost"]
 
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 
 INSTALLED_APPS = [
     "videosdb.apps.VideosdbConfig",
+    "rest_framework",
     "django_extensions",
     'django.contrib.admin',
     'django.contrib.auth',
@@ -39,9 +41,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -77,10 +81,14 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'videosdb',
+        'USER': 'myuser',
+        'PASSWORD': 'mypass',
+        'HOST': 'localhost',
+        'PORT': '',
         'TEST': {
-            "NAME": "dbtest.sqlite3",
+            "NAME": "test_videosdb",
         },
     }
 }
@@ -118,6 +126,21 @@ USE_L10N = True
 
 USE_TZ = True
 
+CORS_ORIGIN_WHITELIST = [
+    'http://192.168.0.19:5000',
+    'http://localhost:8000',
+    'http://localhost:8080',
+    'http://localhost:3000'
+]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    "DEFAULT_PERMISSION_CLASSES":   [
+        "rest_framework.permissions.AllowAny"
+    ]
+}
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
@@ -126,9 +149,9 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = "media"
 
-WWW_ROOT= "http://192.168.0.19"
+WWW_ROOT = "http://localhost:8000"
 WP_USERNAME = "k"
-WP_PASS = "k"
+WP_PASS = "aeoI90nSmWv9bi99C1"
 YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
 YOUTUBE_CHANNEL = {
     "id": "UCcYzLCs3zrQIBVHYA1sK2sw",

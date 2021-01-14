@@ -1,4 +1,15 @@
 {
-    "editor.fontSize": 13,
-    "terminal.integrated.fontSize": 13
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": true
+    },
+    "search.useGlobalIgnoreFiles": true,
+    "search.exclude": {
+        "**/.git": true,
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/tmp": true,
+        "**/.next": true
+    },
 }

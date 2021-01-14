@@ -5,45 +5,106 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug via NPM",
+            "request": "launch",
+            "runtimeExecutable": "${workspaceFolder}/client/node_modules/next/dist/bin/next",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "cwd": "${workspaceFolder}/client",
+            "sourceMapPathOverrides": {
+                "webpack:///./*": "${workspaceRoot}/client/*",
+            },
+            "env": {
+                "NODE_OPTIONS": "--inspect"
+            }
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach Program",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            // "sourceMapPathOverrides": {
+            //     "webpack:///./*": "${workspaceRoot}/client/*",
+            // },
+            "port": 9229
+        },
+        {
             "name": "Django: Tests",
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["test", "--noinput"],
-            "console": "integratedTerminal"
+            "args": [
+                "test",
+                "--noinput"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
         },
         {
             "name": "Django: sync-wordpress",
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["videosdb", "--sync-wordpress"],
-            "console": "integratedTerminal"
+            "args": [
+                "videosdb",
+                "--sync-wordpress"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
         },
         {
             "name": "Django: publish-one",
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["videosdb", "--publish-one", "CR5HtTsUl5E"],
-            "console": "integratedTerminal"
+            "args": [
+                "videosdb",
+                "--publish-one",
+                "CR5HtTsUl5E"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
         },
         {
             "name": "Django: download-one",
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["videosdb", "--download-one", "CR5HtTsUl5E"],
-            "console": "integratedTerminal"
+            "args": [
+                "videosdb",
+                "--download-one",
+                "CR5HtTsUl5E"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
         },
         {
             "name": "Django: download-all",
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["videosdb", "--download-all"],
-            "console": "integratedTerminal"
+            "args": [
+                "videosdb",
+                "--download-all"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Django: check",
+            "type": "python",
+            "request": "launch",
+            "program": "manage.py",
+            "args": [
+                "videosdb",
+                "-c"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
         }
-
     ]
 }
