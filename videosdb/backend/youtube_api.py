@@ -1,6 +1,7 @@
 import re
 import logging
-import requests
+import json
+import httplib2
 from youtube_transcript_api import YouTubeTranscriptApi
 
 logger = logging.getLogger("videosdb")
@@ -17,6 +18,8 @@ def _sentence_case(text):
 class YoutubeAPI:
     def __init__(self, yt_key):
         self.yt_key = yt_key
+        self.http = httplib2.Http(".cache")
+        self.root_url = "https://www.googleapis.com/youtube/v3"
 
     def _make_request(self, base_url, page_token=""):
         url = base_url
@@ -25,17 +28,18 @@ class YoutubeAPI:
         url += "&key=" + self.yt_key
 
         logger.debug("request: " + url)
-        response = requests.get(url)
-        response.raise_for_status()
-        json = response.json()
-        items = json["items"]
-        if "nextPageToken" in json:
-            items += self._make_request(base_url, json["nextPageToken"])
+        (response, content) = self.http.request(url)
+        assert response.status == 200
+        json_response = json.loads(content)
+        items = json_response["items"]
+        if "nextPageToken" in json_response:
+            items += self._make_request(base_url,
+                                        json_response["nextPageToken"])
         # logger.debug(items)
         return items
 
     def _get_playlist_info(self, playlist_id):
-        url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet"
+        url = self.root_url + "/playlists?part=snippet"
         url += "&id=" + playlist_id
         items = self._make_request(url)
         playlist = {
@@ -46,7 +50,7 @@ class YoutubeAPI:
         return playlist
 
     def _get_channnelsection_playlists(self, channel_id):
-        url = "https://www.googleapis.com/youtube/v3/channelSections?part=contentDetails"
+        url = self.root_url + "/channelSections?part=contentDetails"
         url += "&channelId=" + channel_id
         items = self._make_request(url)
         playlist_ids = []
@@ -60,7 +64,7 @@ class YoutubeAPI:
         return playlist_ids
 
     def _get_channel_playlists(self, channel_id):
-        url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2C+contentDetails"
+        url = self.root_url + "/playlists?part=snippet%2C+contentDetails"
         url += "&channelId=" + channel_id
         items = self._make_request(url)
         playlist_ids = []
@@ -81,7 +85,7 @@ class YoutubeAPI:
         return playlists
 
     def get_video_info(self, youtube_id):
-        url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics"
+        url = self.root_url + "/videos?part=snippet,contentDetails,statistics"
         url += "&id=" + youtube_id
         items = self._make_request(url)
         if items:
@@ -94,7 +98,7 @@ class YoutubeAPI:
         return None
 
     def list_playlist_videos(self, playlist_id):
-        url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet"
+        url = self.root_url + "/playlistItems?part=snippet"
         url += "&playlistId=" + playlist_id
         items = self._make_request(url)
         video_ids = []

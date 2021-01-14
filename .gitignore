@@ -9,3 +9,4 @@ dbtest.sqlite3
 dbtest.sqlite3-journal
 media/
 client/.next
+.cache/
