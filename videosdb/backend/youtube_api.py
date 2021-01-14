@@ -29,7 +29,10 @@ class YoutubeAPI:
 
         logger.debug("request: " + url)
         (response, content) = self.http.request(url)
-        assert response.status == 200
+        if response.status != 200:
+            raise Exception("%s: %s\n %s" %
+                            (response.status, response.reason, content))
+
         json_response = json.loads(content)
         items = json_response["items"]
         if "nextPageToken" in json_response:
