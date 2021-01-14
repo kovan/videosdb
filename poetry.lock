@@ -324,14 +324,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "pip-autoremove"
-version = "0.9.1"
-description = "Remove a package and its unused dependencies"
-category = "dev"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "prompt-toolkit"
 version = "3.0.3"
 description = "Library for building powerful interactive command lines in Python"
@@ -536,7 +528,7 @@ requests = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "94f97d32b5a96d43926ab64ca279c074cd0cc3ef09cdd5f689b91dcb34d0c9d6"
+content-hash = "4c59532fd81d45a0c7b41c1d20f8a80cb4ff5cbaf6ec4f0a87625c26b1bb451b"
 
 [metadata.files]
 appnope = [
@@ -599,6 +591,7 @@ django-uuslug = [
 ]
 djangorestframework = [
     {file = "djangorestframework-3.12.2-py3-none-any.whl", hash = "sha256:0209bafcb7b5010fdfec784034f059d512256424de2a0f084cb82b096d6dd6a7"},
+    {file = "djangorestframework-3.12.2.tar.gz", hash = "sha256:0898182b4737a7b584a2c73735d89816343369f259fea932d90dc78e35d8ac33"},
 ]
 httplib2 = [
     {file = "httplib2-0.18.1-py3-none-any.whl", hash = "sha256:ca2914b015b6247791c4866782fa6042f495b94401a0f0bd3e1d6e0ba2236782"},
@@ -704,10 +697,6 @@ pexpect = [
 pickleshare = [
     {file = "pickleshare-0.7.5-py2.py3-none-any.whl", hash = "sha256:9649af414d74d4df115d5d718f82acb59c9d418196b7b4290ed47a12ce62df56"},
     {file = "pickleshare-0.7.5.tar.gz", hash = "sha256:87683d47965c1da65cdacaf31c8441d12b8044cdec9aca500cd78fc2c683afca"},
-]
-pip-autoremove = [
-    {file = "pip-autoremove-0.9.1.tar.gz", hash = "sha256:807f4489ea669912bca4535296ef1e6c92794c71e849f58abf188e9786b472e5"},
-    {file = "pip_autoremove-0.9.1-py2.py3-none-any.whl", hash = "sha256:32c89058be38da31058b518b85369be06cf72ad424157cb93b3cc0ae7b4877d7"},
 ]
 prompt-toolkit = [
     {file = "prompt_toolkit-3.0.3-py3-none-any.whl", hash = "sha256:c93e53af97f630f12f5f62a3274e79527936ed466f038953dfa379d4941f651a"},
