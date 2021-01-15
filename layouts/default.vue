@@ -12,8 +12,7 @@ v-app(dark)
           v-list-item-title Categories
         v-list-item(v-for="category in this.categories" :key="category.id" :to="'/categories/' + category.slug" router exact)
             v-list-item-title(v-text="category.name")
-            v-list-item-icon
-              v-icon(v-text="icon")
+
 
         
 
@@ -61,6 +60,11 @@ export default {
         },
         {
           icon: 'mdi-apps',
+          title: 'Search videos',
+          to: '/search-videos',
+        },        
+        {
+          icon: 'mdi-apps',
           title: 'Random video',
           to: '/random-video',
         },
@@ -76,9 +80,14 @@ export default {
         },
         {
           icon: 'mdi-apps',
-          title: 'Latest videos',
-          to: '/',
+          title: 'Most favorites videos',
+          to: '/most-favorited-videos',
         },
+        {
+          icon: 'mdi-apps',
+          title: 'Most commented videos',
+          to: '/most-commented-videos',
+        },        
       ],
       categories: [],
       miniVariant: false,
@@ -90,8 +99,7 @@ export default {
   async fetch() {
     let categories = await axios.get('http://localhost:8000/api/categories/')
 
-    this.categories = categories.data.results
-    console.log(categories)
+    this.categories = categories.data
   },
 }
 </script>
