@@ -71,22 +71,22 @@ export default {
         {
           icon: 'mdi-apps',
           title: 'Most viewed videos',
-          to: '/most-viewed-videos',
+          to: '/most-viewed',
         },
         {
           icon: 'mdi-apps',
           title: 'Most liked videos',
-          to: '/most-liked-videos',
+          to: '/most-liked',
         },
         {
           icon: 'mdi-apps',
           title: 'Most favorites videos',
-          to: '/most-favorited-videos',
+          to: '/most-favorited',
         },
         {
           icon: 'mdi-apps',
           title: 'Most commented videos',
-          to: '/most-commented-videos',
+          to: '/most-commented',
         },        
       ],
       categories: [],

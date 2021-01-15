@@ -15,6 +15,35 @@
 <script>
 
 export default {
-  props: ["videos"]
+  data: () => {
+    return {
+      videos: []
+    }
+  },
+  props: ["url"],
+  computed: {
+    // preparedVideos: function () {
+    //   let prepared = this.videos.map( video => {
+    //     let thumbs_prepared = ""
+        
+    //     for (const size in video.thumbnails) {
+    //       thumbs_prepared += video.thumbnails[size].url + ", "
+
+    //     }
+    //     video.thumbs_prepared = thumbs_prepared;
+    //     return video
+    //   })
+      
+    //   return prepared;
+    // }
+  },
+  async fetch() { 
+    let response = await this.$axios.$get(this.url)
+  
+    this.videos = response.results
+    
+    
+    
+  }  
 }
 </script>

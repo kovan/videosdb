@@ -11,10 +11,8 @@
     "dev-debug": "node node_modules/.bin/nuxt"
   },
   "dependencies": {
-    "@nuxt/http": "^0.6.2",
-    "@nuxtjs/axios": "^5.12.2",
+    "@nuxtjs/axios": "^5.12.5",
     "core-js": "^3.6.5",
-    "knex": "^0.21.15",
     "nuxt": "^2.14.6",
     "vue-plyr": "^7.0.0"
   },
