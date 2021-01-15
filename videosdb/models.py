@@ -91,7 +91,6 @@ class Video(DirtyFieldsMixin, models.Model):
         for tag in tags:
             tag_obj, created = Tag.objects.get_or_create(name=tag)
             self.tags.add(tag_obj)
-        self.save()
 
     def save(self, *args, **kwargs):
         if not self.is_dirty():

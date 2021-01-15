@@ -101,7 +101,8 @@
             "program": "manage.py",
             "args": [
                 "videosdb",
-                "-c"
+                "-c",
+                "-t"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
