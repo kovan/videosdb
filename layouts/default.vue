@@ -66,7 +66,7 @@ v-app(dark)
 </template>
 
 <script>
-import axios from "axios";
+
 
 export default {
   data () {
@@ -113,13 +113,13 @@ export default {
       ],
       categories: [],
       miniVariant: false,
-      right: true,
+      right: false,
       rightDrawer: false,
       title: 'Sadhguru wisdom',
     }
   },
   async fetch () {
-    this.categories = await this.$axios.$get('/api/categories/')
+    this.categories = await this.$axios.$get('/api/categories/?ordering=-popularity')
   },
 }
 </script>
