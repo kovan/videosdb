@@ -18,16 +18,18 @@ v-container
           @change='handleSearch'
         )
 
-  v-container.d-flex.child-flex(align='center', fluid)
-    v-row(align='end', justify='center')
-      v-col(v-for='video in this.videos', :key='video.youtube_id')
-        v-card(outlined, tile) 
-          v-card-title
+  v-container.d-flex.child-flex(align='center')
+    v-row(justify='center', no-gutters)
+      v-col(v-for='video in this.videos', :key='video.youtube_id', no-gutters)
+        v-card(no-gutters, outlined, shaped, tile, elevation='20')
+          v-card-text
             NuxtLink(nuxt, :to='"/video/" + video.slug')
               | {{ video.title }}
           v-card-text
             NuxtLink(nuxt, :to='"/video/" + video.slug')
               v-img(:src='video.thumbnails.medium.url')
+          v-card-text
+            | {{ video.description_trimmed }}
 
   v-pagination(
     v-model='current_page',

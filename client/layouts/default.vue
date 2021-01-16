@@ -44,7 +44,12 @@ v-app(dark)
     //-   v-icon mdi-minus
     v-toolbar-title(v-text='title')
     v-spacer
-    v-text-field(hide-details, prepend-icon='mdi-magnify', single-line)
+    //- v-text-field(
+    //-   hide-details,
+    //-   prepend-icon='mdi-magnify',
+    //-   single-line,
+    //-   @change='handleSearch'
+    //- )
 
     //- v-btn(icon, @click.stop='rightDrawer = !rightDrawer')
     //-   v-icon mdi-menu
@@ -113,6 +118,11 @@ export default {
       right: false,
       rightDrawer: false,
       title: 'Sadhguru wisdom',
+    }
+  },
+  methods: {
+    handleSearch () {
+
     }
   },
   async fetch () {
