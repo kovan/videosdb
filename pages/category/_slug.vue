@@ -1,14 +1,22 @@
 <template lang="pug">
-  
-  Explorer(:categories="this.category_id" ordering="-favorite_count")
-
+v-container
+    h1.text-center Category: {{this.category.name}}
+    Explorer(:categories="this.category.id" ordering='-favorite_count')
 </template>
 
 <script>
 import Explorer from '~/components/Explorer.vue'
 export default {
-  asyncData(context) {
-    return { category_id: context.query.id }
+  data: () => {
+    return {
+      category: {}
+    }
+  },
+
+  async asyncData ({$axios, params}) {
+    let url = "/api/categories/" + params.slug
+    let response = await $axios.$get(url)
+    return { category: response }
   }
 }
 </script>

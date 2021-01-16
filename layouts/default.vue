@@ -10,7 +10,7 @@ v-app(dark)
       v-list-group(:value="true" prepend-icon="mdi-account-circle")
         template(v-slot:activator="")
           v-list-item-title Categories
-        v-list-item(v-for="category in this.categories" :key="category.id" :to="`/category/${category.slug}?id=${category.id}`" router exact dense nuxt)
+        v-list-item(v-for="category in this.categories" :key="category.id" :to="`/category/${category.slug}`" router exact dense nuxt)
             v-list-item-title(v-text="category.name")
 
 
