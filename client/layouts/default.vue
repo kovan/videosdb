@@ -30,8 +30,6 @@ v-app(dark)
           :key='category.id',
           :to='`/category/${category.slug}`',
           router,
-          exact,
-          dense,
           nuxt,
           v-text='category.name'
         )
@@ -118,7 +116,7 @@ export default {
     }
   },
   async fetch () {
-    this.categories = await this.$axios.$get('/api/categories/')
+    this.categories = await this.$axios.$get('/api/categories/?ordering=-use_count')
   },
 }
 </script>

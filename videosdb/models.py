@@ -1,12 +1,11 @@
-from dirtyfields import DirtyFieldsMixin
-from django.conf import settings
-import re
-from uuslug import uuslug
-from django.db import models
-# Import slugify to generate slugs from strings
-from django.utils.text import slugify
 import json
 import logging
+import re
+
+from dirtyfields import DirtyFieldsMixin
+from django.conf import settings
+from django.db import models
+from uuslug import uuslug
 
 logger = logging.getLogger("videosdb")
 
@@ -29,10 +28,6 @@ class Tag(DirtyFieldsMixin, models.Model):
         if not self.slug:
             self.slug = uuslug(self.name, instance=self)
         super(Tag, self).save(*args, **kwargs)
-
-    @property
-    def popularity(self):
-        return self.video_set.count()
 
 
 class Category(DirtyFieldsMixin, models.Model):
