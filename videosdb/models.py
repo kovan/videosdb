@@ -1,4 +1,6 @@
 from dirtyfields import DirtyFieldsMixin
+from django.conf import settings
+import re
 from uuslug import uuslug
 from django.db import models
 # Import slugify to generate slugs from strings
@@ -28,6 +30,10 @@ class Tag(DirtyFieldsMixin, models.Model):
             self.slug = uuslug(self.name, instance=self)
         super(Tag, self).save(*args, **kwargs)
 
+    @property
+    def popularity(self):
+        return self.video_set.count()
+
 
 class Category(DirtyFieldsMixin, models.Model):
     name = models.CharField(unique=True, max_length=256)
@@ -51,7 +57,6 @@ class Category(DirtyFieldsMixin, models.Model):
 
 class Video(DirtyFieldsMixin, models.Model):
     class Meta:
-        ordering = ['-yt_published_date']
         indexes = [
             models.Index(fields=["youtube_id"]),
             models.Index(fields=["slug"]),
@@ -108,6 +113,16 @@ class Video(DirtyFieldsMixin, models.Model):
         if "thumbnails" in full_response:
             return full_response["thumbnails"]
         return None
+
+    @property
+    def description_trimmed(self):
+        # leave part of description specific to this video:
+        match = re.search(
+            settings.TRUNCATE_DESCRIPTION_AFTER, self.description)
+        if match and match.start() != -1:
+            return self.description[:match.start()]
+
+        return self.description
 
     def load_from_youtube_info(self, info):
         from django.utils.dateparse import parse_datetime

@@ -1,5 +1,17 @@
 TODO
 ------------------------
+
+- separar lista de categorías con líneas
+- ordenar presentación de cada video
+- ordenar lista categorías por popularidad (videos que las tienen)
+- dockerizarlo todo
+   - nginx o uno que soporte QUIC?
+- crear app IOS/android
+- mostrar videos relacionados en la página del vídeo
+- botones para compartir en redes sociales
+
+
+
 - Wordpress: mejoras para encontrar videos:
   - buscador filtros por rangos de fechas, visitas, idioma, palabras en campos... etc.
   - carrusel de videos destacados al entrar¿?
@@ -61,7 +73,9 @@ X inicio (basado en dashboard) (de moemnto NO)
    - transcripcion
    - estadísticas (visitas, etc.)
    - botones compartir redes sociales
-   - related videos ¿? no se si habrá manera de hacerlo
+   - related videos ¿? no se si habrá manera de hacerlo.. SI:
+       GET https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId=5rOiW_xY-kc&type=video&key={YOUR_API_KEY}
+
 - las categorias se muestran en la barra lateral, y al pinchar lleva a un explorador de videos de esa categoría
 - los tags más usados lo mismo.
 - los META deben estár bien con título y descripcion.
