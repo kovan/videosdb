@@ -36,18 +36,18 @@ v-app(dark)
 
   v-app-bar(:clipped-left='clipped', fixed, app)
     v-app-bar-nav-icon(@click.stop='drawer = !drawer')
-    v-btn(icon, @click.stop='miniVariant = !miniVariant')
-      v-icon mdi-{{  &grave;chevron-${miniVariant ? &apos;right&apos; : &apos;left&apos;}&grave;  }}
-    v-btn(icon, @click.stop='clipped = !clipped')
-      v-icon mdi-application
-    v-btn(icon, @click.stop='fixed = !fixed')
-      v-icon mdi-minus
+    //- v-btn(icon, @click.stop='miniVariant = !miniVariant')
+    //-   v-icon mdi-{{  &grave;chevron-${miniVariant ? &apos;right&apos; : &apos;left&apos;}&grave;  }}
+    //- v-btn(icon, @click.stop='clipped = !clipped')
+    //-   v-icon mdi-application
+    //- v-btn(icon, @click.stop='fixed = !fixed')
+    //-   v-icon mdi-minus
     v-toolbar-title(v-text='title')
     v-spacer
     v-text-field(hide-details, prepend-icon='mdi-magnify', single-line)
 
-    v-btn(icon, @click.stop='rightDrawer = !rightDrawer')
-      v-icon mdi-menu
+    //- v-btn(icon, @click.stop='rightDrawer = !rightDrawer')
+    //-   v-icon mdi-menu
   v-main
     v-container
       nuxt
@@ -77,16 +77,16 @@ export default {
           title: 'Latest videos',
           to: '/',
         },
-        {
-          icon: 'mdi-magnify',
-          title: 'Search videos',
-          to: '/search-videos',
-        },
-        {
-          icon: 'mdi-shuffle',
-          title: 'Random video',
-          to: '/random-video',
-        },
+        // {
+        //   icon: 'mdi-magnify',
+        //   title: 'Search videos',
+        //   to: '/search-videos',
+        // },
+        // {
+        //   icon: 'mdi-shuffle',
+        //   title: 'Random video',
+        //   to: '/random-video',
+        // },
         {
           icon: 'mdi-eye',
           title: 'Most viewed videos',

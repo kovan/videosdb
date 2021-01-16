@@ -9,7 +9,7 @@ v-container
           @change='handleOrderingChange'
         )
         v-text-field(
-          v-model="search"
+          v-model='search',
           hide-details,
           prepend-icon='mdi-magnify',
           single-line,
@@ -19,13 +19,16 @@ v-container
         )
 
   v-container.d-flex.child-flex(align='center', fluid)
-    v-row(align='center')
+    v-row(align='end', justify='center')
       v-col(v-for='video in this.videos', :key='video.youtube_id')
-        v-card.pa-2(outlined, tile)
-          NuxtLink(nuxt, :to='"/video/" + video.slug')
-            | {{ video.title }}
-          NuxtLink(nuxt, :to='"/video/" + video.slug')
-            v-img(:src='video.thumbnails.medium.url')
+        v-card(outlined, tile) 
+          v-card-title
+            NuxtLink(nuxt, :to='"/video/" + video.slug')
+              | {{ video.title }}
+          v-card-text
+            NuxtLink(nuxt, :to='"/video/" + video.slug')
+              v-img(:src='video.thumbnails.medium.url')
+
   v-pagination(
     v-model='current_page',
     :length='page_count',

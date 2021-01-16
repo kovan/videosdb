@@ -4,14 +4,20 @@ v-container
     v-card-title(align='center') 
       | {{ this.video.title }}
     v-card-text(align='center')
-      iframe(
-        width='560',
-        height='315',
-        :src='"https:/www.youtube.com/embed/" + this.video.youtube_id',
-        frameborder='0',
-        allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
-        allowfullscreen
-      )
+    youtube(
+      ref='youtube',
+      :video-id='video.youtube_id',
+      :player-vars='{ autoplay: 0, modestbranding: 1, showinfo: 0, rel: 0 }',
+      fit-parent
+    )
+      //- iframe(
+      //-   width='560',
+      //-   height='315',
+      //-   :src='"https:/www.youtube.com/embed/" + this.video.youtube_id',
+      //-   frameborder='0',
+      //-   allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+      //-   allowfullscreen
+      //- )
     v-divider
     v-card-text(style='white-space: pre-line')
       | {{ this.video.description_trimmed }}
@@ -37,7 +43,9 @@ v-container
         | Share
 </template>
 <script>
-import axios from "axios";
+
+
+
 
 export default {
   head () {

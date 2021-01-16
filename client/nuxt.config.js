@@ -8,24 +8,25 @@ export default {
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { 
-        hid: 'description', 
-        name: 'description', 
-        content: 'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.' 
-      }
+      {
+        hid: 'description',
+        name: 'description',
+        content:
+          'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.',
+      },
     ],
-    link: [
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
-    ]
+    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
   },
 
   // Global CSS (https://go.nuxtjs.dev/config-css)
-  css: [
-  ],
+  css: [],
 
   // Plugins to run before rendering page (https://go.nuxtjs.dev/config-plugins)
   plugins: [
-    { src: '~/plugins/vue-plyr', mode: 'client' }
+    {
+      src: '~/plugins/vue-youtube.js',
+      mode: 'client',
+    },
   ],
 
   // Auto import components (https://go.nuxtjs.dev/config-components)
@@ -40,7 +41,7 @@ export default {
   // Modules (https://go.nuxtjs.dev/config-modules)
   modules: [
     // https://go.nuxtjs.dev/axios
-    '@nuxtjs/axios'
+    '@nuxtjs/axios',
   ],
 
   // Axios module configuration (https://go.nuxtjs.dev/config-axios)
@@ -50,14 +51,14 @@ export default {
 
   publicRuntimeConfig: {
     axios: {
-      browserBaseURL: process.env.BROWSER_BASE_URL
-    }
+      browserBaseURL: process.env.BROWSER_BASE_URL,
+    },
   },
 
   privateRuntimeConfig: {
     axios: {
-      baseURL: process.env.BASE_URL
-    }
+      baseURL: process.env.BASE_URL,
+    },
   },
 
   // Vuetify module configuration (https://go.nuxtjs.dev/config-vuetify)
@@ -73,21 +74,20 @@ export default {
           info: colors.teal.lighten1,
           warning: colors.amber.base,
           error: colors.deepOrange.accent4,
-          success: colors.green.accent3
-        }
-      }
-    }
+          success: colors.green.accent3,
+        },
+      },
+    },
   },
 
   // Build Configuration (https://go.nuxtjs.dev/config-build)
   build: {
-     extend(config, ctx) {
+    extend(config, ctx) {
       if (ctx.isDev) {
         config.devtool = ctx.isClient ? 'source-map' : 'inline-source-map'
       }
-    }
+    },
   },
 
-  serverMiddleware: [
-  ]
+  serverMiddleware: [],
 }
