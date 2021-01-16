@@ -1,5 +1,6 @@
 <template lang="pug">
 v-container
+  | {{this.video.title}}
   iframe(
     width='560',
     height='315',
@@ -33,10 +34,6 @@ export default {
   },
   async asyncData ({ $axios, params }) {
     let video = await $axios.$get('/api/videos/' + params.slug + "/")
-    let categories = await $axios.$get('/api/categories/' + params.slug + "/")
-    let video = await $axios.$get('/api/videos/' + params.slug + "/")
-
-    
     return { video }
   }
 }
