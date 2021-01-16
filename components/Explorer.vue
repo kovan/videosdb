@@ -83,7 +83,7 @@ export default {
       this.$fetch()
     },
     handleSearch () {
-        this.$fetch()
+      this.$fetch()
     },
     handleOrderingChange (args) {
       this.ordering = args
@@ -94,7 +94,7 @@ export default {
     const url = new URL('/api/videos/', "http://localhost:8000")
     if (this.ordering)
       url.searchParams.append("ordering", this.ordering)
-    if (this.page)
+    if (this.current_page)
       url.searchParams.append("page", this.current_page)
     if (this.categories)
       url.searchParams.append("categories", this.categories)
