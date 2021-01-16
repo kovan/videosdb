@@ -22,9 +22,9 @@ v-container
     v-row(align='center')
       v-col(v-for='video in this.videos', :key='video.youtube_id')
         v-card.pa-2(outlined, tile)
-          NuxtLink(nuxt, :to='"/" + video.slug')
+          NuxtLink(nuxt, :to='"/video/" + video.slug')
             | {{ video.title }}
-          NuxtLink(nuxt, :to='"/" + video.slug')
+          NuxtLink(nuxt, :to='"/video/" + video.slug')
             v-img(:src='video.thumbnails.medium.url')
   v-pagination(
     v-model='current_page',

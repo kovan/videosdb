@@ -1,6 +1,6 @@
 <template lang="pug">
 v-container
-  | {{this.video.title}}
+  | {{ this.video.title }}
   iframe(
     width='560',
     height='315',
@@ -9,12 +9,12 @@ v-container
     allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
     allowfullscreen
   )
-  | {{this.video.categories}}
-  | {{this.video.description}}
+  | {{ this.video.categories }}
+  | {{ this.video.description }}
   |
-  | {{this.video.transcription}}
+  | {{ this.video.transcription }}
   |
-  | {{this.video.tags}}
+  | {{ this.video.tags }}
 </template>
 <script>
 import axios from "axios";
