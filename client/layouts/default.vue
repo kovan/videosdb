@@ -22,7 +22,7 @@ v-app(dark)
           v-icon {{ item.icon }}
         v-list-item-content
           v-list-item-title(v-text='item.title')
-      v-list-group(:value='true', prepend-icon='mdi-account-circle')
+      v-list-group(:value='true', prepend-icon='mdi-text-short')
         template(v-slot:activator='')
           v-list-item-title Categories
         v-list-item(
@@ -73,37 +73,37 @@ export default {
       fixed: false,
       items: [
         {
-          icon: 'mdi-apps',
+          icon: 'mdi-fire',
           title: 'Latest videos',
           to: '/',
         },
         {
-          icon: 'mdi-apps',
+          icon: 'mdi-magnify',
           title: 'Search videos',
           to: '/search-videos',
         },
         {
-          icon: 'mdi-apps',
+          icon: 'mdi-shuffle',
           title: 'Random video',
           to: '/random-video',
         },
         {
-          icon: 'mdi-apps',
+          icon: 'mdi-eye',
           title: 'Most viewed videos',
           to: '/most-viewed',
         },
         {
-          icon: 'mdi-apps',
+          icon: 'mdi-thumb-up',
           title: 'Most liked videos',
           to: '/most-liked',
         },
         {
-          icon: 'mdi-apps',
+          icon: 'mdi-star',
           title: 'Most favorited videos',
           to: '/most-favorited',
         },
         {
-          icon: 'mdi-apps',
+          icon: 'mdi-comment',
           title: 'Most commented videos',
           to: '/most-commented',
         },
