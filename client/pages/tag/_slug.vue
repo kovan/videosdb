@@ -1,7 +1,7 @@
 <template lang="pug">
 v-container
   h1.text-center Tag: {{ this.tag.name }}
-  Explorer(:categories='this.tag.id')
+  Explorer(:tags='this.tag.id')
 </template>
 
 <script>
