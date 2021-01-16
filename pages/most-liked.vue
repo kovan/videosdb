@@ -1,6 +1,7 @@
 <template lang="pug">
-  
-  Explorer(ordering="-like_count")
+v-container
+    h1.text-center Most liked videos
+    Explorer(ordering="-like_count")
 
 </template>
 

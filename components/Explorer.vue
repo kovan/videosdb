@@ -4,9 +4,9 @@ v-container
     v-row(align='center')
       v-col(v-for='video in this.videos', :key='video.youtube_id')
         v-card.pa-2(outlined, tile)
-          NuxtLink(nuxt, :to='video.slug')
+          NuxtLink(  :to='"/" + video.slug')
             | {{ video.title }}
-          NuxtLink(nuxt, :to='video.slug')
+          NuxtLink(  :to='"/" + video.slug')
             v-img(:src='video.thumbnails.medium.url')
   v-pagination(
     v-model='current_page',
@@ -32,20 +32,11 @@ export default {
     categories: {
       default: ''
     },
+    tags: {
+      default: ''
+    },    
   },
-  computed: {
-    // preparedVideos: function () {
-    //   let prepared = this.videos.map( video => {
-    //     let thumbs_prepared = ""
-    //     for (const size in video.thumbnails) {
-    //       thumbs_prepared += video.thumbnails[size].url + ", "
-    //     }
-    //     video.thumbs_prepared = thumbs_prepared;
-    //     return video
-    //   })
-    //   return prepared;
-    // }
-  },
+
   methods: {
     handlePageChange (value) {
       this.currentPage = value
@@ -58,12 +49,15 @@ export default {
   async fetch () {
     let url = '/api/videos/?'
     if (this.ordering)
-      url += `ordering=${this.ordering}&page=${this.current_page}`
+      url += `&ordering=${this.ordering}&page=${this.current_page}`
     if (this.categories) 
       url += `&categories=${this.categories}`
+    if (this.tags) 
+      url += `&tags=${this.tags}`
 
     let response = await this.$axios.$get(url)
     this.videos = response.results
+    
     this.page_count = Math.floor(response.count / response.results.length)
   },
 }

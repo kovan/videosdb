@@ -1,6 +1,7 @@
 <template lang="pug">
-  
-  Explorer(ordering="-yt_published_date")
+  v-container
+    h1.text-center Latest videos
+    Explorer(ordering="-yt_published_date")
 
 </template>
 

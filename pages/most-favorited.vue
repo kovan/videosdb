@@ -1,6 +1,7 @@
 <template lang="pug">
-  
-  Explorer(ordering="-favorite_count")
+v-container
+    h1.text-center Most favorited videos
+    Explorer(ordering="-favorite_count")
 
 </template>
 

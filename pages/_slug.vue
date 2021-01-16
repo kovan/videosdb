@@ -8,9 +8,12 @@ v-container
     allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
     allowfullscreen
   )
+  | {{this.video.categories}}
   | {{this.video.description}}
   |
   | {{this.video.transcription}}
+  |
+  | {{this.video.tags}}
 </template>
 <script>
 import axios from "axios";
@@ -28,12 +31,12 @@ export default {
       ]
     }
   },
-  async asyncData ({ params }) {
-    let video = await axios.get(
-      'http://localhost:8000/api/videos/' + params.slug + "/"
-    )
+  async asyncData ({ $axios, params }) {
+    let video = await $axios.$get('/api/videos/' + params.slug + "/")
+    let categories = await $axios.$get('/api/categories/' + params.slug + "/")
+    let video = await $axios.$get('/api/videos/' + params.slug + "/")
 
-    video = video.data
+    
     return { video }
   }
 }

@@ -1,7 +1,7 @@
 <template lang="pug">
 v-container
-    h1.text-center Category: {{this.category.name}}
-    Explorer(:categories="this.category.id")
+    h1.text-center Tag: {{this.tag.name}}
+    Explorer(:categories="this.tag.id")
 </template>
 
 <script>
@@ -9,14 +9,14 @@ import Explorer from '~/components/Explorer.vue'
 export default {
   data: () => {
     return {
-      category: {}
+      tag: {}
     }
   },
 
   async asyncData ({$axios, params}) {
-    let url = "/api/categories/" + params.slug
+    let url = "/api/tag/" + params.slug
     let response = await $axios.$get(url)
-    return { category: response }
+    return { tag: response }
   }
 }
 </script>

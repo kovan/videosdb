@@ -1,6 +1,7 @@
 <template lang="pug">
-  
-  Explorer(ordering="-view_count")
+v-container
+    h1.text-center Most viewed videos
+    Explorer(ordering="-view_count")
 
 </template>
 

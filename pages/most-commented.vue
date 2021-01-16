@@ -1,6 +1,7 @@
 <template lang="pug">
-  
-  Explorer(ordering="-comment_count")
+v-container
+    h1.text-center Most commented videos
+    Explorer(ordering="-comment_count")
 
 </template>
 
