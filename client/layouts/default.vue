@@ -25,7 +25,8 @@ v-app(dark)
 
       v-list-group(:value='true', prepend-icon='mdi-text-short')
         template(v-slot:activator='')
-          v-list-item-title Categories
+          v-list-item-title 
+            | Categories
         v-list-item(
           v-for='category in this.categories',
           :key='category.id',
@@ -38,23 +39,9 @@ v-app(dark)
 
   v-app-bar(:clipped-left='clipped', fixed, app)
     v-app-bar-nav-icon(@click.stop='drawer = !drawer')
-    //- v-btn(icon, @click.stop='miniVariant = !miniVariant')
-    //-   v-icon mdi-{{  &grave;chevron-${miniVariant ? &apos;right&apos; : &apos;left&apos;}&grave;  }}
-    //- v-btn(icon, @click.stop='clipped = !clipped')
-    //-   v-icon mdi-application
-    //- v-btn(icon, @click.stop='fixed = !fixed')
-    //-   v-icon mdi-minus
-    v-app-bar-title(v-text='title')
 
-    //- v-text-field(
-    //-   hide-details,
-    //-   prepend-icon='mdi-magnify',
-    //-   single-line,
-    //-   @change='handleSearch'
-    //- )
+    v-toolbar-title(v-text='title')
 
-    //- v-btn(icon, @click.stop='rightDrawer = !rightDrawer')
-    //-   v-icon mdi-menu
   v-main
     v-container
       nuxt

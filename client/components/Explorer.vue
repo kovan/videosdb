@@ -96,6 +96,7 @@ export default {
     }
   },
   async fetch () {
+
     const url = new URL('/api/videos/', "http://localhost:8000")
     if (this.ordering)
       url.searchParams.append("ordering", this.ordering)
@@ -115,10 +116,3 @@ export default {
   },
 }
 </script>
-
-<style scoped>
-.v-card__text,
-.v-card__title {
-  word-break: normal; /* maybe !important  */
-}
-</style>
