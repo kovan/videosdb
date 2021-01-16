@@ -10,7 +10,7 @@ v-app(dark)
       v-list-group(:value="true" prepend-icon="mdi-account-circle")
         template(v-slot:activator="")
           v-list-item-title Categories
-        v-list-item(v-for="category in this.categories" :key="category.id" :to="'/categories/' + category.slug" router exact dense nuxt)
+        v-list-item(v-for="category in this.categories" :key="category.id" :to="`/category/${category.slug}?id=${category.id}`" router exact dense nuxt)
             v-list-item-title(v-text="category.name")
 
 
@@ -100,7 +100,7 @@ export default {
     }
   },
   async fetch() {
-    this.categories = await this.$axios.$get('http://localhost:8000/api/categories/')
+    this.categories = await this.$axios.$get('/api/categories/')
   },
 }
 </script>

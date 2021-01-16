@@ -22,7 +22,7 @@ export default {
       page_count: 0
     }
   },
-  props: ["ordering"],
+  props: ["ordering", "categories"],
   computed: {
     // preparedVideos: function () {
     //   let prepared = this.videos.map( video => {
@@ -49,7 +49,7 @@ export default {
     }
   },  
   async fetch() { 
-    let url = `/api/videos/?ordering=${this.ordering}&page=${this.current_page}`
+    let url = `/api/videos/?ordering=${this.ordering}&page=${this.current_page}&categories=${this.categories}`
     let response = await this.$axios.$get(url)
     this.videos = response.results
     this.page_count = Math.floor(response.count / response.results.length)
