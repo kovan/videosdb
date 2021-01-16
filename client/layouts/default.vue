@@ -22,6 +22,7 @@ v-app(dark)
           v-icon {{ item.icon }}
         v-list-item-content
           v-list-item-title(v-text='item.title')
+
       v-list-group(:value='true', prepend-icon='mdi-text-short')
         template(v-slot:activator='')
           v-list-item-title Categories
@@ -31,7 +32,8 @@ v-app(dark)
           :to='`/category/${category.slug}`',
           router,
           nuxt,
-          v-text='category.name'
+          v-text='category.name',
+          style='border-bottom: 1px dotted'
         )
 
   v-app-bar(:clipped-left='clipped', fixed, app)
@@ -42,8 +44,8 @@ v-app(dark)
     //-   v-icon mdi-application
     //- v-btn(icon, @click.stop='fixed = !fixed')
     //-   v-icon mdi-minus
-    v-toolbar-title(v-text='title')
-    v-spacer
+    v-app-bar-title(v-text='title')
+
     //- v-text-field(
     //-   hide-details,
     //-   prepend-icon='mdi-magnify',
@@ -117,7 +119,7 @@ export default {
       miniVariant: false,
       right: false,
       rightDrawer: false,
-      title: 'Sadhguru wisdom',
+      title: 'Sadhguru wisdom. Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.',
     }
   },
   methods: {

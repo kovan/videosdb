@@ -1,5 +1,5 @@
 <template lang="pug">
-v-container
+v-container.ma-0.pa-0(align='center')
   v-container(fluid)
     v-row(align='center')
       v-col.d-flex
@@ -13,22 +13,22 @@ v-container
           hide-details,
           prepend-icon='mdi-magnify',
           single-line,
-          label='Type to filter videos',
+          label='Search...',
           clearable,
           @change='handleSearch'
         )
 
-  v-container.d-flex.child-flex(align='center')
-    v-row(justify='center', no-gutters)
+  v-container.ma-0.pa-0.d-flex.child-flex(align='center')
+    v-row.ma-0.pa-0(justify='center')
       v-col(v-for='video in this.videos', :key='video.youtube_id', no-gutters)
-        v-card(no-gutters, outlined, shaped, tile, elevation='20')
-          v-card-text
+        v-card.pa-0.ma-0(no-gutters, outlined, shaped, tile, elevation='20')
+          v-card-title(align='center')
             NuxtLink(nuxt, :to='"/video/" + video.slug')
               | {{ video.title }}
           v-card-text
             NuxtLink(nuxt, :to='"/video/" + video.slug')
               v-img(:src='video.thumbnails.medium.url')
-          v-card-text
+          v-card-text(style='white-space: pre-line')
             | {{ video.description_trimmed }}
 
   v-pagination(
@@ -115,3 +115,10 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.v-card__text,
+.v-card__title {
+  word-break: normal; /* maybe !important  */
+}
+</style>
