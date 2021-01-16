@@ -21,15 +21,17 @@ v-container
     v-divider
     v-card-title
       | Categories
-    v-card-text(v-for='cat in this.video.categories' :key="cat.name")
-      | {{ cat }}
+    v-card-text(v-for='cat in this.video.categories' :key="cat.id")
+      NuxtLink(:to="'/category/' + cat.slug")
+        | {{ cat.name }}
     v-divider
     v-card-title
       | Tags
     v-card-text
       v-chip-group(column)
-        v-chip(v-for='tag in this.video.tags' :key="tag.name")
-          | {{ tag }}
+        v-chip(v-for='tag in this.video.tags' :key="tag.id")
+          NuxtLink(:to="'/tag/' + tag.slug")
+            | {{ tag.name }}
     v-card-actions
       v-btn(color='deep-purple lighten-2')
         | Share

@@ -26,7 +26,7 @@ export default {
   },
 
   async asyncData ({ $axios, params }) {
-    let url = "/api/tag/" + params.slug
+    let url = "/api/tags/" + params.slug
     let response = await $axios.$get(url)
     return { tag: response }
   }
