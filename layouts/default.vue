@@ -1,8 +1,8 @@
 <template lang="pug">
 v-app(dark)
-  v-navigation-drawer(v-model='drawer' :mini-variant='miniVariant' :clipped='clipped' fixed app)
+  v-navigation-drawer(v-model='drawer' :mini-variant='miniVariant' :clipped='clipped' fixed app temporary width=300)
     v-list
-      v-list-item(v-for='(item, i) in items' :key='i' :to='item.to' router exact)
+      v-list-item(v-for='(item, i) in items' :key='i' :to='item.to' router exact nuxt)
         v-list-item-action
           v-icon {{ item.icon }}
         v-list-item-content
@@ -10,7 +10,7 @@ v-app(dark)
       v-list-group(:value="true" prepend-icon="mdi-account-circle")
         template(v-slot:activator="")
           v-list-item-title Categories
-        v-list-item(v-for="category in this.categories" :key="category.id" :to="'/categories/' + category.slug" router exact)
+        v-list-item(v-for="category in this.categories" :key="category.id" :to="'/categories/' + category.slug" router exact dense nuxt)
             v-list-item-title(v-text="category.name")
 
 
@@ -26,6 +26,9 @@ v-app(dark)
       v-icon mdi-minus
     v-toolbar-title(v-text='title')
     v-spacer
+    v-text-field(hide-details prepend-icon="mdi-magnify" single-line)
+      
+      
     v-btn(icon @click.stop='rightDrawer = !rightDrawer')
       v-icon mdi-menu
   v-main
@@ -80,7 +83,7 @@ export default {
         },
         {
           icon: 'mdi-apps',
-          title: 'Most favorites videos',
+          title: 'Most favorited videos',
           to: '/most-favorited',
         },
         {
@@ -97,9 +100,7 @@ export default {
     }
   },
   async fetch() {
-    let categories = await axios.get('http://localhost:8000/api/categories/')
-
-    this.categories = categories.data
+    this.categories = await this.$axios.$get('http://localhost:8000/api/categories/')
   },
 }
 </script>

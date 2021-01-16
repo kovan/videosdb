@@ -1,6 +1,6 @@
 <template lang="pug">
   
-  Explorer(url="http://localhost:8000/api/videos?ordering=-view_count")
+  Explorer(ordering="-view_count")
 
 </template>
 

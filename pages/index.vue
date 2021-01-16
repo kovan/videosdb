@@ -1,6 +1,6 @@
 <template lang="pug">
   
-  Explorer(url="http://localhost:8000/api/videos/")
+  Explorer(ordering="-yt_published_date")
 
 </template>
 
