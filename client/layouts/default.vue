@@ -35,7 +35,6 @@ v-app(dark)
           nuxt,
           v-text='category.name'
         )
-      
 
   v-app-bar(:clipped-left='clipped', fixed, app)
     v-app-bar-nav-icon(@click.stop='drawer = !drawer')
@@ -119,7 +118,7 @@ export default {
     }
   },
   async fetch () {
-    this.categories = await this.$axios.$get('/api/categories/?ordering=-popularity')
+    this.categories = await this.$axios.$get('/api/categories/')
   },
 }
 </script>
