@@ -112,6 +112,9 @@ class Video(DirtyFieldsMixin, models.Model):
     @property
     def description_trimmed(self):
         # leave part of description specific to this video:
+        if not self.description:
+            return None
+
         match = re.search(
             settings.TRUNCATE_DESCRIPTION_AFTER, self.description)
         if match and match.start() != -1:

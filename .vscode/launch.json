@@ -7,15 +7,15 @@
         {
             "name": "Debug via NPM",
             "request": "launch",
-            "runtimeExecutable": "${workspaceFolder}/client/node_modules/.bin/nuxt",
+            "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "type": "node",
-            "cwd": "${workspaceFolder}/client",
+            "cwd": "${workspaceFolder}/frontend",
             "outputCapture": "std",
             "sourceMapPathOverrides": {
-                "webpack:///./*": "${workspaceRoot}/client/*"
+                "webpack:///./*": "${workspaceRoot}/frontend/*"
             },
             "env": {
                 "NODE_OPTIONS": "--inspect"
@@ -24,9 +24,9 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "client: chrome",
+            "name": "frontend: chrome",
             "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}/client"
+            "webRoot": "${workspaceFolder}/frontend"
         },
         {
             "type": "node",
@@ -134,8 +134,8 @@
             "preLaunchTask": "docker-run: debug",
             "platform": "node",
             "node": {
-                "package": "${workspaceFolder}/client/package.json",
-                "localRoot": "${workspaceFolder}/client"
+                "package": "${workspaceFolder}/frontend/package.json",
+                "localRoot": "${workspaceFolder}/frontend"
             }
         }
     ]
