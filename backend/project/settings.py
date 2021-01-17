@@ -104,32 +104,6 @@ DATABASES = {
 #     }
 # }
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': {
-        'verbose': {
-            'format': '%(asctime)s %(levelname)s [%(name)s:%(lineno)s] %(module)s %(process)d %(thread)d %(message)s'
-        }
-    },
-    'handlers': {
-        'gunicorn': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'verbose',
-            'filename': 'logs/gunicorn.errors',
-            'maxBytes': 1024 * 1024 * 100,  # 100 mb
-        }
-    },
-    'loggers': {
-        'gunicorn.errors': {
-            'level': 'INFO',
-            'handlers': ['gunicorn'],
-            'propagate': True,
-        },
-    }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators

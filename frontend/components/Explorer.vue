@@ -1,5 +1,5 @@
 <template lang="pug">
-v-container.ma-0.pa-0(align='center', v-if="this.videos.lengh")
+v-container.ma-0.pa-0(align='center', v-if="this.videos.length")
   v-container(fluid)
     v-row(align='center')
       v-col.d-flex
