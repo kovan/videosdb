@@ -115,7 +115,11 @@ export default {
     }
   },
   async fetch () {
-    this.categories = await this.$axios.$get('/api/categories/?ordering=-use_count')
+    try {
+      this.categories = await this.$axios.$get('/api/categores/?ordering=-use_count')  
+    } catch (error) {
+      console.error(error)
+    }
   },
 }
 </script>

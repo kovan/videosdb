@@ -59,7 +59,11 @@ export default {
     }
   },
   async asyncData ({ $axios, params }) {
-    let video = await $axios.$get('/api/videos/' + params.slug + "/")
+    try {
+      let video = await $axios.$get('/api/videos/' + params.slug + "/")
+    } catch (error) {
+      console.error(error)
+    }       
     return { video }
   }
 }

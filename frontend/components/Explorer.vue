@@ -1,5 +1,5 @@
 <template lang="pug">
-v-container.ma-0.pa-0(align='center')
+v-container.ma-0.pa-0(align='center', v-if="this.videos.lengh")
   v-container(fluid)
     v-row(align='center')
       v-col.d-flex
@@ -36,6 +36,8 @@ v-container.ma-0.pa-0(align='center')
     :length='page_count',
     @input='handlePageChange'
   )
+v-container(v-else)
+  | No videos found.
 </template>
 
 <script>
@@ -97,7 +99,7 @@ export default {
   },
   async fetch () {
 
-    const url = new URL('/api/videos/', "http://localhost:8000")
+    const url = new URL('/api/videos/', "http://backend:8000")
     if (this.ordering)
       url.searchParams.append("ordering", this.ordering)
     if (this.current_page)
@@ -109,10 +111,15 @@ export default {
     if (this.search)
       url.searchParams.append("search", this.search)
 
-    let response = await this.$axios.$get(url.href)
-    this.videos = response.results
+    try {
+      let response = await this.$axios.$get(url.href)
+      this.videos = response.results
+      this.page_count = Math.floor(response.count / response.results.length)
 
-    this.page_count = Math.floor(response.count / response.results.length)
+    } catch (error) {
+      console.error(error)
+    }
+
   },
 }
 </script>

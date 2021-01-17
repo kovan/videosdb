@@ -13,7 +13,7 @@ TODO
 
 
 - Wordpress: mejoras para encontrar videos:
-  - buscador filtros por rangos de fechas, visitas, idioma, palabras en campos... etc.
+  - buscador filtros por rangos de fechas, visitas,  idioma, palabras en campos... etc.
   - carrusel de videos destacados al entrar¿?
   - vista de cuadrícula de videos
   - video aleatorio botón
