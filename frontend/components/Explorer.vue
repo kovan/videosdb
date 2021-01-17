@@ -117,7 +117,7 @@ export default {
       this.page_count = Math.floor(response.count / response.results.length)
 
     } catch (error) {
-      console.error(error)
+      console.trace(error)
     }
 
   },

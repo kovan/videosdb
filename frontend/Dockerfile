@@ -1,13 +1,14 @@
 FROM node:12
 
-# Create app directory
-WORKDIR /app
-ADD . /app/
 
 # global install & update
 RUN npm i -g npm && npm i -g yarn --force
 
-RUN rm yarn.lock
+# Create app directory
+WORKDIR /app
+ADD . /app/
+
+#RUN rm yarn.lock
 RUN yarn
 RUN yarn build
 

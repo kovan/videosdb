@@ -18,7 +18,6 @@ WORKDIR /app
 COPY --chown=appuser:appuser . .
 
 RUN poetry install --no-dev
-RUN poetry run python manage.py migrate
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 # File wsgi.py was not found in subfolder: 'videosdb'. Please enter the Python path to wsgi file.

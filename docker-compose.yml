@@ -11,15 +11,18 @@ services:
       - db
     build:
       context: ./backend
-      dockerfile: Dockerfile
     ports:
       - 8000:8000
+  django_migrations:
+    image: videosdb_backend
+    command: poetry run python manage.py migrate --noinput
+    depends_on:
+      - db
   frontend:
     image: videosdb_frontend
     links:
       - backend
     build:
       context: ./frontend
-      dockerfile: Dockerfile
     ports:
       - 3000:3000
