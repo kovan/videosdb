@@ -25,7 +25,7 @@ SECRET_KEY = '4!_fouo%ikguf72o=em+(v0m)pdo7^8ae*vw$xs9&+l-dsa#*u'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-#ALLOWED_HOSTS = ["192.168.0.19", "localhost"]
+ALLOWED_HOSTS = ["*"]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -83,10 +83,10 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'videosdb',
-#         'USER': 'myuser',
-#         'PASSWORD': 'mypass',
-#         'HOST': 'localhost',
+#         'NAME': 'postgres',
+#         'USER': 'postgres',
+#         'PASSWORD': 'postgres',
+#         'HOST': 'db',
 #         'PORT': '',
 #         'TEST': {
 #             "NAME": "test_videosdb",

@@ -50,7 +50,7 @@ export default {
   },
 
   proxy: {
-    '/api': 'http://localhost:8000',
+    '/api': 'http://backend:8000',
   },
 
   // Vuetify module configuration (https://go.nuxtjs.dev/config-vuetify)

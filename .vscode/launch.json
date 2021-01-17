@@ -15,7 +15,7 @@
             "cwd": "${workspaceFolder}/client",
             "outputCapture": "std",
             "sourceMapPathOverrides": {
-                "webpack:///./*": "${workspaceRoot}/client/*",
+                "webpack:///./*": "${workspaceRoot}/client/*"
             },
             "env": {
                 "NODE_OPTIONS": "--inspect"
@@ -27,7 +27,7 @@
             "name": "client: chrome",
             "url": "http://localhost:3000",
             "webRoot": "${workspaceFolder}/client"
-        },        
+        },
         {
             "type": "node",
             "request": "attach",
@@ -35,9 +35,6 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            // "sourceMapPathOverrides": {
-            //     "webpack:///./*": "${workspaceRoot}/client/*",
-            // },
             "port": 9229
         },
         {
@@ -114,6 +111,32 @@
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Docker: Python - Django",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run: debug",
+            "python": {
+                "pathMappings": [
+                    {
+                        "localRoot": "${workspaceFolder}",
+                        "remoteRoot": "/app"
+                    }
+                ],
+                "projectType": "django"
+            }
+        },
+        {
+            "name": "Docker Node.js Launch",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run: debug",
+            "platform": "node",
+            "node": {
+                "package": "${workspaceFolder}/client/package.json",
+                "localRoot": "${workspaceFolder}/client"
+            }
         }
     ]
 }
