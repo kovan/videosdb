@@ -116,7 +116,7 @@ export default {
   },
   async fetch () {
     try {
-      this.categories = await this.$axios.$get('/api/categores/?ordering=-use_count')  
+      this.categories = await this.$axios.$get('/api/categories/?ordering=-use_count')  
     } catch (error) {
       console.error(error)
     }

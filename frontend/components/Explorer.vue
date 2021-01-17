@@ -98,8 +98,8 @@ export default {
     }
   },
   async fetch () {
-
-    const url = new URL('/api/videos/', "http://backend:8000")
+    const dummy_root = "http://example.com"  // otherwise URL doesn't work
+    const url = new URL('/api/videos/', dummy_root)
     if (this.ordering)
       url.searchParams.append("ordering", this.ordering)
     if (this.current_page)
@@ -112,12 +112,12 @@ export default {
       url.searchParams.append("search", this.search)
 
     try {
-      let response = await this.$axios.$get(url.href)
+      let response = await this.$axios.$get(url.href.replace(dummy_root, ""))
       this.videos = response.results
       this.page_count = Math.floor(response.count / response.results.length)
 
     } catch (error) {
-      console.trace(error)
+      console.log(error)
     }
 
   },
