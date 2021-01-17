@@ -103,11 +103,11 @@ class Video(DirtyFieldsMixin, models.Model):
     @property
     def thumbnails(self):
         if not self.full_response:
-            return None
+            return dict()
         full_response = json.loads(self.full_response)
         if "thumbnails" in full_response:
             return full_response["thumbnails"]
-        return None
+        return dict()
 
     @property
     def description_trimmed(self):

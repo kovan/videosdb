@@ -71,4 +71,4 @@ class VideoViewSet(viewsets.ModelViewSet):
                        "comment_count", "favorited_count", "like_count"]
     search_fields = ["title", "description"]
     filterset_fields = ["tags", "categories"]
-    queryset = Video.objects.filter(excluded=False)
+    queryset = Video.objects.exclude(excluded=True).exclude(title=None)
