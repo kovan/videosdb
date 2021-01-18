@@ -14,10 +14,10 @@ services:
       context: ./backend
     ports:
       - 8000:8000
-  django_migrations:
+  django-migrations:
     image: videosdb_backend
     command: poetry run python manage.py migrate --noinput
-    depends_on:
+    links:
       - db
   frontend:
     image: videosdb_frontend
