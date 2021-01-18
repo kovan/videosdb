@@ -11,10 +11,12 @@ ENV PYTHONUNBUFFERED=1
 
 RUN python -m pip install poetry 
 
+WORKDIR /app
+
 # Switching to a non-root user, please refer to https://aka.ms/vscode-docker-python-user-rights
 RUN useradd -m appuser
 USER appuser
-WORKDIR /app
+RUN chown appuser:appuser .
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
 RUN poetry install --no-dev
 COPY --chown=appuser:appuser . .
