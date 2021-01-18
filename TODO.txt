@@ -1,58 +1,26 @@
 TODO
 ------------------------
-
-- separar lista de categorías con líneas
-- ordenar presentación de cada video
-- ordenar lista categorías por popularidad (videos que las tienen)
+- barra lateral siempre visible en PC y tablets en horizontal
+- añadir google analitics
+- buscador global arriba
 - dockerizarlo todo
    - nginx o uno que soporte QUIC?
 - crear app IOS/android
-- mostrar videos relacionados en la página del vídeo
+- mostrar videos relacionados en la página del vídeo GET https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId=5rOiW_xY-kc&type=video&key={YOUR_API_KEY}
 - botones para compartir en redes sociales
+- video aleatorio botón
+- añadir ordenar por: titulo, duración, y fecha de publicación.
+- añadir tags y categories a los campos en los que busca el textfield
+- ¿? paginación precisa (meter´nº de pag. a mano) de 10 en 10, 100 en 100... etc.
+- ¿? buscador filtros por rangos de fechas, visitas, idioma, palabras en campos... etc.
+- ¿? top vistos por rango de tiempo: dia, mes semana, año.
+- ¿? Añadir TOP referenciados en Google (ordenar según el numero de resultados al buscar la id del video?¿)
+- ¿? carrusel de videos destacados al entrar¿?
+- ¿? los tags más usados mostrar en barra lateral
+- ¿? retoques CSS
 
 
-
-- Wordpress: mejoras para encontrar videos:
-  - buscador filtros por rangos de fechas, visitas,  idioma, palabras en campos... etc.
-  - carrusel de videos destacados al entrar¿?
-  - vista de cuadrícula de videos
-  - video aleatorio botón
-  - paginación precisa (meter´nº de pag. a mano) de 10 en 10, 100 en 100... etc.
-  - top vistos: dia, mes semana, año.
-  - con datos de YT:
-    - top likes en youtube.
-    - top referenciados en Google
-    - top comentados
-    - mas nuevos
-    - mas viejos
-
-UI:
---------------
-X inicio (basado en dashboard) (de moemnto NO)
-  - latest video (highlighted)
-  - video explorer button (grande) (lleva a explorador de videos)
-  - view random video button
-  - latest videos
-    - thumbnail, titulo video, date published on YT
-  - top viewed videos (lista), cada item:
-    - thumbnail, titulo video, view count
-  - top liked videos:  
-    - thumbnail, titulo video, lie count
-  - top favourited videos:  
-    - thumbnail, titulo video, favorite count
-  - top commented videos:
-    - thumbnail, titulo video, comment count
-
-- explorador de videos (basado en customers)
-   - cada video que se pueda ver directamente
-   - el paginador debe permitir meter el nº de pagina directamente
-   - ordenar por todos (up y down)
-     - titulo
-     - estadisticas y duración.
-     - fecha de publicacion
-   - filtro (texftield) todo en uno: titulo, descripción, tags, categorias
-
-- buscador avanzado (basado en settings). 
+- ¿? buscador avanzado (basado en settings). 
   - Campos:
     - titulo
     - categorias
@@ -63,64 +31,21 @@ X inicio (basado en dashboard) (de moemnto NO)
     - fecha de publicacion
     - estadisticas
 
-*** general:
- - cada video al pinchar lleva a la página del video, donde se muestra:
-   - video
-   - titulo
-   - categorias a las que pertenece
-   - tags que tiene
-   - descripcion
-   - transcripcion
-   - estadísticas (visitas, etc.)
-   - botones compartir redes sociales
-   - related videos ¿? no se si habrá manera de hacerlo.. SI:
-       GET https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId=5rOiW_xY-kc&type=video&key={YOUR_API_KEY}
 
-- las categorias se muestran en la barra lateral, y al pinchar lleva a un explorador de videos de esa categoría
-- los tags más usados lo mismo.
-- los META deben estár bien con título y descripcion.
 
-estructura Next.js:
-- pages
-  - video
-  - category
-  - tag
-  index.js
-  dashboard.js
-  explorer.js
-  search.js
 
-sidebar:
- - latest videos
- - random video 
- - top viewed
- - top liked
- - top favourited
- - top commented
- - search field / advanced search
- - categories:
-    - cat1
-    - cat2
-    ...etc.
-
-footer:
-- contacto
-- link al canal de youtube de sadhguru
-- instalar google analytics
 
 
 
 IDEA-STORM
 ------------------------
 - pasar a kubernetes todo
-- dejar de lado wordpress y hacer frontend en Django
-- publicar todo como web estática + JS para buscar y filtrar:
-  - React o sólo JQuery? meteor?
 - hacer una app Ethereum que genere la web bajo un subdominio estilo nombrecanal.myapp.com y cobrar pasta
-- deshacerme de docker y dejar un nginx frontal, un nginx backend para wordpress y un mysql
 
 
-TEMAS:
+
+
+TEMAS Wordpress:
 ------
 
 Ansia: push sidebar
