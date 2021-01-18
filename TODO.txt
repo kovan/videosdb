@@ -1,5 +1,7 @@
 TODO
 ------------------------
+- generalizar todo para que funcione tb con Nithyananda.yoga
+- mover dominio, y habilitar https+certbot
 - barra lateral siempre visible en PC y tablets en horizontal
 - añadir google analitics
 - buscador global arriba
