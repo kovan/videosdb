@@ -1,10 +1,11 @@
-from dirtyfields import DirtyFieldsMixin
-from uuslug import uuslug
-from django.db import models
-# Import slugify to generate slugs from strings
-from django.utils.text import slugify
 import json
 import logging
+import re
+
+from dirtyfields import DirtyFieldsMixin
+from django.conf import settings
+from django.db import models
+from uuslug import uuslug
 
 logger = logging.getLogger("videosdb")
 
@@ -51,7 +52,6 @@ class Category(DirtyFieldsMixin, models.Model):
 
 class Video(DirtyFieldsMixin, models.Model):
     class Meta:
-        ordering = ['-yt_published_date']
         indexes = [
             models.Index(fields=["youtube_id"]),
             models.Index(fields=["slug"]),
@@ -91,7 +91,6 @@ class Video(DirtyFieldsMixin, models.Model):
         for tag in tags:
             tag_obj, created = Tag.objects.get_or_create(name=tag)
             self.tags.add(tag_obj)
-        self.save()
 
     def save(self, *args, **kwargs):
         if not self.is_dirty():
@@ -109,6 +108,16 @@ class Video(DirtyFieldsMixin, models.Model):
         if "thumbnails" in full_response:
             return full_response["thumbnails"]
         return None
+
+    @property
+    def description_trimmed(self):
+        # leave part of description specific to this video:
+        match = re.search(
+            settings.TRUNCATE_DESCRIPTION_AFTER, self.description)
+        if match and match.start() != -1:
+            return self.description[:match.start()]
+
+        return self.description
 
     def load_from_youtube_info(self, info):
         from django.utils.dateparse import parse_datetime
