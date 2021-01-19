@@ -6,9 +6,9 @@ from django.conf import settings
 from django.test import TestCase, override_settings, tag
 from unittest.mock import create_autospec, patch
 from django.utils import timezone
-from videosdb.models import Video, Category
-from videosdb.backend.downloader import Downloader
-from videosdb.backend.youtube_api import YoutubeAPI
+from .models import Video, Category
+from .backend.downloader import Downloader
+from .backend.youtube_api import YoutubeAPI
 
 
 @override_settings(MEDIA_ROOT="test_media")

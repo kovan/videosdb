@@ -17,20 +17,23 @@ v-container
     v-card-text
       | {{ this.video.transcription }}
     v-divider
-    v-card-title
-      | Categories
-    ul
-      li(v-for='cat in this.video.categories', :key='cat.id')
-        NuxtLink(:to='"/category/" + cat.slug')
-          | {{ cat.name }}
+    v-card(v-if="this.video.categories.length")
+      v-card-title
+        | Categories
+      v-card-text
+        ul
+          li(v-for='cat in this.video.categories', :key='cat.id')
+            NuxtLink(:to='"/category/" + cat.slug')
+              | {{ cat.name }}
     v-divider
-    v-card-title
-      | Tags
-    v-card-text
-      v-chip-group(column)
-        v-chip(v-for='tag in this.video.tags', :key='tag.id')
-          NuxtLink(:to='"/tag/" + tag.slug')
-            | {{ tag.name }}
+    v-card(v-if="this.video.tags.length")    
+      v-card-title(v-if="this.video.tags.length")
+        | Tags
+      v-card-text
+        v-chip-group(column)
+          v-chip(v-for='tag in this.video.tags', :key='tag.id')
+            NuxtLink(:to='"/tag/" + tag.slug')
+              | {{ tag.name }}
     //- v-card-actions
     //-   v-btn(color='deep-purple lighten-2')
     //-     | Share
@@ -59,9 +62,20 @@ export default {
     }
   },
   async asyncData ({ $axios, params }) {
-    let video = await $axios.$get('/api/videos/' + params.slug + "/")
-    return { video }
+    try {
+      let video = await $axios.$get('/api/videos/' + params.slug + "/")
+      return { video }      
+    } catch (error) {
+      console.error(error)
+    }       
   }
 }
 </script>
+
+<style>
+.v-card__text,
+.v-card__title {
+  word-break: normal; /* maybe !important   */
+}
+</style>
 
