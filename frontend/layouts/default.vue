@@ -4,12 +4,10 @@ v-app(dark)
     v-model='drawer',
     :mini-variant='miniVariant',
     clipped=true,
-    fixed,
     app,
     color="black",
-    mobile-breakpoint=800,
-    width=350
-  )
+    mobile-breakpoint=640,
+    width=350)
     v-list
       v-list-item(
         v-for='(item, i) in items',
@@ -39,14 +37,12 @@ v-app(dark)
         )
 
   v-app-bar(:clipped-left='clipped', app, collapse-on-scroll)
-    
-    v-app-bar-nav-icon(@click.stop='drawer = !drawer')  
-    v-app-bar-title(v-text="title")
-    template(v-slot:extension)
-      | Mysticism, yoga, spirituality, ancient wisdom, day-to-day life tips, interviews, tales, and much more.
 
+    v-app-bar-nav-icon(@click.stop='drawer = !drawer')
 
-
+    v-toolbar-title(v-text='title')
+      template(v-slot="extension")
+        | {{ description}}
   v-main
     v-container
       nuxt
@@ -57,7 +53,7 @@ v-app(dark)
 
 
 export default {
-  data () {
+  data () { debugger
     return {
       clipped: true,
       drawer: true,
@@ -103,7 +99,8 @@ export default {
       miniVariant: false,
       right: false,
       rightDrawer: false,
-      title: this.$root.$options.head.title, //'Sadhguru wisdom. Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.',
+      title: this.$root.$options.head.title,
+      description: this.$root.$options.head.meta[2].content,
     }
   },
   methods: {
