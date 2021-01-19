@@ -7,12 +7,12 @@
         {
             "name": "Debug via NPM",
             "request": "launch",
-            "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
+            "runtimeExecutable": "${workspaceFolder}/backend/frontend/node_modules/.bin/nuxt",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "type": "node",
-            "cwd": "${workspaceFolder}/frontend",
+            "cwd": "${workspaceFolder}/backend/frontend",
             "outputCapture": "std",
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceRoot}/frontend/*"
@@ -26,7 +26,7 @@
             "request": "launch",
             "name": "frontend: chrome",
             "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}/frontend"
+            "webRoot": "${workspaceFolder}/backend/frontend"
         },
         {
             "type": "node",
@@ -47,7 +47,7 @@
                 "--noinput"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/backend"
         },
         {
             "name": "Django: sync-wordpress",
@@ -59,7 +59,7 @@
                 "--sync-wordpress"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/backend"
         },
         {
             "name": "Django: publish-one",
@@ -72,7 +72,7 @@
                 "CR5HtTsUl5E"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/backend"
         },
         {
             "name": "Django: download-one",
@@ -85,7 +85,7 @@
                 "CR5HtTsUl5E"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/backend"
         },
         {
             "name": "Django: download-all",
@@ -97,7 +97,7 @@
                 "--download-all"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/backend"
         },
         {
             "name": "Django: check",
@@ -110,7 +110,7 @@
                 "-t"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/backend"
         },
         {
             "name": "Docker: Python - Django",
@@ -120,7 +120,7 @@
             "python": {
                 "pathMappings": [
                     {
-                        "localRoot": "${workspaceFolder}",
+                        "localRoot": "${workspaceFolder}/backend",
                         "remoteRoot": "/app"
                     }
                 ],
@@ -134,8 +134,8 @@
             "preLaunchTask": "docker-run: debug",
             "platform": "node",
             "node": {
-                "package": "${workspaceFolder}/frontend/package.json",
-                "localRoot": "${workspaceFolder}/frontend"
+                "package": "${workspaceFolder}/backend/frontend/package.json",
+                "localRoot": "${workspaceFolder}/backend/frontend"
             }
         }
     ]

@@ -22,11 +22,7 @@ class Downloader:
         def process_video(youtube_id, category_name=None):
             video, created = Video.objects.get_or_create(youtube_id=youtube_id)
             # if new video or missing info, download info:
-            if created \
-                    or not video.full_response \
-                    or not video.title \
-                    or not video.view_count:
-
+            if video.is_missing_yt_info():
                 info = self.yt_api.get_video_info(video.youtube_id)
                 if info:
                     video.load_from_youtube_info(info)
