@@ -1,7 +1,6 @@
 TODO
 ------------------------
 - revisar tema transcripciones, ver que se descargan y muestran
-- hacer la API readonly
 - ¿? permitir elegir entre cuadrícula y lista de videos
 - generalizar todo para que funcione tb con Nithyananda.yoga
 - mover dominio, y habilitar https+certbot

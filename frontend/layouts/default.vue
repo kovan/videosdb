@@ -3,10 +3,11 @@ v-app(dark)
   v-navigation-drawer(
     v-model='drawer',
     :mini-variant='miniVariant',
-    :clipped='clipped',
+    clipped=true,
     fixed,
     app,
-    temporary,
+    color="black",
+    mobile-breakpoint=800,
     width=350
   )
     v-list
@@ -37,23 +38,19 @@ v-app(dark)
           style='border-bottom: 1px dotted'
         )
 
-  v-app-bar(:clipped-left='clipped', fixed, app)
-    v-app-bar-nav-icon(@click.stop='drawer = !drawer')
+  v-app-bar(:clipped-left='clipped', app, collapse-on-scroll)
+    
+    v-app-bar-nav-icon(@click.stop='drawer = !drawer')  
+    v-app-bar-title(v-text="title")
+    template(v-slot:extension)
+      | Mysticism, yoga, spirituality, ancient wisdom, day-to-day life tips, interviews, tales, and much more.
 
-    v-toolbar-title(v-text='title')
+
 
   v-main
     v-container
       nuxt
-  v-navigation-drawer(v-model='rightDrawer', :right='right', temporary, fixed)
-    v-list
-      v-list-item(@click.native='right = !right')
-        v-list-item-action
-          v-icon(light)
-            | mdi-repeat
-        v-list-item-title Switch drawer (click me)
-  v-footer(:absolute='!fixed', app)
-    span &copy; {{ new Date().getFullYear() }}
+  
 </template>
 
 <script>
@@ -62,8 +59,8 @@ v-app(dark)
 export default {
   data () {
     return {
-      clipped: false,
-      drawer: false,
+      clipped: true,
+      drawer: true,
       fixed: false,
       items: [
         {
@@ -106,7 +103,7 @@ export default {
       miniVariant: false,
       right: false,
       rightDrawer: false,
-      title: 'Sadhguru wisdom. Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.',
+      title: this.$root.$options.head.title, //'Sadhguru wisdom. Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.',
     }
   },
   methods: {
