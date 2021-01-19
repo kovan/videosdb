@@ -37,7 +37,7 @@ class VideoSerializer(serializers.ModelSerializer):
                   "description_trimmed"]
 
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = "slug"
     serializer_class = TagSerializer
     filter_backends = [filters.OrderingFilter,
@@ -48,7 +48,7 @@ class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
     lookup_field = "slug"
     serializer_class = CategorySerializer
@@ -60,7 +60,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.annotate(use_count=Count("video"))
 
 
-class VideoViewSet(viewsets.ModelViewSet):
+class VideoViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["-yt_published_date"]
     lookup_field = "slug"
     serializer_class = VideoSerializer

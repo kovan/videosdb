@@ -1,2 +1,2 @@
 #! /bin/sh
-docker-compose run backend poetry run python manage.py --check-for-new-videos
+docker-compose run backend poetry run python manage.py videosdb --check-for-new-videos

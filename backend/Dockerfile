@@ -27,4 +27,4 @@ EXPOSE 8000
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 # File wsgi.py was not found in subfolder: 'videosdb'. Please enter the Python path to wsgi file.
-CMD ["poetry", "run", "gunicorn", "--bind", "0.0.0.0:8000", "--access-logfile", "-", "project.wsgi"]
+CMD ["poetry", "run", "gunicorn", "--bind", "0.0.0.0:8000", "project.wsgi"]

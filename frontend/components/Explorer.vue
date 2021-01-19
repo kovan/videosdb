@@ -37,7 +37,7 @@ v-container.ma-0.pa-0(align='center', v-if="this.videos.length")
     @input='handlePageChange'
   )
 v-container(v-else)
-  | No videos found.
+
 </template>
 
 <script>

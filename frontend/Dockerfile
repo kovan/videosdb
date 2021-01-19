@@ -1,4 +1,4 @@
-FROM node:12
+FROM node:14
 
 RUN echo 'root:toor' | chpasswd
 RUN npm i -g npm && npm i -g yarn --force
