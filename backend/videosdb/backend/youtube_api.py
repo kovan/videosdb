@@ -109,10 +109,11 @@ class YoutubeAPI:
             video_ids.append(item["snippet"]["resourceId"]["videoId"])
         return video_ids
 
-    # def get_related_videos(self, youtube_id):
-
-
-# https: // www.googleapis.com/youtube/v3/search?part = snippet & relatedToVideoId = 5rOiW_xY-kc & type = video & key = {YOUR_API_KEY}
+    def get_related_videos(self, youtube_id):
+        url = self.root_url + "/search?part=snippet&type=video"
+        url += "&relatedToVideoId=" + youtube_id
+        items = self._make_request(url)
+        return items
 
     def get_video_transcript(self, youtube_id):
         try:

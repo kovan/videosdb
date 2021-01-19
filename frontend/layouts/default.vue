@@ -5,7 +5,6 @@ v-app(dark)
     :mini-variant='miniVariant',
     clipped=true,
     app,
-    color="black",
     mobile-breakpoint=640,
     width=350)
     v-list
