@@ -68,7 +68,7 @@ class VideoViewSet(viewsets.ReadOnlyModelViewSet):
                        filters.SearchFilter,
                        DjangoFilterBackend]
     ordering_fields = ["yt_published_date", "view_count",
-                       "comment_count", "favorited_count", "like_count"]
-    search_fields = ["title", "description"]
+                       "comment_count", "favorited_count", "like_count", "title"]
+    search_fields = ["title", "description", "tags", "categories"]
     filterset_fields = ["tags", "categories"]
     queryset = Video.objects.exclude(excluded=True).exclude(title=None)

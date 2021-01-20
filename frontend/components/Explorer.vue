@@ -8,6 +8,11 @@ v-container.ma-0.pa-0(align='center', v-if="this.videos.length")
           label='Order by ',
           @change='handleOrderingChange'
         )
+        v-select(
+          :items='period_options',
+          label='Period',
+          @change='handlePeriodChange'
+        )        
         v-text-field(
           v-model='search',
           hide-details,
@@ -44,10 +49,15 @@ v-container(v-else)
 export default {
   data: () => {
     return {
-      videos: [],
-      current_page: 1,
       page_count: 0,
-      search: "",
+      videos: [],
+      period_options: [
+        "this week",
+        "this month",
+        "this year",
+        "always"
+      ],
+      period: "always",
       ordering_options: [
         {
           text: "Latest",
@@ -68,11 +78,14 @@ export default {
         {
           text: "Most favorited",
           value: "-favorite_count"
-        },
+        }
       ]
     }
   },
   props: {
+    current_page: 1,
+    search: "",
+
     ordering: {
       default: '',
       type: String,
@@ -87,15 +100,19 @@ export default {
 
   methods: {
     handlePageChange () {
-      this.$fetch()
+      redirect()
     },
-    handleSearch () {
+    handleSearch() {
       this.$fetch()
     },
     handleOrderingChange (args) {
       this.ordering = args
       this.$fetch()
-    }
+    },
+    handlePeriodChange (args) {
+      this.period = args
+      this.$fetch()
+    }    
   },
   async fetch () {
     const dummy_root = "http://example.com"  // otherwise URL doesn't work

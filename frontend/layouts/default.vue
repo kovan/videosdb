@@ -5,7 +5,7 @@ v-app(dark)
     :mini-variant='miniVariant',
     clipped=true,
     app,
-    mobile-breakpoint=640,
+    mobile-breakpoint=800,
     width=350)
     v-list
       v-list-item(
@@ -35,13 +35,20 @@ v-app(dark)
           style='border-bottom: 1px dotted'
         )
 
-  v-app-bar(:clipped-left='clipped', app, collapse-on-scroll)
+  v-app-bar(:clipped-left='clipped', app, collapse-on-scroll, fixed)
 
     v-app-bar-nav-icon(@click.stop='drawer = !drawer')
-
+    v-spacer
     v-toolbar-title(v-text='title')
-      template(v-slot="extension")
-        | {{ description}}
+    template(v-slot:extension="")
+      v-tabs(centered)
+        v-tab Latest
+        v-tab Most viewed
+        v-tab Most liked
+        v-tab Most favorited
+        v-tab Most commented
+    v-spacer
+
   v-main
     v-container
       nuxt
