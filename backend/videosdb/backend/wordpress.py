@@ -21,7 +21,7 @@ class Wordpress:
         from wordpress_xmlrpc.methods import media
 
         images = self.client.call(media.GetMediaLibrary({
-           # number=1,
+            "number":1,
             "parent_id":0
         }))
         found = [img for img in images if img.title == title + ".jpg"]
