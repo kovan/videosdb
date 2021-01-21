@@ -8,3 +8,4 @@ dbtest.sqlite3
 dbtest.sqlite3-journal
 media/
 .cache/
+backend/datadump.json
