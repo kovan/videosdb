@@ -109,11 +109,20 @@ class YoutubeAPI:
             video_ids.append(item["snippet"]["resourceId"]["videoId"])
         return video_ids
 
+    def get_related_videos(self, youtube_id):
+        url = self.root_url + "/search?part=snippet&type=video"
+        url += "&relatedToVideoId=" + youtube_id
+        items = self._make_request(url)
+        return items
+
     def get_video_transcript(self, youtube_id):
+        #url = self.root_url + "/captions?part=id,snippet&videoId=" + youtube_id
+
         try:
-            t = YouTubeTranscriptApi.get_transcript(youtube_id)
+            t = YouTubeTranscriptApi.get_transcript(
+                youtube_id, languages=("en", "en-US"), cookies="youtube.com_cookies.txt")
         except Exception as e:
-            logger.warn(str(e))
+            logger.warn(e)
             return None
 
         result = ""

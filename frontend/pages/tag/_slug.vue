@@ -27,8 +27,12 @@ export default {
 
   async asyncData ({ $axios, params }) {
     let url = "/api/tags/" + params.slug
-    let response = await $axios.$get(url)
-    return { tag: response }
+    try {
+      let response = await $axios.$get(url)
+      return { tag: response }
+    } catch (error) {
+      console.error(error)
+    }        
   }
 }
 </script>

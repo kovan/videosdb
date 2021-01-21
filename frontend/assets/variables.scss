@@ -5,5 +5,9 @@
 
 .v-card__text,
 .v-card__title {
-  word-break: normal; /* maybe !important  */
+  word-break: normal !important; /* maybe !important  */
 }
+
+//body::-webkit-scrollbar-track {
+//background: orange;
+//}

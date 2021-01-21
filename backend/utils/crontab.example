@@ -1,3 +1,3 @@
-SHELL=/usr/bin/zsh
-0 8 * * * cd /home/pi/videosdb-prod/ && zsh run.sh
-* * * * * cd /home/pi/videosdb-prod/ && source venv/bin/activate && utils/dynamic-ip-check.py
+SHELL=/bin/bash
+POETRY=$HOME/.poetry/bin/poetry
+0 12 * * * cd /app && $POETRY run sh run.sh
