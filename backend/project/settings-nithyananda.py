@@ -1,5 +1,15 @@
 from .settings import *
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.nithyananda.sqlite3'),
+        'TEST': {
+            "NAME": "dbtest.sqlite3",
+        },
+    }
+}
+
 WWW_ROOT = "https://www.nithyananda.yoga"
 WP_USERNAME = "nithyananda"
 WP_PASS = "P74xhrhtn4WUkX"
