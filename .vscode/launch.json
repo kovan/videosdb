@@ -47,7 +47,8 @@
                 "--noinput"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend"
+            "cwd": "${workspaceFolder}/backend",
+            "justMyCode": false
         },
         {
             "name": "Django: sync-wordpress",

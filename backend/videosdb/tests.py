@@ -73,4 +73,5 @@ class DownloaderTest(TestCase):
 
     @ tag("consume-quota")
     def test_download(self):
-        pass
+        api = YoutubeAPI(settings.YOUTUBE_KEY)
+        print(api.get_video_transcript("tSc_rtEtpm4"))
