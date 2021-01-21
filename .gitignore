@@ -1,3 +1,4 @@
+.cache
 *.swp
 __pycache__/
 backend/tmp/
@@ -9,3 +10,4 @@ backend/dbtest.sqlite3-journal
 backend/media/
 backend/.cache/
 backend/datadump.json
+db.sadhguru.sqlite3
