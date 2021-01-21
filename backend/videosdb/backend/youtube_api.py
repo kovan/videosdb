@@ -112,7 +112,8 @@ class YoutubeAPI:
     def get_video_transcript(self, youtube_id):
         try:
             t = YouTubeTranscriptApi.get_transcript(youtube_id)
-        except Exception:
+        except Exception as e:
+            logger.warn(str(e))
             return None
 
         result = ""
