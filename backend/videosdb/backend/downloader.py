@@ -66,14 +66,15 @@ class Downloader:
             #             except HTTPError:
             #                 video.thumbnail = None
 
-            if not video.transcript:
+            if not video.transcript and video.transcript_available:
                 try:
                     video.transcript = self.yt_api.get_video_transcript(
                         video.youtube_id)
+                    video.transcript_available = True
                 except youtube_transcript_api.CouldNotRetrieveTranscript:
-                    video.transcript = "NOT_AVAILABLE"
+                    video.transcript_available = False
                 except youtube_transcript_api.TooManyRequests as e:
-                    video.transcript = None  # pending for retry
+                    video.transcript_available = True
 
             if category_name:
                 category, created = Category.objects.get_or_create(

@@ -79,6 +79,7 @@ class Video(DirtyFieldsMixin, models.Model):
         max_length=256, null=True, help_text="duration")
     full_response = models.TextField(null=True)
     transcript = models.TextField(null=True)
+    transcript_available = models.BooleanField(default=True, null=True)
     thumbnail = models.FileField(null=True)
     slug = models.SlugField(unique=True, max_length=4096,
                             null=True, db_index=True)

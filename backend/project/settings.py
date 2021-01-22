@@ -160,7 +160,7 @@ LOGGING = {
     },
     'handlers': {
         'file': {
-            #            'level': 'TRACE' if DEBUG else 'INFO',
+            'level': 'TRACE',
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1000000,
             "backupCount": 10,
