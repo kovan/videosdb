@@ -10,7 +10,7 @@ import os
 import youtube_transcript_api
 
 
-@traced(logging.getLogger("videosdb"))
+@traced(logging.getLogger(__name__))
 class Downloader:
     def __init__(self):
         self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)

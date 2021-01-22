@@ -8,7 +8,7 @@ from django.db import models
 from django.db.models.fields import DateTimeField
 from uuslug import uuslug
 
-logger = logging.getLogger("videosdb")
+logger = logging.getLogger(__name__)
 
 
 class Tag(DirtyFieldsMixin, models.Model):

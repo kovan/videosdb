@@ -4,7 +4,7 @@ import json
 import httplib2
 from youtube_transcript_api import YouTubeTranscriptApi
 
-logger = logging.getLogger("videosdb")
+logger = logging.getLogger(__name__)
 
 
 def _sentence_case(text):

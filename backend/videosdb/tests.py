@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import logging
 from django.core.files import File
 from django.conf import settings
 from django.test import TestCase, override_settings, tag
@@ -9,6 +10,8 @@ from django.utils import timezone
 from .models import Video, Category
 from .backend.downloader import Downloader
 from .backend.youtube_api import YoutubeAPI
+
+logger = logging.getLogger(__name__)
 
 
 @override_settings(MEDIA_ROOT="test_media")
@@ -71,7 +74,16 @@ class DownloaderTest(TestCase):
             sorted([t.name for t in v.tags.all()]),
             sorted(test_video_info["tags"]))
 
-    @ tag("consume-quota")
+    @tag("consume-quota")
     def test_download(self):
-        api = YoutubeAPI(settings.YOUTUBE_KEY)
-        print(api.get_video_transcript("tSc_rtEtpm4"))
+        pass
+        # import time
+        # from youtube_transcript_api import TooManyRequests
+        # api = YoutubeAPI(settings.YOUTUBE_KEY)
+        # while True:
+        #     logger.info("Getting transcript...")
+        #     try:
+        #         api.get_video_transcript("tSc_rtEtpm4", None)
+        #     except TooManyRequests as e:
+        #         logger.error("TooManyRequests")
+        #         time.sleep(60)

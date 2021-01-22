@@ -5,14 +5,12 @@ from autologging import traced, TRACE
 from django.conf import settings
 
 
-
-
-@traced(logging.getLogger("videosdb"))
+@traced(logging.getLogger(__name__))
 class Wordpress:
     def __init__(self):
         from wordpress_xmlrpc import Client
         self.client = Client(
-            settings.WWW_ROOT +   "/xmlrpc.php",
+            settings.WWW_ROOT + "/xmlrpc.php",
             settings.WP_USERNAME,
             settings.WP_PASS)
 
@@ -21,11 +19,11 @@ class Wordpress:
         from wordpress_xmlrpc.methods import media
 
         images = self.client.call(media.GetMediaLibrary({
-            "number":1,
-            "parent_id":0
+            "number": 1,
+            "parent_id": 0
         }))
         found = [img for img in images if img.title == title + ".jpg"]
-        if found: # do not reupload
+        if found:  # do not reupload
             return int(found[0].id)
 
         data = {
@@ -52,7 +50,7 @@ class Wordpress:
         from wordpress_xmlrpc.methods.posts import GetPosts
         return self.client.call(GetPosts(filter))
 
-    def publish(self, video, post_id = 0, thumbnail_id = 0):
+    def publish(self, video, post_id=0, thumbnail_id=0):
         from wordpress_xmlrpc import WordPressPost
         from wordpress_xmlrpc.methods.posts import NewPost, EditPost
         import jinja2
@@ -60,7 +58,8 @@ class Wordpress:
         description = ""
         if video.description:
             # leave part of description specific to this video:
-            match = re.search(settings.TRUNCATE_DESCRIPTION_AFTER, video.description)
+            match = re.search(
+                settings.TRUNCATE_DESCRIPTION_AFTER, video.description)
             if match and match.start() != -1:
                 description = video.description[:match.start()]
             else:
@@ -69,7 +68,6 @@ class Wordpress:
         transcript = ""
         if video.transcript:
             transcript = video.transcript
-
 
         template = jinja2.Template(template_raw)
         html = template.render(
@@ -92,18 +90,18 @@ class Wordpress:
         post.terms_names = {}
 
         if video.categories:
-            post.terms_names["category"] = [str(c) for c in video.categories.all()]
-        
+            post.terms_names["category"] = [
+                str(c) for c in video.categories.all()]
+
         if video.tags:
             post.terms_names["post_tag"] = [str(t) for t in video.tags.all()]
 
         post.post_status = "publish"
 
         logging.debug("publishing " + str(post_id))
-        
+
         if post_id:
             self.client.call(EditPost(post_id, post))
             return post_id
 
         return int(self.client.call(NewPost(post)))
-

@@ -13,7 +13,7 @@ def dbg():
     ipdb.set_trace()
 
 
-@traced(logging.getLogger("videosdb"))
+@traced(logging.getLogger(__name__))
 def add_arguments(parser):
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
     parser.add_argument("-s", "--sync-wordpress", action="store_true")
@@ -24,7 +24,7 @@ def add_arguments(parser):
     parser.add_argument("--republish-all", action="store_true")
 
 
-@traced(logging.getLogger("videosdb"))
+@traced(logging.getLogger(__name__))
 def handle(*args, **options):
 
     if options["check_for_new_videos"]:
