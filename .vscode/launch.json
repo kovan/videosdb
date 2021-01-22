@@ -42,8 +42,12 @@
             "type": "python",
             "request": "launch",
             "program": "manage.py",
+            "env": {
+                "DEBUG": "1"
+            },
             "args": [
                 "test",
+                "-n",
                 "--noinput"
             ],
             "console": "integratedTerminal",

@@ -26,8 +26,10 @@ class Tag(DirtyFieldsMixin, models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        if not self.slug:
+        if not self.slug and self.name:
             self.slug = uuslug(self.name, instance=self)
+        if not self.is_dirty():
+            return
         super(Tag, self).save(*args, **kwargs)
 
 
@@ -46,8 +48,10 @@ class Category(DirtyFieldsMixin, models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        if not self.slug:
+        if not self.slug and self.name:
             self.slug = uuslug(self.name, instance=self)
+        if not self.is_dirty():
+            return
         super(Category, self).save(*args, **kwargs)
 
 
@@ -79,7 +83,7 @@ class Video(DirtyFieldsMixin, models.Model):
         max_length=256, null=True, help_text="duration")
     full_response = models.TextField(null=True)
     transcript = models.TextField(null=True)
-    transcript_available = models.BooleanField(default=True, null=True)
+    transcript_available = models.BooleanField(null=True)
     thumbnail = models.FileField(null=True)
     slug = models.SlugField(unique=True, max_length=4096,
                             null=True, db_index=True)
