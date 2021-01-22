@@ -14,29 +14,7 @@ def dbg():
 
 
 @traced(logging.getLogger("videosdb"))
-def configure_logging(enable_trace):
-    import logging.handlers
-
-    logger = logging.getLogger("videosdb")
-    formatter = logging.Formatter(
-        '%(asctime)s %(levelname)s:%(filename)s,%(lineno)d:%(name)s.%(funcName)s:%(message)s')
-    if not os.path.exists("logs"):
-        os.makedirs("logs")
-    handler = logging.handlers.RotatingFileHandler(
-        "./logs/log", 'a', 1000000, 10)
-    handler2 = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(formatter)
-    handler2.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.addHandler(handler2)
-
-    if enable_trace:
-        logger.setLevel(TRACE)
-
-
-@traced(logging.getLogger("videosdb"))
 def add_arguments(parser):
-    parser.add_argument("-t", "--trace", action="store_true")
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
     parser.add_argument("-s", "--sync-wordpress", action="store_true")
     parser.add_argument("-d", "--download-one", dest="dl_video_id")
@@ -48,8 +26,6 @@ def add_arguments(parser):
 
 @traced(logging.getLogger("videosdb"))
 def handle(*args, **options):
-
-    configure_logging(options["trace"])
 
     if options["check_for_new_videos"]:
         downloader = Downloader()

@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
+from autologging import TRACE
 import os
+import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -142,7 +144,53 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.AllowAny"
     ]
 }
-
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname}\t{asctime}:{filename},{lineno:d}:{name}.{funcName}:{message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname}\t{message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'TRACE' if DEBUG else 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1000000,
+            "backupCount": 10,
+            'filename': 'logs/log',
+            'formatter': 'verbose'
+        },
+        'console': {
+            'level': 'TRACE' if DEBUG else 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+            'stream': sys.stderr
+        }
+    },
+    'loggers': {
+        'videosdb': {
+            'handlers': ['file', 'console'],
+            'level': 'TRACE' if DEBUG else 'INFO',
+            'propagate': True,
+        },
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'TRACE' if DEBUG else 'INFO',
+            'propagate': True,
+        },
+        '': {
+            'handlers': ['file', 'console'],
+            'level': 'TRACE' if DEBUG else 'INFO',
+            'propagate': True
+        }
+    },
+}
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/

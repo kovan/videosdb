@@ -3,11 +3,11 @@ from django.core.files import File
 from django.conf import settings
 from videosdb.models import Video, Category
 from autologging import traced
-from urllib.error import HTTPError
 from urllib.request import urlretrieve
 import json
 import logging
 import os
+import youtube_transcript_api
 
 
 @traced(logging.getLogger("videosdb"))
@@ -67,8 +67,13 @@ class Downloader:
             #                 video.thumbnail = None
 
             if not video.transcript:
-                video.transcript = self.yt_api.get_video_transcript(
-                    video.youtube_id)
+                try:
+                    video.transcript = self.yt_api.get_video_transcript(
+                        video.youtube_id)
+                except youtube_transcript_api.CouldNotRetrieveTranscript:
+                    video.transcript = "NOT_AVAILABLE"
+                except youtube_transcript_api.TooManyRequests as e:
+                    video.transcript = None  # pending for retry
 
             if category_name:
                 category, created = Category.objects.get_or_create(

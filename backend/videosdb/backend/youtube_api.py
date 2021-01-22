@@ -118,14 +118,10 @@ class YoutubeAPI:
     def get_video_transcript(self, youtube_id):
         #url = self.root_url + "/captions?part=id,snippet&videoId=" + youtube_id
 
-        try:
-            t = YouTubeTranscriptApi.get_transcript(
-                youtube_id, languages=("en", "en-US"), cookies="youtube.com_cookies.txt")
-        except Exception as e:
-            logger.warn(e)
-            return None
+        transcripts = YouTubeTranscriptApi.get_transcript(
+            youtube_id, languages=("en", "en-US"), cookies="youtube.com_cookies.txt")
 
         result = ""
-        for d in t:
+        for d in transcripts:
             result += d["text"] + " "
         return _sentence_case(result.capitalize() + ".")
