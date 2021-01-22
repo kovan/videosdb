@@ -34,6 +34,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Application definition
 
 INSTALLED_APPS = [
+    "test_without_migrations",
     "videosdb.apps.VideosdbConfig",
     "rest_framework",
     "django_extensions",
@@ -159,7 +160,7 @@ LOGGING = {
     },
     'handlers': {
         'file': {
-            'level': 'TRACE' if DEBUG else 'INFO',
+            #            'level': 'TRACE' if DEBUG else 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1000000,
             "backupCount": 10,
@@ -167,7 +168,7 @@ LOGGING = {
             'formatter': 'verbose'
         },
         'console': {
-            'level': 'TRACE' if DEBUG else 'INFO',
+            #            'level': 'TRACE' if DEBUG else 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
             'stream': sys.stderr
@@ -175,12 +176,10 @@ LOGGING = {
     },
     'loggers': {
         'videosdb': {
-            'handlers': ['file', 'console'],
             'level': 'TRACE' if DEBUG else 'INFO',
             'propagate': True,
         },
         'django': {
-            'handlers': ['file', 'console'],
             'level': 'TRACE' if DEBUG else 'INFO',
             'propagate': True,
         },

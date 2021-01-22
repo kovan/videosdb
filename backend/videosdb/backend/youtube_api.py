@@ -115,11 +115,11 @@ class YoutubeAPI:
         items = self._make_request(url)
         return items
 
-    def get_video_transcript(self, youtube_id):
+    def get_video_transcript(self, youtube_id, cookies="youtube.com_cookies.txt"):
         #url = self.root_url + "/captions?part=id,snippet&videoId=" + youtube_id
 
         transcripts = YouTubeTranscriptApi.get_transcript(
-            youtube_id, languages=("en", "en-US"), cookies="youtube.com_cookies.txt")
+            youtube_id, languages=("en", "en-US"), cookies=cookies)
 
         result = ""
         for d in transcripts:

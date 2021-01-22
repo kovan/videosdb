@@ -151,6 +151,14 @@ python-versions = ">=3.5"
 Django = ">=2.2"
 
 [[package]]
+name = "django-test-without-migrations"
+version = "0.6"
+description = "Disable migrations when running your Django tests."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "django-uuslug"
 version = "1.2.0"
 description = "A Django slugify application that guarantees uniqueness and handles unicode."
@@ -560,7 +568,7 @@ resolved_reference = "fb819c06e4d9c54b7e372de2a8040951357e0fcd"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "d3789298bfc0358916e223ba016bf10fea5b02bdc7e26107021f911a7eb7aa3c"
+content-hash = "3d41f590ba7c176da6a311bf0cfd430fc89c3d5ee3430dfa7e61b53649736c04"
 
 [metadata.files]
 appnope = [
@@ -621,6 +629,9 @@ django-extensions = [
 django-filter = [
     {file = "django-filter-2.4.0.tar.gz", hash = "sha256:84e9d5bb93f237e451db814ed422a3a625751cbc9968b484ecc74964a8696b06"},
     {file = "django_filter-2.4.0-py3-none-any.whl", hash = "sha256:e00d32cebdb3d54273c48f4f878f898dced8d5dfaad009438fe61ebdf535ace1"},
+]
+django-test-without-migrations = [
+    {file = "django-test-without-migrations-0.6.tar.gz", hash = "sha256:28fbe94d23f314f524acea7ff23ef6f72ddb232492d6d0b39c25a97fc20be0fa"},
 ]
 django-uuslug = [
     {file = "django-uuslug-1.2.0.tar.gz", hash = "sha256:bf0872618acc61f7ace65b96ae71d63f347595c8b990942834f1ba9448af19ec"},
