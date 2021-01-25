@@ -119,7 +119,7 @@ class YoutubeAPI:
         #url = self.root_url + "/captions?part=id,snippet&videoId=" + youtube_id
 
         transcripts = YouTubeTranscriptApi.get_transcript(
-            youtube_id, languages=("en", "en-US"), cookies=cookies)
+            youtube_id, languages=("en", "en-US", "en-GB"), cookies=cookies)
 
         result = ""
         for d in transcripts:

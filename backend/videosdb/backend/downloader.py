@@ -66,7 +66,7 @@ class Downloader:
         #             except HTTPError:
         #                 video.thumbnail = None
 
-        if not video.transcript:
+        if not video.transcript and video.transcript_available is None:
             try:
                 video.transcript = self.yt_api.get_video_transcript(
                     video.youtube_id)
