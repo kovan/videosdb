@@ -74,7 +74,7 @@ class DownloaderTest(TestCase):
             sorted([t.name for t in v.tags.all()]),
             sorted(test_video_info["tags"]))
 
-    # @tag("consume-quota")
-    # def test_download(self):
-    #     d = Downloader()
-    #     d.process_video("tSc_rtEtpm4")
+    @tag("consume-quota")
+    def test_download(self):
+        d = Downloader()
+        d.process_video("tSc_rtEtpm4")

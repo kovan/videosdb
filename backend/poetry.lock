@@ -562,13 +562,13 @@ requests = "*"
 [package.source]
 type = "git"
 url = "https://github.com/kovan/youtube-transcript-api.git"
-reference = "master"
-resolved_reference = "fb819c06e4d9c54b7e372de2a8040951357e0fcd"
+reference = "instantiable-api"
+resolved_reference = "09fee2a1ee914f786c04d728f85b983f6f67a6b2"
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "3d41f590ba7c176da6a311bf0cfd430fc89c3d5ee3430dfa7e61b53649736c04"
+content-hash = "498b638ba4d30c03fb18ad0ce21066128e881ddbbfb2621aadc22b843624c086"
 
 [metadata.files]
 appnope = [
