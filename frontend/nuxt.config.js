@@ -1,6 +1,7 @@
 import colors from 'vuetify/es5/util/colors'
 
 export default {
+  target: 'static',
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head: {
     titleTemplate: '%s - Sadhguru wisdom',
@@ -48,23 +49,24 @@ export default {
   axios: {
     proxy: true,
     debug: process.env.DEBUG ? true : false,
+    baseURL: process.env.API_URL, // http://localhost:8000
   },
 
-  publicRuntimeConfig: {
-    axios: {
-      browserBaseURL: process.env.BROWSER_BASE_URL,
-    },
-  },
+  // publicRuntimeConfig: {
+  //   axios: {
+  //     browserBaseURL: process.env.BROWSER_BASE_URL,
+  //   },
+  // },
 
-  privateRuntimeConfig: {
-    axios: {
-      baseURL: process.env.BASE_URL,
-    },
-  },
+  // privateRuntimeConfig: {
+  //   axios: {
+  //     baseURL: process.env.BASE_URL,
+  //   },
+  // },
 
-  proxy: {
-    '/api': 'http://backend:8000',
-  },
+  // proxy: {
+  //   '/api': 'http://backend:8000',
+  // },
 
   // Vuetify module configuration (https://go.nuxtjs.dev/config-vuetify)
   vuetify: {
@@ -93,11 +95,11 @@ export default {
       }
     },
   },
-  server: {
-    port: 3000, // default: 3000
-    host: '0.0.0.0', // default: localhost,
-    timing: false,
-  },
+  // server: {
+  //   port: 3000, // default: 3000
+  //   host: '0.0.0.0', // default: localhost,
+  //   timing: false,
+  // },
 
   serverMiddleware: [],
 }

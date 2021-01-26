@@ -17,7 +17,7 @@ v-container
     v-card-text
       | {{ this.video.transcription }}
     v-divider
-    v-card(v-if="this.video.categories.length")
+    v-card(v-if="this.video.categories")
       v-card-title
         | Categories
       v-card-text
@@ -26,8 +26,8 @@ v-container
             NuxtLink(:to='"/category/" + cat.slug')
               | {{ cat.name }}
     v-divider
-    v-card(v-if="this.video.tags.length")    
-      v-card-title(v-if="this.video.tags.length")
+    v-card(v-if="this.video.tags")    
+      v-card-title(v-if="this.video.tags")
         | Tags
       v-card-text
         v-chip-group(column)
