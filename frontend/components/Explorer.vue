@@ -4,11 +4,6 @@ v-container.ma-0.pa-0(align='center', v-if="this.videos.length")
     v-row(align='center')
       v-col.d-flex
         v-select(
-          :items='ordering_options',
-          label='Order by ',
-          @change='handleOrderingChange'
-        )
-        v-select(
           :items='period_options',
           label='Period',
           @change='handlePeriodChange'
@@ -18,7 +13,7 @@ v-container.ma-0.pa-0(align='center', v-if="this.videos.length")
           hide-details,
           prepend-icon='mdi-magnify',
           single-line,
-          label='Search...',
+          label='filter...',
           clearable,
           @change='handleSearch'
         )
@@ -50,6 +45,7 @@ export default {
   data: () => {
     return {
       page_count: 0,
+      current_page: 1,
       videos: [],
       period_options: [
         "this week",
@@ -83,7 +79,6 @@ export default {
     }
   },
   props: {
-    current_page: 1,
     search: "",
 
     ordering: {
@@ -97,10 +92,19 @@ export default {
       default: ''
     },
   },
-
+  
+  updated () {
+    this.$fetch()
+  },
   methods: {
+
     handlePageChange () {
-      redirect()
+      this.$router.push({
+        path: this.$route.path,
+        query: {
+          page: this.current_page
+        }
+      })
     },
     handleSearch() {
       this.$fetch()
@@ -115,6 +119,8 @@ export default {
     }    
   },
   async fetch () {
+
+
     const dummy_root = "http://example.com"  // otherwise URL doesn't work
     const url = new URL('/api/videos/', dummy_root)
     if (this.ordering)
