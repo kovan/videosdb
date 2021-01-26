@@ -1,5 +1,5 @@
 <template lang="pug">
-v-container.ma-0.pa-0(align='center')
+v-container.ma-0.pa-0(align='center', v-if="this.videos.length")
   v-container(fluid)
     v-row(align='center')
       v-col.d-flex
@@ -8,6 +8,11 @@ v-container.ma-0.pa-0(align='center')
           label='Order by ',
           @change='handleOrderingChange'
         )
+        v-select(
+          :items='period_options',
+          label='Period',
+          @change='handlePeriodChange'
+        )        
         v-text-field(
           v-model='search',
           hide-details,
@@ -36,16 +41,23 @@ v-container.ma-0.pa-0(align='center')
     :length='page_count',
     @input='handlePageChange'
   )
+v-container(v-else)
+
 </template>
 
 <script>
 export default {
   data: () => {
     return {
-      videos: [],
-      current_page: 1,
       page_count: 0,
-      search: "",
+      videos: [],
+      period_options: [
+        "this week",
+        "this month",
+        "this year",
+        "always"
+      ],
+      period: "always",
       ordering_options: [
         {
           text: "Latest",
@@ -66,11 +78,14 @@ export default {
         {
           text: "Most favorited",
           value: "-favorite_count"
-        },
+        }
       ]
     }
   },
   props: {
+    current_page: 1,
+    search: "",
+
     ordering: {
       default: '',
       type: String,
@@ -85,19 +100,23 @@ export default {
 
   methods: {
     handlePageChange () {
-      this.$fetch()
+      redirect()
     },
-    handleSearch () {
+    handleSearch() {
       this.$fetch()
     },
     handleOrderingChange (args) {
       this.ordering = args
       this.$fetch()
-    }
+    },
+    handlePeriodChange (args) {
+      this.period = args
+      this.$fetch()
+    }    
   },
   async fetch () {
-
-    const url = new URL('/api/videos/', "http://localhost:8000")
+    const dummy_root = "http://example.com"  // otherwise URL doesn't work
+    const url = new URL('/api/videos/', dummy_root)
     if (this.ordering)
       url.searchParams.append("ordering", this.ordering)
     if (this.current_page)
@@ -109,10 +128,23 @@ export default {
     if (this.search)
       url.searchParams.append("search", this.search)
 
-    let response = await this.$axios.$get(url.href)
-    this.videos = response.results
+    try {
+      let response = await this.$axios.$get(url.href.replace(dummy_root, ""))
+      this.videos = response.results
+      this.page_count = Math.floor(response.count / response.results.length)
 
-    this.page_count = Math.floor(response.count / response.results.length)
+    } catch (error) {
+      console.error(error)
+    }
+
   },
 }
 </script>
+
+
+<style>
+.v-card__text,
+.v-card__title {
+  word-break: normal; /* maybe !important   */
+}
+</style>

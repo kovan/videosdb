@@ -135,7 +135,7 @@ pytz = ">=2015.7"
 name = "django-extensions"
 version = "3.1.0"
 description = "Extensions for Django"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.5"
 
@@ -149,6 +149,14 @@ python-versions = ">=3.5"
 
 [package.dependencies]
 Django = ">=2.2"
+
+[[package]]
+name = "django-test-without-migrations"
+version = "0.6"
+description = "Disable migrations when running your Django tests."
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "django-uuslug"
@@ -171,6 +179,20 @@ python-versions = ">=3.5"
 
 [package.dependencies]
 django = ">=2.2"
+
+[[package]]
+name = "gunicorn"
+version = "20.0.4"
+description = "WSGI HTTP Server for UNIX"
+category = "main"
+optional = false
+python-versions = ">=3.4"
+
+[package.extras]
+eventlet = ["eventlet (>=0.9.7)"]
+gevent = ["gevent (>=0.13)"]
+setproctitle = ["setproctitle"]
+tornado = ["tornado (>=0.2)"]
 
 [[package]]
 name = "httplib2"
@@ -444,7 +466,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 name = "six"
 version = "1.15.0"
 description = "Python 2 and 3 compatibility utilities"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
@@ -526,20 +548,27 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "youtube-transcript-api"
+name = "youtube_transcript_api"
 version = "0.3.1"
-description = "This is an python API which allows you to get the transcripts/subtitles for a given YouTube video. It also works for automatically generated subtitles, supports translating subtitles and it does not require a headless browser, like other selenium based solutions do!"
+description = ""
 category = "main"
 optional = false
 python-versions = "*"
+develop = false
 
 [package.dependencies]
 requests = "*"
 
+[package.source]
+type = "git"
+url = "https://github.com/kovan/youtube-transcript-api.git"
+reference = "master"
+resolved_reference = "fb819c06e4d9c54b7e372de2a8040951357e0fcd"
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "8e38cca3b77a0af401cec1462d9ea9bcdbf451d87d37b93665eb68be3d8a5098"
+content-hash = "3d41f590ba7c176da6a311bf0cfd430fc89c3d5ee3430dfa7e61b53649736c04"
 
 [metadata.files]
 appnope = [
@@ -601,11 +630,19 @@ django-filter = [
     {file = "django-filter-2.4.0.tar.gz", hash = "sha256:84e9d5bb93f237e451db814ed422a3a625751cbc9968b484ecc74964a8696b06"},
     {file = "django_filter-2.4.0-py3-none-any.whl", hash = "sha256:e00d32cebdb3d54273c48f4f878f898dced8d5dfaad009438fe61ebdf535ace1"},
 ]
+django-test-without-migrations = [
+    {file = "django-test-without-migrations-0.6.tar.gz", hash = "sha256:28fbe94d23f314f524acea7ff23ef6f72ddb232492d6d0b39c25a97fc20be0fa"},
+]
 django-uuslug = [
     {file = "django-uuslug-1.2.0.tar.gz", hash = "sha256:bf0872618acc61f7ace65b96ae71d63f347595c8b990942834f1ba9448af19ec"},
 ]
 djangorestframework = [
     {file = "djangorestframework-3.12.2-py3-none-any.whl", hash = "sha256:0209bafcb7b5010fdfec784034f059d512256424de2a0f084cb82b096d6dd6a7"},
+    {file = "djangorestframework-3.12.2.tar.gz", hash = "sha256:0898182b4737a7b584a2c73735d89816343369f259fea932d90dc78e35d8ac33"},
+]
+gunicorn = [
+    {file = "gunicorn-20.0.4-py2.py3-none-any.whl", hash = "sha256:cd4a810dd51bf497552cf3f863b575dabd73d6ad6a91075b65936b151cbf4f9c"},
+    {file = "gunicorn-20.0.4.tar.gz", hash = "sha256:1904bb2b8a43658807108d59c3f3d56c2b6121a701161de0ddf9ad140073c626"},
 ]
 httplib2 = [
     {file = "httplib2-0.18.1-py3-none-any.whl", hash = "sha256:ca2914b015b6247791c4866782fa6042f495b94401a0f0bd3e1d6e0ba2236782"},
@@ -846,7 +883,4 @@ wcwidth = [
 wrapt = [
     {file = "wrapt-1.12.1.tar.gz", hash = "sha256:b62ffa81fb85f4332a4f609cab4ac40709470da05643a082ec1eb88e6d9b97d7"},
 ]
-youtube-transcript-api = [
-    {file = "youtube_transcript_api-0.3.1-py3-none-any.whl", hash = "sha256:8f3eb0169c2be836e5fcfaeadbb9897b418befbd8bdd065bd95f582c419817cb"},
-    {file = "youtube_transcript_api-0.3.1.tar.gz", hash = "sha256:aa6186172a34fe4a6cb090320bad391387b58e018d095fb4fbfcd295a43ed309"},
-]
+youtube_transcript_api = []

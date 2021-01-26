@@ -4,7 +4,7 @@ import json
 import httplib2
 from youtube_transcript_api import YouTubeTranscriptApi
 
-logger = logging.getLogger("videosdb")
+logger = logging.getLogger(__name__)
 
 
 def _sentence_case(text):
@@ -109,13 +109,19 @@ class YoutubeAPI:
             video_ids.append(item["snippet"]["resourceId"]["videoId"])
         return video_ids
 
-    def get_video_transcript(self, youtube_id):
-        try:
-            t = YouTubeTranscriptApi.get_transcript(youtube_id)
-        except Exception:
-            return None
+    def get_related_videos(self, youtube_id):
+        url = self.root_url + "/search?part=snippet&type=video"
+        url += "&relatedToVideoId=" + youtube_id
+        items = self._make_request(url)
+        return items
+
+    def get_video_transcript(self, youtube_id, cookies="youtube.com_cookies.txt"):
+        #url = self.root_url + "/captions?part=id,snippet&videoId=" + youtube_id
+
+        transcripts = YouTubeTranscriptApi.get_transcript(
+            youtube_id, languages=("en", "en-US"), cookies=cookies)
 
         result = ""
-        for d in t:
+        for d in transcripts:
             result += d["text"] + " "
         return _sentence_case(result.capitalize() + ".")

@@ -1,14 +1,16 @@
 TODO
 ------------------------
+- revisar tema transcripciones, ver que se descargan y muestran
+- ¿? permitir elegir entre cuadrícula y lista de videos
+- generalizar todo para que funcione tb con Nithyananda.yoga
+- mover dominio, y habilitar https+certbot
+- barra lateral siempre visible en PC y tablets en horizontal
 - añadir google analitics
 - buscador global arriba
-- dockerizarlo todo
-   - nginx o uno que soporte QUIC?
 - crear app IOS/android
 - mostrar videos relacionados en la página del vídeo GET https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId=5rOiW_xY-kc&type=video&key={YOUR_API_KEY}
 - botones para compartir en redes sociales
 - video aleatorio botón
-- añadir ordenar por: titulo, duración, y fecha de publicación.
 - añadir tags y categories a los campos en los que busca el textfield
 - ¿? paginación precisa (meter´nº de pag. a mano) de 10 en 10, 100 en 100... etc.
 - ¿? buscador filtros por rangos de fechas, visitas, idioma, palabras en campos... etc.
@@ -16,9 +18,6 @@ TODO
 - ¿? Añadir TOP referenciados en Google (ordenar según el numero de resultados al buscar la id del video?¿)
 - ¿? carrusel de videos destacados al entrar¿?
 - ¿? los tags más usados mostrar en barra lateral
-- ¿? retoques CSS
-
-
 - ¿? buscador avanzado (basado en settings). 
   - Campos:
     - titulo
@@ -36,10 +35,8 @@ TODO
 
 
 
-IDEA-STORM
-------------------------
-- pasar a kubernetes todo
-- hacer una app Ethereum que genere la web bajo un subdominio estilo nombrecanal.myapp.com y cobrar pasta
+
+
 
 
 

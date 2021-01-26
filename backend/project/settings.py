@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
+from autologging import TRACE
 import os
+import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,15 +25,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '4!_fouo%ikguf72o=em+(v0m)pdo7^8ae*vw$xs9&+l-dsa#*u'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True if "DEBUG" in os.environ else False
 
-#ALLOWED_HOSTS = ["192.168.0.19", "localhost"]
+ALLOWED_HOSTS = ["*"]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 
 INSTALLED_APPS = [
+    "test_without_migrations",
     "videosdb.apps.VideosdbConfig",
     "rest_framework",
     "django_extensions",
@@ -83,26 +86,16 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'videosdb',
-#         'USER': 'myuser',
-#         'PASSWORD': 'mypass',
-#         'HOST': 'localhost',
+#         'NAME': 'postgres',
+#         'USER': 'postgres',
+#         'PASSWORD': 'postgres',
+#         'HOST': 'db',
 #         'PORT': '',
 #         'TEST': {
 #             "NAME": "test_videosdb",
 #         },
 #     }
 # }
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        'TEST': {
-            "NAME": "dbtest.sqlite3",
-        },
-    }
-}
 
 
 # Password validation
@@ -152,7 +145,51 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.AllowAny"
     ]
 }
-
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname}\t{asctime}:{filename},{lineno:d}:{name}.{funcName}:{message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname}\t{message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'TRACE',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1000000,
+            "backupCount": 10,
+            'filename': 'logs/log',
+            'formatter': 'verbose'
+        },
+        'console': {
+            #            'level': 'TRACE' if DEBUG else 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+            'stream': sys.stderr
+        }
+    },
+    'loggers': {
+        'videosdb': {
+            'level': 'TRACE' if DEBUG else 'INFO',
+            'propagate': True,
+        },
+        'django': {
+            'level': 'TRACE' if DEBUG else 'INFO',
+            'propagate': True,
+        },
+        '': {
+            'handlers': ['file', 'console'],
+            'level': 'TRACE' if DEBUG else 'INFO',
+            'propagate': True
+        }
+    },
+}
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
@@ -161,12 +198,4 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = "media"
 
-WWW_ROOT = "http://localhost:8000"
-WP_USERNAME = "k"
-WP_PASS = "aeoI90nSmWv9bi99C1"
 YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
-YOUTUBE_CHANNEL = {
-    "id": "UCcYzLCs3zrQIBVHYA1sK2sw",
-    "name": "Sadhguru"
-}
-TRUNCATE_DESCRIPTION_AFTER = "#Sadhguru"

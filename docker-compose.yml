@@ -1,0 +1,32 @@
+version: "3"
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    restart: always
+  backend:
+    image: videosdb_backend
+    links:
+      - db
+    build:
+      context: ./backend
+    ports:
+      - 8000:8000
+    restart: always
+  django-migrations:
+    image: videosdb_backend
+    command: poetry run python manage.py migrate --noinput
+    links:
+      - db
+  frontend:
+    image: videosdb_frontend
+    links:
+      - backend
+    build:
+      context: ./frontend
+    ports:
+      - 3000:3000
+    restart: always
