@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import isodate
 
 from dirtyfields import DirtyFieldsMixin
 from django.conf import settings
@@ -151,6 +152,10 @@ class Video(DirtyFieldsMixin, models.Model):
             return self.description[:match.start()]
 
         return self.description
+
+    @property
+    def duration_humanized(self):
+        return str(isodate.parse_duration(self.duration))
 
     def load_from_youtube_info(self, info):
         from django.utils.dateparse import parse_datetime

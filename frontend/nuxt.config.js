@@ -76,7 +76,7 @@ export default {
   build: {
     extend(config, ctx) {
       if (ctx.isDev) {
-        config.devtool = 'source-map'
+        config.devtool = 'inline-source-map'
       }
     },
   },

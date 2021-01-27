@@ -2,7 +2,7 @@
 div
   header
     nav.navbar.navbar-expand-md.navbar-dark.fixed-top.bg-dark
-      a.navbar-brand(href="#") Carousel
+      a.navbar-brand(href="#") Sadhguru
       button.navbar-toggler(type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation")
         span.navbar-toggler-icon
       #navbarCollapse.collapse.navbar-collapse

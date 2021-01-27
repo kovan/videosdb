@@ -49,137 +49,28 @@
     .album.py-5.bg-light
       .container
         .row
-          .col-md-4
+          .col-md-4(v-for="video in this.videos" :key="video.youtube_id")
             .card.mb-4.shadow-sm
-              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
-                title Placeholder
-                rect(width="100%" height="100%" fill="#55595c")
-                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
+              //- svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
+              //-   title {{video.description_trimmed}}
+              //-   rect(width="100%" height="100%" fill="#55595c")
+              //-   text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
+              b-img(:src="video.thumbnails.medium.url" :alt="video.description_trimmed")
               .card-body
                 p.card-text
-                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
+                  | {{video.title}}
                 .d-flex.justify-content-between.align-items-center
                   .btn-group
                     button.btn.btn-sm.btn-outline-secondary(type="button") View
                     button.btn.btn-sm.btn-outline-secondary(type="button") Edit
-                  small.text-muted 9 mins
-          .col-md-4
-            .card.mb-4.shadow-sm
-              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
-                title Placeholder
-                rect(width="100%" height="100%" fill="#55595c")
-                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
-              .card-body
-                p.card-text
-                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
-                .d-flex.justify-content-between.align-items-center
-                  .btn-group
-                    button.btn.btn-sm.btn-outline-secondary(type="button") View
-                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
-                  small.text-muted 9 mins
-          .col-md-4
-            .card.mb-4.shadow-sm
-              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
-                title Placeholder
-                rect(width="100%" height="100%" fill="#55595c")
-                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
-              .card-body
-                p.card-text
-                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
-                .d-flex.justify-content-between.align-items-center
-                  .btn-group
-                    button.btn.btn-sm.btn-outline-secondary(type="button") View
-                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
-                  small.text-muted 9 mins
-          .col-md-4
-            .card.mb-4.shadow-sm
-              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
-                title Placeholder
-                rect(width="100%" height="100%" fill="#55595c")
-                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
-              .card-body
-                p.card-text
-                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
-                .d-flex.justify-content-between.align-items-center
-                  .btn-group
-                    button.btn.btn-sm.btn-outline-secondary(type="button") View
-                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
-                  small.text-muted 9 mins
-          .col-md-4
-            .card.mb-4.shadow-sm
-              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
-                title Placeholder
-                rect(width="100%" height="100%" fill="#55595c")
-                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
-              .card-body
-                p.card-text
-                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
-                .d-flex.justify-content-between.align-items-center
-                  .btn-group
-                    button.btn.btn-sm.btn-outline-secondary(type="button") View
-                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
-                  small.text-muted 9 mins
-          .col-md-4
-            .card.mb-4.shadow-sm
-              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
-                title Placeholder
-                rect(width="100%" height="100%" fill="#55595c")
-                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
-              .card-body
-                p.card-text
-                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
-                .d-flex.justify-content-between.align-items-center
-                  .btn-group
-                    button.btn.btn-sm.btn-outline-secondary(type="button") View
-                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
-                  small.text-muted 9 mins
-          .col-md-4
-            .card.mb-4.shadow-sm
-              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
-                title Placeholder
-                rect(width="100%" height="100%" fill="#55595c")
-                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
-              .card-body
-                p.card-text
-                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
-                .d-flex.justify-content-between.align-items-center
-                  .btn-group
-                    button.btn.btn-sm.btn-outline-secondary(type="button") View
-                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
-                  small.text-muted 9 mins
-          .col-md-4
-            .card.mb-4.shadow-sm
-              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
-                title Placeholder
-                rect(width="100%" height="100%" fill="#55595c")
-                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
-              .card-body
-                p.card-text
-                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
-                .d-flex.justify-content-between.align-items-center
-                  .btn-group
-                    button.btn.btn-sm.btn-outline-secondary(type="button") View
-                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
-                  small.text-muted 9 mins
-          .col-md-4
-            .card.mb-4.shadow-sm
-              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
-                title Placeholder
-                rect(width="100%" height="100%" fill="#55595c")
-                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
-              .card-body
-                p.card-text
-                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
-                .d-flex.justify-content-between.align-items-center
-                  .btn-group
-                    button.btn.btn-sm.btn-outline-secondary(type="button") View
-                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
-                  small.text-muted 9 mins
+                  small.text-muted {{ video.duration_humanized }}
+          
 
 
 </template>
 
 <script >
+
 export default {
   data: () => {
     return {
