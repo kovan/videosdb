@@ -63,7 +63,7 @@
                     button.btn.btn-sm.btn-outline-secondary(type="button") Edit
                   small.text-muted {{ video.duration_humanized }}
         .overflow-auto
-          b-pagination-nav(limit=10 size="lg" align="center" v-model="current_page" :link-gen="linkGen" :number-of-pages="10" use-router)
+          b-pagination-nav(size="lg" align="center" v-model="current_page" :link-gen="linkGen" :number-of-pages="10" use-router)
 
 
 
@@ -154,7 +154,7 @@ export default {
     }    
   },
   async fetch () {
-    this.current_page = this.$route.query.page || 1
+
     console.log("fetch")
 
     const dummy_root = "http://example.com"  // otherwise URL doesn't work
