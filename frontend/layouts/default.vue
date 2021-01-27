@@ -36,8 +36,6 @@ div
 
   footer.text-muted
     .container
-      p.float-right
-        a(href="#") Back to top
       p This page is not affiliated or asociated to the 
         a(href="http://isha.sadhguru.org​") official Sadhguru website.
       p All content is original to 
@@ -143,7 +141,9 @@ export default {
 
 <style scoped>
 
-
+footer {
+  margin-top: 50px
+}
 
 .feather {
   width: 16px;
