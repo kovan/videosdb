@@ -1,7 +1,5 @@
-import colors from 'vuetify/es5/util/colors'
-
 export default {
-  target: 'static',
+  // target: 'static',
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head: {
     titleTemplate: '%s - Sadhguru wisdom',
@@ -36,20 +34,21 @@ export default {
   // Modules for dev and build (recommended) (https://go.nuxtjs.dev/config-modules)
   buildModules: [
     // https://go.nuxtjs.dev/vuetify
-    '@nuxtjs/vuetify',
+    // '@nuxtjs/vuetify',
   ],
 
   // Modules (https://go.nuxtjs.dev/config-modules)
   modules: [
     // https://go.nuxtjs.dev/axios
     '@nuxtjs/axios',
+    'bootstrap-vue/nuxt',
   ],
 
   // Axios module configuration (https://go.nuxtjs.dev/config-axios)
   axios: {
     proxy: true,
     debug: process.env.DEBUG ? true : false,
-    baseURL: process.env.API_URL, // http://localhost:8000
+    baseURL: 'http://localhost:8000', // process.env.API_URL, //
   },
 
   // publicRuntimeConfig: {
@@ -64,34 +63,15 @@ export default {
   //   },
   // },
 
-  // proxy: {
-  //   '/api': 'http://backend:8000',
-  // },
-
-  // Vuetify module configuration (https://go.nuxtjs.dev/config-vuetify)
-  vuetify: {
-    customVariables: ['~/assets/variables.scss'],
-    theme: {
-      dark: false,
-      themes: {
-        dark: {
-          primary: colors.blue.darken2,
-          accent: colors.grey.darken3,
-          secondary: colors.amber.darken3,
-          info: colors.teal.lighten1,
-          warning: colors.amber.base,
-          error: colors.deepOrange.accent4,
-          success: colors.green.accent3,
-        },
-      },
-    },
+  proxy: {
+    '/api': 'http://backend:8000',
   },
 
   // Build Configuration (https://go.nuxtjs.dev/config-build)
   build: {
     extend(config, ctx) {
       if (ctx.isDev) {
-        config.devtool = ctx.isClient ? 'source-map' : 'inline-source-map'
+        config.devtool = 'source-map'
       }
     },
   },

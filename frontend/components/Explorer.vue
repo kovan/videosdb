@@ -1,42 +1,143 @@
 <template lang="pug">
-v-container.ma-0.pa-0(align='center', v-if="this.videos.length")
-  v-container(fluid)
-    v-row(align='center')
-      v-col.d-flex
-        v-select(
-          :items='period_options',
-          label='Period',
-          @change='handlePeriodChange'
-        )        
-        v-text-field(
-          v-model='search',
-          hide-details,
-          prepend-icon='mdi-magnify',
-          single-line,
-          label='filter...',
-          clearable,
-          @change='handleSearch'
-        )
+  div
+    section.jumbotron.text-center
+      .container
+        h1 Album example
+        p.lead.text-muted
+          | Something short and leading about the collection below—its contents, the creator, etc. Make it short and sweet, but not too short so folks don’t simply skip over it entirely.
+        p
+          a.btn.btn-primary.my-2(href="#") Main call to action
+          a.btn.btn-secondary.my-2(href="#") Secondary action
+    .album.py-5.bg-light
+      .container
+        .row
+          .col-md-4
+            .card.mb-4.shadow-sm
+              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
+                title Placeholder
+                rect(width="100%" height="100%" fill="#55595c")
+                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
+              .card-body
+                p.card-text
+                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
+                .d-flex.justify-content-between.align-items-center
+                  .btn-group
+                    button.btn.btn-sm.btn-outline-secondary(type="button") View
+                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
+                  small.text-muted 9 mins
+          .col-md-4
+            .card.mb-4.shadow-sm
+              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
+                title Placeholder
+                rect(width="100%" height="100%" fill="#55595c")
+                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
+              .card-body
+                p.card-text
+                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
+                .d-flex.justify-content-between.align-items-center
+                  .btn-group
+                    button.btn.btn-sm.btn-outline-secondary(type="button") View
+                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
+                  small.text-muted 9 mins
+          .col-md-4
+            .card.mb-4.shadow-sm
+              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
+                title Placeholder
+                rect(width="100%" height="100%" fill="#55595c")
+                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
+              .card-body
+                p.card-text
+                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
+                .d-flex.justify-content-between.align-items-center
+                  .btn-group
+                    button.btn.btn-sm.btn-outline-secondary(type="button") View
+                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
+                  small.text-muted 9 mins
+          .col-md-4
+            .card.mb-4.shadow-sm
+              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
+                title Placeholder
+                rect(width="100%" height="100%" fill="#55595c")
+                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
+              .card-body
+                p.card-text
+                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
+                .d-flex.justify-content-between.align-items-center
+                  .btn-group
+                    button.btn.btn-sm.btn-outline-secondary(type="button") View
+                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
+                  small.text-muted 9 mins
+          .col-md-4
+            .card.mb-4.shadow-sm
+              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
+                title Placeholder
+                rect(width="100%" height="100%" fill="#55595c")
+                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
+              .card-body
+                p.card-text
+                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
+                .d-flex.justify-content-between.align-items-center
+                  .btn-group
+                    button.btn.btn-sm.btn-outline-secondary(type="button") View
+                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
+                  small.text-muted 9 mins
+          .col-md-4
+            .card.mb-4.shadow-sm
+              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
+                title Placeholder
+                rect(width="100%" height="100%" fill="#55595c")
+                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
+              .card-body
+                p.card-text
+                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
+                .d-flex.justify-content-between.align-items-center
+                  .btn-group
+                    button.btn.btn-sm.btn-outline-secondary(type="button") View
+                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
+                  small.text-muted 9 mins
+          .col-md-4
+            .card.mb-4.shadow-sm
+              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
+                title Placeholder
+                rect(width="100%" height="100%" fill="#55595c")
+                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
+              .card-body
+                p.card-text
+                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
+                .d-flex.justify-content-between.align-items-center
+                  .btn-group
+                    button.btn.btn-sm.btn-outline-secondary(type="button") View
+                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
+                  small.text-muted 9 mins
+          .col-md-4
+            .card.mb-4.shadow-sm
+              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
+                title Placeholder
+                rect(width="100%" height="100%" fill="#55595c")
+                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
+              .card-body
+                p.card-text
+                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
+                .d-flex.justify-content-between.align-items-center
+                  .btn-group
+                    button.btn.btn-sm.btn-outline-secondary(type="button") View
+                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
+                  small.text-muted 9 mins
+          .col-md-4
+            .card.mb-4.shadow-sm
+              svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
+                title Placeholder
+                rect(width="100%" height="100%" fill="#55595c")
+                text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
+              .card-body
+                p.card-text
+                  | This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.
+                .d-flex.justify-content-between.align-items-center
+                  .btn-group
+                    button.btn.btn-sm.btn-outline-secondary(type="button") View
+                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
+                  small.text-muted 9 mins
 
-  v-container.ma-0.pa-0.d-flex.child-flex(align='center')
-    v-row.ma-0.pa-0(justify='center')
-      v-col(v-for='video in this.videos', :key='video.youtube_id', no-gutters)
-        v-card.pa-0.ma-0(no-gutters, outlined, shaped, tile, elevation='20')
-          v-card-title(align='center')
-            NuxtLink(nuxt, :to='"/video/" + video.slug')
-              | {{ video.title }}
-          v-card-text
-            NuxtLink(nuxt, :to='"/video/" + video.slug')
-              v-img(:src='video.thumbnails.medium.url')
-          v-card-text(style='white-space: pre-line')
-            | {{ video.description_trimmed }}
-
-  v-pagination(
-    v-model='current_page',
-    :length='page_count',
-    @input='handlePageChange'
-  )
-v-container(v-else)
 
 </template>
 
@@ -149,8 +250,7 @@ export default {
 
 
 <style>
-.v-card__text,
-.v-card__title {
-  word-break: normal; /* maybe !important   */
-}
+
+
+
 </style>

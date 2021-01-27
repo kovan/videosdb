@@ -1,5 +1,6 @@
 TODO
 ------------------------
+- pasar a lite-youtube-embed (npm)
 - revisar tema transcripciones, ver que se descargan y muestran
 - ¿? permitir elegir entre cuadrícula y lista de videos
 - generalizar todo para que funcione tb con Nithyananda.yoga
@@ -7,7 +8,6 @@ TODO
 - barra lateral siempre visible en PC y tablets en horizontal
 - añadir google analitics
 - buscador global arriba
-- crear app IOS/android
 - mostrar videos relacionados en la página del vídeo GET https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId=5rOiW_xY-kc&type=video&key={YOUR_API_KEY}
 - botones para compartir en redes sociales
 - video aleatorio botón
