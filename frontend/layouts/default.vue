@@ -1,33 +1,34 @@
 <template lang="pug">
 div
   header
-    #navbarHeader.collapse.bg-dark
-      .container
-        .row
-          .col-sm-8.col-md-7.py-4
-            h4.text-white About
-            p.text-muted
-              | Add some information about the album below, the author, or any other background context. Make it a few sentences long so folks can pick up some informative tidbits. Then, link them off to some social networking sites or contact information.
-          .col-sm-4.offset-md-1.py-4
-            h4.text-white Contact
-            ul.list-unstyled
-              li
-                a.text-white(href="#") Follow on Twitter
-              li
-                a.text-white(href="#") Like on Facebook
-              li
-                a.text-white(href="#") Email me
-    .navbar.navbar-dark.bg-dark.shadow-sm
-      .container.d-flex.justify-content-between
-        a.navbar-brand.d-flex.align-items-center(href="#")
-          svg.mr-2(xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true" viewbox="0 0 24 24" focusable="false")
-            path(d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z")
-            circle(cx="12" cy="13" r="4")
-          strong Album
-        button.navbar-toggler(type="button" data-toggle="collapse" data-target="#navbarHeader" aria-controls="navbarHeader" aria-expanded="false" aria-label="Toggle navigation")
-          span.navbar-toggler-icon
+    nav.navbar.navbar-expand-md.navbar-dark.bg-dark.fixed-top
+      a.navbar-brand(href="#") Navbar
+      button.navbar-toggler(type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation")
+        span.navbar-toggler-icon
+      #navbarsExampleDefault.collapse.navbar-collapse
+        ul.navbar-nav.mr-auto
+          li.nav-item.active
+            a.nav-link(href="#")
+              | Home 
+              span.sr-only (current)
+          li.nav-item
+            a.nav-link(href="#") Link
+          li.nav-item
+            a.nav-link.disabled(href="#" tabindex="-1" aria-disabled="true") Disabled
+          li.nav-item.dropdown
+            a#dropdown01.nav-link.dropdown-toggle(href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Dropdown
+            .dropdown-menu(aria-labelledby="dropdown01")
+              a.dropdown-item(href="#") Action
+              a.dropdown-item(href="#") Another action
+              a.dropdown-item(href="#") Something else here
+        form.form-inline.my-2.my-lg-0
+          input.form-control.mr-sm-2(type="text" placeholder="Search" aria-label="Search")
+          button.btn.btn-secondary.my-2.my-sm-0(type="submit") Search
+
+
   main(role="main")
     nuxt
+
 
   footer.text-muted
     .container
@@ -112,56 +113,100 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 
-.bd-placeholder-img {
-  font-size: 1.125rem;
-  text-anchor: middle;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
 
-@media (min-width: 768px) {
-  .bd-placeholder-img-lg {
-    font-size: 3.5rem;
-  }
-}
+/* GLOBAL STYLES
+-------------------------------------------------- */
+/* Padding below the footer and lighter body text */
 
-.jumbotron {
+body {
   padding-top: 3rem;
   padding-bottom: 3rem;
-  margin-bottom: 0;
-  background-color: #fff;
-}
-@media (min-width: 768px) {
-  .jumbotron {
-    padding-top: 6rem;
-    padding-bottom: 6rem;
-  }
+  color: #5a5a5a;
 }
 
-.jumbotron p:last-child {
-  margin-bottom: 0;
+
+/* CUSTOMIZE THE CAROUSEL
+-------------------------------------------------- */
+
+/* Carousel base class */
+/* .carousel {
+  margin-bottom: 4rem;
+} */
+/* Since positioning the image, we need to help out the caption */
+.carousel-caption {
+  bottom: 3rem;
+  z-index: 10;
 }
 
-.jumbotron h1 {
+/* Declare heights because of positioning of img element */
+.carousel-item {
+  height: 32rem;
+}
+.carousel-item > img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 100%;
+  height: 32rem;
+}
+
+
+/* MARKETING CONTENT
+-------------------------------------------------- */
+
+/* Center align the text within the three columns below the carousel */
+.marketing .col-lg-4 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.marketing h2 {
+  font-weight: 400;
+}
+.marketing .col-lg-4 p {
+  margin-right: .75rem;
+  margin-left: .75rem;
+}
+
+
+/* Featurettes
+------------------------- */
+
+.featurette-divider {
+  margin: 5rem 0; /* Space out the Bootstrap <hr> more */
+}
+
+/* Thin out the marketing headings */
+.featurette-heading {
   font-weight: 300;
+  line-height: 1;
+  letter-spacing: -.05rem;
 }
 
-.jumbotron .container {
-  max-width: 40rem;
+
+/* RESPONSIVE CSS
+-------------------------------------------------- */
+
+@media (min-width: 40em) {
+  /* Bump up size of carousel content */
+  .carousel-caption p {
+    margin-bottom: 1.25rem;
+    font-size: 1.25rem;
+    line-height: 1.4;
+  }
+
+  .featurette-heading {
+    font-size: 50px;
+  }
 }
 
-footer {
-  padding-top: 3rem;
-  padding-bottom: 3rem;
+@media (min-width: 62em) {
+  .featurette-heading {
+    margin-top: 7rem;
+  }
 }
 
-footer p {
-  margin-bottom: .25rem;
-}
 
 
 </style>

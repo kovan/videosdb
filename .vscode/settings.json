@@ -12,5 +12,4 @@
         "**/tmp": true,
         "**/.next": true
     },
-    "python.pythonPath": "/home/k/.cache/pypoetry/virtualenvs/videosdb-ZIAprXvb-py3.8",
 }
