@@ -1,49 +1,50 @@
 <template lang="pug">
-v-container
-  v-card
-    v-card-title(align='center') 
+b-container
+  b-card
+    b-card-title(align='center') 
       | {{ this.video.title }}
-    v-card-text(align='center')
-    youtube(
-      ref='youtube',
-      :video-id='video.youtube_id',
-      :player-vars='{ autoplay: 0, modestbranding: 1, showinfo: 0, rel: 0 }',
-      fit-parent
+    b-card-text(align='center')
+    YoutubeEmbedLite(
+      :vid="this.video.youtube_id"
+
     )
-    v-divider
-    v-card-text(style='white-space: pre-line')
+    b-divider
+    b-card-text
       | {{ this.video.description_trimmed }}
-    v-divider
-    v-card-text
+    b-divider
+    b-card-text
       | {{ this.video.transcription }}
-    v-divider
-    v-card(v-if="this.video.categories")
-      v-card-title
+    b-divider
+    b-card(v-if="this.video.categories")
+      b-card-title
         | Categories
-      v-card-text
+      b-card-text
         ul
           li(v-for='cat in this.video.categories', :key='cat.id')
             NuxtLink(:to='"/category/" + cat.slug')
               | {{ cat.name }}
-    v-divider
-    v-card(v-if="this.video.tags")    
-      v-card-title(v-if="this.video.tags")
+    b-divider
+    b-card(v-if="this.video.tags")    
+      b-card-title(v-if="this.video.tags")
         | Tags
-      v-card-text
-        v-chip-group(column)
-          v-chip(v-for='tag in this.video.tags', :key='tag.id')
+      b-card-text
+        b-chip-group(column)
+          b-chip(v-for='tag in this.video.tags', :key='tag.id')
             NuxtLink(:to='"/tag/" + tag.slug')
               | {{ tag.name }}
-    //- v-card-actions
-    //-   v-btn(color='deep-purple lighten-2')
+    //- b-card-actions
+    //-   b-btn(color='deep-purple lighten-2')
     //-     | Share
 </template>
 <script>
 
-
+import YoutubeEmbedLite from "@miyaoka/vue-youtube-embed-lite"
 
 
 export default {
+  components: {
+    YoutubeEmbedLite
+  },
   head () {
     return {
       title: this.video.title,
@@ -73,9 +74,6 @@ export default {
 </script>
 
 <style>
-.v-card__text,
-.v-card__title {
-  word-break: normal; /* maybe !important   */
-}
+
 </style>
 
