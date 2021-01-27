@@ -1,5 +1,5 @@
 <template lang="pug">
-v-container
+b-container
   h1.text-center Tag: {{ this.tag.name }}
   Explorer(:tags='this.tag.id')
 </template>

@@ -124,14 +124,12 @@ export default {
     },
   },
   
-  updated () { 
-    this.current_page = this.$route.query.page || 1
-    console.log(this.current_page)
-    this.$fetch()  
-  },
-  beforeRouteUpdate(to, from, next) {
-    this.$fetch()
-    next()
+  watch: {
+    $route(to, from) {
+      this.current_page = this.$route.query.page || 1
+      console.log("route changed, page: " + this.current_page)
+      this.$fetch()  
+    }
   },
   methods: {  
     linkGen(pageNum) {
@@ -157,7 +155,7 @@ export default {
   },
   async fetch () {
     this.current_page = this.$route.query.page || 1
-    console.log(this.current_page)
+    console.log("fetch")
 
     const dummy_root = "http://example.com"  // otherwise URL doesn't work
     const url = new URL('/api/videos/', dummy_root)

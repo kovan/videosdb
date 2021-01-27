@@ -8,13 +8,13 @@ b-container
       :vid="this.video.youtube_id"
 
     )
-    b-divider
+
     b-card-text
       | {{ this.video.description_trimmed }}
-    b-divider
+
     b-card-text
       | {{ this.video.transcription }}
-    b-divider
+
     b-card(v-if="this.video.categories")
       b-card-title
         | Categories
@@ -23,7 +23,7 @@ b-container
           li(v-for='cat in this.video.categories', :key='cat.id')
             NuxtLink(:to='"/category/" + cat.slug')
               | {{ cat.name }}
-    b-divider
+
     b-card(v-if="this.video.tags")    
       b-card-title(v-if="this.video.tags")
         | Tags
