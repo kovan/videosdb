@@ -11,6 +11,7 @@
     "dev-debug": "node node_modules/.bin/nuxt"
   },
   "dependencies": {
+    "@miyaoka/vue-youtube-embed-lite": "^1.1.0",
     "@nuxtjs/axios": "^5.12.5",
     "@nuxtjs/proxy": "^2.1.0",
     "bootstrap": "^4.6.0",
