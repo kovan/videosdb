@@ -62,7 +62,9 @@
                     button.btn.btn-sm.btn-outline-secondary(type="button") View
                     button.btn.btn-sm.btn-outline-secondary(type="button") Edit
                   small.text-muted {{ video.duration_humanized }}
-          
+        .overflow-auto
+          b-pagination-nav(v-model="current_page" :link-gen="linkGen" :number-of-pages="10" use-router)
+
 
 
 </template>
@@ -122,19 +124,25 @@ export default {
     },
   },
   
-  updated () {
-    this.$fetch()
+  updated () { 
+    this.current_page = this.$route.query.page || 1
+    console.log(this.current_page)
+    this.$fetch()  
   },
-  methods: {
-
-    handlePageChange () {
-      this.$router.push({
+  beforeRouteUpdate(to, from, next) {
+    this.$fetch()
+    next()
+  },
+  methods: {  
+    linkGen(pageNum) {
+      return {
         path: this.$route.path,
         query: {
-          page: this.current_page
+          page: pageNum
         }
-      })
+      }
     },
+
     handleSearch() {
       this.$fetch()
     },
@@ -148,7 +156,8 @@ export default {
     }    
   },
   async fetch () {
-
+    this.current_page = this.$route.query.page || 1
+    console.log(this.current_page)
 
     const dummy_root = "http://example.com"  // otherwise URL doesn't work
     const url = new URL('/api/videos/', dummy_root)
