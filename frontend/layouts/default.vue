@@ -1,11 +1,11 @@
 <template lang="pug">
 div
   header
-    nav.navbar.navbar-expand-md.navbar-dark.bg-dark.fixed-top
-      a.navbar-brand(href="#") Navbar
-      button.navbar-toggler(type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation")
+    nav.navbar.navbar-expand-md.navbar-dark.fixed-top.bg-dark
+      a.navbar-brand(href="#") Carousel
+      button.navbar-toggler(type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation")
         span.navbar-toggler-icon
-      #navbarsExampleDefault.collapse.navbar-collapse
+      #navbarCollapse.collapse.navbar-collapse
         ul.navbar-nav.mr-auto
           li.nav-item.active
             a.nav-link(href="#")
@@ -15,15 +15,10 @@ div
             a.nav-link(href="#") Link
           li.nav-item
             a.nav-link.disabled(href="#" tabindex="-1" aria-disabled="true") Disabled
-          li.nav-item.dropdown
-            a#dropdown01.nav-link.dropdown-toggle(href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Dropdown
-            .dropdown-menu(aria-labelledby="dropdown01")
-              a.dropdown-item(href="#") Action
-              a.dropdown-item(href="#") Another action
-              a.dropdown-item(href="#") Something else here
-        form.form-inline.my-2.my-lg-0
+        form.form-inline.mt-2.mt-md-0
           input.form-control.mr-sm-2(type="text" placeholder="Search" aria-label="Search")
-          button.btn.btn-secondary.my-2.my-sm-0(type="submit") Search
+          button.btn.btn-outline-success.my-2.my-sm-0(type="submit") Search
+
 
 
   main(role="main")
@@ -125,20 +120,20 @@ body {
 }
 
 
-      .bd-placeholder-img {
-        font-size: 1.125rem;
-        text-anchor: middle;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-      }
+.bd-placeholder-img {
+  font-size: 1.125rem;
+  text-anchor: middle;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 
-      @media (min-width: 768px) {
-        .bd-placeholder-img-lg {
-          font-size: 3.5rem;
-        }
-      }
+@media (min-width: 768px) {
+  .bd-placeholder-img-lg {
+    font-size: 3.5rem;
+  }
+}
 </style>
 
 

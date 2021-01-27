@@ -289,15 +289,6 @@ export default {
 
 <style scoped>
 
-/* GLOBAL STYLES
--------------------------------------------------- */
-/* Padding below the footer and lighter body text */
-
-body {
-  padding-top: 3rem;
-  padding-bottom: 3rem;
-  color: #5a5a5a;
-}
 
 
 /* CUSTOMIZE THE CAROUSEL
