@@ -52,7 +52,8 @@
               //-   title {{video.description_trimmed}}
               //-   rect(width="100%" height="100%" fill="#55595c")
               //-   text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
-              b-img(:src="video.thumbnails.medium.url" :alt="video.description_trimmed")
+              NuxtLink(:to="'/video/' + video.slug")
+                b-img(:src="video.thumbnails.medium.url" :alt="video.description_trimmed")
               .card-body
                 p.card-text
                   | {{video.title}}
@@ -67,11 +68,9 @@
 </template>
 
 <script >
-import YoutubeEmbedLite from '@miyaoka/vue-youtube-embed-lite'
+
 export default {
-  components: {
-    YoutubeEmbedLite
-  },
+
   data: () => {
     return {
       page_count: 0,
