@@ -19,10 +19,12 @@ RUN useradd -m appuser
 RUN chown appuser:appuser .
 
 USER appuser
+RUN mkdir /app/.cache && chown appuser:appuser /app/.cache
+VOLUME /app/.cacheº
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
 RUN poetry install --no-dev
 COPY --chown=appuser:appuser . .
-VOLUME [ "/app/.cache" ]
+
 
 EXPOSE 8000
 
