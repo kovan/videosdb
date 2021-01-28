@@ -110,7 +110,7 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "django-cors-headers"
-version = "3.6.0"
+version = "3.7.0"
 description = "django-cors-headers is a Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS)."
 category = "main"
 optional = false
@@ -121,7 +121,7 @@ Django = ">=2.2"
 
 [[package]]
 name = "django-dirtyfields"
-version = "1.4.1"
+version = "1.5.0"
 description = "Tracking dirty fields on a Django model instance (actively maintained)"
 category = "main"
 optional = false
@@ -531,7 +531,7 @@ python-versions = "*"
 
 [[package]]
 name = "urllib3"
-version = "1.26.2"
+version = "1.26.3"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
@@ -560,7 +560,7 @@ python-versions = "*"
 
 [[package]]
 name = "youtube_transcript_api"
-version = "0.3.1"
+version = "0.3.1.1"
 description = ""
 category = "main"
 optional = false
@@ -573,13 +573,13 @@ requests = "*"
 [package.source]
 type = "git"
 url = "https://github.com/kovan/youtube-transcript-api.git"
-reference = "instantiable-api"
-resolved_reference = "09fee2a1ee914f786c04d728f85b983f6f67a6b2"
+reference = "videosdb"
+resolved_reference = "f464fa6e1d021f4f958bcbfb87b94a6572723322"
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "fd27057b5edb83abfe3c9eae5841b33edc6bb394caaf2aae61ce0947b5e91dd0"
+content-hash = "27ddffbd09711f8677c722de08144f58a99ae6b23c7581ec69ee09246a022dbb"
 
 [metadata.files]
 appnope = [
@@ -627,11 +627,11 @@ django = [
     {file = "Django-3.1.5.tar.gz", hash = "sha256:2d78425ba74c7a1a74b196058b261b9733a8570782f4e2828974777ccca7edf7"},
 ]
 django-cors-headers = [
-    {file = "django-cors-headers-3.6.0.tar.gz", hash = "sha256:5665fc1b1aabf1b678885cf6f8f8bd7da36ef0a978375e767d491b48d3055d8f"},
-    {file = "django_cors_headers-3.6.0-py3-none-any.whl", hash = "sha256:ba898dd478cd4be3a38ebc3d8729fa4d044679f8c91b2684edee41129d7e968a"},
+    {file = "django-cors-headers-3.7.0.tar.gz", hash = "sha256:96069c4aaacace786a34ee7894ff680780ec2644e4268b31181044410fecd12e"},
+    {file = "django_cors_headers-3.7.0-py3-none-any.whl", hash = "sha256:1ac2b1213de75a251e2ba04448da15f99bcfcbe164288ae6b5ff929dc49b372f"},
 ]
 django-dirtyfields = [
-    {file = "django-dirtyfields-1.4.1.tar.gz", hash = "sha256:466d5f8bea81dadc158756eec0a176bce1f36ace45e9607e196875fa01baa605"},
+    {file = "django-dirtyfields-1.5.0.tar.gz", hash = "sha256:7d7e8cf2fa153057cb4b51b5262c6f5b4594f23cd651e2f41746614bedfdf6f6"},
 ]
 django-extensions = [
     {file = "django-extensions-3.1.0.tar.gz", hash = "sha256:7cd002495ff0a0e5eb6cdd6be759600905b4e4079232ea27618fc46bdd853651"},
@@ -888,8 +888,8 @@ typed-ast = [
     {file = "typed_ast-1.4.2.tar.gz", hash = "sha256:9fc0b3cb5d1720e7141d103cf4819aea239f7d136acf9ee4a69b047b7986175a"},
 ]
 urllib3 = [
-    {file = "urllib3-1.26.2-py2.py3-none-any.whl", hash = "sha256:d8ff90d979214d7b4f8ce956e80f4028fc6860e4431f731ea4a8c08f23f99473"},
-    {file = "urllib3-1.26.2.tar.gz", hash = "sha256:19188f96923873c92ccb987120ec4acaa12f0461fa9ce5d3d0772bc965a39e08"},
+    {file = "urllib3-1.26.3-py2.py3-none-any.whl", hash = "sha256:1b465e494e3e0d8939b50680403e3aedaa2bc434b7d5af64dfd3c958d7f5ae80"},
+    {file = "urllib3-1.26.3.tar.gz", hash = "sha256:de3eedaad74a2683334e282005cd8d7f22f4d55fa690a2a1020a416cb0a47e73"},
 ]
 wcwidth = [
     {file = "wcwidth-0.2.5-py2.py3-none-any.whl", hash = "sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784"},
