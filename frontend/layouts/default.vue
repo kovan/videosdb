@@ -3,7 +3,8 @@ div
 
   nav.navbar.navbar-dark.sticky-top.bg-dark.flex-md-nowrap.p-0.shadow
     NuxtLink.navbar-brand.col-md-3.col-lg-2.mr-0.px-3(to="/") Sadhguru wisdom
-    button.navbar-toggler.position-absolute.d-md-none.collapsed(type="button" data-toggle="collapse" data-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation")
+    b-button.position-absolute.d-md-none.navbar-toggler(v-b-toggle.sidebarMenu="" aria-label="Toggle navigation")   
+
       span.navbar-toggler-icon
     input.form-control.form-control-dark.w-100(type="text" placeholder="Search" aria-label="Search")
 
@@ -19,16 +20,17 @@ div
 
   .container-fluid
     .row
-      nav#sidebarMenu.col-md-3.col-lg-2.d-md-block.bg-light.sidebar.collapse
-        .sidebar-sticky.pt-3
-          h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
-            span Categories
-          ul.nav.flex-column
-            li.nav-item(v-for='category in this.categories'  :key='category.id')
-              NuxtLink(:to='`/category/${category.slug}`')
-                | - {{category.name}}
+      b-collapse#sidebarMenu.col-md-3.col-lg-3.d-md-block.bg-light.sidebar.collapse(visible)
+        nav
+          .sidebar-sticky.pt-3
+            h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
+              span Categories
+            ul.flex-column
+              li.nav-item(v-for='category in this.categories'  :key='category.id')
+                NuxtLink(:to='`/category/${category.slug}`')
+                  | {{category.name}}
 
-      main(role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4")
+      main(role="main" class="col-md-9 col-lg-9 ml-sm-auto  px-md-4")
        nuxt
 
 
@@ -44,10 +46,10 @@ div
 </template>
 
 <script>
-import NavBar from '~/components/NavBar.vue';  
+import NavBar from '~/components/NavBar.vue'
 
 export default {
-  data () { 
+  data() {
     return {
       clipped: true,
       drawer: true,
@@ -98,13 +100,13 @@ export default {
     }
   },
   methods: {
-    handleSearch () {
-
-    }
+    handleSearch() {},
   },
-  async fetch () {
+  async fetch() {
     try {
-      this.categories = await this.$axios.$get('/api/categories/?ordering=-use_count')  
+      this.categories = await this.$axios.$get(
+        '/api/categories/?ordering=-use_count'
+      )
     } catch (error) {
       console.error(error)
     }
@@ -116,8 +118,6 @@ export default {
 /* GLOBAL STYLES
 -------------------------------------------------- */
 /* Padding below the footer and lighter body text */
-
-
 
 .bd-placeholder-img {
   font-size: 1.125rem;
@@ -135,12 +135,9 @@ export default {
 }
 </style>
 
-
-
 <style scoped>
-
 footer {
-  margin-top: 50px
+  margin-top: 50px;
 }
 
 .feather {
@@ -160,7 +157,7 @@ footer {
   left: 0;
   z-index: 100; /* Behind the navbar */
   padding: 48px 0 0; /* Height of navbar */
-  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 767.98px) {
@@ -173,7 +170,7 @@ footer {
   position: relative;
   top: 0;
   height: calc(100vh - 48px);
-  padding-top: .5rem;
+  padding-top: 0.5rem;
   overflow-x: hidden;
   overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
 }
@@ -205,7 +202,7 @@ footer {
 }
 
 .sidebar-heading {
-  font-size: .75rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
@@ -214,35 +211,32 @@ footer {
  */
 
 .navbar-brand {
-  padding-top: .75rem;
-  padding-bottom: .75rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
   font-size: 1rem;
-  background-color: rgba(0, 0, 0, .25);
-  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
+  background-color: rgba(0, 0, 0, 0.25);
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.25);
 }
 
 .navbar .navbar-toggler {
-  top: .25rem;
+  top: 0.25rem;
   right: 1rem;
 }
 
 .navbar .form-control {
-  padding: .75rem 1rem;
+  padding: 0.75rem 1rem;
   border-width: 0;
   border-radius: 0;
 }
 
 .form-control-dark {
   color: #fff;
-  background-color: rgba(255, 255, 255, .1);
-  border-color: rgba(255, 255, 255, .1);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .form-control-dark:focus {
   border-color: transparent;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
 }
-
-
-
 </style>

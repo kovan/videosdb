@@ -47,20 +47,20 @@
       .container
         .row
           .col-md-4(v-for="video in this.videos" :key="video.youtube_id")
-            .card.mb-4.shadow-sm
+            .card.mb-4.shadow-sm.text-center
               //- svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
               //-   title {{video.description_trimmed}}
               //-   rect(width="100%" height="100%" fill="#55595c")
               //-   text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
-              NuxtLink(:to="'/video/' + video.slug")
-                b-img(:src="video.thumbnails.medium.url" :alt="video.description_trimmed")
+              NuxtLink(:to="'/video/' + video.slug").mt-3
+                b-img(:src="video.thumbnails.medium.url" :alt="video.description_trimmed" )
               .card-body
                 p.card-text
                   | {{video.title}}
                 .d-flex.justify-content-between.align-items-center
-                  .btn-group
-                    button.btn.btn-sm.btn-outline-secondary(type="button") View
-                    button.btn.btn-sm.btn-outline-secondary(type="button") Edit
+                  //- .btn-group
+                  //-   button.btn.btn-sm.btn-outline-secondary(type="button") View
+                  //-   button.btn.btn-sm.btn-outline-secondary(type="button") Edit
                   small.text-muted {{ video.duration_humanized }}
         .overflow-auto
           b-pagination-nav(size="lg" align="center" v-model="current_page" :link-gen="linkGen" :number-of-pages="10" use-router)
