@@ -8,6 +8,8 @@ services:
       - POSTGRES_PASSWORD=postgres
     restart: always
   backend:
+    environment:
+      - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
     image: videosdb_backend
     links:
       - db
@@ -17,11 +19,15 @@ services:
       - 8000:8000
     restart: always
   django-migrations:
+    environment:
+      - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
     image: videosdb_backend
     command: poetry run python manage.py migrate --noinput
     links:
       - db
   frontend:
+    environment:
+      - API_URL=http://backend:8000
     image: videosdb_frontend
     links:
       - backend

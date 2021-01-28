@@ -12,3 +12,4 @@ backend/.cache/
 backend/datadump.json
 db.sadhguru.sqlite3
 backend/db.nithyananda.sqlite3-journal
+backend/data.json

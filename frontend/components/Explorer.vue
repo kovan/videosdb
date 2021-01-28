@@ -155,7 +155,6 @@ export default {
   },
   async fetch () {
 
-    console.log("fetch")
 
     const dummy_root = "http://example.com"  // otherwise URL doesn't work
     const url = new URL('/api/videos/', dummy_root)

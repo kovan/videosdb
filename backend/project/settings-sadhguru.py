@@ -1,12 +1,26 @@
 from .settings import *
 
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sadhguru.sqlite3'),
+#         'TEST': {
+#             "NAME": "dbtest.sqlite3",
+#         },
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sadhguru.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'db',
+        'PORT': '',
         'TEST': {
-            "NAME": "dbtest.sqlite3",
+            "NAME": "test_videosdb",
         },
     }
 }

@@ -23,4 +23,5 @@
 **/secrets.dev.yaml
 **/values.dev.yaml
 README.md
-db.sqlite3
+*.sqlite3
+**/*.pyc

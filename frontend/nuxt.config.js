@@ -48,7 +48,7 @@ export default {
   axios: {
     proxy: true,
     debug: process.env.DEBUG ? true : false,
-    baseURL: 'http://localhost:8000', // process.env.API_URL, //
+    baseURL: process.env.API_URL,
   },
 
   // publicRuntimeConfig: {
@@ -64,7 +64,7 @@ export default {
   // },
 
   proxy: {
-    '/api': 'http://backend:8000',
+    '/api': process.env.API_URL,
   },
 
   // Build Configuration (https://go.nuxtjs.dev/config-build)
