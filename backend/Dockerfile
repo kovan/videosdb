@@ -22,7 +22,7 @@ USER appuser
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
 RUN poetry install --no-dev
 COPY --chown=appuser:appuser . .
-
+VOLUME [ "/app/.cache" ]
 
 EXPOSE 8000
 

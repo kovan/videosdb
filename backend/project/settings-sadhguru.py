@@ -1,16 +1,6 @@
 from .settings import *
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sadhguru.sqlite3'),
-#         'TEST': {
-#             "NAME": "dbtest.sqlite3",
-#         },
-#     }
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -21,6 +11,13 @@ DATABASES = {
         'PORT': '',
         'TEST': {
             "NAME": "test_videosdb",
+        },
+    },
+    'sqlite': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sadhguru.sqlite3'),
+        'TEST': {
+            "NAME": "dbtest.sqlite3",
         },
     }
 }
