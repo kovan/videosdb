@@ -1,49 +1,41 @@
 <template lang="pug">
-v-container
-  v-card
-    v-card-title(align='center') 
-      | {{ this.video.title }}
-    v-card-text(align='center')
-    youtube(
-      ref='youtube',
-      :video-id='video.youtube_id',
-      :player-vars='{ autoplay: 0, modestbranding: 1, showinfo: 0, rel: 0 }',
-      fit-parent
-    )
-    v-divider
-    v-card-text(style='white-space: pre-line')
-      | {{ this.video.description_trimmed }}
-    v-divider
-    v-card-text
-      | {{ this.video.transcription }}
-    v-divider
-    v-card(v-if="this.video.categories.length")
-      v-card-title
-        | Categories
-      v-card-text
-        ul
-          li(v-for='cat in this.video.categories', :key='cat.id')
-            NuxtLink(:to='"/category/" + cat.slug')
-              | {{ cat.name }}
-    v-divider
-    v-card(v-if="this.video.tags.length")    
-      v-card-title(v-if="this.video.tags.length")
-        | Tags
-      v-card-text
-        v-chip-group(column)
-          v-chip(v-for='tag in this.video.tags', :key='tag.id')
-            NuxtLink(:to='"/tag/" + tag.slug')
-              | {{ tag.name }}
-    //- v-card-actions
-    //-   v-btn(color='deep-purple lighten-2')
-    //-     | Share
+div
+  b-card(:title="this.video.title")
+
+    b-card-text
+      YoutubeEmbedLite(:vid="this.video.youtube_id" thumb-quality="hq")
+
+    b-card-text(style='white-space: pre-line')
+      h6 Description
+      p {{ this.video.description_trimmed }}
+
+
+    b-card-text(v-if="this.video.categories")
+      h6 Categories
+      ul
+        li(v-for='cat in this.video.categories', :key='cat.id')
+          NuxtLink(:to='"/category/" + cat.slug')
+            | {{ cat.name }}
+    b-card-text(v-if="this.video.tags")
+      h6 Tags
+      NuxtLink.p-1(:to='"/tag/" + tag.slug' v-for='tag in this.video.tags', :key='tag.id') 
+        b-button.mt-1(size="sm" pill) 
+          | {{ tag.name }}
+
+    b-card-text(v-if="this.video.transcript")
+      h6 Transcription:
+      small {{ this.video.transcript }}          
+
 </template>
 <script>
 
-
+import YoutubeEmbedLite from "@miyaoka/vue-youtube-embed-lite"
 
 
 export default {
+  components: {
+    YoutubeEmbedLite
+  },
   head () {
     return {
       title: this.video.title,
@@ -73,9 +65,6 @@ export default {
 </script>
 
 <style>
-.v-card__text,
-.v-card__title {
-  word-break: normal; /* maybe !important   */
-}
+
 </style>
 

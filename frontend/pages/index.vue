@@ -1,6 +1,4 @@
 <template lang="pug">
-v-container
-  h1.text-center Latest videos
   Explorer(ordering='-yt_published_date')
 </template>
 
@@ -22,3 +20,7 @@ export default {
   }
 }
 </script>
+
+<style>
+
+</style>

@@ -11,14 +11,12 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
+            "args": ["dev"],
             "type": "node",
             "cwd": "${workspaceFolder}/frontend",
             "outputCapture": "std",
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceRoot}/frontend/*"
-            },
-            "env": {
-                "NODE_OPTIONS": "--inspect"
             }
         },
         {
@@ -42,8 +40,12 @@
             "type": "python",
             "request": "launch",
             "program": "manage.py",
+            "env": {
+                "DEBUG": "1"
+            },
             "args": [
                 "test",
+                "-n",
                 "--noinput"
             ],
             "console": "integratedTerminal",

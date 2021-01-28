@@ -30,8 +30,8 @@ class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
         lookup_field = "slug"
-        fields = ["id", "youtube_id", "description", "yt_published_date",
-                  "categories", "tags", "duration", "transcript", "thumbnail",
+        fields = ["id", "youtube_id", "yt_published_date",
+                  "categories", "tags", "duration_humanized", "transcript", "thumbnail",
                   "slug", "view_count", "dislike_count",
                   "favorite_count", "comment_count", "title", "thumbnails",
                   "description_trimmed"]

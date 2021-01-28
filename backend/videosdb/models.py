@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import isodate
 
 from dirtyfields import DirtyFieldsMixin
 from django.conf import settings
@@ -26,8 +27,10 @@ class Tag(DirtyFieldsMixin, models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        if not self.slug:
+        if not self.slug and self.name:
             self.slug = uuslug(self.name, instance=self)
+        if not self.is_dirty():
+            return
         super(Tag, self).save(*args, **kwargs)
 
 
@@ -46,8 +49,10 @@ class Category(DirtyFieldsMixin, models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        if not self.slug:
+        if not self.slug and self.name:
             self.slug = uuslug(self.name, instance=self)
+        if not self.is_dirty():
+            return
         super(Category, self).save(*args, **kwargs)
 
 
@@ -79,7 +84,7 @@ class Video(DirtyFieldsMixin, models.Model):
         max_length=256, null=True, help_text="duration")
     full_response = models.TextField(null=True)
     transcript = models.TextField(null=True)
-    transcript_available = models.BooleanField(default=True, null=True)
+    transcript_available = models.BooleanField(null=True)
     thumbnail = models.FileField(null=True)
     slug = models.SlugField(unique=True, max_length=4096,
                             null=True, db_index=True)
@@ -147,6 +152,10 @@ class Video(DirtyFieldsMixin, models.Model):
             return self.description[:match.start()]
 
         return self.description
+
+    @property
+    def duration_humanized(self):
+        return str(isodate.parse_duration(self.duration))
 
     def load_from_youtube_info(self, info):
         from django.utils.dateparse import parse_datetime

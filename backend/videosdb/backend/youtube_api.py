@@ -3,6 +3,7 @@ import logging
 import json
 import httplib2
 from youtube_transcript_api import YouTubeTranscriptApi
+import youtube_transcript_api
 
 logger = logging.getLogger(__name__)
 
@@ -16,9 +17,11 @@ def _sentence_case(text):
 
 
 class YoutubeAPI:
-    def __init__(self, yt_key):
+    def __init__(self, yt_key, cookies="youtube.com_cookies.txt"):
         self.yt_key = yt_key
         self.http = httplib2.Http(".cache")
+        self.transcript_api = youtube_transcript_api.YouTubeTranscriptApi(
+            cookies=cookies)
         self.root_url = "https://www.googleapis.com/youtube/v3"
 
     def _make_request(self, base_url, page_token=""):
@@ -115,13 +118,16 @@ class YoutubeAPI:
         items = self._make_request(url)
         return items
 
-    def get_video_transcript(self, youtube_id, cookies="youtube.com_cookies.txt"):
-        #url = self.root_url + "/captions?part=id,snippet&videoId=" + youtube_id
+    def get_video_transcript(self, youtube_id):
+        # url = self.root_url + "/captions?part=id,snippet&videoId=" + youtube_id
+        # transcripts = self.transcript_fetcher.fetch(youtube_id)
+        # transcript = transcripts.find_transcript(
+        #     ("en", "en-US", "en-GB")).fetch()
 
-        transcripts = YouTubeTranscriptApi.get_transcript(
-            youtube_id, languages=("en", "en-US"), cookies=cookies)
+        transcript = self.transcript_api.get(
+            youtube_id, languages=("en", "en-US", "en-GB"))
 
         result = ""
-        for d in transcripts:
+        for d in transcript:
             result += d["text"] + " "
         return _sentence_case(result.capitalize() + ".")

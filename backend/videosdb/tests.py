@@ -76,14 +76,5 @@ class DownloaderTest(TestCase):
 
     @tag("consume-quota")
     def test_download(self):
-        pass
-        # import time
-        # from youtube_transcript_api import TooManyRequests
-        # api = YoutubeAPI(settings.YOUTUBE_KEY)
-        # while True:
-        #     logger.info("Getting transcript...")
-        #     try:
-        #         api.get_video_transcript("tSc_rtEtpm4", None)
-        #     except TooManyRequests as e:
-        #         logger.error("TooManyRequests")
-        #         time.sleep(60)
+        d = Downloader()
+        d.process_video("tSc_rtEtpm4")
