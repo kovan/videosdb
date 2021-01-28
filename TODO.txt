@@ -1,5 +1,6 @@
 TODO
 ------------------------
+- no mostrar botones de páginas que no existen
 - pasar a lite-youtube-embed (npm)
 - revisar tema transcripciones, ver que se descargan y muestran
 - ¿? permitir elegir entre cuadrícula y lista de videos
