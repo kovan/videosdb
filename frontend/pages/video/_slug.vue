@@ -1,5 +1,5 @@
 <template lang="pug">
-b-container
+div
   b-card(:title="this.video.title")
 
     b-card-text
@@ -24,7 +24,7 @@ b-container
 
     b-card-text(v-if="this.video.transcript")
       h6 Transcription:
-      p {{ this.video.transcript }}          
+      small {{ this.video.transcript }}          
 
 </template>
 <script>

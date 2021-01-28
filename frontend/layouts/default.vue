@@ -23,8 +23,6 @@ div
         .sidebar-sticky.pt-3
           h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
             span Categories
-            a.d-flex.align-items-center.text-muted
-              span(data-feather="plus-circle")
           ul.nav.flex-column
             li.nav-item(v-for='category in this.categories'  :key='category.id')
               NuxtLink(:to='`/category/${category.slug}`')
