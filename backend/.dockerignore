@@ -44,7 +44,5 @@ README.md
 __pycache__
 dist
 docs
-logs
-src/{{ project_name }}/settings/local.py
-src/node_modules
+logs/log*
 media/

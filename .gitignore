@@ -2,7 +2,6 @@
 *.swp
 __pycache__/
 backend/tmp/
-backend/logs/
 backend/db.sqlite3
 backend/db.sqlite3-journal
 backend/dbtest.sqlite3
