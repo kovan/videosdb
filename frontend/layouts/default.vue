@@ -3,10 +3,9 @@ div
 
   nav.navbar.navbar-dark.sticky-top.bg-dark.flex-md-nowrap.p-0.shadow
     NuxtLink.navbar-brand.col-md-3.col-lg-2.mr-0.px-3(to="/") Sadhguru wisdom
-    b-button.position-absolute.d-md-none.navbar-toggler(v-b-toggle.sidebarMenu="" aria-label="Toggle navigation")   
-
+    b-button.position-absolute.d-md-none.navbar-toggler(v-b-toggle.sidebarMenu="" aria-label="Toggle navigation")
       span.navbar-toggler-icon
-    input.form-control.form-control-dark.w-100(type="text" placeholder="Search" aria-label="Search")
+      // input.form-control.form-control-dark.w-100(type="text" placeholder="Search" aria-label="Search")
 
 
 
@@ -34,7 +33,7 @@ div
        nuxt
 
 
-  footer.text-muted
+  footer.text-muted.text-right
     .container
       p This page is not affiliated or asociated to the 
         a(href="http://isha.sadhguru.org​") official Sadhguru website.
