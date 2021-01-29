@@ -19,7 +19,7 @@ div
 
   .container-fluid
     .row
-      b-collapse#sidebarMenu.col-md-3.col-lg-3.d-md-block.bg-light.sidebar.collapse(visible)
+      b-collapse#sidebarMenu.col-md-3.col-lg-3.d-md-block.bg-light.sidebar.collapse()
         nav
           .sidebar-sticky.pt-3
             h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
