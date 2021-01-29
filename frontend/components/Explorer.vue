@@ -63,7 +63,7 @@
                   //-   button.btn.btn-sm.btn-outline-secondary(type="button") Edit
                   small.text-muted {{ video.duration_humanized }}
         .overflow-auto
-          b-pagination-nav(size="lg" align="center" v-model="current_page" :link-gen="linkGen" :number-of-pages="10" use-router)
+          b-pagination-nav(size="lg" align="center" v-model="current_page" :link-gen="linkGen" :number-of-pages="page_count" use-router)
 
 
 

@@ -1,11 +1,15 @@
 TODO
 ------------------------
-- no mostrar botones de páginas que no existen
-- pasar a lite-youtube-embed (npm)
-- revisar tema transcripciones, ver que se descargan y muestran
+- pasar Lighthouse
+- que los logs se almacenen en prod
+- que el DEBUG=1 funcione
+- en el movil las categorias salen desplegadas
+- revisar lo del volumen de .cache xq no ha quedado bien
+- calidad imagen detalle video adecuada al tamaño de la pantalla del dispositivo
+- los videos requieren 3 clicks para verlos, mejorarlo
+- no mostrar botones de páginas que no existen, y que se puedan acceder a todas las paginas
 - ¿? permitir elegir entre cuadrícula y lista de videos
 - generalizar todo para que funcione tb con Nithyananda.yoga
-- mover dominio, y habilitar https+certbot
 - barra lateral siempre visible en PC y tablets en horizontal
 - añadir google analitics
 - buscador global arriba

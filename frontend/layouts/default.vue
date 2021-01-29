@@ -35,7 +35,7 @@ div
 
   footer.text-muted.text-right
     .container
-      p This page is not affiliated or asociated to the 
+      p This page is not affiliated or associated to the 
         a(href="http://isha.sadhguru.org​") official Sadhguru website.
       p All content is original to 
         a(href="https://www.youtube.com/user/sadhguru") Sadhguru YouTube channel
@@ -45,55 +45,12 @@ div
 </template>
 
 <script>
-import NavBar from '~/components/NavBar.vue'
 
 export default {
   data() {
     return {
-      clipped: true,
-      drawer: true,
-      fixed: false,
-      items: [
-        // {
-        //   icon: 'mdi-fire',
-        //   title: 'Latest videos',
-        //   to: '/',
-        // },
-        // {
-        //   icon: 'mdi-magnify',
-        //   title: 'Search videos',
-        //   to: '/search-videos',
-        // },
-        // {
-        //   icon: 'mdi-shuffle',
-        //   title: 'Random video',
-        //   to: '/random-video',
-        // },
-        // {
-        //   icon: 'mdi-eye',
-        //   title: 'Most viewed videos',
-        //   to: '/most-viewed',
-        // },
-        // {
-        //   icon: 'mdi-thumb-up',
-        //   title: 'Most liked videos',
-        //   to: '/most-liked',
-        // },
-        // {
-        //   icon: 'mdi-star',
-        //   title: 'Most favorited videos',
-        //   to: '/most-favorited',
-        // },
-        // {
-        //   icon: 'mdi-comment',
-        //   title: 'Most commented videos',
-        //   to: '/most-commented',
-        // },
-      ],
       categories: [],
-      miniVariant: false,
-      right: false,
-      rightDrawer: false,
+
       title: this.$root.$options.head.title,
       description: this.$root.$options.head.meta[2].content,
     }
