@@ -17,7 +17,7 @@ WORKDIR /app
 # Switching to a non-root user, please refer to https://aka.ms/vscode-docker-python-user-rights
 RUN useradd -m appuser
 RUN chown appuser:appuser .
-RUN mkdir /app/.cache && chown appuser:ºappuser /app/.cache
+RUN mkdir /app/.cache && chown appuser:appuser /app/.cache
 RUN mkdir /app/logs && chown appuser:appuser /app/logs
 USER appuser
 
