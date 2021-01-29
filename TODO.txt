@@ -1,10 +1,9 @@
 TODO
 ------------------------
+- custom validator check failed for prop "numberOfPages".
+- certbot renew en cron
 - pasar Lighthouse
 - que los logs se almacenen en prod
-- que el DEBUG=1 funcione
-- en el movil las categorias salen desplegadas
-- revisar lo del volumen de .cache xq no ha quedado bien
 - calidad imagen detalle video adecuada al tamaño de la pantalla del dispositivo
 - los videos requieren 3 clicks para verlos, mejorarlo
 - no mostrar botones de páginas que no existen, y que se puedan acceder a todas las paginas
