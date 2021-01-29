@@ -17,11 +17,12 @@ WORKDIR /app
 # Switching to a non-root user, please refer to https://aka.ms/vscode-docker-python-user-rights
 RUN useradd -m appuser
 RUN chown appuser:appuser .
-RUN mkdir /app/.cache && chown appuser:appuser /app/.cache
-
+RUN mkdir /app/.cache && chown appuser:ºappuser /app/.cache
+RUN mkdir /app/logs && chown appuser:appuser /app/logs
 USER appuser
 
 VOLUME /app/.cache
+VOLUME /app/logs
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
 RUN poetry install --no-dev
 COPY --chown=appuser:appuser . .
