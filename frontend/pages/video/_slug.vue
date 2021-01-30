@@ -10,33 +10,35 @@ div
     div
       hr
       h6 Description
-      p(style='white-space: pre-line') {{ this.video.description_trimmed }}
+      p {{ this.video.description_trimmed }}
 
 
-    div(v-if="this.video.categories")
-      hr
+    b-card-text(v-if="this.video.categories")
       h6 Categories
       ul
         li(v-for='cat in this.video.categories', :key='cat.id')
           NuxtLink(:to='"/category/" + cat.slug')
             | {{ cat.name }}
-    div(v-if="this.video.tags")
-      hr
+    b-card-text(v-if="this.video.tags")
       h6 Tags
       NuxtLink.p-1(:to='"/tag/" + tag.slug' v-for='tag in this.video.tags', :key='tag.id') 
         b-button.mt-1(size="sm" pill) 
           | {{ tag.name }}
 
-    div(v-if="this.video.transcript")
-      hr
+    b-card-text(v-if="this.video.transcript")
       h6 Transcription:
       small {{ this.video.transcript }}          
 
 </template>
 <script>
 
+import YoutubeEmbedLite from "@miyaoka/vue-youtube-embed-lite"
+
 
 export default {
+  components: {
+    YoutubeEmbedLite
+  },
   head () {
     return {
       title: this.video.title,
