@@ -52,8 +52,8 @@
               //-   title {{video.description_trimmed}}
               //-   rect(width="100%" height="100%" fill="#55595c")
               //-   text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
-              NuxtLink(:to="'/video/' + video.slug").mt-3
-                b-img(:src="video.thumbnails.medium.url" :alt="video.description_trimmed" )
+              NuxtLink(:to="'/video/' + video.slug")
+                b-img(:src="video.thumbnails.medium.url" :alt="video.description_trimmed" class="bd-placeholder-img card-img-top" width="100%" )
               .card-body
                 p.card-text
                   NuxtLink(:to="'/video/' + video.slug")
