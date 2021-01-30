@@ -4,7 +4,7 @@ div
     
     div#video
       client-only
-        youtube(:video-id="this.video.youtube_id" player-heigth="100%" :player-vars="{autoplay: 1}")
+        youtube.text-center(:video-id="this.video.youtube_id" player-heigth="100%" :player-vars="{autoplay: 1}")
       
     
     div
