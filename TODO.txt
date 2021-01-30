@@ -1,9 +1,7 @@
 TODO
 ------------------------
-- check-new-videos en cron
 
 - custom validator check failed for prop "numberOfPages".
-- certbot renew en cron
 - pasar Lighthouse
 - que los logs se almacenen en prod
 - calidad imagen detalle video adecuada al tamaño de la pantalla del dispositivo
