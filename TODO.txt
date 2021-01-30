@@ -1,17 +1,12 @@
 TODO
 ------------------------
- que la api no sea visible desde Nginx
+- mirar la composición del bundle webpack y cómo minimizarla
 - evitar duplicar tags que solo difieran en mayuscula
 - custom validator check failed for prop "numberOfPages".
 - pasar Lighthouse
 - que los logs se almacenen en prod
-- calidad imagen detalle video adecuada al tamaño de la pantalla del dispositivo
-- los videos requieren 3 clicks para verlos, mejorarlo
-- no mostrar botones de páginas que no existen, y que se puedan acceder a todas las paginas
 - ¿? permitir elegir entre cuadrícula y lista de videos
 - generalizar todo para que funcione tb con Nithyananda.yoga
-- barra lateral siempre visible en PC y tablets en horizontal
-- añadir google analitics "@nuxtjs/google-analytics"
 - buscador global arriba
 - mostrar videos relacionados en la página del vídeo GET https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId=5rOiW_xY-kc&type=video&key={YOUR_API_KEY}
 - botones para compartir en redes sociales

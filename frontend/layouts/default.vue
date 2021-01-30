@@ -1,7 +1,7 @@
 <template lang="pug">
 div
 
-  nav.navbar.navbar-dark.sticky-top.bg-dark.flex-md-nowrap.p-0.shadow
+  nav.navbar.navbar-dark.sticky-top.bg-dark.p-0.shadow
     NuxtLink.navbar-brand.col-md-3.col-lg-2.mr-0.px-3(to="/") Sadhguru wisdom
     b-button.position-absolute.d-md-none.navbar-toggler(v-b-toggle.sidebarMenu="" aria-label="Toggle navigation")
       span.navbar-toggler-icon
@@ -33,8 +33,8 @@ div
        nuxt
 
 
-  footer.text-muted.text-right
-    .container
+  footer.text-muted.text-center
+    div
       p This page is not affiliated or associated to the 
         a(href="http://isha.sadhguru.org​") official Sadhguru website.
       p All content is original to 
