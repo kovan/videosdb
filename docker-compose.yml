@@ -10,7 +10,7 @@ services:
   backend:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
-    image: 570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb:backend-latest
+    image: videosdb_backend
     links:
       - db
     build:
@@ -21,14 +21,14 @@ services:
   django-migrations:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
-    image: 570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb:backend-latest
+    image: videosdb_backend
     command: poetry run python manage.py migrate --noinput
     links:
       - db
   frontend:
     environment:
       - API_URL=http://backend:8000
-    image: 570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb:frontend-latest
+    image: videosdb_frontend
     links:
       - backend
     build:

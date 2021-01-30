@@ -1,5 +1,6 @@
 TODO
 ------------------------
+- probar nuxt-purgecss
 - custom validator check failed for prop "numberOfPages".
 - certbot renew en cron
 - pasar Lighthouse
@@ -10,7 +11,7 @@ TODO
 - ¿? permitir elegir entre cuadrícula y lista de videos
 - generalizar todo para que funcione tb con Nithyananda.yoga
 - barra lateral siempre visible en PC y tablets en horizontal
-- añadir google analitics
+- añadir google analitics "@nuxtjs/google-analytics"
 - buscador global arriba
 - mostrar videos relacionados en la página del vídeo GET https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId=5rOiW_xY-kc&type=video&key={YOUR_API_KEY}
 - botones para compartir en redes sociales
