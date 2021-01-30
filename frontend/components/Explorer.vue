@@ -56,7 +56,8 @@
                 b-img(:src="video.thumbnails.medium.url" :alt="video.description_trimmed" )
               .card-body
                 p.card-text
-                  | {{video.title}}
+                  NuxtLink(:to="'/video/' + video.slug")
+                    | {{video.title}}
                 .d-flex.justify-content-between.align-items-center
                   //- .btn-group
                   //-   button.btn.btn-sm.btn-outline-secondary(type="button") View
@@ -75,7 +76,7 @@ export default {
 
   data: () => {
     return {
-      page_count: 0,
+      page_count: 1,
       current_page: 1,
       videos: [],
       period_options: [

@@ -1,6 +1,7 @@
 TODO
 ------------------------
-- probar nuxt-purgecss
+- check-new-videos en cron
+
 - custom validator check failed for prop "numberOfPages".
 - certbot renew en cron
 - pasar Lighthouse
