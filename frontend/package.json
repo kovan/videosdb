@@ -11,13 +11,13 @@
     "dev-debug": "node node_modules/.bin/nuxt"
   },
   "dependencies": {
-    "@miyaoka/vue-youtube-embed-lite": "^1.1.0",
     "@nuxtjs/axios": "^5.12.5",
     "@nuxtjs/proxy": "^2.1.0",
     "bootstrap": "^4.6.0",
     "bootstrap-vue": "^2.21.2",
     "core-js": "^3.6.5",
-    "nuxt": "latest"
+    "nuxt": "latest",
+    "vue-youtube-embed": "^2.2.2"
   },
   "devDependencies": {
     "@nuxtjs/google-analytics": "^2.4.0",

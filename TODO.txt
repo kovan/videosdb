@@ -1,6 +1,7 @@
 TODO
 ------------------------
-
+ que la api no sea visible desde Nginx
+- evitar duplicar tags que solo difieran en mayuscula
 - custom validator check failed for prop "numberOfPages".
 - pasar Lighthouse
 - que los logs se almacenen en prod

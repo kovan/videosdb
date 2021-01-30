@@ -1,41 +1,42 @@
 <template lang="pug">
 div
   b-card(:title="this.video.title")
-
-    b-card-text
-      YoutubeEmbedLite(:vid="this.video.youtube_id" thumb-quality="hq")
-
-    b-card-text(style='white-space: pre-line')
+    
+    div#video
+      client-only
+        youtube(:video-id="this.video.youtube_id" player-heigth="100%" :player-vars="{autoplay: 1}")
+      
+    
+    div
+      hr
       h6 Description
-      p {{ this.video.description_trimmed }}
+      p(style='white-space: pre-line') {{ this.video.description_trimmed }}
 
 
-    b-card-text(v-if="this.video.categories")
+    div(v-if="this.video.categories")
+      hr
       h6 Categories
       ul
         li(v-for='cat in this.video.categories', :key='cat.id')
           NuxtLink(:to='"/category/" + cat.slug')
             | {{ cat.name }}
-    b-card-text(v-if="this.video.tags")
+    div(v-if="this.video.tags")
+      hr
       h6 Tags
       NuxtLink.p-1(:to='"/tag/" + tag.slug' v-for='tag in this.video.tags', :key='tag.id') 
         b-button.mt-1(size="sm" pill) 
           | {{ tag.name }}
 
-    b-card-text(v-if="this.video.transcript")
+    div(v-if="this.video.transcript")
+      hr
       h6 Transcription:
       small {{ this.video.transcript }}          
 
 </template>
 <script>
 
-import YoutubeEmbedLite from "@miyaoka/vue-youtube-embed-lite"
-
 
 export default {
-  components: {
-    YoutubeEmbedLite
-  },
   head () {
     return {
       title: this.video.title,
