@@ -1,9 +1,9 @@
 <template lang="pug">
 div
 
-  nav.navbar.navbar-dark.sticky-top.bg-dark.p-0.shadow
+  nav.navbar.navbar-dark.sticky-top.bg-dark.p-0.shadow.flex-md-nowrap.ml-auto
     NuxtLink.navbar-brand.col-md-3.col-lg-2.mr-0.px-3(to="/") Sadhguru wisdom
-    b-button.position-absolute.d-md-none.navbar-toggler(v-b-toggle.sidebarMenu="" aria-label="Toggle navigation")
+    b-button.position-absolute.d-md-none.navbar-toggler(@click="sidebar_visible = !sidebar_visible")
       span.navbar-toggler-icon
       // input.form-control.form-control-dark.w-100(type="text" placeholder="Search" aria-label="Search")
 
@@ -19,7 +19,7 @@ div
 
   .container-fluid
     .row
-      b-collapse#sidebarMenu.col-md-3.col-lg-3.d-md-block.bg-light.sidebar.collapse()
+      b-collapse#sidebarMenu.col-md-3.col-lg-3.d-md-block.bg-light.sidebar.collapse(v-model="sidebar_visible")
         nav
           .sidebar-sticky.pt-3
             h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
@@ -49,6 +49,7 @@ div
 export default {
   data() {
     return {
+      sidebar_visible: true,
       categories: [],
 
       title: this.$root.$options.head.title,
@@ -92,107 +93,9 @@ export default {
 </style>
 
 <style scoped>
-footer {
-  margin-top: 50px;
-}
-
-.feather {
-  width: 16px;
-  height: 16px;
-  vertical-align: text-bottom;
-}
-
-/*
- * Sidebar
- */
-
-.sidebar {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 100; /* Behind the navbar */
-  padding: 48px 0 0; /* Height of navbar */
-  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 767.98px) {
-  .sidebar {
-    top: 5rem;
-  }
-}
-
-.sidebar-sticky {
-  position: relative;
-  top: 0;
-  height: calc(100vh - 48px);
-  padding-top: 0.5rem;
-  overflow-x: hidden;
-  overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
-}
-
-@supports ((position: -webkit-sticky) or (position: sticky)) {
-  .sidebar-sticky {
-    position: -webkit-sticky;
-    position: sticky;
-  }
-}
-
-.sidebar .nav-link {
-  font-weight: 500;
-  color: #333;
-}
-
-.sidebar .nav-link .feather {
-  margin-right: 4px;
-  color: #999;
-}
-
-.sidebar .nav-link.active {
-  color: #007bff;
-}
-
-.sidebar .nav-link:hover .feather,
-.sidebar .nav-link.active .feather {
-  color: inherit;
-}
-
-.sidebar-heading {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-}
-
-/*
- * Navbar
- */
-
-.navbar-brand {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-  font-size: 1rem;
-  background-color: rgba(0, 0, 0, 0.25);
-  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.25);
-}
-
 .navbar .navbar-toggler {
-  top: 0.25rem;
+
   right: 1rem;
 }
 
-.navbar .form-control {
-  padding: 0.75rem 1rem;
-  border-width: 0;
-  border-radius: 0;
-}
-
-.form-control-dark {
-  color: #fff;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.form-control-dark:focus {
-  border-color: transparent;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
-}
 </style>

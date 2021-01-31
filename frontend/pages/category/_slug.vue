@@ -1,6 +1,6 @@
 <template lang="pug">
 b-container
-  h1.text-center Category: {{ this.category.name }}
+  h2.text-center Category: {{ this.category.name }}
   Explorer(:categories='this.category.id')
 </template>
 

@@ -1,10 +1,11 @@
 TODO
 ------------------------
+- cambiar navbar a b-navbar
 - mirar la composición del bundle webpack y cómo minimizarla
 - evitar duplicar tags que solo difieran en mayuscula
 - custom validator check failed for prop "numberOfPages".
 - pasar Lighthouse
-- que los logs se almacenen en prod
+- que los logs se almacenen en prodw
 - ¿? permitir elegir entre cuadrícula y lista de videos
 - generalizar todo para que funcione tb con Nithyananda.yoga
 - buscador global arriba
