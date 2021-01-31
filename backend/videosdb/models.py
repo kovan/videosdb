@@ -120,7 +120,7 @@ class Video(DirtyFieldsMixin, models.Model):
 
     def set_tags(self, tags):
         for tag in tags:
-            tag_obj, created = Tag.objects.get_or_create(name=tag)
+            tag_obj, created = Tag.objects.get_or_create(name=tag.lower())
             self.tags.add(tag_obj)
 
     def save(self, *args, **kwargs):
