@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "nuxt",
-    "build": "nuxt build",
+    "build": "NUXT_ENV_CURRENT_GIT_SHA=`git rev-parse --short HEAD` nuxt build",
     "start": "nuxt start",
     "generate": "nuxt generate",
     "test": "jest",

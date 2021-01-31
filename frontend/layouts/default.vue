@@ -35,10 +35,16 @@ div
 
   footer.text-muted.text-center
     div
-      p This page is not affiliated or associated to the 
-        a(href="http://isha.sadhguru.org​") official Sadhguru website.
-      p All content is original to 
-        a(href="https://www.youtube.com/user/sadhguru") Sadhguru YouTube channel
+      p
+        small This page is not affiliated or associated to the 
+          a(href="http://isha.sadhguru.org​") official Sadhguru website.
+      p 
+        small 
+          | All content is original to 
+          a(href="https://www.youtube.com/user/sadhguru") Sadhguru YouTube channel
+      p
+        small(v-if="this.version")
+          | version: {{this.version}} 
 
     
 
@@ -55,6 +61,11 @@ export default {
       title: this.$root.$options.head.title,
       description: this.$root.$options.head.meta[2].content,
     }
+  },
+  computed: {
+    version() {
+      return process.env.NUXT_ENV_CURRENT_GIT_SHA;
+    },
   },
   methods: {
     categoryClick(event) {
@@ -95,6 +106,12 @@ export default {
 </style>
 
 <style scoped>
+.collapsing {
+    -webkit-transition: none;
+    transition: none;
+    display: none;
+}
+
 .navbar .navbar-toggler {
 
   right: 1rem;
