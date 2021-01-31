@@ -25,8 +25,8 @@ div
             h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
               span Categories
             ul.flex-column
-              li.nav-item(v-for='category in this.categories'  :key='category.id')
-                NuxtLink(:to='`/category/${category.slug}`')
+              li.nav-item(v-for='category in this.categories'  :key='category.id' @click="categoryClick")
+                NuxtLink(:to='`/category/${category.slug}`' )
                   | {{category.name}}
 
       main(role="main" class="col-md-9 col-lg-9 ml-sm-auto px-md-4 pt-4")
@@ -49,7 +49,7 @@ div
 export default {
   data() {
     return {
-      sidebar_visible: true,
+      sidebar_visible: false,
       categories: [],
 
       title: this.$root.$options.head.title,
@@ -57,7 +57,9 @@ export default {
     }
   },
   methods: {
-    handleSearch() {},
+    categoryClick(event) {
+      this.sidebar_visible = false
+    },
   },
   async fetch() {
     try {
