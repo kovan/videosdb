@@ -63,7 +63,7 @@
                   //-   button.btn.btn-sm.btn-outline-secondary(type="button") View
                   //-   button.btn.btn-sm.btn-outline-secondary(type="button") Edit
                   small.text-muted {{ video.duration_humanized }}
-        .overflow-auto(v-show="this.videos.length")
+        .overflow-auto(v-if="this.videos.length")
           b-pagination-nav(size="lg" align="center" v-model="current_page" :link-gen="linkGen" :number-of-pages="page_count" use-router)
 
 
@@ -128,7 +128,6 @@ export default {
   watch: {
     $route(to, from) {
       this.current_page = this.$route.query.page || 1
-      console.log("route changed, page: " + this.current_page)
       this.$fetch()  
     }
   },
@@ -161,7 +160,7 @@ export default {
     const url = new URL('/api/videos/', dummy_root)
     if (this.ordering)
       url.searchParams.append("ordering", this.ordering)
-    if (this.current_page)
+    if (this.current_page > 1)
       url.searchParams.append("page", this.current_page)
     if (this.categories)
       url.searchParams.append("categories", this.categories)
@@ -173,8 +172,7 @@ export default {
     try {
       let response = await this.$axios.$get(url.href.replace(dummy_root, ""))
       this.videos = response.results
-      this.page_count = Math.floor(response.count / response.results.length)
-
+      this.page_count = response.count == 0? 0: Math.floor(response.count / response.results.length)
     } catch (error) {
       console.error(error)
     }

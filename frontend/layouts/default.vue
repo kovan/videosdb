@@ -3,9 +3,10 @@ div
 
   nav.navbar.navbar-dark.sticky-top.bg-dark.p-0.shadow.flex-md-nowrap.ml-auto
     NuxtLink.navbar-brand.col-md-3.col-lg-2.mr-0.px-3(to="/") Sadhguru wisdom
-    b-button.position-absolute.d-md-none.navbar-toggler(@click="sidebar_visible = !sidebar_visible")
+    b-input.form-control.form-control-dark.w-100(type="search" placeholder="Search" v-model="search_input" @keyup.enter="search")
+    b-button.position-absolute.d-md-none.navbar-toggler(@click="sidebar_visible = !sidebar_visible" debounce="500")
       span.navbar-toggler-icon
-      // input.form-control.form-control-dark.w-100(type="text" placeholder="Search" aria-label="Search")
+        
 
 
 
@@ -55,6 +56,7 @@ div
 export default {
   data() {
     return {
+      search_input: "",
       sidebar_visible: false,
       categories: [],
 
@@ -71,6 +73,16 @@ export default {
     categoryClick(event) {
       this.sidebar_visible = false
     },
+    search() {
+      this.$router.push(
+        {
+          path: "/search",
+          query: {
+            q: this.search_input
+          }
+        }
+      )
+    },    
   },
   async fetch() {
     try {

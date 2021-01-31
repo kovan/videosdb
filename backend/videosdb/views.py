@@ -61,7 +61,6 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class VideoViewSet(viewsets.ReadOnlyModelViewSet):
-    ordering = ["-yt_published_date"]
     lookup_field = "slug"
     serializer_class = VideoSerializer
     filter_backends = [filters.OrderingFilter,
@@ -69,6 +68,7 @@ class VideoViewSet(viewsets.ReadOnlyModelViewSet):
                        DjangoFilterBackend]
     ordering_fields = ["yt_published_date", "view_count",
                        "comment_count", "favorited_count", "like_count", "title"]
-    search_fields = ["title", "description", "tags", "categories"]
+    search_fields = ["title", "description",
+                     "transcript", "tags__name", "categories__name"]
     filterset_fields = ["tags", "categories"]
     queryset = Video.objects.exclude(excluded=True).exclude(title=None)
