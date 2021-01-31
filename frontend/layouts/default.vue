@@ -29,7 +29,7 @@ div
                 NuxtLink(:to='`/category/${category.slug}`')
                   | {{category.name}}
 
-      main(role="main" class="col-md-9 col-lg-9 ml-sm-auto  px-md-4")
+      main(role="main" class="col-md-9 col-lg-9 ml-sm-auto px-md-4 pt-4")
        nuxt
 
 

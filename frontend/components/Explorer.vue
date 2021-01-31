@@ -1,5 +1,5 @@
 <template lang="pug">
-  div
+  div.pt-2
     //- #myCarousel.carousel.slide(data-ride="carousel")
     //-   ol.carousel-indicators
     //-     li.active(data-target="#myCarousel" data-slide-to="0")
@@ -44,7 +44,7 @@
     //-     span.sr-only Next
 
     .album.py-5.bg-light
-      .container
+      div
         .row
           .col-md-4(v-for="video in this.videos" :key="video.youtube_id")
             .card.mb-4.shadow-sm.text-center
