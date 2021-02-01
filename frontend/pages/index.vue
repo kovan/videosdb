@@ -1,5 +1,5 @@
 <template lang="pug">
-  Explorer(ordering='-yt_published_date')
+  Explorer()
 </template>
 
 <script>

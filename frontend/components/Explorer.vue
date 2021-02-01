@@ -1,57 +1,16 @@
 <template lang="pug">
   div.pt-2
-    //- #myCarousel.carousel.slide(data-ride="carousel")
-    //-   ol.carousel-indicators
-    //-     li.active(data-target="#myCarousel" data-slide-to="0")
-    //-     li(data-target="#myCarousel" data-slide-to="1")
-    //-     li(data-target="#myCarousel" data-slide-to="2")
-    //-   .carousel-inner
-    //-     .carousel-item.active
-    //-       .container 
-    //-         YoutubeEmbedLite(:vid="this.videos[0].youtube_id" thumb-quality="hq")
-    //-       //- svg.bd-placeholder-img(width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label=" :  " preserveaspectratio="xMidYMid slice" focusable="false")
-    //-       //-   title  
-    //-       //-   rect(width="100%" height="100%" fill="#777")
-    //-       //-   text(x="50%" y="50%" fill="#777" dy=".3em")  
-         
-    //-     .carousel-item
-    //-       svg.bd-placeholder-img(width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label=" :  " preserveaspectratio="xMidYMid slice" focusable="false")
-    //-         title  
-    //-         rect(width="100%" height="100%" fill="#777")
-    //-         text(x="50%" y="50%" fill="#777" dy=".3em")  
-    //-       .container
-    //-         .carousel-caption
-    //-           h1 Another example headline.
-    //-           p Some representative placeholder content for the second slide of the carousel.
-    //-           p
-    //-             a.btn.btn-lg.btn-primary(href="#") Learn more
-    //-     .carousel-item
-    //-       svg.bd-placeholder-img(width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label=" :  " preserveaspectratio="xMidYMid slice" focusable="false")
-    //-         title  
-    //-         rect(width="100%" height="100%" fill="#777")
-    //-         text(x="50%" y="50%" fill="#777" dy=".3em")  
-    //-       .container
-    //-         .carousel-caption.text-right
-    //-           h1 One more for good measure.
-    //-           p Some representative placeholder content for the third slide of this carousel.
-    //-           p
-    //-             a.btn.btn-lg.btn-primary(href="#") Browse gallery
-    //-   a.carousel-control-prev(href="#myCarousel" role="button" data-slide="prev")
-    //-     span.carousel-control-prev-icon(aria-hidden="true")
-    //-     span.sr-only Previous
-    //-   a.carousel-control-next(href="#myCarousel" role="button" data-slide="next")
-    //-     span.carousel-control-next-icon(aria-hidden="true")
-    //-     span.sr-only Next
 
     .album.py-1.bg-light
       div
         .row
+          .col
+            .container.p-1.pb-3
+              | Order by: 
+              b-form-select(text="Order by" v-model="ordering" :options="ordering_options" @change="handleOrderingChange")
+        .row
           .col-md-4(v-for="video in this.videos" :key="video.youtube_id")
             .card.mb-4.shadow-sm.text-center
-              //- svg.bd-placeholder-img.card-img-top(width="100%" height="225" xmlns="http://www.w3.org/2000/svg" preserveaspectratio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail")
-              //-   title {{video.description_trimmed}}
-              //-   rect(width="100%" height="100%" fill="#55595c")
-              //-   text(x="50%" y="50%" fill="#eceeef" dy=".3em") Thumbnail
               NuxtLink(:to="'/video/' + video.slug")
                 b-img(:src="video.thumbnails.medium.url" :alt="video.description_trimmed" class="bd-placeholder-img card-img-top" width="100%" )
               .card-body
@@ -59,9 +18,6 @@
                   NuxtLink(:to="'/video/' + video.slug")
                     | {{video.title}}
                 .d-flex.justify-content-between.align-items-center
-                  //- .btn-group
-                  //-   button.btn.btn-sm.btn-outline-secondary(type="button") View
-                  //-   button.btn.btn-sm.btn-outline-secondary(type="button") Edit
                   small.text-muted {{ video.duration_humanized }}
         .overflow-auto(v-if="this.videos.length")
           b-pagination-nav(size="lg" align="center" v-model="current_page" :link-gen="linkGen" :number-of-pages="page_count" use-router)
@@ -107,16 +63,12 @@ export default {
           text: "Most favorited",
           value: "-favorite_count"
         }
-      ]
+      ],
+      ordering: "-yt_published_date"
     }
   },
   props: {
     search: "",
-
-    ordering: {
-      default: '',
-      type: String,
-    },
     categories: {
       default: ''
     },
@@ -141,17 +93,9 @@ export default {
       }
     },
 
-    handleSearch() {
+    handleOrderingChange () {
       this.$fetch()
-    },
-    handleOrderingChange (args) {
-      this.ordering = args
-      this.$fetch()
-    },
-    handlePeriodChange (args) {
-      this.period = args
-      this.$fetch()
-    }    
+    }
   },
   async fetch () {
 

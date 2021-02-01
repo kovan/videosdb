@@ -3,7 +3,7 @@ div
 
   nav.navbar.navbar-dark.sticky-top.bg-dark.p-0.shadow.flex-md-nowrap.ml-auto
     NuxtLink.navbar-brand.col-md-3.col-lg-2.mr-0.px-3(to="/") Sadhguru wisdom
-    b-input.form-control.form-control-dark.w-100(type="search" placeholder="Search" v-model="search_input" @keyup.enter="search")
+    b-input.form-control.form-control-dark(type="search" placeholder="Search" v-model="search_input" @keyup.enter="search")
     b-button.position-absolute.d-md-none.navbar-toggler(@click="sidebar_visible = !sidebar_visible" debounce="500")
       span.navbar-toggler-icon
         
@@ -125,8 +125,8 @@ export default {
 }
 
 .navbar .navbar-toggler {
-
-  right: 1rem;
+  top: 0.25rem;
+  right: 0.25rem;
 }
 
 </style>
