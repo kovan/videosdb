@@ -1,29 +1,29 @@
 <template lang="pug">
 div
-  h6 Search results for term: {{search_query}}
-  Explorer(:search='search_query')
+  client-only
+    div.gcse-search
 </template>
 
 <script>
-import Explorer from '~/components/Explorer.vue'
 
 export default {
   head () {
     return {
-      title: "Search results",
+      title: "Search",
       meta: [
         {
           hid: 'description',
           name: 'description',
-          content: "Search results"
+          content: "Search"
         }
       ],
+      script: [ {
+          src: "https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635",
+          async: false,
+          head:true
+        }
+      ]
     }
-  },
-  computed: {
-      search_query() {
-           return this.$route.query.q
-      }
   }
 }
 </script>

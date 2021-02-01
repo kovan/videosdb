@@ -3,8 +3,9 @@ div
 
   nav.navbar.navbar-dark.sticky-top.bg-dark.p-0.shadow.flex-md-nowrap.ml-auto
     NuxtLink.navbar-brand.col-md-3.col-lg-2.mr-0.px-3(to="/") Sadhguru wisdom
-    b-input.form-control.form-control-dark(type="search" placeholder="Search" v-model="search_input" @keyup.enter="search")
-    b-button.position-absolute.d-md-none.navbar-toggler(@click="sidebar_visible = !sidebar_visible" debounce="500")
+    // b-input.form-control.form-control-dark(type="search" placeholder="Search" v-model="search_input" @keyup.enter="search")
+    //b-icon.h4#searchIcon(icon="search")
+    b-button.position-absolute.d-md-none.navbar-toggler(@click="sidebar_visible = !sidebar_visible")
       span.navbar-toggler-icon
         
 
@@ -52,8 +53,13 @@ div
 </template>
 
 <script>
+import {BIcon, BIconSearch} from 'bootstrap-vue'
 
 export default {
+  components: {
+    BIcon,
+    BIconSearch
+  },
   data() {
     return {
       search_input: "",
@@ -125,8 +131,13 @@ export default {
 }
 
 .navbar .navbar-toggler {
-  top: 0.25rem;
+  top: 0.1rem;
   right: 0.25rem;
+}
+
+#searchIcon {
+  top: 0.1rem;
+  right: 2rem;
 }
 
 </style>
