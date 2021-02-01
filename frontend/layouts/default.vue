@@ -8,7 +8,7 @@ div
       b-button(variant="light" squared @click="hideSidebar")
         b-icon#searchIcon(icon="search"  alt="Search")    
     // b-input.form-control.form-control-dark(type="search" placeholder="Search" v-model="search_input" @keyup.enter="search")
-    b-button.d-md-none(@click="sidebar_visible = !sidebar_visible" variant="light" squared)
+    b-button.d-md-none(@click="toggleSidebar" variant="light" squared)
       span.navbar-toggler-icon
         
 
@@ -24,7 +24,7 @@ div
 
   .container-fluid
     .row
-      b-collapse#sidebarMenu.col-md-3.col-lg-3.d-md-block.bg-light.sidebar.collapse(v-model="sidebar_visible")
+      b-collapse#sidebarMenu.col-md-3.col-lg-3.d-md-block.bg-light.sidebar.collapse(v-model="sidebar_visible" z-index="1000")
         nav
           .sidebar-sticky.pt-3
             h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
@@ -79,6 +79,9 @@ export default {
     },
   },
   methods: {
+    toggleSidebar() {
+      this.sidebar_visible = !this.sidebar_visible
+    },
     hideSidebar(event) {
       this.sidebar_visible = false
     },
