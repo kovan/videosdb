@@ -1,11 +1,14 @@
 <template lang="pug">
 div
 
-  nav.navbar.navbar-dark.sticky-top.bg-dark.p-0.shadow.flex-md-nowrap.ml-auto
-    NuxtLink.navbar-brand.col-md-3.col-lg-2.mr-0.px-3(to="/") Sadhguru wisdom
+  b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-0.px-3.shadow.d-flex
+
+    NuxtLink.mr-auto.navbar-brand(to="/") Sadhguru wisdom
+    NuxtLink(to="/search")
+      b-button(variant="light" squared @click="hideSidebar")
+        b-icon#searchIcon(icon="search"  alt="Search")    
     // b-input.form-control.form-control-dark(type="search" placeholder="Search" v-model="search_input" @keyup.enter="search")
-    //b-icon.h4#searchIcon(icon="search")
-    b-button.position-absolute.d-md-none.navbar-toggler(@click="sidebar_visible = !sidebar_visible")
+    b-button.d-md-none(@click="sidebar_visible = !sidebar_visible" variant="light" squared)
       span.navbar-toggler-icon
         
 
@@ -27,7 +30,7 @@ div
             h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
               span Categories
             ul.flex-column
-              li.nav-item(v-for='category in this.categories'  :key='category.id' @click="categoryClick")
+              li.nav-item(v-for='category in this.categories'  :key='category.id' @click="hideSidebar")
                 NuxtLink(:to='`/category/${category.slug}`' )
                   | {{category.name}}
 
@@ -76,7 +79,7 @@ export default {
     },
   },
   methods: {
-    categoryClick(event) {
+    hideSidebar(event) {
       this.sidebar_visible = false
     },
     search() {
@@ -130,14 +133,6 @@ export default {
     display: none;
 }
 
-.navbar .navbar-toggler {
-  top: 0.1rem;
-  right: 0.25rem;
-}
 
-#searchIcon {
-  top: 0.1rem;
-  right: 2rem;
-}
 
 </style>

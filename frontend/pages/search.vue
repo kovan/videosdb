@@ -5,8 +5,15 @@ div
 </template>
 
 <script>
+const gcs_url = "https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635"
 
 export default {
+  mounted() {
+    this.$loadScript(gcs_url)
+  },
+  destroyed() {
+    this.$unloadScript(gcs_url)
+  },
   head () {
     return {
       title: "Search",
@@ -15,12 +22,6 @@ export default {
           hid: 'description',
           name: 'description',
           content: "Search"
-        }
-      ],
-      script: [ {
-          src: "https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635",
-          async: false,
-          head:true
         }
       ]
     }
