@@ -1,13 +1,17 @@
 version: "3"
 services:
   db:
-    image: postgres
+    image: videosdb_postgres
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
     restart: always
-  backend:
+
+  backend-sadhguru:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
     image: videosdb_backend
@@ -16,23 +20,60 @@ services:
     build:
       context: ./backend
     ports:
-      - 8000:8000
+      - 8001:8000
     restart: always
-  django-migrations:
+
+  django-migrations-sadhguru:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
     image: videosdb_backend
     command: poetry run python manage.py migrate --noinput
     links:
       - db
-  frontend:
+
+  frontend-sadhguru:
     environment:
-      - API_URL=http://backend:8000
+      - API_URL=http://backend-sadhguru:8000
+      - VIDEOSDB_TITLE="Sadhguru wisdom"
+      - VIDEOSDB_SUBTITLE="Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more."
     image: videosdb_frontend
     links:
-      - backend
+      - backend-sadhguru
     build:
       context: ./frontend
     ports:
-      - 3000:3000
+      - 3001:3000
+    restart: always
+
+  backend-nithyananda:
+    environment:
+      - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
+    image: videosdb_backend
+    links:
+      - db
+    build:
+      context: ./backend
+    ports:
+      - 8002:8000
+    restart: always
+
+  django-migrations-nithyananda:
+    environment:
+      - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
+    image: videosdb_backend
+    command: poetry run python manage.py migrate --noinput
+    links:
+      - db
+
+  frontend-nithyananda:
+    environment:
+      - API_URL=http://backend-nithyananda:8000
+      - VIDEOSDB_TITLE="KAILASA's Nithyananda"
+    image: videosdb_frontend
+    links:
+      - backend-nithyananda
+    build:
+      context: ./frontend
+    ports:
+      - 3002:3000
     restart: always

@@ -1,7 +1,7 @@
 <template lang="pug">
 v-container
-  h1.text-center Randin vudei
-  Explorer(ordering='-like_count')
+  h1.text-center Random video
+  Explorer()
 </template>
 
 <script>
@@ -14,7 +14,7 @@ export default {
         {
           hid: 'description',
           name: 'description',
-          content: "Most liked Sadhguru videos"
+          content: "Random video"
         }
       ],
     }

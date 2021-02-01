@@ -1,20 +1,21 @@
 export default {
   // target: 'static',
   // Global page headers (https://go.nuxtjs.dev/config-head)
-  head: {
-    titleTemplate: '%s - Sadhguru wisdom',
-    title: 'Sadhguru wisdom',
-    meta: [
-      { charset: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      {
-        hid: 'description',
-        name: 'description',
-        content:
-          'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.',
-      },
-    ],
-    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+  head() {
+    return {
+      titleTemplate: '%s - ' + this.$config.title,
+      title: this.$config.title,
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        {
+          hid: 'description',
+          name: 'description',
+          content: this.$config.subtitle,
+        },
+      ],
+      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+    }
   },
 
   // Global CSS (https://go.nuxtjs.dev/config-css)
@@ -57,11 +58,10 @@ export default {
     baseURL: process.env.API_URL,
   },
 
-  // publicRuntimeConfig: {
-  //   axios: {
-  //     browserBaseURL: process.env.BROWSER_BASE_URL,
-  //   },
-  // },
+  publicRuntimeConfig: {
+    title: process.env.VIDEOSDB_TITLE,
+    subtitle: process.env.VIDEOSDB_SUBTITLE,
+  },
 
   // privateRuntimeConfig: {
   //   axios: {

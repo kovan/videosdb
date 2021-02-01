@@ -3,7 +3,7 @@ div
 
   b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-1.px-2.shadow.d-flex
 
-    NuxtLink.mr-auto.navbar-brand(to="/") Sadhguru wisdom
+    NuxtLink.mr-auto.navbar-brand(to="/") {{title}}
     NuxtLink(to="/search")
       b-button(variant="light" squared @click="hideSidebar")
         b-icon#searchIcon(icon="search"  alt="Search")    
@@ -40,14 +40,6 @@ div
 
   footer.text-muted.text-center
     div
-      p
-        small This page is not affiliated or associated to the 
-          a(href="http://isha.sadhguru.org​") official Sadhguru website.
-      p 
-        small 
-          | All content is original to 
-          a(href="https://www.youtube.com/user/sadhguru") Sadhguru YouTube channel
-      p
         small(v-if="this.version")
           | version: {{this.version}} 
 
@@ -69,13 +61,13 @@ export default {
       sidebar_visible: false,
       categories: [],
 
-      title: this.$root.$options.head.title,
-      description: this.$root.$options.head.meta[2].content,
+      title: this.$config.title,
+      description: this.$config.subtitle,
     }
   },
   computed: {
     version() {
-      return process.env.NUXT_ENV_CURRENT_GIT_SHA;
+      return process.env.VIDEOSDB_CURRENT_GIT_SHA;
     },
   },
   methods: {
