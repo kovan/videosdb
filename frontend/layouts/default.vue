@@ -1,7 +1,7 @@
 <template lang="pug">
 div
 
-  b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-0.px-3.shadow.d-flex
+  b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-1.px-2.shadow.d-flex
 
     NuxtLink.mr-auto.navbar-brand(to="/") Sadhguru wisdom
     NuxtLink(to="/search")
