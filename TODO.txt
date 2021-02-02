@@ -1,8 +1,8 @@
 TODO
 ------------------------
-- ahora mismo las visualizaciones, likes... etc. no se actualizan, corregir
+-- ahora mismo las visualizaciones, likes... etc. no se actualizan, corregir
 - ejecutar migracion de tag a lower() en prod
-- revisar transcripts en nithyananda prod
+-- revisar transcripts en nithyananda prod
 - ¿?usar el jobs de django-extensions
 - que el sidebar tenga posicion absoluta
 - infinite scroll
