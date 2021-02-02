@@ -36,6 +36,7 @@ services:
       - API_URL=http://backend-sadhguru:8000
       - VIDEOSDB_TITLE="Sadhguru wisdom"
       - VIDEOSDB_SUBTITLE="Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more."
+      - GCS_URL="https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635"
     image: gcr.io/worpdress-279321/videosdb-frontend:latest
     links:
       - backend-sadhguru
@@ -69,6 +70,7 @@ services:
     environment:
       - API_URL=http://backend-nithyananda:8000
       - VIDEOSDB_TITLE="KAILASA's Nithyananda"
+      - GCS_URL="https://cse.google.com/cse.js?cx=043c6e15fcd358d5a"
     image: gcr.io/worpdress-279321/videosdb-frontend:latest
     links:
       - backend-nithyananda

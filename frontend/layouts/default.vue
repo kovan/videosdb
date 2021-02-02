@@ -8,7 +8,7 @@ div
       b-button(variant="light" squared @click="hideSidebar")
         b-icon#searchIcon(icon="search"  alt="Search")    
     // b-input.form-control.form-control-dark(type="search" placeholder="Search" v-model="search_input" @keyup.enter="search")
-    b-button.d-md-none(@click="toggleSidebar" variant="light" squared)
+    b-button(@click="toggleSidebar" variant="light" squared)
       span.navbar-toggler-icon
         
 
@@ -24,17 +24,16 @@ div
 
   .container-fluid
     .row
-      b-collapse#sidebarMenu.col-md-3.col-lg-3.d-md-block.bg-light.sidebar.collapse(v-model="sidebar_visible" z-index="1000")
-        nav
-          .sidebar-sticky.pt-3
-            h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
-              span Categories
-            ul.flex-column
-              li.nav-item(v-for='category in this.categories'  :key='category.id' @click="hideSidebar")
-                NuxtLink(:to='`/category/${category.slug}`' )
-                  | {{category.name}}
+      //  b-collapse.col-md-3.col-lg-3.d-md-block.bg-light.sidebar.collapse(v-model="sidebar_visible" position-absolute)
+      b-sidebar#sidebarMenu(v-model="sidebar_visible" backdrop shadow)
+          h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
+            span Categories
+          ul.flex-column
+            li.nav-item(v-for='category in this.categories'  :key='category.id' @click="hideSidebar")
+              NuxtLink(:to='`/category/${category.slug}`' )
+                | {{category.name}}
 
-      main(role="main" class="col-md-9 col-lg-9 ml-sm-auto px-md-4 pt-4")
+      main(role="main" class="col-md-12 col-lg-12 ml-sm-auto px-md-4 pt-4")
        nuxt
 
 
@@ -51,6 +50,7 @@ div
 import {BIcon, BIconSearch} from 'bootstrap-vue'
 
 export default {
+  scrollToTop: true,
   components: {
     BIcon,
     BIconSearch

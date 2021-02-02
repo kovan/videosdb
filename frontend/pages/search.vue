@@ -5,7 +5,7 @@ div
 </template>
 
 <script>
-const gcs_url = "https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635"
+
 
 export default {
   data() {
@@ -14,11 +14,13 @@ export default {
     }
   },
   mounted() {
+    const gcs_url = this.$config.gcs_url
     this.$loadScript(gcs_url).then(() => {
       this.loaded = true
     })
   },
   destroyed() {
+    const gcs_url = this.$config.gcs_url
     this.$unloadScript(gcs_url).then(() => {
       this.loaded = false
     })
