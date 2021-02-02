@@ -13,6 +13,6 @@ set -e
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
 	CREATE USER nithyananda WITH ENCRYPTED PASSWORD 'nithyananda';
-	CREATE DATABASE nithyananda;º
+	CREATE DATABASE nithyananda;
 	GRANT ALL PRIVILEGES ON DATABASE nithyananda TO nithyananda;
 EOSQL
