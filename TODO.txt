@@ -1,5 +1,7 @@
 TODO
 ------------------------
+- usar el jobs de django-extensions
+- que el sidebar tenga posicion absoluta
 - infinite scroll
 - añadir subtitulo al título
 - cambiar navbar a b-navbar
