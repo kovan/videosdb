@@ -34,33 +34,6 @@ class Downloader:
             video.save()
             return
 
-        # if not video.thumbnail and video.full_response:
-        #     info = json.loads(video.full_response)
-        #     if "thumbnails" in info:
-        #         thumbnails = info["thumbnails"]
-        #         if "standard" in thumbnails:
-        #             tn = thumbnails["standard"]
-        #         elif "high" in thumbnails:
-        #             tn = thumbnails["high"]
-        #         elif "default" in thumbnails:
-        #             tn = thumbnails["default"]
-        #         elif "low" in thumbnails:
-        #             tn = thumbnails["low"]
-        #         else:
-        #             tn = None
-
-        #         if tn:
-        #             url = tn["url"]
-        #             try:
-        #                 tempname, _ = urlretrieve(
-        #                     url, "%s/%s.jpg" % (settings.MEDIA_ROOT, video.youtube_id))
-        #                 f = File(open(tempname, 'rb'))
-        #                 video.thumbnail = f
-        #                 f.close()
-        #                 os.remove(tempname)
-        #             except HTTPError:
-        #                 video.thumbnail = None
-
         if not video.transcript and video.transcript_available is None:
             try:
                 video.transcript = self.yt_api.get_video_transcript(

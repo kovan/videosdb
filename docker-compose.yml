@@ -1,7 +1,7 @@
 version: "3"
 services:
   db:
-    image: videosdb_postgres
+    image: gcr.io/worpdress-279321/videosdb-postgres:latest
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -14,19 +14,22 @@ services:
   backend-sadhguru:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
-    image: videosdb_backend
+    image: gcr.io/worpdress-279321/videosdb-backend:latest
     links:
       - db
     build:
       context: ./backend
     ports:
       - 8001:8000
+    volumes:
+      - httplib_cache:/app/.cache
+      - logs:/app/logs
     restart: always
 
   django-migrations-sadhguru:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
-    image: videosdb_backend
+    image: gcr.io/worpdress-279321/videosdb-backend:latest
     command: poetry run python manage.py migrate --noinput
     links:
       - db
@@ -36,7 +39,8 @@ services:
       - API_URL=http://backend-sadhguru:8000
       - VIDEOSDB_TITLE="Sadhguru wisdom"
       - VIDEOSDB_SUBTITLE="Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more."
-    image: videosdb_frontend
+      - GCS_URL="https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635"
+    image: gcr.io/worpdress-279321/videosdb-frontend:latest
     links:
       - backend-sadhguru
     build:
@@ -48,20 +52,23 @@ services:
   backend-nithyananda:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
-    image: videosdb_backend
+    image: gcr.io/worpdress-279321/videosdb-backend:latest
     links:
       - db
     build:
       context: ./backend
     ports:
       - 8002:8000
+    volumes:
+      - httplib_cache:/app/.cache
+      - logs:/app/logs
     restart: always
 
   django-migrations-nithyananda:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
-    image: videosdb_backend
     command: poetry run python manage.py migrate --noinput
+    image: gcr.io/worpdress-279321/videosdb-backend:latest
     links:
       - db
 
@@ -69,7 +76,8 @@ services:
     environment:
       - API_URL=http://backend-nithyananda:8000
       - VIDEOSDB_TITLE="KAILASA's Nithyananda"
-    image: videosdb_frontend
+      - GCS_URL="https://cse.google.com/cse.js?cx=043c6e15fcd358d5a"
+    image: gcr.io/worpdress-279321/videosdb-frontend:latest
     links:
       - backend-nithyananda
     build:
@@ -77,3 +85,7 @@ services:
     ports:
       - 3002:3000
     restart: always
+
+volumes:
+  logs:
+  httplib_cache:
