@@ -1,26 +1,19 @@
 <template lang="pug">
 div
 
-  b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-1.px-2.shadow.d-flex
+  b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-1.px-2.d-flex
 
     NuxtLink.mr-auto.navbar-brand(to="/") {{title}}
+
     NuxtLink(to="/search")
       b-button(variant="light" squared @click="hideSidebar")
         b-icon#searchIcon(icon="search"  alt="Search")    
     // b-input.form-control.form-control-dark(type="search" placeholder="Search" v-model="search_input" @keyup.enter="search")
     b-button(@click="toggleSidebar" variant="light" squared)
       span.navbar-toggler-icon
-        
 
-
-
-    //- // Right aligned nav items
-    //- b-navbar-nav.ml-auto
-    //-   b-nav-form
-    //-     b-form-input.mr-sm-2(size="sm" placeholder="Search")
-    //-     b-button.my-2.my-sm-0(size="sm" type="submit") Search
-
-
+  div.bg-dark.p-1.px-2(v-if="subtitle")
+    h5.text-center {{subtitle}}
 
   .container-fluid
     .row
@@ -62,7 +55,7 @@ export default {
       categories: [],
 
       title: this.$config.title,
-      description: this.$config.subtitle,
+      subtitle: this.$config.subtitle,
     }
   },
   computed: {
