@@ -174,13 +174,3 @@ class Video(DirtyFieldsMixin, models.Model):
             self.set_tags(info["tags"])
 
         self.full_response = json.dumps(info)
-
-
-class Publication(models.Model):
-    video = models.OneToOneField(
-        Video,
-        on_delete=models.CASCADE,
-        primary_key=True)
-    published_date = models.DateTimeField(null=True)
-    post_id = models.IntegerField(null=True)
-    thumbnail_id = models.IntegerField(null=True)
