@@ -1,6 +1,6 @@
 <template lang="pug">
 b-container
-  Explorer()
+  Explorer
 </template>
 
 <script>
@@ -23,5 +23,4 @@ export default {
 </script>
 
 <style>
-
 </style>

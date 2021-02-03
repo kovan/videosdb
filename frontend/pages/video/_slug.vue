@@ -1,36 +1,41 @@
 <template lang="pug">
 div
-  b-card(:title="this.video.title")
-    
+  b-card(:title='this.video.title')
     div
-      b-embed(type="iframe" aspect="16by9" :src="'https://www.youtube.com/embed/' + this.video.youtube_id +'?rel=0'" allowfullscreen)
+      b-embed(
+        type='iframe',
+        aspect='16by9',
+        :src='"https://www.youtube.com/embed/" + this.video.youtube_id + "?rel=0"',
+        allowfullscreen
+      )
 
-    
     div
       hr
       h6 Description
       p {{ this.video.description_trimmed }}
 
-
-    div(v-if="this.video.categories")
+    div(v-if='this.video.categories')
       hr
       h6 Categories
       ul
         li(v-for='cat in this.video.categories', :key='cat.id')
           NuxtLink(:to='"/category/" + cat.slug')
             | {{ cat.name }}
-    div(v-if="this.video.tags")
+    div(v-if='this.video.tags')
       hr
       h6 Tags
-      NuxtLink.p-1(:to='"/tag/" + tag.slug' v-for='tag in this.video.tags', :key='tag.id') 
-        b-button.mt-1(size="sm" pill) 
+      NuxtLink.p-1(
+        :to='"/tag/" + tag.slug',
+        v-for='tag in this.video.tags',
+        :key='tag.id'
+      ) 
+        b-button.mt-1(size='sm', pill) 
           | {{ tag.name }}
 
-    div(v-if="this.video.transcript")
+    div(v-if='this.video.transcript')
       hr
       h6 Transcription:
-      small {{ this.video.transcript }}          
-
+      small {{ this.video.transcript }}
 </template>
 <script>
 
@@ -57,15 +62,14 @@ export default {
   async asyncData ({ $axios, params }) {
     try {
       let video = await $axios.$get('/api/videos/' + params.slug + "/")
-      return { video }      
+      return { video }
     } catch (error) {
       console.error(error)
-    }       
+    }
   }
 }
 </script>
 
 <style>
-
 </style>
 

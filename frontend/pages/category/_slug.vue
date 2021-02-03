@@ -32,7 +32,7 @@ export default {
       return { category: response }
     } catch (error) {
       console.error(error)
-    }    
+    }
   }
 }
 </script>

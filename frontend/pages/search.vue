@@ -1,25 +1,25 @@
 <template lang="pug">
 div
   client-only
-    div.gcse-search
+    .gcse-search
 </template>
 
 <script>
 
 
 export default {
-  data() {
+  data () {
     return {
       loaded: false
     }
   },
-  mounted() {
+  mounted () {
     const gcs_url = this.$config.gcs_url
     this.$loadScript(gcs_url).then(() => {
       this.loaded = true
     })
   },
-  destroyed() {
+  destroyed () {
     const gcs_url = this.$config.gcs_url
     this.$unloadScript(gcs_url).then(() => {
       this.loaded = false
@@ -41,5 +41,4 @@ export default {
 </script>
 
 <style>
-
 </style>

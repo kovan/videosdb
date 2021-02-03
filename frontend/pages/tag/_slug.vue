@@ -32,7 +32,7 @@ export default {
       return { tag: response }
     } catch (error) {
       console.error(error)
-    }        
+    }
   }
 }
 </script>

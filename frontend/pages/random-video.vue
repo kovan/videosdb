@@ -1,7 +1,7 @@
 <template lang="pug">
 v-container
   h1.text-center Random video
-  Explorer()
+  Explorer
 </template>
 
 <script>
