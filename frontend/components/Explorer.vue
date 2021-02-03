@@ -10,8 +10,17 @@
               text='Order by',
               v-model='ordering',
               :options='ordering_options',
-              @change='handleOrderingChange'
+              @change='handleChange'
             )
+        .col
+          .container.p-1.pb-3
+            | Period:
+            b-form-select(
+              text='Period',
+              v-model='period',
+              :options='period_options',
+              @change='handleChange'
+            ) 
       .row
         .col-md-4(v-for='video in this.videos', :key='video.youtube_id')
           .card.mb-4.shadow-sm.text-center
@@ -48,10 +57,22 @@ export default {
       current_page: 1,
       videos: [],
       period_options: [
-        "this week",
-        "this month",
-        "this year",
-        "always"
+        {
+          text: "Last week",
+          value: "last_week"
+        },
+        {
+          text: "Last month",
+          value: "last_month"
+        },
+        {
+          text: "Last year",
+          value: "last_year"
+        },
+        {
+          text: "Always",
+          value: "always"
+        }
       ],
       period: "always",
       ordering_options: [
@@ -105,7 +126,7 @@ export default {
       }
     },
 
-    handleOrderingChange () {
+    handleChange () {
       this.$fetch()
     }
   },
@@ -116,6 +137,8 @@ export default {
     const url = new URL('/api/videos/', dummy_root)
     if (this.ordering)
       url.searchParams.append("ordering", this.ordering)
+    if (this.period)
+      url.searchParams.append("period", this.period)
     if (this.current_page > 1)
       url.searchParams.append("page", this.current_page)
     if (this.categories)

@@ -2,6 +2,7 @@ git pull
 git checkout prod
 docker-compose pull
 docker-compose up -d
+sleep 5
 docker system prune -f
 
 root_url=gcr.io/worpdress-279321/videosdb

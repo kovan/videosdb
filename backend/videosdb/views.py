@@ -1,7 +1,9 @@
+from datetime import timedelta, date
 from rest_framework import serializers, viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Tag, Category, Video
 from django.db.models import Count
+from django.utils import timezone
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -61,6 +63,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class VideoViewSet(viewsets.ReadOnlyModelViewSet):
+
     lookup_field = "slug"
     serializer_class = VideoSerializer
     filter_backends = [filters.OrderingFilter,
@@ -71,4 +74,22 @@ class VideoViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["title", "description",
                      "transcript", "tags__name", "categories__name"]
     filterset_fields = ["tags", "categories"]
-    queryset = Video.objects.exclude(excluded=True).exclude(title=None)
+
+    def get_queryset(self):
+        queryset = Video.objects.exclude(excluded=True).exclude(title=None)
+        period = self.request.query_params.get('period', None)
+        if period:
+
+            if period == "last_week":
+                start_date = timezone.now() - timedelta(weeks=1)
+            elif period == "last_month":
+                start_date = timezone.now() - timedelta(weeks=4)
+            elif period == "last_year":
+                start_date = timezone.now() - timedelta(weeks=54)
+            else:
+                start_date = date(1, 1, 1)
+            end_date = timezone.now() + timedelta(days=1)
+
+            queryset = queryset.filter(yt_published_date__range=[
+                                       start_date, end_date])
+        return queryset
