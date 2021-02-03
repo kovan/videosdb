@@ -3,15 +3,14 @@ div
   b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-1.px-2.d-flex
     NuxtLink.mr-auto.navbar-brand(to='/') {{ title }}
 
-    NuxtLink(to='/search')
-      b-button(variant='light', squared, @click='hideSidebar')
-        b-icon#searchIcon(icon='search', alt='Search') 
+    b-button.mx-1(squared, @click='hideSidebar', to='/search')
+      b-icon#searchIcon(icon='search', alt='Search') 
     // b-input.form-control.form-control-dark(type="search" placeholder="Search" v-model="search_input" @keyup.enter="search")
-    b-button(@click='toggleSidebar', variant='light', squared)
+    b-button(@click='toggleSidebar', squared, style='border: 1px')
       span.navbar-toggler-icon
 
-  .bg-dark.p-1.px-2(v-if='subtitle')
-    h6.text-center {{ subtitle }}
+  .p-1.px-2.bg-dark(v-if='subtitle')
+    h6.text-white.text-center {{ subtitle }}
 
   .container-fluid
     .row
