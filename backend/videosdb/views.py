@@ -39,6 +39,19 @@ class VideoSerializer(serializers.ModelSerializer):
                   "description_trimmed"]
 
 
+class VideoListSerializer(serializers.ModelSerializer):
+    thumbnails = serializers.ListSerializer
+
+    class Meta:
+        model = Video
+        lookup_field = "slug"
+        fields = ["id", "youtube_id", "yt_published_date",
+                  "categories", "tags", "duration_humanized", "thumbnail",
+                  "slug", "view_count", "dislike_count",
+                  "favorite_count", "comment_count", "title", "thumbnails",
+                  "description_trimmed"]
+
+
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = "slug"
     serializer_class = TagSerializer
@@ -74,6 +87,17 @@ class VideoViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["title", "description",
                      "transcript", "tags__name", "categories__name"]
     filterset_fields = ["tags", "categories"]
+
+    action_serializers = {
+        'retrieve': VideoSerializer,
+        'list': VideoListSerializer
+    }
+
+    def get_serializer_class(self):
+        serializer_class = self.action_serializers.get(self.action, None)
+        if not serializer_class:
+            serializer_class = super().get_serializer_class()
+        return serializer_class
 
     def get_queryset(self):
         queryset = Video.objects.exclude(excluded=True).exclude(title=None)
