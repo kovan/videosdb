@@ -1,5 +1,6 @@
 <template lang="pug">
 div
+  h2.text-center Search
   client-only
     .gcse-search
 </template>

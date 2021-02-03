@@ -3,10 +3,15 @@ div
   b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-1.px-2.d-flex
     NuxtLink.mr-auto.navbar-brand(to='/') {{ title }}
 
-    b-button.mx-1(squared, @click='hideSidebar', to='/search')
+    b-button.mx-1(squared, @click='hideSidebar', to='/search', title='Search')
       b-icon#searchIcon(icon='search', alt='Search') 
-    // b-input.form-control.form-control-dark(type="search" placeholder="Search" v-model="search_input" @keyup.enter="search")
-    b-button(@click='toggleSidebar', squared, style='border: 1px')
+
+    b-button(
+      @click='toggleSidebar',
+      squared,
+      style='border: 1px',
+      title='Categories'
+    )
       span.navbar-toggler-icon
 
   .p-1.px-2.bg-dark(v-if='subtitle')
@@ -14,7 +19,6 @@ div
 
   .container-fluid
     .row
-      //  b-collapse.col-md-3.col-lg-3.d-md-block.bg-light.sidebar.collapse(v-model="sidebar_visible" position-absolute)
       b-sidebar#sidebarMenu(v-model='sidebar_visible', backdrop, shadow)
         h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
           span Categories
