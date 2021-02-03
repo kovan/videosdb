@@ -126,7 +126,9 @@ export default {
       url.searchParams.append("search", this.search)
 
     try {
+      this.$nuxt.$loading.start() //STARTS LOADING
       let response = await this.$axios.$get(url.href.replace(dummy_root, ""), { progress: true })
+      this.$nuxt.$loading.finish() //STOPS LOADING
       this.videos = response.results
       this.page_count = response.count == 0 ? 0 : Math.floor(response.count / response.results.length)
     } catch (error) {
