@@ -1,29 +1,41 @@
 <template lang="pug">
-  div.pt-2
-
-    .album.py-1.bg-light
-      div
-        .row
-          .col
-            .container.p-1.pb-3
-              | Order by: 
-              b-form-select(text="Order by" v-model="ordering" :options="ordering_options" @change="handleOrderingChange")
-        .row
-          .col-md-4(v-for="video in this.videos" :key="video.youtube_id")
-            .card.mb-4.shadow-sm.text-center
-              NuxtLink(:to="'/video/' + video.slug")
-                b-img(:src="video.thumbnails.medium.url" :alt="video.description_trimmed" class="bd-placeholder-img card-img-top" width="100%" )
-              .card-body
-                p.card-text
-                  NuxtLink(:to="'/video/' + video.slug")
-                    | {{video.title}}
-                .d-flex.justify-content-between.align-items-center
-                  small.text-muted {{ video.duration_humanized }}
-        .overflow-auto(v-if="this.videos.length")
-          b-pagination-nav(size="lg" align="center" v-model="current_page" :link-gen="linkGen" :number-of-pages="page_count" use-router)
-
-
-
+.pt-2
+  .album.py-1.bg-light
+    div
+      .row
+        .col
+          .container.p-1.pb-3
+            | Order by:
+            b-form-select(
+              text='Order by',
+              v-model='ordering',
+              :options='ordering_options',
+              @change='handleOrderingChange'
+            )
+      .row
+        .col-md-4(v-for='video in this.videos', :key='video.youtube_id')
+          .card.mb-4.shadow-sm.text-center
+            NuxtLink(:to='"/video/" + video.slug')
+              b-img.bd-placeholder-img.card-img-top(
+                :src='video.thumbnails.medium.url',
+                :alt='video.description_trimmed',
+                width='100%'
+              )
+            .card-body
+              p.card-text
+                NuxtLink(:to='"/video/" + video.slug')
+                  | {{ video.title }}
+              .d-flex.justify-content-between.align-items-center
+                small.text-muted {{ video.duration_humanized }}
+      .overflow-auto(v-if='this.videos.length')
+        b-pagination-nav(
+          size='lg',
+          align='center',
+          v-model='current_page',
+          :link-gen='linkGen',
+          :number-of-pages='page_count',
+          use-router
+        )
 </template>
 
 <script >
@@ -76,15 +88,15 @@ export default {
       default: ''
     },
   },
-  
+
   watch: {
-    $route(to, from) {
+    $route (to, from) {
       this.current_page = this.$route.query.page || 1
-      this.$fetch()  
+      this.$fetch()
     }
   },
-  methods: {  
-    linkGen(pageNum) {
+  methods: {
+    linkGen (pageNum) {
       return {
         path: this.$route.path,
         query: {
@@ -114,9 +126,9 @@ export default {
       url.searchParams.append("search", this.search)
 
     try {
-      let response = await this.$axios.$get(url.href.replace(dummy_root, ""))
+      let response = await this.$axios.$get(url.href.replace(dummy_root, ""), { progress: true })
       this.videos = response.results
-      this.page_count = response.count == 0? 0: Math.floor(response.count / response.results.length)
+      this.page_count = response.count == 0 ? 0 : Math.floor(response.count / response.results.length)
     } catch (error) {
       console.error(error)
     }
@@ -127,6 +139,4 @@ export default {
 
 
 <style scoped>
-
-
 </style>
