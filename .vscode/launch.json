@@ -1,145 +1,122 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug via NPM",
-            "request": "launch",
-            "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "args": ["dev"],
-            "type": "node",
-            "cwd": "${workspaceFolder}/frontend",
-            "outputCapture": "std",
-            "sourceMapPathOverrides": {
-                "webpack:///./*": "${workspaceRoot}/frontend/*"
-            }
-        },
-        {
-            "type": "chrome",
-            "request": "launch",
-            "name": "frontend: chrome",
-            "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}/frontend"
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach Program",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "port": 9229
-        },
-        {
-            "name": "Django: Tests",
-            "type": "python",
-            "request": "launch",
-            "program": "manage.py",
-            "env": {
-                "DEBUG": "1"
-            },
-            "args": [
-                "test",
-                "-n",
-                "--noinput"
-            ],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend",
-            "justMyCode": false
-        },
-        {
-            "name": "Django: sync-wordpress",
-            "type": "python",
-            "request": "launch",
-            "program": "manage.py",
-            "args": [
-                "videosdb",
-                "--sync-wordpress"
-            ],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend"
-        },
-        {
-            "name": "Django: publish-one",
-            "type": "python",
-            "request": "launch",
-            "program": "manage.py",
-            "args": [
-                "videosdb",
-                "--publish-one",
-                "CR5HtTsUl5E"
-            ],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend"
-        },
-        {
-            "name": "Django: download-one",
-            "type": "python",
-            "request": "launch",
-            "program": "manage.py",
-            "args": [
-                "videosdb",
-                "--download-one",
-                "CR5HtTsUl5E"
-            ],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend"
-        },
-        {
-            "name": "Django: download-all",
-            "type": "python",
-            "request": "launch",
-            "program": "manage.py",
-            "args": [
-                "videosdb",
-                "--download-all"
-            ],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend"
-        },
-        {
-            "name": "Django: check",
-            "type": "python",
-            "request": "launch",
-            "program": "manage.py",
-            "args": [
-                "videosdb",
-                "-c",
-                "-t"
-            ],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend"
-        },
-        {
-            "name": "Docker: Python - Django",
-            "type": "docker",
-            "request": "launch",
-            "preLaunchTask": "docker-run: debug",
-            "python": {
-                "pathMappings": [
-                    {
-                        "localRoot": "${workspaceFolder}/backend",
-                        "remoteRoot": "/app"
-                    }
-                ],
-                "projectType": "django"
-            }
-        },
-        {
-            "name": "Docker Node.js Launch",
-            "type": "docker",
-            "request": "launch",
-            "preLaunchTask": "docker-run: debug",
-            "platform": "node",
-            "node": {
-                "package": "${workspaceFolder}/frontend/package.json",
-                "localRoot": "${workspaceFolder}/frontend"
-            }
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug via NPM",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
+      "skipFiles": ["<node_internals>/**"],
+      "args": ["dev"],
+      "type": "node",
+      "cwd": "${workspaceFolder}/frontend",
+      "outputCapture": "std",
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${workspaceRoot}/frontend/*"
+      }
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "frontend: chrome",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/frontend"
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach Program",
+      "skipFiles": ["<node_internals>/**"],
+      "port": 9229
+    },
+    {
+      "name": "Django: Tests",
+      "type": "python",
+      "request": "launch",
+      "program": "manage.py",
+      "env": {
+        "DEBUG": "1"
+      },
+      "args": ["test", "-n", "--noinput"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": false
+    },
+    {
+      "name": "Django: ipfs",
+      "type": "python",
+      "request": "launch",
+      "program": "manage.py",
+      "args": ["videosdb", "-i"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "DJANGO_SETTINGS_MODULE": "project.settings-local"
+      }
+    },
+    {
+      "name": "Django: publish-one",
+      "type": "python",
+      "request": "launch",
+      "program": "manage.py",
+      "args": ["videosdb", "--publish-one", "CR5HtTsUl5E"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "Django: download-one",
+      "type": "python",
+      "request": "launch",
+      "program": "manage.py",
+      "args": ["videosdb", "--download-one", "CR5HtTsUl5E"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "Django: download-all",
+      "type": "python",
+      "request": "launch",
+      "program": "manage.py",
+      "args": ["videosdb", "--download-all"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "Django: check",
+      "type": "python",
+      "request": "launch",
+      "program": "manage.py",
+      "args": ["videosdb", "-c", "-t"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "Docker: Python - Django",
+      "type": "docker",
+      "request": "launch",
+      "preLaunchTask": "docker-run: debug",
+      "python": {
+        "pathMappings": [
+          {
+            "localRoot": "${workspaceFolder}/backend",
+            "remoteRoot": "/app"
+          }
+        ],
+        "projectType": "django"
+      }
+    },
+    {
+      "name": "Docker Node.js Launch",
+      "type": "docker",
+      "request": "launch",
+      "preLaunchTask": "docker-run: debug",
+      "platform": "node",
+      "node": {
+        "package": "${workspaceFolder}/frontend/package.json",
+        "localRoot": "${workspaceFolder}/frontend"
+      }
+    }
+  ]
 }
