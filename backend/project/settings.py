@@ -199,3 +199,5 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = "media"
 
 YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
+IPFS_HOST = "127.0.0.1"
+IPFS_PORT = 5001

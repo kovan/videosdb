@@ -1,9 +1,14 @@
 import re
+import os
+import executor
+import io
+import tempfile
 import logging
 import json
 import httplib2
-from youtube_transcript_api import YouTubeTranscriptApi
 import youtube_transcript_api
+from autologging import traced
+from executor import execute
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +21,7 @@ def _sentence_case(text):
     return final
 
 
+@traced(logging.getLogger(__name__))
 class YoutubeAPI:
     def __init__(self, yt_key, cookies="youtube.com_cookies.txt"):
         self.yt_key = yt_key
@@ -131,3 +137,62 @@ class YoutubeAPI:
         for d in transcript:
             result += d["text"] + " "
         return _sentence_case(result.capitalize() + ".")
+
+
+@traced(logging.getLogger(__name__))
+class YoutubeDL:
+    class UnavailableError(Exception):
+        pass
+
+    def __init__(self):
+        self.BASE_CMD = "youtube-dl  --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "  # --limit-rate 1M "
+
+    def download_video(self, _id):
+        filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
+        cmd = self.BASE_CMD + \
+            "--output '%s' %s" % (filename_format,
+                                  "http://www.youtube.com/watch?v=" + _id)
+        logging.info(cmd)
+        try:
+            execute(cmd)
+        except executor.ExternalCommandFailed as e:
+            raise self.UnavailableError()
+        files = os.listdir(".")
+        filename = max(files, key=os.path.getctime)
+        return filename
+
+    def download_thumbnail(self, _id):
+        execute(self.BASE_CMD +
+                "--write-thumbnail --skip-download http://www.youtube.com/watch?v=" + _id)
+        files = os.listdir(".")
+        filename = max(files, key=os.path.getctime)
+        return filename
+
+    def download_info(self, youtube_id):
+        cmd = self.BASE_CMD + \
+            "--write-info-json --skip-download --output '%(id)s' http://www.youtube.com/watch?v=" + \
+            youtube_id
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.chdir(tmpdir)
+                result = execute(cmd, capture_stderr=True)
+                with io.open(youtube_id + ".info.json") as f:
+                    video_json = json.load(f)
+        except executor.ExternalCommandFailed as e:
+            out = str(e.command.stderr)
+            if "copyright" in out or \
+               "Unable to extract video title" in out or \
+               "available in your country" in out or \
+               "video is unavailable" in out:
+                raise self.UnavailableError()
+            raise
+        return video_json
+
+    def list_videos(self, url):
+        result = execute(self.BASE_CMD + "--flat-playlist --playlist-random -j " +
+                         url, check=False, capture=True, capture_stderr=True)
+        videos = []
+        for video_json in result.splitlines():
+            video = json.loads(video_json)
+            videos.append(video)
+        return videos

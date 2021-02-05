@@ -17,6 +17,7 @@ def add_arguments(parser):
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
     parser.add_argument("-d", "--download-one", dest="dl_video_id")
     parser.add_argument("-a", "--download-all", action="store_true")
+    parser.add_argument("-i", "--download-all-to-ipfs", action="store_true")
 
 
 @traced(logging.getLogger(__name__))
@@ -29,6 +30,9 @@ def handle(*args, **options):
     if options["download_all"]:
         downloader = Downloader()
         downloader.download_all()
+    if options["download_all_to_ipfs"]:
+        downloader = Downloader()
+        downloader.download_all_to_ipfs()
 
     if options["dl_video_id"]:
         downloader = Downloader()

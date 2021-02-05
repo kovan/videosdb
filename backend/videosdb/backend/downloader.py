@@ -1,10 +1,12 @@
-from .youtube_api import YoutubeAPI
+from .youtube_api import YoutubeAPI, YoutubeDL
 
 from django.conf import settings
 from videosdb.models import Video, Category
 from autologging import traced
-
+from .ipfs import IPFS
 import logging
+import tempfile
+import os
 import youtube_transcript_api
 
 logger = logging.getLogger(__name__)
@@ -106,3 +108,14 @@ class Downloader:
     def download_pending(self):
         videos = Video.objects.filter(excluded=False)
         self.enqueue_videos([v.youtube_id for v in videos if not v.title])
+
+    def download_all_to_ipfs(self):
+        ipfs = IPFS()
+        yt_dl = YoutubeDL()
+        videos = Video.objects.filter(excluded=False)
+        for video in videos:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.chdir(tmpdir)
+                video.filename = yt_dl.download_video(
+                    video.youtube_id)
+                video.ipfs_hash = ipfs.add_file(video.filename)
