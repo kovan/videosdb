@@ -1,8 +1,9 @@
 # For more information, please refer to https://aka.ms/vscode-docker-python
 FROM python:3.8-slim-buster
 RUN echo 'root:toor' | chpasswd
+SHELL ["/bin/bash", "-c"]
 RUN apt update
-RUN apt install git -y
+RUN apt install git-core curl -y
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -10,7 +11,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
-RUN python -m pip install poetry 
 
 WORKDIR /app
 
@@ -21,6 +21,8 @@ RUN mkdir /app/.cache && chown appuser:appuser /app/.cache
 RUN mkdir /app/logs && chown appuser:appuser /app/logs
 USER appuser
 
+RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+ENV PATH="$PATH:/home/appuser/.poetry/bin"
 VOLUME /app/.cache
 VOLUME /app/logs
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
