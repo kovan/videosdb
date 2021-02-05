@@ -1,4 +1,5 @@
 from .youtube_api import YoutubeAPI, YoutubeDL
+import shutil
 import re
 from django.conf import settings
 from videosdb.models import Video, Category
@@ -133,3 +134,26 @@ class Downloader:
                 video.filename = yt_dl.download_video(
                     video.youtube_id)
                 video.ipfs_hash = ipfs.add_file(video.filename)
+
+    def download_all_to_disk(self):
+
+        yt_dl = YoutubeDL()
+        files = os.listdir("/mnt/bucket/videos")
+        files_by_youtube_id = {}
+        for file in files:
+            match = re.search(r'\[(.{11})\]\.', file)
+            if not match:
+                continue
+            youtube_id = match.group(1)
+
+            files_by_youtube_id[youtube_id] = file
+        os.chdir("/mnt/bucket/videos")
+        videos = Video.objects.filter(excluded=False)
+        for video in videos:
+            if video.youtube_id in files_by_youtube_id:
+                continue
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.chdir(tmpdir)
+                video.filename = yt_dl.download_video(
+                    video.youtube_id)
+                shutil.move(video.filename, "/mnt/bucket/videos") 

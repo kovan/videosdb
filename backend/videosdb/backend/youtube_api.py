@@ -142,10 +142,13 @@ class YoutubeAPI:
 @traced(logging.getLogger(__name__))
 class YoutubeDL:
     class UnavailableError(Exception):
-        pass
+        def __init__(self, s):
+            self.s = s
+        def __repr__(self):
+            return s
 
     def __init__(self):
-        self.BASE_CMD = "youtube-dl  --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "  # --limit-rate 1M "
+        self.BASE_CMD = "youtube-dl -f 'webm[height<=720]/best' --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "  # --limit-rate 1M "
 
     def download_video(self, _id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
@@ -156,7 +159,7 @@ class YoutubeDL:
         try:
             execute(cmd)
         except executor.ExternalCommandFailed as e:
-            raise self.UnavailableError()
+            raise self.UnavailableError(repr(e))
         files = os.listdir(".")
         filename = max(files, key=os.path.getctime)
         return filename
@@ -184,7 +187,7 @@ class YoutubeDL:
                "Unable to extract video title" in out or \
                "available in your country" in out or \
                "video is unavailable" in out:
-                raise self.UnavailableError()
+                raise self.UnavailableError(repr(e))
             raise
         return video_json
 
