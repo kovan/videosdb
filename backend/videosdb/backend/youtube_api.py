@@ -144,11 +144,13 @@ class YoutubeDL:
     class UnavailableError(Exception):
         def __init__(self, s):
             self.s = s
+
         def __repr__(self):
-            return s
+            return self.s
 
     def __init__(self):
-        self.BASE_CMD = "youtube-dl -f 'webm[height<=720]/best' --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "  # --limit-rate 1M "
+        # --limit-rate 1M "
+        self.BASE_CMD = "youtube-dl -f 'webm[height<=720]/best' --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
 
     def download_video(self, _id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
