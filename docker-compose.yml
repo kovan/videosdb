@@ -7,8 +7,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     build:
-      context: .
-      dockerfile: Dockerfile.postgres
+      context: ./db
     ports:
       - 5432:5432
     restart: always
