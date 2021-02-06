@@ -10,7 +10,7 @@ phases:
       - echo Build started on `date`
       - echo Building the Docker images...
       - docker build -t videosdb:frontend-latest frontend
-      - docker tag videosdb:fronted-latest 570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb:frontend-latest
+      - docker tag videosdb:frontend-latest 570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb:frontend-latest
   post_build:
     commands:
       - echo Build completed on `date`
