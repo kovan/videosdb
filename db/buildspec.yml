@@ -9,10 +9,10 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker images...
-      - docker build -t videosdb:db-latest db
-      - docker tag videosdb:db-latest 570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb:db-latest
+      - docker build -t videosdb-db:latest db
+      - docker tag videosdb-db:latest 570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb-db:latest
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing the Docker image...
-      - docker push 570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb:db-latest
+      - docker push 570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb-db:latest
