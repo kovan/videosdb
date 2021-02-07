@@ -1,14 +1,13 @@
 version: "3"
 services:
   db:
-    image: gcr.io/worpdress-279321/videosdb-postgres:latest
+    image: ${REPO}db-latest
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     build:
-      context: .
-      dockerfile: Dockerfile.postgres
+      context: ./db
     ports:
       - 5432:5432
     restart: always
@@ -16,7 +15,7 @@ services:
   backend-sadhguru:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
-    image: gcr.io/worpdress-279321/videosdb-backend:latest
+    image: ${REPO}backend-latest
     links:
       - db
     build:
@@ -31,7 +30,7 @@ services:
   django-migrations-sadhguru:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
-    image: gcr.io/worpdress-279321/videosdb-backend:latest
+    image: ${REPO}backend-latest
     command: poetry run python manage.py migrate --noinput
     links:
       - db
@@ -42,7 +41,7 @@ services:
       - VIDEOSDB_TITLE="Sadhguru wisdom"
       - VIDEOSDB_SUBTITLE="Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more."
       - GCS_URL="https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635"
-    image: gcr.io/worpdress-279321/videosdb-frontend:latest
+    image: ${REPO}frontend-latest
     links:
       - backend-sadhguru
     build:
@@ -54,7 +53,7 @@ services:
   backend-nithyananda:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
-    image: gcr.io/worpdress-279321/videosdb-backend:latest
+    image: ${REPO}backend-latest
     links:
       - db
     build:
@@ -70,7 +69,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
     command: poetry run python manage.py migrate --noinput
-    image: gcr.io/worpdress-279321/videosdb-backend:latest
+    image: ${REPO}backend-latest
     links:
       - db
 
@@ -79,7 +78,7 @@ services:
       - API_URL=http://backend-nithyananda:8000
       - VIDEOSDB_TITLE="KAILASA's Nithyananda"
       - GCS_URL="https://cse.google.com/cse.js?cx=043c6e15fcd358d5a"
-    image: gcr.io/worpdress-279321/videosdb-frontend:latest
+    image: ${REPO}frontend-latest
     links:
       - backend-nithyananda
     build:

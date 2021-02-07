@@ -1,6 +1,7 @@
 from .youtube_api import YoutubeAPI, YoutubeDL
 import shutil
 import re
+import random
 from django.conf import settings
 from videosdb.models import Video, Category
 from autologging import traced
@@ -12,6 +13,20 @@ import youtube_transcript_api
 
 logger = logging.getLogger(__name__)
 
+from collections import namedtuple
+
+_ntuple_diskusage = namedtuple('usage', 'total used free')
+
+def disk_usage(path):
+    """Return disk usage statistics about the given path.
+
+    Returned valus is a named tuple with attributes 'total', 'used' and
+    'free', which are the amount of total, used and free space, in bytes.
+    """
+    st = os.statvfs(path)
+    free = st.f_bavail * st.f_frsize
+    total = st.f_blocks * st.f_frsize
+    used = (st.f_blocks - st.f_bfree) * st.f_frsize
 
 @traced(logging.getLogger(__name__))
 class Downloader:
@@ -135,10 +150,10 @@ class Downloader:
                     video.youtube_id)
                 video.ipfs_hash = ipfs.add_file(video.filename)
 
-    def download_all_to_disk(self):
+    def download_all_to_disk(self, dst_path="/mnt/bucket/videos"):
 
         yt_dl = YoutubeDL()
-        files = os.listdir("/mnt/bucket/videos")
+        files = os.listdir(dst_path)
         files_by_youtube_id = {}
         for file in files:
             match = re.search(r'\[(.{11})\]\.', file)
@@ -147,13 +162,18 @@ class Downloader:
             youtube_id = match.group(1)
 
             files_by_youtube_id[youtube_id] = file
-        os.chdir("/mnt/bucket/videos")
-        videos = Video.objects.filter(excluded=False)
+        os.chdir(dst_path)
+        videos = list(Video.objects.filter(excluded=False))
+        random.shuffle(videos)
         for video in videos:
             if video.youtube_id in files_by_youtube_id:
                 continue
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
-                video.filename = yt_dl.download_video(
-                    video.youtube_id)
-                shutil.move(video.filename, "/mnt/bucket/videos") 
+                try:
+                    video.filename = yt_dl.download_video(
+                        video.youtube_id)
+                except YoutubeDL.UnavailableError as e:
+                    logging.error(repr(e))
+                    continue
+                shutil.move(video.filename,dst_path) 
