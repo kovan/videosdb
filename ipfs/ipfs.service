@@ -1,0 +1,13 @@
+# copy this file to ~/.config/systemd/user/ipfs.service
+# an then run loginctl enable-linger [user]
+
+[Unit]
+Description=IPFS daemon
+
+[Service]
+# Environment="IPFS_PATH=/data/ipfs"  # optional path to ipfs init directory if not default ($HOME/.ipfs)
+ExecStart=/usr/local/bin/ipfs daemon
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
