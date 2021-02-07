@@ -1,3 +1,6 @@
 SHELL=/bin/bash
-POETRY=$HOME/.poetry/bin/poetry
-0 12 * * * cd /app && $POETRY run sh run.sh
+PATH=$PATH:/usr/bin
+REPO=570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb:
+5 4 * * sun sudo certbot renew
+0 12 * * * cd /home/ubuntu/prj/videosdb && docker-compose run --rm backend-sadhguru poetry run python manage.py videosdb -c
+0 0  * * * cd /home/ubuntu/prj/videosdb && docker-compose run --rm backend-nithyananda poetry run python manage.py videosdb -c
