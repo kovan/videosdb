@@ -148,8 +148,12 @@ class Downloader:
                 continue
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
-                video.filename = yt_dl.download_video(
-                    video.youtube_id)
+                try:
+                    video.filename = yt_dl.download_video(
+                        video.youtube_id)
+                except YoutubeDL.UnavailableError as e:
+                    logging.error(repr(e))
+                    continue
                 video.ipfs_hash = ipfs.add_file(video.filename)
 
     def download_all_to_disk(self, dst_path="/mnt/bucket/videos"):
