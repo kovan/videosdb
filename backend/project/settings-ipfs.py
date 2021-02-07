@@ -7,7 +7,7 @@ DATABASES = {
         'NAME': 'postgres',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': 'sadhguru.digital',
+        'HOST': 'localhost',
         'PORT': '',
         'TEST': {
             "NAME": "test_videosdb",

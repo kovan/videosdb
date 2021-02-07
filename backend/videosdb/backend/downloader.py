@@ -128,15 +128,17 @@ class Downloader:
     def download_all_to_ipfs(self):
         ipfs = IPFS()
         yt_dl = YoutubeDL()
+        ipfs.api.files.mkdir("/videos", parents=True)
         files = ipfs.api.files.ls("/videos")
         files_by_youtube_id = {}
-        for file in files["Entries"]:
-            match = re.search(r'\[(.{11})\]\.', file["Name"])
-            if not match:
-                continue
-            youtube_id = match.group(1)
+        if files["Entries"]:
+            for file in files["Entries"]:
+                match = re.search(r'\[(.{11})\]\.', file["Name"])
+                if not match:
+                    continue
+                youtube_id = match.group(1)
 
-            files_by_youtube_id[youtube_id] = file
+                files_by_youtube_id[youtube_id] = file
         # 'Entries': [
         #     {'Size': 0, 'Hash': '', 'Name': 'Software', 'Type': 0}
         # ]
