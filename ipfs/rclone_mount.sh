@@ -1,1 +1,1 @@
-rclone mount union: /tmp/mount/ --vfs-cache-mode full --attr-timeout 24h --no-checksum -no-modtime --no-seek --vfs-read-wait 1s --vfs-cache-max-age 24h  --mega-hard-delete --mega-debug --debug-fuse -vv
+rclone mount union: /tmp/mount/ --vfs-cache-mode full --attr-timeout 24h   --vfs-read-wait 1s --vfs-cache-max-age 24h  --mega-hard-delete --mega-debug --debug-fuse -vv 2>&1 |egrep  'NOTICE|INFO|ERROR'
