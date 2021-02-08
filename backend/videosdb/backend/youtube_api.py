@@ -23,11 +23,11 @@ def _sentence_case(text):
 
 @traced(logging.getLogger(__name__))
 class YoutubeAPI:
-    def __init__(self, yt_key, cookies="youtube.com_cookies.txt"):
+    def __init__(self, yt_key):
         self.yt_key = yt_key
         self.http = httplib2.Http(".cache")
         self.transcript_api = youtube_transcript_api.YouTubeTranscriptApi(
-            cookies=cookies)
+            cookies=None)
         self.root_url = "https://www.googleapis.com/youtube/v3"
 
     def _make_request(self, base_url, page_token=""):

@@ -101,6 +101,8 @@ class Video(DirtyFieldsMixin, models.Model):
     definition = models.CharField(
         max_length=256, null=True, help_text="definition")
     related_videos = models.ManyToManyField("self")
+    ipfs_hash = models.CharField(max_length=256, null=True)
+    filename = models.CharField(max_length=256, null=True)
 
     @staticmethod
     def list_fields_imported_from_yt():

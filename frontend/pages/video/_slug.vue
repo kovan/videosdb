@@ -14,6 +14,18 @@ div
       h6 Description
       p {{ this.video.description_trimmed }}
 
+    div(v-if='this.video.ipfs_hash')
+      h6 Download
+      ul
+        li
+          a(
+            :href='"https://ipfs." + $config.domain + "/ipfs/" + this.video.ipfs_hash + "?download=true&filename=" + this.video.filename'
+          ) Using HTTP
+        li
+          a(
+            :href='"ipfs://" + this.video.ipfs_hash + "?download=true&filename=" + this.video.filename'
+          ) Using IPFS
+
     div(v-if='this.video.categories')
       hr
       h6 Categories
@@ -28,8 +40,8 @@ div
         :to='"/tag/" + tag.slug',
         v-for='tag in this.video.tags',
         :key='tag.id'
-      ) 
-        b-button.mt-1(size='sm', pill) 
+      )
+        b-button.mt-1(size='sm', pill)
           | {{ tag.name }}
 
     div(v-if='this.video.transcript')

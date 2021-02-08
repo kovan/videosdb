@@ -59,6 +59,7 @@ export default {
   },
 
   publicRuntimeConfig: {
+    domain: process.env.VIDEOSDB_DOMAIN,
     title: process.env.VIDEOSDB_TITLE,
     subtitle: process.env.VIDEOSDB_SUBTITLE,
     gcs_url: process.env.GCS_URL,

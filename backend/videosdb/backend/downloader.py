@@ -1,3 +1,4 @@
+from collections import namedtuple
 from .youtube_api import YoutubeAPI, YoutubeDL
 import shutil
 import re
@@ -13,9 +14,9 @@ import youtube_transcript_api
 
 logger = logging.getLogger(__name__)
 
-from collections import namedtuple
 
 _ntuple_diskusage = namedtuple('usage', 'total used free')
+
 
 def disk_usage(path):
     """Return disk usage statistics about the given path.
@@ -27,6 +28,7 @@ def disk_usage(path):
     free = st.f_bavail * st.f_frsize
     total = st.f_blocks * st.f_frsize
     used = (st.f_blocks - st.f_bfree) * st.f_frsize
+
 
 @traced(logging.getLogger(__name__))
 class Downloader:
@@ -155,9 +157,10 @@ class Downloader:
                     logging.error(repr(e))
                     continue
                 video.ipfs_hash = ipfs.add_file(video.filename)
+                video.save()
 
-    def download_all_to_disk(self, dst_path="/mnt/bucket/videos"):
-
+    def download_all_to_disk(self):
+        dst_path = os.getcwd()
         yt_dl = YoutubeDL()
         files = os.listdir(dst_path)
         files_by_youtube_id = {}
@@ -182,4 +185,5 @@ class Downloader:
                 except YoutubeDL.UnavailableError as e:
                     logging.error(repr(e))
                     continue
-                shutil.move(video.filename,dst_path) 
+                video.save()
+                shutil.move(video.filename, dst_path)
