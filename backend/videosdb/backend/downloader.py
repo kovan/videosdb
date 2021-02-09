@@ -156,7 +156,8 @@ class Downloader:
                 except YoutubeDL.UnavailableError as e:
                     logging.error(repr(e))
                     continue
-                video.ipfs_hash = ipfs.add_file(video.filename)
+                video.ipfs_hash = ipfs.add_file(
+                    video.filename, opts={"nocopy": True})
                 video.save()
 
     def download_all_to_disk(self):
