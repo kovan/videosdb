@@ -191,7 +191,11 @@ class Downloader:
                     logging.error(repr(e))
                     continue
                 video.save()
-                shutil.move(video.filename, dst_path)
+                try:
+                    shutil.move(video.filename, dst_path)
+                except OSError as e:
+                    logging.exception(e)
+                    continue
 
     def register_all_in_ipfs(self):
         ipfs = IPFS()
