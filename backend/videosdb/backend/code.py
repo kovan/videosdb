@@ -41,6 +41,10 @@ def handle(*args, **options):
         downloader = Downloader()
         downloader.register_all_in_ipfs()
 
+    if options["download_all_to_ipfs"]:
+        downloader = Downloader()
+        downloader.download_all_to_ipfs()
+
     if options["dl_video_id"]:
         downloader = Downloader()
         downloader.download_one(options["dl_video_id"])
