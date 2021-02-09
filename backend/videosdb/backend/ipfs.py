@@ -54,7 +54,7 @@ class IPFS:
             "/ip4/%s/tcp/%s/http" % (self.host, self.port))
 #        self.api = ipfsapi.connect(self.host, self.port)
 
-    def add_file(self, filename, opts=None, add_to_dir=True):
+    def add_file(self, filename, opts={}, add_to_dir=True):
         ipfs_hash = self.api.add(filename, opts)["Hash"]
         self.api.pin.add(ipfs_hash)
 
