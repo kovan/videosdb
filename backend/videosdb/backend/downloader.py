@@ -147,6 +147,10 @@ class Downloader:
         videos = Video.objects.filter(excluded=False)
         for video in videos:
             if video.youtube_id in files_by_youtube_id:
+                file = files_by_youtube_id[video.youtube_id]
+                if not video.ipfs_hash:
+                    video.ipfs_hash = file["Hash"]
+                video.save()
                 continue
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
@@ -157,7 +161,7 @@ class Downloader:
                     logging.error(repr(e))
                     continue
                 video.ipfs_hash = ipfs.add_file(
-                    video.filename, opts={"nocopy": True})
+                    video.filename)
                 video.save()
 
     def download_all_to_disk(self):
@@ -188,3 +192,34 @@ class Downloader:
                     continue
                 video.save()
                 shutil.move(video.filename, dst_path)
+
+    def register_all_in_ipfs(self):
+        ipfs = IPFS()
+        ipfs.api.files.mkdir("/videos", parents=True)
+        files = ipfs.api.files.ls("/videos")
+        files_by_youtube_id = {}
+        if files["Entries"]:
+            for file in files["Entries"]:
+                match = re.search(r'\[(.{11})\]\.', file["Name"])
+                if not match:
+                    continue
+                youtube_id = match.group(1)
+
+                files_by_youtube_id[youtube_id] = file
+        # 'Entries': [
+        #     {'Size': 0, 'Hash': '', 'Name': 'Software', 'Type': 0}
+        # ]
+        videos = Video.objects.filter(excluded=False)
+        for video in videos:
+            if video.youtube_id in files_by_youtube_id:
+                file = files_by_youtube_id[video.youtube_id]
+                if not video.filename:
+                    video.filename = file["Name"]
+                if not video.ipfs_hash:
+                    video.ipfs_hash = file["Hash"]
+                video.save()
+                continue
+
+            video.ipfs_hash = ipfs.add_file(
+                video.filename, opts={"nocopy": True})
+            video.save()
