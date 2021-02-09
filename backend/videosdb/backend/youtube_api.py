@@ -150,7 +150,7 @@ class YoutubeDL:
 
     def __init__(self):
         # --limit-rate 1M "
-        self.BASE_CMD = "youtube-dl -f 'webm[height<=720]/best/webm[height<=1080]' --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
+        self.BASE_CMD = "youtube-dl -f 'webm[height<=720]/webm[height<=1080]' --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
 
     def download_video(self, _id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
