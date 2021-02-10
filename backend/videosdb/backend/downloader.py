@@ -108,7 +108,6 @@ class Downloader:
 
     def check_for_new_videos(self):
         channel_id = settings.YOUTUBE_CHANNEL["id"]
-        self.enqueue_channel(channel_id)
         try:
             self.enqueue_channel(channel_id)
         except YoutubeAPI.YoutubeAPIError as e:
