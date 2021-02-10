@@ -200,7 +200,7 @@ class Downloader:
                     logging.exception(e)
                     continue
 
-    def register_all_in_ipfs(self):
+    def register_all_in_ipfs_filestore(self):
         ipfs = IPFS()
         ipfs.api.files.mkdir("/videos", parents=True)
         files = ipfs.api.files.ls("/videos")

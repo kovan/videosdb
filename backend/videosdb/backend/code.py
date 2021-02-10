@@ -19,7 +19,8 @@ def add_arguments(parser):
     parser.add_argument("-a", "--download-all", action="store_true")
     parser.add_argument("-i", "--download-all-to-ipfs", action="store_true")
     parser.add_argument("-k", "--download-all-to-disk", action="store_true")
-    parser.add_argument("-r", "--register-all-in-ipfs", action="store_true")
+    parser.add_argument(
+        "-r", "--register-all-in-ipfs-filestore", action="store_true")
 
 
 @traced(logging.getLogger(__name__))
@@ -37,9 +38,9 @@ def handle(*args, **options):
         downloader = Downloader()
         downloader.download_all_to_disk()
 
-    if options["register_all_in_ipfs"]:
+    if options["register_all_in_ipfs_filestore"]:
         downloader = Downloader()
-        downloader.register_all_in_ipfs()
+        downloader.register_all_in_ipfs_filestore()
 
     if options["download_all_to_ipfs"]:
         downloader = Downloader()
