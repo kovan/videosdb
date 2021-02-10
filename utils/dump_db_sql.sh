@@ -2,3 +2,4 @@ echo postgres |docker-compose run --rm db pg_dump -d postgres -h db -U postgres 
 echo nithyananda |docker-compose run --rm db pg_dump -d nithyananda -h db -U nithyananda  > nithyananda-dump.sql
 gzip sadhguru-dump.sql
 gzip nithyananda-dump.sql
+

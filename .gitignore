@@ -14,3 +14,5 @@ backend/db.nithyananda.sqlite3-journal
 backend/data.json
 db.sqlite3
 logs/log
+nithyananda-dump.sql.gz
+sadhguru-dump.sql.gz
