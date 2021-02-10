@@ -88,9 +88,10 @@
       "type": "python",
       "request": "launch",
       "program": "manage.py",
-      "args": ["videosdb", "-c", "-t"],
+      "args": ["videosdb", "-c"],
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/backend"
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": false
     },
     {
       "name": "Docker: Python - Django",

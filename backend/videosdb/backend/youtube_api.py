@@ -31,6 +31,10 @@ def _sentence_case(text):
 
 @traced(logging.getLogger(__name__))
 class YoutubeAPI:
+    class YoutubeAPIError(Exception):
+        def __init__(self, s):
+            self.s = s
+
     def __init__(self, yt_key):
         self.yt_key = yt_key
         self.http = httplib2.Http(".cache")
@@ -47,8 +51,8 @@ class YoutubeAPI:
         logger.debug("request: " + url)
         (response, content) = self.http.request(url)
         if response.status != 200:
-            raise Exception("%s: %s\n %s" %
-                            (response.status, response.reason, content))
+            raise self.YoutubeAPIError("%s: %s\n %s" %
+                                       (response.status, response.reason, json.loads(content)))
 
         json_response = json.loads(content)
         items = json_response["items"]

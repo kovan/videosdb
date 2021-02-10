@@ -54,19 +54,6 @@ class Downloader:
             video.save()
             return
 
-        if not video.transcript and video.transcript_available is None:
-            try:
-                video.transcript = self.yt_api.get_video_transcript(
-                    video.youtube_id)
-                video.transcript_available = True
-                logger.debug("Transcription downloaded")
-            except youtube_transcript_api.TooManyRequests as e:
-                logger.warn(e)
-                video.transcript_available = None  # leave None so that it retries later
-            except youtube_transcript_api.CouldNotRetrieveTranscript as e:
-                logger.info(e)
-                video.transcript_available = False
-
         if category_name:
             category, created = Category.objects.get_or_create(
                 name=category_name)
@@ -122,10 +109,29 @@ class Downloader:
     def check_for_new_videos(self):
         channel_id = settings.YOUTUBE_CHANNEL["id"]
         self.enqueue_channel(channel_id)
+        try:
+            self.enqueue_channel(channel_id)
+        except YoutubeAPI.YoutubeAPIError as e:
+            logging.exception(e)
+        self.fill_transcripts()
 
-    def download_pending(self):
+    def fill_transcripts(self):
         videos = Video.objects.filter(excluded=False)
-        self.enqueue_videos([v.youtube_id for v in videos if not v.title])
+        for video in videos:
+            if not video.transcript and video.transcript_available is None:
+                try:
+                    video.transcript = self.yt_api.get_video_transcript(
+                        video.youtube_id)
+                    video.transcript_available = True
+                    logger.debug("Transcription downloaded")
+                except youtube_transcript_api.TooManyRequests as e:
+                    logger.warn(e)
+                    video.transcript_available = None  # leave None so that it retries later
+                    break
+                except youtube_transcript_api.CouldNotRetrieveTranscript as e:
+                    video.transcript_available = False
+                finally:
+                    video.save()
 
     def download_all_to_ipfs(self):
         ipfs = IPFS()
