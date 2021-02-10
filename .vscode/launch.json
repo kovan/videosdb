@@ -117,6 +117,12 @@
         "package": "${workspaceFolder}/frontend/package.json",
         "localRoot": "${workspaceFolder}/frontend"
       }
+    },
+    {
+      "name": "lbry",
+      "request": "launch",
+      "type": "python",
+      "program": "backend/videosdb/backend/lbry.py"
     }
   ]
 }

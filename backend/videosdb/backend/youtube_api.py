@@ -9,8 +9,16 @@ import httplib2
 import youtube_transcript_api
 from autologging import traced
 from executor import execute
+import re
 
 logger = logging.getLogger(__name__)
+
+
+def parse_youtube_id(string: str) -> str:
+    match = re.search(r'\[(.{11})\]\.', string)
+    if not match:
+        return None
+    return match.group(1)
 
 
 def _sentence_case(text):

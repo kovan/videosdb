@@ -1,14 +1,17 @@
 import os
 import requests
 import json
+from videosdb.backend.youtube_api import parse_youtube_id
 
 path = os.getcwd()
 with os.scandir(path) as entries:
     for entry in entries:
         if entry.is_file():
+            if not entry.name.endswith("webm"):
+                continue
             thumbUrl = ""
-            fileNameNoExtension = entry.name.split(".")[0]
-            if entry.name.split(".")[1] == "mp4":
+            fileNameNoExtension = entry.name
+            if not os.path.exists(fileNameNoExtension + ".url"):
                 print("Creating thumbnail for file: " + entry.name + "\n")
                 thumbName = fileNameNoExtension + "_thumbnail.png"
                 os.system("ffmpeg -i '"+path + "/" + entry.name+"' -vcodec mjpeg -vframes 1 -an -f rawvideo -ss `ffmpeg -i '"+path + "/" + entry.name +
@@ -26,14 +29,18 @@ with os.scandir(path) as entries:
                     print("Finish upload thumbnail, result json: " +
                           json.dumps(returnJson) + "\n")
                     thumbUrl = returnJson["data"]["serveUrl"]
+                    with open(fileNameNoExtension + ".url", "w") as f:
+                        f.write(thumbUrl)
                 else:
                     print("Spee.ch error: " + reqResult.text + "\n")
                 os.remove(path + "/" + thumbName)
+            else:
+                thumbUrl = open(fileNameNoExtension + ".url").read()
 
             params = {
                 "method": "publish",
                 "params": {
-                    "name": fileNameNoExtension,
+                    "name": parse_youtube_id(fileNameNoExtension),
                     "bid": "0.1",
                     "file_path": path + "/" + entry.name,
                     "validate_file": False,
@@ -41,7 +48,7 @@ with os.scandir(path) as entries:
                     "tags": [],
                     "languages": [],
                     "locations": [],
-                    "channel_id": "9e2e0f84a68146c0d13184cbf4ec3c7f4bdd1028",
+                    "channel_id": "a77b31ddd43da24a1ab0ee9347fa65bd1628fe0d",
                     "thumbnail_url": thumbUrl,
                     "funding_account_ids": [],
                     "preview": False,

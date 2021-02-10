@@ -1,5 +1,5 @@
 from collections import namedtuple
-from .youtube_api import YoutubeAPI, YoutubeDL
+from .youtube_api import YoutubeAPI, YoutubeDL, parse_youtube_id
 import shutil
 import re
 import random
@@ -135,10 +135,9 @@ class Downloader:
         files_by_youtube_id = {}
         if files["Entries"]:
             for file in files["Entries"]:
-                match = re.search(r'\[(.{11})\]\.', file["Name"])
-                if not match:
+                youtube_id = parse_youtube_id(file["Name"])
+                if not youtube_id:
                     continue
-                youtube_id = match.group(1)
 
                 files_by_youtube_id[youtube_id] = file
         # 'Entries': [
@@ -170,10 +169,9 @@ class Downloader:
         files = os.listdir(dst_path)
         files_by_youtube_id = {}
         for file in files:
-            match = re.search(r'\[(.{11})\]\.', file)
-            if not match:
+            youtube_id = parse_youtube_id(file["Name"])
+            if not youtube_id:
                 continue
-            youtube_id = match.group(1)
 
             files_by_youtube_id[youtube_id] = file
         os.chdir(dst_path)
@@ -204,10 +202,9 @@ class Downloader:
         files_by_youtube_id = {}
         if files["Entries"]:
             for file in files["Entries"]:
-                match = re.search(r'\[(.{11})\]\.', file["Name"])
-                if not match:
+                youtube_id = parse_youtube_id(file["Name"])
+                if not youtube_id:
                     continue
-                youtube_id = match.group(1)
 
                 files_by_youtube_id[youtube_id] = file
         # 'Entries': [
