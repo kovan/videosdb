@@ -4,7 +4,7 @@ div
     NuxtLink.mr-auto.h4.text-white(to='/') {{ title }}
 
     b-button.mx-1(squared, @click='hideSidebar', to='/search', title='Search')
-      b-icon#searchIcon(icon='search', alt='Search') 
+      b-icon#searchIcon(icon='search', alt='Search')
 
     b-button(
       @click='toggleSidebar',
@@ -36,8 +36,9 @@ div
 
   footer.text-muted.text-center
     div
-      small(v-if='this.version')
-        | version: {{ this.version }}
+      hr
+        small(v-if='this.version')
+          | version: {{ this.version }}
 </template>
 
 <script>

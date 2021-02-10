@@ -199,5 +199,5 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = "media"
 
 
-IPFS_HOST = "127.0.0.1"
-IPFS_PORT = 5001
+IPFS_HOST = os.environ.get("IPFS_HOST", "127.0.0.1")
+IPFS_PORT = os.environ.get("IPFS_PORT", 5001)
