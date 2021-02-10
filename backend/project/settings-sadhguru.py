@@ -31,3 +31,4 @@ YOUTUBE_CHANNEL = {
     "name": "Sadhguru"
 }
 TRUNCATE_DESCRIPTION_AFTER = "#Sadhguru"
+YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
