@@ -20,6 +20,8 @@ def add_arguments(parser):
     parser.add_argument("-i", "--download-all-to-ipfs", action="store_true")
     parser.add_argument("-k", "--download-all-to-disk", action="store_true")
     parser.add_argument(
+        "-f", "--download-and-register-in-ipfs", action="store_true")
+    parser.add_argument(
         "-r", "--register-all-in-ipfs-filestore", action="store_true")
 
 
@@ -49,3 +51,7 @@ def handle(*args, **options):
     if options["dl_video_id"]:
         downloader = Downloader()
         downloader.download_one(options["dl_video_id"])
+
+    if options["download_and_register_in_ipfs"]:
+        downloader = Downloader()
+        downloader.download_and_register_in_ipfs()

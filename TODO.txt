@@ -28,6 +28,17 @@ TODO
     - estadisticas
 
 
+- for video in videos:
+    if not ipfs_filename:
+      if not in os.listdir(gcs_mount)
+        download to gcs
+      save filename
+    if not ipfs_hash:
+      if not in os.listdir(gcs_mount)
+        download_to_gcs
+      add to ipfs --nocopy
+      add to ipfs files
+      save ipfs_hash
 
 
 

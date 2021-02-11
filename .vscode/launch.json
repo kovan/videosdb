@@ -18,13 +18,6 @@
       }
     },
     {
-      "type": "chrome",
-      "request": "launch",
-      "name": "frontend: chrome",
-      "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}/frontend"
-    },
-    {
       "type": "node",
       "request": "attach",
       "name": "Attach Program",
@@ -45,18 +38,6 @@
       "justMyCode": false
     },
     {
-      "name": "Django: ipfs",
-      "type": "python",
-      "request": "launch",
-      "program": "manage.py",
-      "args": ["videosdb", "-i"],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/backend",
-      "env": {
-        "DJANGO_SETTINGS_MODULE": "project.settings-local"
-      }
-    },
-    {
       "name": "Django: publish-one",
       "type": "python",
       "request": "launch",
@@ -75,20 +56,11 @@
       "cwd": "${workspaceFolder}/backend"
     },
     {
-      "name": "Django: download-all",
+      "name": "Django custom",
       "type": "python",
       "request": "launch",
       "program": "manage.py",
-      "args": ["videosdb", "--download-all"],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/backend"
-    },
-    {
-      "name": "Django: check",
-      "type": "python",
-      "request": "launch",
-      "program": "manage.py",
-      "args": ["videosdb", "-c"],
+      "args": ["videosdb", "-f"],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/backend",
       "justMyCode": false
