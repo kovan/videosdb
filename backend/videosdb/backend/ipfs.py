@@ -51,7 +51,7 @@ class IPFS:
         self.port = settings.IPFS_PORT
         self.dnslink_update_pending = False
         self.api = ipfshttpclient.connect(
-            "/ip4/%s/tcp/%s/http" % (self.host, self.port))
+            "/ip4/%s/tcp/%s/http" % (self.host, self.port), session=True)
 
     def add_file(self, filename, add_to_dir=True, **kwargs):
         result = self.api.add(
