@@ -1,2 +1,0 @@
-#rclone mount union: /tmp/mount/ --vfs-cache-mode full --attr-timeout 24h   --vfs-read-wait 1s --vfs-cache-max-size 100M --vfs-cache-max-age 24h  --mega-hard-delete --mega-debug --debug-fuse -vv 2>&1 |egrep  'NOTICE|INFO|ERROR'
-rclone mount gcs:videosdb /mnt/gcs/  --transfers 32 --vfs-cache-mode full --attr-timeout 24h   --vfs-read-wait 1s --vfs-cache-max-size 2G --vfs-cache-max-age 24h -v

@@ -4,6 +4,7 @@
 [Unit]
 Description=IPFS daemon
 After=rclone.service
+AssertPathIsDirectory=/mnt/filestore-repo
 
 [Service]
 Environment="IPFS_PATH=/mnt/filestore-repo"  

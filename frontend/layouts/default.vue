@@ -36,7 +36,8 @@ div
 
   footer.text-muted.text-center
     div
-      hr
+      p
+        hr
         small(v-if='this.version')
           | version: {{ this.version }}
 </template>
