@@ -180,7 +180,7 @@ LOGGING = {
             'propagate': True,
         },
         "property_manager": {
-            "LEVEL": "INFO",
+            "level": "INFO",
             'propagate': True,
         },
         'django': {
