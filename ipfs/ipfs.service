@@ -3,9 +3,10 @@
 
 [Unit]
 Description=IPFS daemon
+After=rclone.service
 
 [Service]
-# Environment="IPFS_PATH=/data/ipfs"  # optional path to ipfs init directory if not default ($HOME/.ipfs)
+Environment="IPFS_PATH=/mnt/filestore-repo"  
 ExecStart=nice -n 10 /usr/local/bin/ipfs daemon
 Restart=on-failure
 
