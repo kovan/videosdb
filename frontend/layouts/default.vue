@@ -1,18 +1,29 @@
 <template lang="pug">
 div
-  b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-2.px-2.d-flex
-    NuxtLink.mr-auto.h4.text-white(to='/') {{ title }}
+  b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-2.pl-3.d-flex.align-middle
+    NuxtLink.mr-auto.h5.text-white.align-middle(to='/') {{ title }}
 
-    b-button.mx-1(squared, href='/video', title='Random video')
+    b-button.mx-1(
+      squared,
+      href='/video',
+      title='Random video',
+      style='border: 0px'
+    )
       b-icon(icon='shuffle', alt='Random video')
 
-    b-button.mx-1(squared, @click='hideSidebar', to='/search', title='Search')
+    b-button.mx-1(
+      squared,
+      @click='hideSidebar',
+      to='/search',
+      title='Search',
+      style='border: 0px'
+    )
       b-icon#searchIcon(icon='search', alt='Search')
 
     b-button.mx-1(
       @click='toggleSidebar',
       squared,
-      style='border: 1px',
+      style='border: 0px; padding-top: 4px; padding-botton: 4px; padding-right: 10px; padding-left: 10px',
       title='Categories'
     )
       span.navbar-toggler-icon
@@ -94,7 +105,7 @@ export default {
         '/api/categories/?ordering=-use_count'
       )
     } catch (error) {
-      console.exception(error)
+      console.error(error)
     }
   },
 }

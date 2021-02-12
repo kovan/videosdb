@@ -1,6 +1,6 @@
 <template lang="pug">
-div
-  b-card(:title='this.video.title')
+b-container.m-0.p-0.mx-auto
+  b-card.m-0.p-0(:title='this.video.title')
     div
       b-embed(
         type='iframe',
@@ -20,11 +20,11 @@ div
         li
           a(
             :href='"https://ipfs." + $config.domain + "/ipfs/" + this.video.ipfs_hash + "?download=true&filename=" + this.video.filename'
-          ) Using HTTP
+          ) Using HTTP (standard)
         li
           a(
             :href='"ipfs://" + this.video.ipfs_hash + "?download=true&filename=" + this.video.filename'
-          ) Using IPFS
+          ) Using IPFS (experimental)
 
     div(v-if='this.video.categories')
       hr
@@ -80,7 +80,7 @@ export default {
       let video = await $axios.$get(url)
       return { video }
     } catch (error) {
-      console.exception(error)
+      console.error(error)
     }
   }
 }
