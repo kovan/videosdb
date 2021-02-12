@@ -9,8 +9,7 @@ b-container.m-0.p-0.mx-auto
         allowfullscreen
       )
 
-    div
-      hr
+    div(v-if='this.video.description_trimmed')
       h6 Description
       p {{ this.video.description_trimmed }}
 
@@ -19,22 +18,22 @@ b-container.m-0.p-0.mx-auto
       ul
         li
           a(
-            :href='"https://ipfs." + $config.domain + "/ipfs/" + this.video.ipfs_hash + "?download=true&filename=" + this.video.filename'
+            :href='"https://ipfs." + $config.domain + "/ipfs/" + this.video.ipfs_hash + "?filename=" + this.video.filename',
+            download
           ) Using HTTP (standard)
         li
           a(
-            :href='"ipfs://" + this.video.ipfs_hash + "?download=true&filename=" + this.video.filename'
+            :href='"ipfs://" + this.video.ipfs_hash + "?filename=" + this.video.filename'
           ) Using IPFS (experimental)
 
     div(v-if='this.video.categories')
-      hr
       h6 Categories
       ul
         li(v-for='cat in this.video.categories', :key='cat.id')
           NuxtLink(:to='"/category/" + cat.slug')
             | {{ cat.name }}
+
     div(v-if='this.video.tags')
-      hr
       h6 Tags
       NuxtLink.p-1(
         :to='"/tag/" + tag.slug',
@@ -45,7 +44,6 @@ b-container.m-0.p-0.mx-auto
           | {{ tag.name }}
 
     div(v-if='this.video.transcript')
-      hr
       h6 Transcription:
       small {{ this.video.transcript }}
 </template>
