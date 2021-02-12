@@ -41,7 +41,7 @@ div
         v-for='tag in this.video.tags',
         :key='tag.id'
       )
-        b-button.mt-1(size='sm', pill)
+        b-button.mt-2(size='sm', pill)
           | {{ tag.name }}
 
     div(v-if='this.video.transcript')

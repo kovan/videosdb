@@ -5,7 +5,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/rclone mount \
+ExecStart=/usr/bin/rclone mount -v \
+        --vfs-read-chunk-size 1M \
         --vfs-cache-mode full \
         --attr-timeout 24h\
         --vfs-cache-max-size 2G \

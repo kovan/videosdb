@@ -1,7 +1,7 @@
 <template lang="pug">
 div
-  b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-1.px-2.d-flex
-    NuxtLink.mr-auto.h4.text-white(to='/') {{ title }}
+  b-nav.navbar.navbar-dark.sticky-top.bg-dark.pt-1.px-2.d-flex
+    NuxtLink.mr-auto.h4.text-white.mt-1(to='/') {{ title }}
 
     b-button.mx-1(squared, @click='hideSidebar', to='/search', title='Search')
       b-icon#searchIcon(icon='search', alt='Search')

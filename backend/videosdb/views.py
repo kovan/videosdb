@@ -36,7 +36,7 @@ class VideoSerializer(serializers.ModelSerializer):
                   "categories", "tags", "duration_humanized", "transcript", "thumbnail",
                   "slug", "view_count", "dislike_count",
                   "favorite_count", "comment_count", "title", "thumbnails",
-                  "description_trimmed"]
+                  "description_trimmed", "filename", "ipfs_hash"]
 
 
 class VideoListSerializer(serializers.ModelSerializer):

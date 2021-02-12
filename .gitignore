@@ -16,3 +16,4 @@ db.sqlite3
 logs/log
 nithyananda-dump.sql.gz
 sadhguru-dump.sql.gz
+backend/videos/
