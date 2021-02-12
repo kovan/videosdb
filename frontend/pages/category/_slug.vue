@@ -5,7 +5,6 @@ b-container
 </template>
 
 <script>
-import Explorer from '~/components/Explorer.vue'
 export default {
   head () {
     return {
