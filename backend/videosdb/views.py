@@ -1,9 +1,20 @@
-from datetime import timedelta, date
-from rest_framework import serializers, viewsets, filters
-from django_filters.rest_framework import DjangoFilterBackend
-from .models import Tag, Category, Video
+from datetime import date, timedelta
+
 from django.db.models import Count
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, serializers, viewsets
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from .models import Category, Tag, Video
+
+
+@api_view(["GET"])
+def random_video(request):
+    video = Video.objects.order_by("?").first()
+    serializer = VideoSerializer(video)
+    return Response(serializer.data)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -46,7 +57,7 @@ class VideoListSerializer(serializers.ModelSerializer):
         model = Video
         lookup_field = "slug"
         fields = ["id", "youtube_id", "yt_published_date",
-                  "categories", "tags", "duration_humanized", "thumbnail",
+                  "categories", "duration_humanized", "thumbnail",
                   "slug", "view_count", "dislike_count",
                   "favorite_count", "comment_count", "title", "thumbnails",
                   "description_trimmed"]

@@ -73,10 +73,14 @@ export default {
   },
   async asyncData ({ $axios, params }) {
     try {
-      let video = await $axios.$get('/api/videos/' + params.slug + "/")
+      if ("slug" in params && params.slug !== undefined)
+        var url = '/api/videos/' + params.slug + "/"
+      else
+        var url = "/api/random-video"
+      let video = await $axios.$get(url)
       return { video }
     } catch (error) {
-      console.error(error)
+      console.exception(error)
     }
   }
 }

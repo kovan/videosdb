@@ -31,7 +31,7 @@ export default {
       let response = await $axios.$get(url)
       return { category: response }
     } catch (error) {
-      console.error(error)
+      console.exception(error)
     }
   }
 }
