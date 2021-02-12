@@ -49,9 +49,8 @@ div
         nuxt
 
   footer.text-muted.text-center
-    div
+    .my-3
       p
-        hr
         small(v-if='this.version')
           | version: {{ this.version }}
 </template>
