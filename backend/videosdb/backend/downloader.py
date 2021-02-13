@@ -38,11 +38,13 @@ class Downloader:
     def process_video(self, youtube_id, category_name=None):
         video, created = Video.objects.get_or_create(youtube_id=youtube_id)
         # if new video or missing info, download info:
-        info = self.yt_api.get_video_info(video.youtube_id)
-        if info:
-            video.load_from_youtube_info(info)
-        else:
-            video.excluded = True
+
+        if not video.full_response:
+            info = self.yt_api.get_video_info(video.youtube_id)
+            if not info:
+                video.excluded = True
+            else:
+                video.load_from_youtube_info(info)
 
         # some playlists include videos from other channels
         # for now exclude those videos
