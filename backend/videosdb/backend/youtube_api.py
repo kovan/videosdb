@@ -82,37 +82,30 @@ class YoutubeAPI:
     def _get_channnelsection_playlists(self, channel_id):
         url = self.root_url + "/channelSections?part=contentDetails"
         url += "&channelId=" + channel_id
-        items = self._make_request(url)
-        playlist_ids = []
-        for item in items:
+
+        for item in self._make_request(url):
             details = item.get("contentDetails")
             if not details:
                 continue
             if not "playlists" in details:
                 continue
-            playlist_ids += details["playlists"]
-        return playlist_ids
+            for id in details["playlists"]:
+                yield id
 
     def _get_channel_playlists(self, channel_id):
         url = self.root_url + "/playlists?part=snippet%2C+contentDetails"
         url += "&channelId=" + channel_id
-        items = self._make_request(url)
-        playlist_ids = []
-        for item in items:
-            playlist_ids.append(item["id"])
-        return playlist_ids
+
+        for item in self._make_request(url):
+            yield item["id"]
 
     def list_playlists(self, channel_id):
         ids_channelsection = self._get_channnelsection_playlists(channel_id)
         ids_channel = self._get_channel_playlists(channel_id)
 
-        playlist_ids = set(ids_channelsection + ids_channel)
-        playlists = []
+        playlist_ids = set(list(ids_channelsection) + list(ids_channel))
         for _id in playlist_ids:
-            playlist = self._get_playlist_info(_id)
-            playlists.append(playlist)
-
-        return playlists
+            yield self._get_playlist_info(_id)
 
     def get_video_info(self, youtube_id):
         url = self.root_url + "/videos?part=snippet,contentDetails,statistics"
@@ -130,11 +123,9 @@ class YoutubeAPI:
     def list_playlist_videos(self, playlist_id):
         url = self.root_url + "/playlistItems?part=snippet"
         url += "&playlistId=" + playlist_id
-        items = self._make_request(url)
-        video_ids = []
-        for item in items:
-            video_ids.append(item["snippet"]["resourceId"]["videoId"])
-        return video_ids
+
+        for item in self._make_request(url):
+            yield item["snippet"]["resourceId"]["videoId"]
 
     def get_related_videos(self, youtube_id):
         url = self.root_url + "/search?part=snippet&type=video"
