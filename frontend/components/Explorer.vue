@@ -20,7 +20,7 @@
               v-model='period',
               :options='period_options',
               @change='handleChange'
-            ) 
+            )
       .row
         .col-md-4(v-for='video in this.videos', :key='video.youtube_id')
           .card.mb-4.shadow-sm.text-center
@@ -49,6 +49,7 @@
 
 <script >
 
+import handleAxiosError from "~/utils/utils"
 export default {
 
   data: () => {
@@ -154,8 +155,8 @@ export default {
       //this.$nuxt.$loading.finish() //STOPS LOADING
       this.videos = response.results
       this.page_count = response.count == 0 ? 0 : Math.floor(response.count / response.results.length)
-    } catch (error) {
-      console.error(error)
+    } catch (exception) {
+      handleAxiosError(exception, this.$nuxt.context.error)
     }
 
   },

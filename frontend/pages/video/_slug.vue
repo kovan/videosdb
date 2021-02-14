@@ -50,6 +50,7 @@ b-container.m-0.p-0.mx-auto
 <script>
 
 
+import handleAxiosError from "~/utils/utils"
 
 export default {
   head () {
@@ -69,7 +70,8 @@ export default {
       video: {}
     }
   },
-  async asyncData ({ $axios, params }) {
+  async asyncData ({ $axios, params, error }) {
+
     try {
       if ("slug" in params && params.slug !== undefined)
         var url = '/api/videos/' + params.slug + "/"
@@ -77,8 +79,8 @@ export default {
         var url = "/api/random-video"
       let video = await $axios.$get(url)
       return { video }
-    } catch (error) {
-      console.error(error)
+    } catch (exception) {
+      handleAxiosError(exception, error)
     }
   }
 }

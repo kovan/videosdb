@@ -57,7 +57,7 @@ div
 
 <script>
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-
+import handleAxiosError from "~/utils/utils"
 export default {
   scrollToTop: true,
   components: {
@@ -103,8 +103,8 @@ export default {
       this.categories = await this.$axios.$get(
         '/api/categories/?ordering=-use_count'
       )
-    } catch (error) {
-      console.error(error)
+    } catch (exception) {
+      handleAxiosError(exception, this.$nuxt.context.error)
     }
   },
 }

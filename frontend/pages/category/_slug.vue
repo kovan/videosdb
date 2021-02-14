@@ -5,6 +5,7 @@ b-container
 </template>
 
 <script>
+import handleAxiosError from "~/utils/utils"
 export default {
   head () {
     return {
@@ -24,13 +25,13 @@ export default {
     }
   },
 
-  async asyncData ({ $axios, params }) {
+  async asyncData ({ $axios, params, error }) {
     let url = "/api/categories/" + params.slug
     try {
       let response = await $axios.$get(url)
       return { category: response }
-    } catch (error) {
-      console.error(error)
+    } catch (exception) {
+      handleAxiosError(exception, error)
     }
   }
 }
