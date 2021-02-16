@@ -46,3 +46,4 @@ dist
 docs
 logs/log*
 media/
+.cache

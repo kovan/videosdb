@@ -30,3 +30,4 @@ YOUTUBE_CHANNEL = {
 }
 TRUNCATE_DESCRIPTION_AFTER = r"(c|C)lick http://bit.ly/"
 YOUTUBE_KEY = "AIzaSyDmVPLhxiShjGUh0VjkJNHloVrfBg_ZfNE"
+VIDEO_FILES_DIR = "/mnt/gcs/videos"

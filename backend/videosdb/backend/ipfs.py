@@ -51,12 +51,12 @@ class IPFS:
         self.port = settings.IPFS_PORT
         self.dnslink_update_pending = False
         self.api = ipfshttpclient.connect(
-            "/ip4/%s/tcp/%s/http" % (self.host, self.port))
-#        self.api = ipfsapi.connect(self.host, self.port)
+            "/ip4/%s/tcp/%s/http" % (self.host, self.port), session=True)
 
-    def add_file(self, filename, add_to_dir=True):
-        ipfs_hash = self.api.add(filename)["Hash"]
-        self.api.pin.add(ipfs_hash)
+    def add_file(self, filename, add_to_dir=True, **kwargs):
+        result = self.api.add(
+            filename, pin=True, **kwargs)
+        ipfs_hash = result[0]["Hash"]
 
         if add_to_dir:
             self.add_to_dir(filename, ipfs_hash)
@@ -66,7 +66,7 @@ class IPFS:
     def add_to_dir(self, filename, _hash):
         from ipfshttpclient.exceptions import StatusError
         src = "/ipfs/" + _hash
-        dst = "/videos/" + filename
+        dst = "/videos/" + os.path.basename(filename)
         try:
             self.api.files.rm(dst)
         except StatusError:

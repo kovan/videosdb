@@ -150,7 +150,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname}\t{asctime}:{filename},{lineno:d}:{name}.{funcName}:{message}',
+            'format': '{levelname}\t{asctime}:{name} -> {filename}:{lineno:d}.{funcName}: {message}',
             'style': '{',
         },
         'simple': {
@@ -164,7 +164,7 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1000000,
             "backupCount": 10,
-            'filename': '/tmp/log',
+            'filename': '/tmp/videosdb_log',
             'formatter': 'verbose'
         },
         'console': {
@@ -177,6 +177,10 @@ LOGGING = {
     'loggers': {
         'videosdb': {
             'level': 'TRACE' if DEBUG else 'INFO',
+            'propagate': True,
+        },
+        "property_manager": {
+            "level": "INFO",
             'propagate': True,
         },
         'django': {
@@ -199,5 +203,5 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = "media"
 
 
-IPFS_HOST = "127.0.0.1"
-IPFS_PORT = 5001
+IPFS_HOST = os.environ.get("IPFS_HOST", "127.0.0.1")
+IPFS_PORT = os.environ.get("IPFS_PORT", 5001)

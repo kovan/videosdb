@@ -11,3 +11,5 @@ do
 		ipfs add --nocopy "/home/k/bucket/videos/$f"
 	fi
 done
+
+rm /tmp/asdf

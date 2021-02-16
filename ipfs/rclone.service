@@ -1,0 +1,22 @@
+[Unit]
+Description=GCS
+AssertPathIsDirectory=/mnt/gcs
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/rclone mount -v \
+        --vfs-read-chunk-size 1M \
+        --vfs-cache-mode full \
+        --attr-timeout 24h\
+        --vfs-cache-max-size 2G \
+        --vfs-cache-max-age 24h \
+        --dir-cache-time=60m \
+        --cache-info-age=60m \
+        gcs:videosdb /mnt/gcs
+ExecStop=/bin/fusermount -u /mnt/gcs
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+

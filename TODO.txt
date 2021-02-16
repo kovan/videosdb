@@ -1,5 +1,7 @@
 TODO
 ------------------------
+- compartir por emule/bittorrent videos?
+- hacer paquetes deb?
 - ver xq el $nuxt.$loading está undefined en prod
 -- revisar transcripts en nithyananda prod
 - ¿?usar el jobs de django-extensions
@@ -10,8 +12,6 @@ TODO
 - ¿? permitir elegir entre cuadrícula y lista de videos
 - mostrar videos relacionados en la página del vídeo GET https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId=5rOiW_xY-kc&type=video&key={YOUR_API_KEY}
 - botones para compartir en redes sociales
-- video aleatorio botón
-- top vistos por rango de tiempo: dia, mes semana, año.
 - ¿? paginación precisa (meter´nº de pag. a mano) de 10 en 10, 100 en 100... etc.
 - ¿? buscador filtros por rangos de fechas, visitas, idioma, palabras en campos... etc.
 
@@ -26,9 +26,6 @@ TODO
   - ordenar:
     - fecha de publicacion
     - estadisticas
-
-
-
 
 
 

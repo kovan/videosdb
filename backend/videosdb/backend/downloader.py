@@ -38,11 +38,13 @@ class Downloader:
     def process_video(self, youtube_id, category_name=None):
         video, created = Video.objects.get_or_create(youtube_id=youtube_id)
         # if new video or missing info, download info:
-        info = self.yt_api.get_video_info(video.youtube_id)
-        if info:
-            video.load_from_youtube_info(info)
-        else:
-            video.excluded = True
+
+        if not video.full_response:
+            info = self.yt_api.get_video_info(video.youtube_id)
+            if not info:
+                video.excluded = True
+            else:
+                video.load_from_youtube_info(info)
 
         # some playlists include videos from other channels
         # for now exclude those videos
@@ -108,7 +110,6 @@ class Downloader:
 
     def check_for_new_videos(self):
         channel_id = settings.YOUTUBE_CHANNEL["id"]
-        self.enqueue_channel(channel_id)
         try:
             self.enqueue_channel(channel_id)
         except YoutubeAPI.YoutubeAPIError as e:
@@ -133,7 +134,8 @@ class Downloader:
                 finally:
                     video.save()
 
-    def download_all_to_ipfs(self):
+    @staticmethod
+    def download_all_to_ipfs():
         ipfs = IPFS()
         yt_dl = YoutubeDL()
         ipfs.api.files.mkdir("/videos", parents=True)
@@ -169,7 +171,8 @@ class Downloader:
                     video.filename)
                 video.save()
 
-    def download_all_to_disk(self):
+    @staticmethod
+    def download_all_to_disk():
         dst_path = os.getcwd()
         yt_dl = YoutubeDL()
         files = os.listdir(dst_path)
@@ -201,18 +204,22 @@ class Downloader:
                     logging.exception(e)
                     continue
 
-    def register_all_in_ipfs(self):
+    @staticmethod
+    def register_all_in_ipfs_filestore(filestore_path=None):
+        if not filestore_path:
+            filestore_path = os.getcwd()
+        files_in_filestore = os.listdir(filestore_path)
         ipfs = IPFS()
-        ipfs.api.files.mkdir("/videos", parents=True)
-        files = ipfs.api.files.ls("/videos")
-        files_by_youtube_id = {}
-        if files["Entries"]:
-            for file in files["Entries"]:
-                youtube_id = parse_youtube_id(file["Name"])
-                if not youtube_id:
-                    continue
+        # ipfs.api.files.mkdir("/videos", parents=True)
+        # files = ipfs.api.files.ls("/videos")
+        # files_by_youtube_id = {}
+        # if files["Entries"]:
+        #     for file in files["Entries"]:
+        #         youtube_id = parse_youtube_id(file["Name"])
+        #         if not youtube_id:
+        #             continue
 
-                files_by_youtube_id[youtube_id] = file
+        #         files_by_youtube_id[youtube_id] = file
         # 'Entries': [
         #     {'Size': 0, 'Hash': '', 'Name': 'Software', 'Type': 0}
         # ]
@@ -230,3 +237,45 @@ class Downloader:
             video.ipfs_hash = ipfs.add_file(
                 video.filename, opts={"nocopy": True})
             video.save()
+
+    @staticmethod
+    def download_and_register_in_ipfs():
+        yt_dl = YoutubeDL()
+        ipfs = IPFS()
+        videos_dir = os.path.abspath(settings.VIDEO_FILES_DIR)
+        if not os.path.exists(videos_dir):
+            os.mkdir(videos_dir)
+        videos = Video.objects.filter(excluded=False).order_by("-duration")
+        files_by_youtube_id = {}
+        files = os.listdir(videos_dir)
+        for file in files:
+            youtube_id = parse_youtube_id(file)
+            if not youtube_id:
+                continue
+            files_by_youtube_id[youtube_id] = file
+
+        for video in videos:
+            if video.youtube_id not in files_by_youtube_id:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    os.chdir(tmpdir)
+                    try:
+                        video.filename = yt_dl.download_video(
+                            video.youtube_id)
+                    except YoutubeDL.UnavailableError as e:
+                        logging.error(repr(e))
+                        continue
+                    video.save()
+                    try:
+                        shutil.move(video.filename, videos_dir)
+                    except OSError as e:
+                        logging.exception(e)
+                        continue
+            elif not video.filename:
+                video.filename = files_by_youtube_id[video.youtube_id]
+                video.save()
+
+            if not video.ipfs_hash:
+                video.ipfs_hash = ipfs.add_file(videos_dir + "/" +
+                                                video.filename, wrap_with_directory=True,
+                                                nocopy=True)
+                video.save()

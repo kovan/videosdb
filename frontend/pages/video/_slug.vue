@@ -1,7 +1,7 @@
 <template lang="pug">
-div
-  b-card(:title='this.video.title')
-    div
+b-container.m-0.p-0.mx-auto
+  b-card.m-0.p-0(:title='this.video.title')
+    .my-4
       b-embed(
         type='iframe',
         aspect='16by9',
@@ -9,49 +9,48 @@ div
         allowfullscreen
       )
 
-    div
-      hr
+    .my-4(v-if='this.video.description_trimmed')
       h6 Description
       p {{ this.video.description_trimmed }}
 
-    div(v-if='this.video.ipfs_hash')
+    .my-4(v-if='this.video.ipfs_hash')
       h6 Download
       ul
         li
           a(
-            :href='"https://ipfs." + $config.domain + "/ipfs/" + this.video.ipfs_hash + "?download=true&filename=" + this.video.filename'
-          ) Using HTTP
+            :href='"https://ipfs." + $config.domain + "/ipfs/" + this.video.ipfs_hash + "?filename=" + this.video.filename',
+            download
+          ) Using HTTP (standard)
         li
           a(
-            :href='"ipfs://" + this.video.ipfs_hash + "?download=true&filename=" + this.video.filename'
-          ) Using IPFS
+            :href='"ipfs://" + this.video.ipfs_hash + "?filename=" + this.video.filename'
+          ) Using IPFS (experimental)
 
-    div(v-if='this.video.categories')
-      hr
+    .my-4(v-if='this.video.categories')
       h6 Categories
       ul
         li(v-for='cat in this.video.categories', :key='cat.id')
           NuxtLink(:to='"/category/" + cat.slug')
             | {{ cat.name }}
-    div(v-if='this.video.tags')
-      hr
+
+    .my-4(v-if='this.video.tags')
       h6 Tags
       NuxtLink.p-1(
         :to='"/tag/" + tag.slug',
         v-for='tag in this.video.tags',
         :key='tag.id'
       )
-        b-button.mt-1(size='sm', pill)
+        b-button.mt-2(size='sm', pill)
           | {{ tag.name }}
 
-    div(v-if='this.video.transcript')
-      hr
+    .my-4(v-if='this.video.transcript')
       h6 Transcription:
       small {{ this.video.transcript }}
 </template>
 <script>
 
 
+import handleAxiosError from "~/utils/utils"
 
 export default {
   head () {
@@ -71,12 +70,17 @@ export default {
       video: {}
     }
   },
-  async asyncData ({ $axios, params }) {
+  async asyncData ({ $axios, params, error }) {
+
     try {
-      let video = await $axios.$get('/api/videos/' + params.slug + "/")
+      if ("slug" in params && params.slug !== undefined)
+        var url = '/api/videos/' + params.slug + "/"
+      else
+        var url = "/api/random-video"
+      let video = await $axios.$get(url)
       return { video }
-    } catch (error) {
-      console.error(error)
+    } catch (exception) {
+      handleAxiosError(exception, error)
     }
   }
 }

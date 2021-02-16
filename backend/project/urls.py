@@ -24,10 +24,10 @@ router.register(r'categories', views.CategoryViewSet)
 router.register(r'tags', views.TagViewSet)
 router.register(r'videos', views.VideoViewSet, basename="videos")
 
-
 urlpatterns = [
     #    path('', TemplateView.as_view(template_name='index.html')),
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('api/random-video', views.random_video, name="random-video"),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]

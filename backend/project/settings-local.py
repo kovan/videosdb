@@ -4,7 +4,7 @@ DATABASES = {
 
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'postgres',
+        'NAME': 'tempdb',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'db',
@@ -31,3 +31,4 @@ YOUTUBE_CHANNEL = {
 }
 TRUNCATE_DESCRIPTION_AFTER = "#Sadhguru"
 YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
+VIDEO_FILES_DIR = "videos"

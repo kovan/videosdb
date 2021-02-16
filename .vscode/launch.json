@@ -11,18 +11,9 @@
       "skipFiles": ["<node_internals>/**"],
       "args": ["dev"],
       "type": "node",
+      "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
-      "outputCapture": "std",
-      "sourceMapPathOverrides": {
-        "webpack:///./*": "${workspaceRoot}/frontend/*"
-      }
-    },
-    {
-      "type": "chrome",
-      "request": "launch",
-      "name": "frontend: chrome",
-      "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}/frontend"
+      "outputCapture": "std"
     },
     {
       "type": "node",
@@ -45,18 +36,6 @@
       "justMyCode": false
     },
     {
-      "name": "Django: ipfs",
-      "type": "python",
-      "request": "launch",
-      "program": "manage.py",
-      "args": ["videosdb", "-i"],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/backend",
-      "env": {
-        "DJANGO_SETTINGS_MODULE": "project.settings-local"
-      }
-    },
-    {
       "name": "Django: publish-one",
       "type": "python",
       "request": "launch",
@@ -75,49 +54,14 @@
       "cwd": "${workspaceFolder}/backend"
     },
     {
-      "name": "Django: download-all",
+      "name": "Django custom",
       "type": "python",
       "request": "launch",
       "program": "manage.py",
-      "args": ["videosdb", "--download-all"],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/backend"
-    },
-    {
-      "name": "Django: check",
-      "type": "python",
-      "request": "launch",
-      "program": "manage.py",
-      "args": ["videosdb", "-c"],
+      "args": ["videosdb", "-f"],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/backend",
       "justMyCode": false
-    },
-    {
-      "name": "Docker: Python - Django",
-      "type": "docker",
-      "request": "launch",
-      "preLaunchTask": "docker-run: debug",
-      "python": {
-        "pathMappings": [
-          {
-            "localRoot": "${workspaceFolder}/backend",
-            "remoteRoot": "/app"
-          }
-        ],
-        "projectType": "django"
-      }
-    },
-    {
-      "name": "Docker Node.js Launch",
-      "type": "docker",
-      "request": "launch",
-      "preLaunchTask": "docker-run: debug",
-      "platform": "node",
-      "node": {
-        "package": "${workspaceFolder}/frontend/package.json",
-        "localRoot": "${workspaceFolder}/frontend"
-      }
     },
     {
       "name": "lbry",

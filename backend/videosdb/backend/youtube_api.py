@@ -10,6 +10,7 @@ import youtube_transcript_api
 from autologging import traced
 from executor import execute
 import re
+from urllib.parse import urljoin, urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -42,30 +43,35 @@ class YoutubeAPI:
             cookies=None)
         self.root_url = "https://www.googleapis.com/youtube/v3"
 
-    def _make_request(self, base_url, page_token=""):
-        url = base_url
-        if page_token:
-            url += "&pageToken=" + page_token
+    def _make_request(self, url):
         url += "&key=" + self.yt_key
+        page_token = None
 
-        logger.debug("request: " + url)
-        (response, content) = self.http.request(url)
-        if response.status != 200:
-            raise self.YoutubeAPIError("%s: %s\n %s" %
-                                       (response.status, response.reason, json.loads(content)))
+        while True:
+            if page_token:
+                final_url = url + "&pageToken=" + page_token
+            else:
+                final_url = url
+            logger.debug("request: " + final_url)
+            (response, content) = self.http.request(final_url)
+            if response.status != 200:
+                raise self.YoutubeAPIError("%s: %s\n %s" %
+                                           (response.status, response.reason, json.loads(content)))
 
-        json_response = json.loads(content)
-        items = json_response["items"]
-        if "nextPageToken" in json_response:
-            items += self._make_request(base_url,
-                                        json_response["nextPageToken"])
-        # logger.debug(items)
-        return items
+            json_response = json.loads(content)
+            items = json_response["items"]
+            for item in items:
+                yield item
+
+            if not "nextPageToken" in json_response:
+                break
+            else:
+                page_token = json_response["nextPageToken"]
 
     def _get_playlist_info(self, playlist_id):
         url = self.root_url + "/playlists?part=snippet"
         url += "&id=" + playlist_id
-        items = self._make_request(url)
+        items = list(self._make_request(url))
         playlist = {
             "id": playlist_id,
             "title": items[0]["snippet"]["title"],
@@ -76,42 +82,35 @@ class YoutubeAPI:
     def _get_channnelsection_playlists(self, channel_id):
         url = self.root_url + "/channelSections?part=contentDetails"
         url += "&channelId=" + channel_id
-        items = self._make_request(url)
-        playlist_ids = []
-        for item in items:
+
+        for item in self._make_request(url):
             details = item.get("contentDetails")
             if not details:
                 continue
             if not "playlists" in details:
                 continue
-            playlist_ids += details["playlists"]
-        return playlist_ids
+            for id in details["playlists"]:
+                yield id
 
     def _get_channel_playlists(self, channel_id):
         url = self.root_url + "/playlists?part=snippet%2C+contentDetails"
         url += "&channelId=" + channel_id
-        items = self._make_request(url)
-        playlist_ids = []
-        for item in items:
-            playlist_ids.append(item["id"])
-        return playlist_ids
+
+        for item in self._make_request(url):
+            yield item["id"]
 
     def list_playlists(self, channel_id):
         ids_channelsection = self._get_channnelsection_playlists(channel_id)
         ids_channel = self._get_channel_playlists(channel_id)
 
-        playlist_ids = set(ids_channelsection + ids_channel)
-        playlists = []
+        playlist_ids = set(list(ids_channelsection) + list(ids_channel))
         for _id in playlist_ids:
-            playlist = self._get_playlist_info(_id)
-            playlists.append(playlist)
-
-        return playlists
+            yield self._get_playlist_info(_id)
 
     def get_video_info(self, youtube_id):
         url = self.root_url + "/videos?part=snippet,contentDetails,statistics"
         url += "&id=" + youtube_id
-        items = self._make_request(url)
+        items = list(self._make_request(url))
         if items:
             video_info = {
                 **items[0]["snippet"],
@@ -124,11 +123,9 @@ class YoutubeAPI:
     def list_playlist_videos(self, playlist_id):
         url = self.root_url + "/playlistItems?part=snippet"
         url += "&playlistId=" + playlist_id
-        items = self._make_request(url)
-        video_ids = []
-        for item in items:
-            video_ids.append(item["snippet"]["resourceId"]["videoId"])
-        return video_ids
+
+        for item in self._make_request(url):
+            yield item["snippet"]["resourceId"]["videoId"]
 
     def get_related_videos(self, youtube_id):
         url = self.root_url + "/search?part=snippet&type=video"
@@ -162,7 +159,7 @@ class YoutubeDL:
 
     def __init__(self):
         # --limit-rate 1M "
-        self.BASE_CMD = "youtube-dl -f 'webm[height<=720]/webm[height<=1080]/best' --ffmpeg-location /dev/null --youtube-skip-dash-manifest --ignore-errors "
+        self.BASE_CMD = "youtube-dl -f 'best[height<=720]'  --youtube-skip-dash-manifest --ignore-errors "
 
     def download_video(self, _id):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
