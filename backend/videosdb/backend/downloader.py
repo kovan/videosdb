@@ -241,6 +241,8 @@ class Downloader:
                 continue
             if video.youtube_id in files_in_disk:
                 video.filename = files_in_disk[video.youtube_id]
+                logging.debug("Adding to IPFS: " +
+                              video.filename)
                 video.ipfs_hash = ipfs.add_file(videos_dir + "/" +
                                                 video.filename, wrap_with_directory=True,
                                                 nocopy=True)
