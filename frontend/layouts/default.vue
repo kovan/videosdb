@@ -1,11 +1,11 @@
 <template lang="pug">
 div
   b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-2.pl-3.d-flex.align-middle
-    NuxtLink.mr-auto.h5.text-white.align-middle(to='/') {{ title }}
+    NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ title }}
 
     b-button.mx-1(
       squared,
-      href='/video',
+      @click.default='randomVideo()',
       title='Random video',
       style='border: 0px'
     )
@@ -81,6 +81,17 @@ export default {
     },
   },
   methods: {
+    async randomVideo () {
+      try {
+        var url = "/api/random-video"
+        let video = await this.$axios.$get(url)
+
+        this.$router.push("/video/" + video.slug)
+      } catch (exception) {
+        console.log(exception)
+        handleAxiosError(exception, this.$nuxt.context.error)
+      }
+    },
     toggleSidebar () {
       this.sidebar_visible = !this.sidebar_visible
     },

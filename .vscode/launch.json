@@ -64,10 +64,13 @@
       "justMyCode": false
     },
     {
-      "name": "lbry",
-      "request": "launch",
+      "name": "Django runserver",
       "type": "python",
-      "program": "backend/videosdb/backend/lbry.py"
+      "request": "launch",
+      "program": "manage.py",
+      "args": ["runserver"],
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": false
     }
   ]
 }

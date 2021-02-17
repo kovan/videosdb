@@ -12,8 +12,8 @@ from .models import Category, Tag, Video
 
 @api_view(["GET"])
 def random_video(request):
-    video = Video.objects.order_by("?").first()
-    serializer = VideoSerializer(video)
+    video = Video.objects.filter(excluded=False).order_by("?").first()
+    serializer = VideoListSerializer(video)
     return Response(serializer.data)
 
 
