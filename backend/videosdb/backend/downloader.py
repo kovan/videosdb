@@ -209,7 +209,6 @@ class Downloader:
         videos_dir = os.path.abspath(settings.VIDEO_FILES_DIR)
         if not os.path.exists(videos_dir):
             os.mkdir(videos_dir)
-        files_in_disk = os.listdir(videos_dir)
         ipfs = IPFS()
         ipfs.api.files.mkdir("/videos", parents=True)
         files = ipfs.api.files.ls("/videos")
@@ -220,6 +219,14 @@ class Downloader:
                 if not youtube_id:
                     continue
                 files_in_ipfs[youtube_id] = file
+
+        files_in_disk = {}
+        for file in os.listdir(videos_dir):
+            youtube_id = parse_youtube_id(file)
+            if not youtube_id:
+                continue
+            files_in_disk[youtube_id] = file
+
         # 'Entries': [
         #     {'Size': 0, 'Hash': '', 'Name': 'Software', 'Type': 0}
         # ]
