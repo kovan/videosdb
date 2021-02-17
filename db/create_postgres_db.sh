@@ -16,3 +16,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
 	CREATE DATABASE nithyananda;
 	GRANT ALL PRIVILEGES ON DATABASE nithyananda TO nithyananda;
 EOSQL
+
+gunzip -c /app/sadhguru-dump.sql.gz    | psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres
+gunzip -c /app/nithyananda-dump.sql.gz | psql -v ON_ERROR_STOP=1 --username  nithyananda     --dbname nithyananda
