@@ -211,7 +211,7 @@ class Downloader:
                 continue
 
             if not video.youtube_id in files_in_disk:
-                logging.debug("Downloading " + file)
+                logging.debug("Downloading " + video.youtube_id)
                 with tempfile.TemporaryDirectory() as tmpdir:
                     os.chdir(tmpdir)
                     try:
