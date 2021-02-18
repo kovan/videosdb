@@ -45,18 +45,21 @@ class DNS:
 
 @traced(logging.getLogger(__name__))
 class IPFS:
-    def __init__(self):
+    def __init__(self, files_root="/videos"):
 
         self.host = settings.IPFS_HOST
         self.port = settings.IPFS_PORT
+        self.files_root = files_root
         self.dnslink_update_pending = False
         self.api = ipfshttpclient.connect(
             "/ip4/%s/tcp/%s/http" % (self.host, self.port), session=True)
+        self.api.files.mkdir(files_root, parents=True)
 
     def add_file(self, filename, add_to_dir=True, **kwargs):
         result = self.api.add(
             filename, pin=True, **kwargs)
         ipfs_hash = result[0]["Hash"]
+        assert ipfs_hash
 
         if add_to_dir:
             self.add_to_dir(filename, ipfs_hash)
@@ -66,12 +69,11 @@ class IPFS:
     def add_to_dir(self, filename, _hash):
         from ipfshttpclient.exceptions import StatusError
         src = "/ipfs/" + _hash
-        dst = "/videos/" + os.path.basename(filename)
+        dst = self.files_root + "/" + os.path.basename(filename)
         try:
             self.api.files.rm(dst)
         except StatusError:
             pass
-        self.api.files.mkdir("/videos", parents=True)
         self.api.files.cp(src, dst)
         self.dnslink_update_pending = True
 
@@ -85,7 +87,7 @@ class IPFS:
         if not self.dnslink_update_pending and not force:
             return
 
-        root_hash = self.api.files.stat("/videos")["Hash"]
+        root_hash = self.api.files.stat(self.files_root)["Hash"]
         dns = DNS(self.config["dns_zone"])
         dns.update_dnslink(self.config["dnslink"], root_hash)
         self.dnslink_update_pending = False

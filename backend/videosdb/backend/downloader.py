@@ -241,15 +241,16 @@ class Downloader:
                 continue
             if video.youtube_id in files_in_disk:
                 video.filename = files_in_disk[video.youtube_id]
-                logging.debug("Adding to IPFS: " +
-                              video.filename)
+
                 video.ipfs_hash = ipfs.add_file(videos_dir + "/" +
                                                 video.filename, wrap_with_directory=True,
                                                 nocopy=True)
+                logging.debug("Added to IPFS: %s, %s" %
+                              (video.filename, video.hash))
                 video.save()
                 continue
 
-    @staticmethod
+    @ staticmethod
     def download_and_register_in_ipfs():
         yt_dl = YoutubeDL()
         ipfs = IPFS()
