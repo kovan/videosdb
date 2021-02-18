@@ -245,7 +245,7 @@ class Downloader:
                               video.filename)
                 video.ipfs_hash = ipfs.add_file(videos_dir + "/" +
                                                 video.filename, wrap_with_directory=True,
-                                                nocopy=True, hash="blake2b-256")
+                                                nocopy=True)
                 video.save()
                 continue
 
