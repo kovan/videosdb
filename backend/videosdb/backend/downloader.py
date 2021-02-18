@@ -202,6 +202,7 @@ class Downloader:
         for video in videos:
 
             if video.youtube_id in files_in_ipfs:
+                logging.debug("Already in IPFS:  " + video.youtube_id)
                 file = files_in_ipfs[video.youtube_id]
                 if not video.filename:
                     video.filename = file["Name"]
