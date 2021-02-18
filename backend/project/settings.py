@@ -168,7 +168,7 @@ LOGGING = {
             'formatter': 'verbose'
         },
         'console': {
-            #            'level': 'TRACE' if DEBUG else 'INFO',
+            #            'level': os.environ.get("LOGLEVEL", "INFO"),
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
             'stream': sys.stderr
@@ -176,7 +176,7 @@ LOGGING = {
     },
     'loggers': {
         'videosdb': {
-            'level': 'TRACE' if DEBUG else 'INFO',
+            'level':  os.environ.get("LOGLEVEL", "INFO"),
             'propagate': True,
         },
         "property_manager": {
@@ -184,12 +184,12 @@ LOGGING = {
             'propagate': True,
         },
         'django': {
-            'level': 'TRACE' if DEBUG else 'INFO',
+            'level': os.environ.get("LOGLEVEL", "INFO"),
             'propagate': True,
         },
         '': {
             'handlers': ['file', 'console'],
-            'level': 'TRACE' if DEBUG else 'INFO',
+            'level': os.environ.get("LOGLEVEL", "INFO"),
             'propagate': True
         }
     },
