@@ -179,7 +179,7 @@ class Downloader:
             os.mkdir(videos_dir)
         ipfs = IPFS()
 
-        files = ipfs.api.files.ls("/videos")
+        files = ipfs.api.files.ls("/videos", long=True)
         files_in_ipfs = {}
         if files["Entries"]:
             for file in files["Entries"]:
@@ -230,7 +230,7 @@ class Downloader:
                         continue
 
             video.ipfs_hash = ipfs.add_file(videos_dir + "/" +
-                                            video.filename, wrap_with_directory=True,
+                                            video.filename,
                                             nocopy=True)
             logging.debug("Added to IPFS: %s, %s" %
                           (video.filename, video.ipfs_hash))
