@@ -231,5 +231,5 @@ class Downloader:
                                             video.filename, wrap_with_directory=True,
                                             nocopy=True)
             logging.debug("Added to IPFS: %s, %s" %
-                          (video.filename, video.hash))
+                          (video.filename, video.ipfs_hash))
             video.save()
