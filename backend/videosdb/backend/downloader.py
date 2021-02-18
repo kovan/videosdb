@@ -172,45 +172,13 @@ class Downloader:
                 video.save()
 
     @staticmethod
-    def download_all_to_disk():
-        dst_path = os.getcwd()
+    def download_and_register_in_ipfs():
         yt_dl = YoutubeDL()
-        files = os.listdir(dst_path)
-        files_by_youtube_id = {}
-        for file in files:
-            youtube_id = parse_youtube_id(file["Name"])
-            if not youtube_id:
-                continue
-
-            files_by_youtube_id[youtube_id] = file
-        os.chdir(dst_path)
-        videos = list(Video.objects.filter(excluded=False))
-        random.shuffle(videos)
-        for video in videos:
-            if video.youtube_id in files_by_youtube_id:
-                continue
-            with tempfile.TemporaryDirectory() as tmpdir:
-                os.chdir(tmpdir)
-                try:
-                    video.filename = yt_dl.download_video(
-                        video.youtube_id)
-                except YoutubeDL.UnavailableError as e:
-                    logging.error(repr(e))
-                    continue
-                video.save()
-                try:
-                    shutil.move(video.filename, dst_path)
-                except OSError as e:
-                    logging.exception(e)
-                    continue
-
-    @staticmethod
-    def register_all_in_ipfs_filestore():
         videos_dir = os.path.abspath(settings.VIDEO_FILES_DIR)
         if not os.path.exists(videos_dir):
             os.mkdir(videos_dir)
         ipfs = IPFS()
-        ipfs.api.files.mkdir("/videos", parents=True)
+
         files = ipfs.api.files.ls("/videos")
         files_in_ipfs = {}
         if files["Entries"]:
@@ -241,36 +209,9 @@ class Downloader:
                     video.ipfs_hash = file["Hash"]
                 video.save()
                 continue
-            if video.youtube_id in files_in_disk:
-                video.filename = files_in_disk[video.youtube_id]
 
-                video.ipfs_hash = ipfs.add_file(videos_dir + "/" +
-                                                video.filename, wrap_with_directory=True,
-                                                nocopy=True)
-                logging.debug("Added to IPFS: %s, %s" %
-                              (video.filename, video.hash))
-                video.save()
-                continue
-
-    @ staticmethod
-    def download_and_register_in_ipfs():
-        yt_dl = YoutubeDL()
-        ipfs = IPFS()
-        videos_dir = os.path.abspath(settings.VIDEO_FILES_DIR)
-        if not os.path.exists(videos_dir):
-            os.mkdir(videos_dir)
-        videos = Video.objects.filter(excluded=False).order_by("-duration")
-        files_by_youtube_id = {}
-        files = os.listdir(videos_dir)
-        for file in files:
-            youtube_id = parse_youtube_id(file)
-            if not youtube_id:
-                continue
-            files_by_youtube_id[youtube_id] = file
-
-        for video in videos:
-            if video.youtube_id not in files_by_youtube_id:
-                logging.debug("Adding " + file)
+            if not video.youtube_id in files_in_disk:
+                logging.debug("Downloading " + file)
                 with tempfile.TemporaryDirectory() as tmpdir:
                     os.chdir(tmpdir)
                     try:
@@ -285,12 +226,10 @@ class Downloader:
                     except OSError as e:
                         logging.exception(e)
                         continue
-            elif not video.filename:
-                video.filename = files_by_youtube_id[video.youtube_id]
-                video.save()
 
-            if not video.ipfs_hash:
-                video.ipfs_hash = ipfs.add_file(videos_dir + "/" +
-                                                video.filename, wrap_with_directory=True,
-                                                nocopy=True)
-                video.save()
+            video.ipfs_hash = ipfs.add_file(videos_dir + "/" +
+                                            video.filename, wrap_with_directory=True,
+                                            nocopy=True)
+            logging.debug("Added to IPFS: %s, %s" %
+                          (video.filename, video.hash))
+            video.save()
