@@ -235,8 +235,10 @@ class Downloader:
 
             if video.youtube_id in files_in_ipfs:
                 file = files_in_ipfs[video.youtube_id]
-                video.filename = file["Name"]
-                video.ipfs_hash = file["Hash"]
+                if not video.filename:
+                    video.filename = file["Name"]
+                if not video.ipfs_hash:
+                    video.ipfs_hash = file["Hash"]
                 video.save()
                 continue
             if video.youtube_id in files_in_disk:
