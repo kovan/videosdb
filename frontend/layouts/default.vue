@@ -1,6 +1,6 @@
 <template lang="pug">
 div
-  b-nav.navbar.navbar-dark.sticky-top.bg-dark.p-2.pl-3.d-flex.align-middle
+  b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle
     NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ title }}
 
     b-button.mx-1(
