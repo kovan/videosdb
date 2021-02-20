@@ -135,6 +135,7 @@ class Downloader:
                     video.save()
 
     @staticmethod
+<<<<<<< HEAD
     def download_all_to_ipfs():
         ipfs = IPFS()
         yt_dl = YoutubeDL()
@@ -237,3 +238,5 @@ class Downloader:
             logging.debug("Added to IPFS: %s, %s" %
                           (video.filename, video.ipfs_hash))
             video.save()
+
+        ipfs.update_dnslink()

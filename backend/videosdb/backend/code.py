@@ -4,6 +4,7 @@ import os
 from autologging import traced, TRACE
 from django.conf import settings
 from .downloader import Downloader
+from .ipfs import IPFS
 
 
 def dbg():
@@ -17,6 +18,7 @@ def add_arguments(parser):
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
     parser.add_argument("-d", "--download-one", dest="dl_video_id")
     parser.add_argument("-a", "--download-all", action="store_true")
+    parser.add_argument("-u", "--update-dnslink", action="store_true")
     parser.add_argument(
         "-f", "--download-and-register-in-ipfs", action="store_true")
     parser.add_argument("-o", "--overwrite-hashes", action="store_true")
@@ -39,3 +41,7 @@ def handle(*args, **options):
     if options["download_and_register_in_ipfs"]:
         downloader = Downloader()
         downloader.download_and_register_in_ipfs(options["overwrite_hashes"])
+
+    if options["update_dnslink"]:
+        ipfs = IPFS()
+        ipfs.update_dnslink(force=True)

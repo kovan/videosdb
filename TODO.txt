@@ -1,5 +1,8 @@
 TODO
 ------------------------
+- usar dnslink
+- hacer backend y frontend que sirvan a varias weba a la vez
+- arrancar nodo js-ipfs para descargar por ipfs en el navegador
 - compartir por emule/bittorrent videos?
 - hacer paquetes deb?
 - ver xq el $nuxt.$loading está undefined en prod
