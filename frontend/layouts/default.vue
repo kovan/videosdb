@@ -28,8 +28,8 @@ div
     )
       span.navbar-toggler-icon
 
-  .p-1.px-2.bg-dark(v-if='subtitle')
-    h6.text-white.text-center {{ subtitle }}
+  .p-1.px-2.mt-2(v-if='subtitle')
+    h6.text-center {{ subtitle }}
 
   .container-fluid
     .row
