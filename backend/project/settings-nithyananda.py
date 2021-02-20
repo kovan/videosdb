@@ -21,9 +21,7 @@ DATABASES = {
     }
 }
 
-WWW_ROOT = "https://www.nithyananda.yoga"
-WP_USERNAME = "nithyananda"
-WP_PASS = "P74xhrhtn4WUkX"
+VIDEOSDB_DOMAIN = "nithyananda.yoga"
 YOUTUBE_CHANNEL = {
     "id": "UC9OM-qeiYIPtAkBe9veG5uw",
     "name": "KAILASA's Nithyananda",

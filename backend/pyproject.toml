@@ -25,6 +25,7 @@ isodate = "^0.6.0"
 ipfshttpclient = {git = "https://github.com/ipfs/py-ipfs-http-client.git"}
 executor = "^23.2"
 youtube-dl = {git = "https://github.com/ytdl-org/youtube-dl.git"}
+google-cloud-dns = "^0.32.1"
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.4"

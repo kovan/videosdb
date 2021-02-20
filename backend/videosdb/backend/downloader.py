@@ -198,3 +198,5 @@ class Downloader:
             logging.debug("Added to IPFS: %s, %s" %
                           (video.filename, video.ipfs_hash))
             video.save()
+
+        ipfs.update_dnslink()

@@ -88,6 +88,7 @@ class IPFS:
             return
 
         root_hash = self.api.files.stat(self.files_root)["Hash"]
-        dns = DNS(self.config["dns_zone"])
-        dns.update_dnslink(self.config["dnslink"], root_hash)
+        dns = DNS(settings.VIDEOSDB_DNSZONE)
+        dns.update_dnslink("videos." +
+                           settings.VIDEOSDB_DOMAIN, root_hash)
         self.dnslink_update_pending = False
