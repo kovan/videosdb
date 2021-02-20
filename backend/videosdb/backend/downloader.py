@@ -172,14 +172,14 @@ class Downloader:
                 video.save()
 
     @staticmethod
-    def download_and_register_in_ipfs():
+    def download_and_register_in_ipfs(overwrite_hashes = False):
         yt_dl = YoutubeDL()
         videos_dir = os.path.abspath(settings.VIDEO_FILES_DIR)
         if not os.path.exists(videos_dir):
             os.mkdir(videos_dir)
         ipfs = IPFS()
 
-        files = ipfs.api.files.ls("/videos", long=True)
+        files = ipfs.api.files.ls("/videos", opts=dict(long=True))
         files_in_ipfs = {}
         if files["Entries"]:
             for file in files["Entries"]:
@@ -207,7 +207,8 @@ class Downloader:
                 logging.debug("Already in IPFS:  " + str(file))
                 if not video.filename:
                     video.filename = file["Name"]
-                if not video.ipfs_hash:
+                if not video.ipfs_hash or overwrite_hashes:
+                    logging.debug("writing hash")
                     video.ipfs_hash = file["Hash"]
                 video.save()
                 continue
@@ -231,6 +232,7 @@ class Downloader:
 
             video.ipfs_hash = ipfs.add_file(videos_dir + "/" +
                                             video.filename,
+                                            wrap_with_directory=True,
                                             nocopy=True)
             logging.debug("Added to IPFS: %s, %s" %
                           (video.filename, video.ipfs_hash))

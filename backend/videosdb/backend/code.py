@@ -19,7 +19,7 @@ def add_arguments(parser):
     parser.add_argument("-a", "--download-all", action="store_true")
     parser.add_argument(
         "-f", "--download-and-register-in-ipfs", action="store_true")
-
+    parser.add_argument("-o", "--overwrite-hashes", action="store_true")
 
 @traced(logging.getLogger(__name__))
 def handle(*args, **options):
@@ -38,4 +38,4 @@ def handle(*args, **options):
 
     if options["download_and_register_in_ipfs"]:
         downloader = Downloader()
-        downloader.download_and_register_in_ipfs()
+        downloader.download_and_register_in_ipfs(options["overwrite_hashes"])
