@@ -135,7 +135,6 @@ class Downloader:
                     video.save()
 
     @staticmethod
-<<<<<<< HEAD
     def download_all_to_ipfs():
         ipfs = IPFS()
         yt_dl = YoutubeDL()
@@ -173,7 +172,7 @@ class Downloader:
                 video.save()
 
     @staticmethod
-    def download_and_register_in_ipfs(overwrite_hashes = False):
+    def download_and_register_in_ipfs(overwrite_hashes=False):
         yt_dl = YoutubeDL()
         videos_dir = os.path.abspath(settings.VIDEO_FILES_DIR)
         if not os.path.exists(videos_dir):
