@@ -161,14 +161,14 @@ class YoutubeDL:
         # --limit-rate 1M "
         self.BASE_CMD = "youtube-dl -f 'best[height<=720]'  --youtube-skip-dash-manifest --ignore-errors "
 
-    def download_video(self, _id):
+    def download_video(self, _id, asynchronous=False):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
         cmd = self.BASE_CMD + \
             "--output '%s' %s" % (filename_format,
                                   "http://www.youtube.com/watch?v=" + _id)
         logging.info(cmd)
         try:
-            execute(cmd)
+            execute(cmd, asynchronous)
         except executor.ExternalCommandFailed as e:
             raise self.UnavailableError(repr(e))
         files = os.listdir(".")
