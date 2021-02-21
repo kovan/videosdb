@@ -18,7 +18,7 @@ b-container.m-0.p-0.mx-auto
       ul
         li
           a(
-            :href='"https://ipfs." + $config.domain + "/ipfs/" + this.video.ipfs_hash + "?filename=" + this.video.filename',
+            :href='"https://videos." + $config.domain + "/" + this.video.filename',
             download
           ) Using HTTP (standard)
         li
