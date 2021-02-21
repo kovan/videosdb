@@ -8,6 +8,8 @@ div
 <script>
 
 
+import { handleAxiosError, getConfigForRequest } from "~/utils/utils"
+
 export default {
   data () {
     return {
@@ -27,8 +29,9 @@ export default {
     })
   },
   head () {
+    const config = getConfigForRequest(this.$nuxt.context.req)
     return {
-      title: "Search",
+      title: "Search" + " - " + config.title,
       meta: [
         {
           hid: 'description',

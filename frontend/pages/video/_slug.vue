@@ -50,17 +50,18 @@ b-container.m-0.p-0.mx-auto
 <script>
 
 
-import handleAxiosError from "~/utils/utils"
+import { handleAxiosError, getConfigForRequest } from "~/utils/utils"
 
 export default {
   head () {
+    const config = getConfigForRequest(this.$nuxt.context.req)
     return {
-      title: this.video.title,
+      title: this.video.title + " - " + config.title,
       meta: [
         {
           hid: "description",
           name: "description",
-          content: this.video.description
+          content: this.video.description_trimmed
         }
       ]
     }

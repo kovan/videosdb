@@ -49,7 +49,7 @@
 
 <script >
 
-import handleAxiosError from "~/utils/utils"
+import { handleAxiosError } from "~/utils/utils"
 export default {
 
   data: () => {

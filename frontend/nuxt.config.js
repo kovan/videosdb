@@ -3,16 +3,10 @@ export default {
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head() {
     return {
-      titleTemplate: '%s - ' + this.$config.title,
-      title: this.$config.title,
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        {
-          hid: 'description',
-          name: 'description',
-          content: this.$config.subtitle,
-        },
+        ,
       ],
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     }
@@ -55,14 +49,7 @@ export default {
   axios: {
     proxy: true,
     debug: process.env.DEBUG ? true : false,
-    baseURL: process.env.API_URL,
-  },
-
-  publicRuntimeConfig: {
-    domain: process.env.VIDEOSDB_DOMAIN,
-    title: process.env.VIDEOSDB_TITLE,
-    subtitle: process.env.VIDEOSDB_SUBTITLE,
-    gcs_url: process.env.GCS_URL,
+    baseURL: process.env.API_URL || 'http://localhost:8000',
   },
 
   // privateRuntimeConfig: {
@@ -72,7 +59,7 @@ export default {
   // },
 
   proxy: {
-    '/api': process.env.API_URL,
+    '/api': process.env.API_URL || 'http://localhost:8000',
   },
 
   // Build Configuration (https://go.nuxtjs.dev/config-build)

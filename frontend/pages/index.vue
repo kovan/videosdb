@@ -4,17 +4,18 @@ b-container
 </template>
 
 <script>
-import Explorer from '~/components/Explorer.vue'
+import { getConfigForRequest } from "~/utils/utils"
 
 export default {
   head () {
+    const config = getConfigForRequest(this.$nuxt.context.req)
     return {
-      title: "Latest videos",
+      title: config.title,
       meta: [
         {
           hid: 'description',
           name: 'description',
-          content: "Latest videos"
+          content: config.subtitle
         }
       ],
     }

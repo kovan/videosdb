@@ -5,11 +5,12 @@ b-container
 </template>
 
 <script>
-import handleAxiosError from "~/utils/utils"
+import { handleAxiosError, getConfigForRequest } from "~/utils/utils"
 export default {
   head () {
+    const config = getConfigForRequest(this.$nuxt.context.req)
     return {
-      title: this.category.name,
+      title: this.category.nam + " - " + config.title,
       meta: [
         {
           hid: 'description',

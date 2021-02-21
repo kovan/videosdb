@@ -1,4 +1,5 @@
 function handleAxiosError(axiosError, errorFunc) {
+  console.error(axiosError)
   if (axiosError.response) {
     errorFunc({
       statusCode: axiosError.response.status,
@@ -11,5 +12,43 @@ function handleAxiosError(axiosError, errorFunc) {
     })
   }
 }
+function getConfigForRequest(req) {
+  const configs = {
+    'nithyananda.yoga': {
+      domain: 'nithyananda.yoga',
+      title: "KAILASA's Nithyananda",
+      subtitle: '',
+      gcs_url: 'https://cse.google.com/cse.js?cx=043c6e15fcd358d5a',
+    },
+    'sadhguru.digital': {
+      domain: 'sadhguru.digital',
+      title: 'Sadhguru wisdom',
+      subtitle:
+        'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.',
+      gcs_url: 'https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635',
+    },
+    localhost: {
+      domain: 'localhost',
+      title: 'Test title',
+      subtitle: 'test subtitle',
+      gcs_url: '',
+    },
+  }
+  const host = req ? req.headers.host : window.location.host.split(':')[0]
+  const config = configs[host] ? configs[host] : configs['localhost']
+  return config
+}
 
-export default handleAxiosError
+function getTitleTemplate() {
+  debugger
+  return '%s - ' + getConfigForRequest().title
+  //   titleTemplate: '%s - ' + utils.getConfigForRequest().title,
+  // title: this.$config.title,
+  //   {
+  //     hid: 'description',
+  //     name: 'description',
+  //     content: this.$config.subtitle,
+  //   }
+}
+
+export { handleAxiosError, getConfigForRequest, getTitleTemplate }

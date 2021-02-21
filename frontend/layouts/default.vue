@@ -57,7 +57,7 @@ div
 
 <script>
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-import handleAxiosError from "~/utils/utils"
+import { handleAxiosError, getConfigForRequest } from "~/utils/utils"
 export default {
   scrollToTop: true,
   components: {
@@ -66,13 +66,14 @@ export default {
     BIconShuffle
   },
   data () {
+    const config = getConfigForRequest(this.$nuxt.context.req)
     return {
       search_input: "",
       sidebar_visible: false,
       categories: [],
 
-      title: this.$config.title,
-      subtitle: this.$config.subtitle,
+      title: config.title,
+      subtitle: config.subtitle,
     }
   },
   computed: {
@@ -110,6 +111,8 @@ export default {
     },
   },
   async fetch () {
+    const config = getConfigForRequest(this.$nuxt.context.req)
+    this.title = config.title
     try {
       this.categories = await this.$axios.$get(
         '/api/categories/?ordering=-use_count'
