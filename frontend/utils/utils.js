@@ -42,4 +42,4 @@ function getConfigForRequest(req) {
   return config
 }
 
-export { handleAxiosError, getConfigForRequest, getTitleTemplate }
+export { handleAxiosError, getConfigForRequest }
