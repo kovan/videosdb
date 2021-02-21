@@ -13,32 +13,41 @@ function handleAxiosError(axiosError, errorFunc) {
   }
 }
 function getConfigForRequest(req) {
-  const configs = {
-    'www.nithyananda.yoga': {
-      domain: 'nithyananda.yoga',
-      title: "KAILASA's Nithyananda",
-      subtitle: '',
-      gcs_url: 'https://cse.google.com/cse.js?cx=043c6e15fcd358d5a',
-    },
-    'www.sadhguru.digital': {
-      domain: 'sadhguru.digital',
-      title: 'Sadhguru wisdom',
-      subtitle:
-        'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.',
-      gcs_url: 'https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635',
-    },
-    localhost: {
-      domain: 'localhost',
-      title: 'Test title',
-      subtitle: 'test subtitle',
-      gcs_url: '',
-    },
-  }
   const host = req
     ? req.headers.host.split(':')[0]
     : window.location.host.split(':')[0]
 
-  const config = configs[host] ? configs[host] : configs['localhost']
+  var config = null
+
+  switch (host) {
+    case 'www.nithyananda.yoga':
+    case 'nithyananda.yoga':
+      config = {
+        domain: 'nithyananda.yoga',
+        title: "KAILASA's Nithyananda",
+        subtitle: '',
+        gcs_url: 'https://cse.google.com/cse.js?cx=043c6e15fcd358d5a',
+      }
+      break
+    case 'www.sadhguru.digital':
+    case 'sadhguru.digital':
+      config = {
+        domain: 'sadhguru.digital',
+        title: 'Sadhguru wisdom',
+        subtitle:
+          'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.',
+        gcs_url: 'https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635',
+      }
+      break
+    default:
+      config = {
+        domain: 'localhost',
+        title: 'Test title',
+        subtitle: 'test subtitle',
+        gcs_url: '',
+      }
+  }
+
   return config
 }
 
