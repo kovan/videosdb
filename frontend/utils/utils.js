@@ -34,21 +34,12 @@ function getConfigForRequest(req) {
       gcs_url: '',
     },
   }
-  const host = req ? req.headers.host : window.location.host.split(':')[0]
+  const host = req
+    ? req.headers.host.split(':')[0]
+    : window.location.host.split(':')[0]
+  console.log(host)
   const config = configs[host] ? configs[host] : configs['localhost']
   return config
-}
-
-function getTitleTemplate() {
-  debugger
-  return '%s - ' + getConfigForRequest().title
-  //   titleTemplate: '%s - ' + utils.getConfigForRequest().title,
-  // title: this.$config.title,
-  //   {
-  //     hid: 'description',
-  //     name: 'description',
-  //     content: this.$config.subtitle,
-  //   }
 }
 
 export { handleAxiosError, getConfigForRequest, getTitleTemplate }
