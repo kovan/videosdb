@@ -14,13 +14,13 @@ function handleAxiosError(axiosError, errorFunc) {
 }
 function getConfigForRequest(req) {
   const configs = {
-    'nithyananda.yoga': {
+    'www.nithyananda.yoga': {
       domain: 'nithyananda.yoga',
       title: "KAILASA's Nithyananda",
       subtitle: '',
       gcs_url: 'https://cse.google.com/cse.js?cx=043c6e15fcd358d5a',
     },
-    'sadhguru.digital': {
+    'www.sadhguru.digital': {
       domain: 'sadhguru.digital',
       title: 'Sadhguru wisdom',
       subtitle:
@@ -37,7 +37,7 @@ function getConfigForRequest(req) {
   const host = req
     ? req.headers.host.split(':')[0]
     : window.location.host.split(':')[0]
-  console.log(host)
+
   const config = configs[host] ? configs[host] : configs['localhost']
   return config
 }
