@@ -18,7 +18,7 @@ b-container.m-0.p-0.mx-auto
       ul
         li
           a(
-            :href='"https://videos." + $config.domain + "/" + this.video.filename',
+            :href='"https://videos." + this.config.domain + "/" + this.video.filename',
             download
           ) Using HTTP (standard)
         li
@@ -68,7 +68,8 @@ export default {
   },
   data () {
     return {
-      video: {}
+      video: {},
+      config: getConfigForRequest(this.$nuxt.context.req)
     }
   },
   async asyncData ({ $axios, params, error }) {

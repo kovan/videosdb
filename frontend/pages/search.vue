@@ -17,14 +17,14 @@ export default {
     }
   },
   mounted () {
-    const gcs_url = this.$config.gcs_url
-    this.$loadScript(gcs_url).then(() => {
+    const config = getConfigForRequest(this.$nuxt.context.req)
+    this.$loadScript(config.gcs_url).then(() => {
       this.loaded = true
     })
   },
   destroyed () {
-    const gcs_url = this.$config.gcs_url
-    this.$unloadScript(gcs_url).then(() => {
+    const config = getConfigForRequest(this.$nuxt.context.req)
+    this.$unloadScript(config.gcs_url).then(() => {
       this.loaded = false
     })
   },

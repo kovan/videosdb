@@ -41,7 +41,7 @@ function getConfigForRequest(req) {
       break
     default:
       config = {
-        domain: 'localhost',
+        domain: host,
         title: 'Test title',
         subtitle: 'test subtitle',
         gcs_url: '',
