@@ -168,7 +168,7 @@ class YoutubeDL:
                                   "http://www.youtube.com/watch?v=" + _id)
         logging.info(cmd)
         try:
-            execute(cmd, asynchronous)
+            execute(cmd, asynchronous=asynchronous)
         except executor.ExternalCommandFailed as e:
             raise self.UnavailableError(repr(e))
         files = os.listdir(".")
