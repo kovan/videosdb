@@ -21,7 +21,7 @@ django-extensions = "^3.1.0"
 six = "^1.15.0"
 django-test-without-migrations = "^0.6"
 isodate = "^0.6.0"
-ipfshttpclient = {git = "https://github.com/ipfs/py-ipfs-http-client.git"}
+ipfshttpclient = {git = "https://github.com/kovan/py-ipfs-http-client.git"}
 executor = "^23.2"
 youtube-dl = {git = "https://github.com/ytdl-org/youtube-dl.git"}
 google-cloud-dns = "^0.32.1"

@@ -172,8 +172,10 @@ class YoutubeDL:
         except executor.ExternalCommandFailed as e:
             raise self.UnavailableError(repr(e))
         files = os.listdir(".")
-        filename = max(files, key=os.path.getctime)
-        return filename
+        if files:
+            filename = max(files, key=os.path.getctime)
+            return filename
+        return None
 
     def download_thumbnail(self, _id):
         execute(self.BASE_CMD +
