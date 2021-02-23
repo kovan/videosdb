@@ -10,6 +10,7 @@ from django.utils import timezone
 from .models import Video, Category
 from .backend.downloader import Downloader
 from .backend.youtube_api import YoutubeAPI
+from .backend.ipfs import IPFS
 
 logger = logging.getLogger(__name__)
 
@@ -78,3 +79,8 @@ class DownloaderTest(TestCase):
     def test_download(self):
         d = Downloader()
         d.process_video("tSc_rtEtpm4")
+
+
+class IPFSTest(TestCase):
+    def test_connect(self):
+        ipfs = IPFS()

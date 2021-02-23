@@ -18,12 +18,12 @@ b-container.m-0.p-0.mx-auto
       ul
         li
           a(
-            :href='"https://videos." + this.config.domain + "/" + this.video.filename',
+            :href='"https://videos." + this.config.domain + "/" + encodeURIComponent(this.video.filename)',
             download
           ) Using HTTP (standard)
         li
           a(
-            :href='"ipfs://" + this.video.ipfs_hash + "?filename=" + this.video.filename'
+            :href='"ipfs://" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)'
           ) Using IPFS (experimental)
 
     .my-4(v-if='this.video.categories')
