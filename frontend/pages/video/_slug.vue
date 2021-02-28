@@ -26,14 +26,14 @@ b-container.m-0.p-0.mx-auto
             :href='"ipfs://" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)'
           ) Using IPFS (experimental)
 
-    .my-4(v-if='this.video.categories')
+    .my-4(v-if='this.video.categories && this.video.categories.length > 0')
       h6 Categories
       ul
         li(v-for='cat in this.video.categories', :key='cat.id')
           NuxtLink(:to='"/category/" + cat.slug')
             | {{ cat.name }}
 
-    .my-4(v-if='this.video.tags')
+    .my-4(v-if='this.video.tags && this.video.tags.length > 0')
       h6 Tags
       NuxtLink.p-1(
         :to='"/tag/" + tag.slug',

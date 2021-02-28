@@ -75,14 +75,13 @@ export default {
     extractCSS: true,
   },
   server: {
-    host: '0.0.0.0',
-    https:
-      process.env.NODE_ENV !== 'production'
-        ? {
-            key: fs.readFileSync(path.resolve(__dirname, 'server.key')),
-            cert: fs.readFileSync(path.resolve(__dirname, 'server.crt')),
-          }
-        : {},
+    // https:
+    //   process.env.NODE_ENV !== 'production'
+    //     ? {
+    //         key: fs.readFileSync(path.resolve(__dirname, 'server.key')),
+    //         cert: fs.readFileSync(path.resolve(__dirname, 'server.crt')),
+    //       }
+    //     : {},
   },
 
   env: {},
