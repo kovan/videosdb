@@ -11,23 +11,9 @@ import logging
 import tempfile
 import os
 import youtube_transcript_api
+import itertools
 
 logger = logging.getLogger(__name__)
-
-
-_ntuple_diskusage = namedtuple('usage', 'total used free')
-
-
-def disk_usage(path):
-    """Return disk usage statistics about the given path.
-
-    Returned valus is a named tuple with attributes 'total', 'used' and
-    'free', which are the amount of total, used and free space, in bytes.
-    """
-    st = os.statvfs(path)
-    free = st.f_bavail * st.f_frsize
-    total = st.f_blocks * st.f_frsize
-    used = (st.f_blocks - st.f_bfree) * st.f_frsize
 
 
 @traced(logging.getLogger(__name__))
@@ -90,16 +76,22 @@ class Downloader:
             else:
                 self.enqueue_videos(video_ids, playlist["title"])
 
-        playlists = self.yt_api.list_playlists(channel_id)
-        for playlist in playlists:
-            process_playlist(playlist)
+        channel_info = list(self.yt_api.get_channel_info(
+            channel_id))[0]
 
-        # threads = []
-        # for i in range(len(playlists)):
-        #     thread = self.loop.create_task(
-        #         process_playlist(playlists[i]))
-        #     threads.append(thread)
-        # self.loop.run_until_complete(asyncio.gather(*threads))
+        all_uploads_playlist = self.yt_api.get_playlist_info(
+            channel_info["contentDetails"]["relatedPlaylists"]["uploads"])
+        playlists1 = self.yt_api.list_channnelsection_playlists(channel_id)
+        playlists2 = self.yt_api.list_channel_playlists(channel_id)
+        playlists = itertools.chain(
+            [all_uploads_playlist], playlists1, playlists2)
+
+        processed_playlists_ids = []
+        for playlist in playlists:
+            if playlist in processed_playlists_ids:
+                continue
+            process_playlist(playlist)
+            processed_playlists_ids.append(playlist)
 
     def download_one(self, youtube_id):
         self.enqueue_videos([youtube_id])

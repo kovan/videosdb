@@ -1,3 +1,6 @@
+import path from 'path'
+import fs from 'fs'
+
 export default {
   // target: 'static',
   // Global page headers (https://go.nuxtjs.dev/config-head)
@@ -71,11 +74,16 @@ export default {
     },
     extractCSS: true,
   },
-  // server: {
-  //   port: 3000, // default: 3000
-  //   host: '0.0.0.0', // default: localhost,
-  //   timing: false,
-  // },
+  server: {
+    host: '0.0.0.0',
+    https:
+      process.env.NODE_ENV !== 'production'
+        ? {
+            key: fs.readFileSync(path.resolve(__dirname, 'server.key')),
+            cert: fs.readFileSync(path.resolve(__dirname, 'server.crt')),
+          }
+        : {},
+  },
 
   env: {},
 

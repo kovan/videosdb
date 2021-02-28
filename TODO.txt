@@ -31,7 +31,10 @@ TODO
     - estadisticas
 
 
-
+ ERROR  Request path contains unescaped characters (internal server error 500)
+ https://www.sadhguru.digital/category/%E2%9A%A1-sadhguru-exclusive-%E2%9A%A1/
+ https://www.sadhguru.digital/category/%E2%80%8Bsadhguru-on-%E2%80%8Bcorruption/
+ https://www.sadhguru.digital/category/%E2%9C%A8january-2021%E2%9C%A8/
 
 
 

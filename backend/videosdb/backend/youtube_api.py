@@ -68,7 +68,7 @@ class YoutubeAPI:
             else:
                 page_token = json_response["nextPageToken"]
 
-    def _get_playlist_info(self, playlist_id):
+    def get_playlist_info(self, playlist_id):
         url = self.root_url + "/playlists?part=snippet"
         url += "&id=" + playlist_id
         items = list(self._make_request(url))
@@ -79,7 +79,7 @@ class YoutubeAPI:
         }
         return playlist
 
-    def _get_channnelsection_playlists(self, channel_id):
+    def list_channnelsection_playlists(self, channel_id):
         url = self.root_url + "/channelSections?part=contentDetails"
         url += "&channelId=" + channel_id
 
@@ -90,22 +90,14 @@ class YoutubeAPI:
             if not "playlists" in details:
                 continue
             for id in details["playlists"]:
-                yield id
+                yield self.get_playlist_info(id)
 
-    def _get_channel_playlists(self, channel_id):
+    def list_channel_playlists(self, channel_id):
         url = self.root_url + "/playlists?part=snippet%2C+contentDetails"
         url += "&channelId=" + channel_id
 
         for item in self._make_request(url):
-            yield item["id"]
-
-    def list_playlists(self, channel_id):
-        ids_channelsection = self._get_channnelsection_playlists(channel_id)
-        ids_channel = self._get_channel_playlists(channel_id)
-
-        playlist_ids = set(list(ids_channelsection) + list(ids_channel))
-        for _id in playlist_ids:
-            yield self._get_playlist_info(_id)
+            yield self.get_playlist_info(item["id"])
 
     def get_video_info(self, youtube_id):
         url = self.root_url + "/videos?part=snippet,contentDetails,statistics"
@@ -132,6 +124,11 @@ class YoutubeAPI:
         url += "&relatedToVideoId=" + youtube_id
         items = self._make_request(url)
         return items
+
+    def get_channel_info(self, channel_id):
+        url = self.root_url + "/channels?part=snippet%2CcontentDetails%2Cstatistics"
+        url += "&id=" + channel_id
+        return self._make_request(url)
 
     def get_video_transcript(self, youtube_id):
         # url = self.root_url + "/captions?part=id,snippet&videoId=" + youtube_id

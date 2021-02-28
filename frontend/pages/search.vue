@@ -13,25 +13,26 @@ import { handleAxiosError, getConfigForRequest } from "~/utils/utils"
 export default {
   data () {
     return {
-      loaded: false
+      loaded: false,
+      config: {}
     }
   },
+  created () {
+    this.config = getConfigForRequest(this.$nuxt.context.req)
+  },
   mounted () {
-    const config = getConfigForRequest(this.$nuxt.context.req)
-    this.$loadScript(config.gcs_url).then(() => {
+    this.$loadScript(this.config.gcs_url).then(() => {
       this.loaded = true
     })
   },
   destroyed () {
-    const config = getConfigForRequest(this.$nuxt.context.req)
-    this.$unloadScript(config.gcs_url).then(() => {
+    this.$unloadScript(this.config.gcs_url).then(() => {
       this.loaded = false
     })
   },
   head () {
-    const config = getConfigForRequest(this.$nuxt.context.req)
     return {
-      title: "Search" + " - " + config.title,
+      title: "Search" + " - " + this.config.title,
       meta: [
         {
           hid: 'description',

@@ -32,6 +32,7 @@ pylint = "^2.6.0"
 django-extensions = "^3.1.0"
 autopep8 = "^1.5.4"
 jedi = "<0.18"
+django-sslserver = "^0.22"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

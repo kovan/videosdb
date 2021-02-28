@@ -58,7 +58,7 @@
       "type": "python",
       "request": "launch",
       "program": "manage.py",
-      "args": ["videosdb", "--update-dnslink"],
+      "args": ["videosdb", "-c"],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/backend",
       "justMyCode": false
