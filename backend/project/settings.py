@@ -34,7 +34,6 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Application definition
 
 INSTALLED_APPS = [
-    "sslserver",
     "test_without_migrations",
     "videosdb.apps.VideosdbConfig",
     "rest_framework",
