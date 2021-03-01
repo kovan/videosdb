@@ -6,7 +6,8 @@ b-container.m-0.p-0.mx-auto
         type='iframe',
         aspect='16by9',
         :src='"https://www.youtube.com/embed/" + this.video.youtube_id + "?rel=0"',
-        allowfullscreen
+        allowfullscreen,
+        autoplay
       )
 
     .my-4(v-if='this.video.description_trimmed')

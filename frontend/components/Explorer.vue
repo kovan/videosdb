@@ -27,8 +27,13 @@
             NuxtLink(:to='"/video/" + video.slug')
               b-img.bd-placeholder-img.card-img-top(
                 :src='video.thumbnails.medium.url',
-                :alt='video.description_trimmed',
-                width='100%'
+                width='100%',
+                :id='video.youtube_id'
+              )
+              b-popover(
+                :target='video.youtube_id',
+                triggers='hover focus',
+                :content='video.description_trimmed'
               )
             .card-body
               p.card-text
