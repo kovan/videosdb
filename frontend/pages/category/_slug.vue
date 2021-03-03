@@ -10,7 +10,7 @@ export default {
   head () {
     const config = getConfigForRequest(this.$nuxt.context.req)
     return {
-      title: this.category.nam + " - " + config.title,
+      title: this.category.name + " - " + config.title,
       meta: [
         {
           hid: 'description',
