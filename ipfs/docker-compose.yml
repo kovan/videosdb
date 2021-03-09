@@ -1,12 +1,10 @@
 version: "2.1"
 services:
   ipfs:
-    image: ghcr.io/linuxserver/ipfs
+    image: go-ipfs
+    build:
+      context: .
     container_name: ipfs
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
 #    volumes:
 #      - /var/opt/ipfs:/config
     ports:
@@ -14,5 +12,4 @@ services:
       - 4001:4001
       - 5001:5001
       - 8080:8080
-      - 8443:443 #optional
     restart: unless-stopped

@@ -31,4 +31,4 @@ YOUTUBE_CHANNEL = {
 }
 TRUNCATE_DESCRIPTION_AFTER = "#Sadhguru"
 YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
-VIDEO_FILES_DIR = "/mnt/1tb/Videos"
+VIDEO_FILES_DIR = "/mnt/videos"
