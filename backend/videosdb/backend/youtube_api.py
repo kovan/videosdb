@@ -135,7 +135,7 @@ class YoutubeAPI:
         # transcript = transcripts.find_transcript(
         #     ("en", "en-US", "en-GB")).fetch()
         transcripts = youtube_transcript_api.YouTubeTranscriptApi.get_transcript(
-            youtube_id, languages=("en", "en-US", "en-GB"), cookies=cookies)
+            youtube_id, languages=("en", "en-US", "en-GB"))
 
         result = ""
         for d in transcripts:
