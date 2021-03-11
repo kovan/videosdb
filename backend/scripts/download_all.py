@@ -5,10 +5,11 @@ import os
 
 from django.conf import settings
 
+
 def run():
     os.chdir(settings.VIDEO_FILES_DIR)
     yt_dl = YoutubeDL()
-    for video in Video.objects.filter(excluded=False):
+    for video in Video.objects.filter(excluded=False).order_by("?"):
         logging.debug("Downloading " + video.youtube_id)
         try:
             yt_dl.download_video(

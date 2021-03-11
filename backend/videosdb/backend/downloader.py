@@ -176,15 +176,17 @@ class Downloader:
         if files["Entries"]:
             for file in files["Entries"]:
                 youtube_id = parse_youtube_id(file["Name"])
-                if not youtube_id:
-                    continue
+                if not youtube_id or youtube_id in files_in_ipfs:
+                    raise Exception()
                 files_in_ipfs[youtube_id] = file
 
         files_in_disk = {}
         for file in os.listdir(videos_dir):
             youtube_id = parse_youtube_id(file)
-            if not youtube_id:
+            if file.endswith(".part"):
                 continue
+            if not youtube_id or youtube_id in files_in_disk:
+                raise Exception()
             files_in_disk[youtube_id] = file
 
         # 'Entries': [
@@ -222,12 +224,13 @@ class Downloader:
                         logging.exception(e)
                         continue
 
+            logging.debug("Adding to IPFS: ID:%s, title: %s, Filename: %s, Hash: %s" %
+                          (video.youtube_id, video.title, video.filename, video.ipfs_hash))
             video.ipfs_hash = ipfs.add_file(videos_dir + "/" +
                                             video.filename,
                                             wrap_with_directory=True,
                                             nocopy=True)
-            logging.debug("Added to IPFS: %s, %s" %
-                          (video.filename, video.ipfs_hash))
+
             video.save()
 
         ipfs.update_dnslink()

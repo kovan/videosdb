@@ -1,0 +1,9 @@
+Package: videosdb
+Version: 1.0-1
+Section: base
+Priority: optional
+Architecture: i386
+Depends: mldonkey-server (>= 3.1.6-1), transmission-daemon (>= 2.94), python3-pip, rclone, git
+Maintainer: Your Name <you@email.com>
+Description: videosdb
+ videos database files servers 
