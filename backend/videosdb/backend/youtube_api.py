@@ -39,8 +39,7 @@ class YoutubeAPI:
     def __init__(self, yt_key):
         self.yt_key = yt_key
         self.http = httplib2.Http(".cache")
-        self.transcript_api = youtube_transcript_api.YouTubeTranscriptApi(
-            cookies=None)
+
         self.root_url = "https://www.googleapis.com/youtube/v3"
 
     def _make_request(self, url):
@@ -135,12 +134,11 @@ class YoutubeAPI:
         # transcripts = self.transcript_fetcher.fetch(youtube_id)
         # transcript = transcripts.find_transcript(
         #     ("en", "en-US", "en-GB")).fetch()
-
-        transcript = self.transcript_api.get(
-            youtube_id, languages=("en", "en-US", "en-GB"))
+        transcripts = youtube_transcript_api.YouTubeTranscriptApi.get_transcript(
+            youtube_id, languages=("en", "en-US", "en-GB"), cookies=cookies)
 
         result = ""
-        for d in transcript:
+        for d in transcripts:
             result += d["text"] + " "
         return _sentence_case(result.capitalize() + ".")
 
