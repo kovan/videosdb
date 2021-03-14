@@ -10,7 +10,7 @@ AssertPathIsDirectory=/mnt/ipfs-repo
 [Service]
 Environment="IPFS_PATH=/mnt/ipfs-repo"
 ExecStart=nice -n 10 /usr/local/bin/ipfs daemon
-Restart=on-failure
+Restart=always
 
 [Install]
 WantedBy=default.target
