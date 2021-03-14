@@ -22,7 +22,7 @@ class Downloader:
         self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
 
     def process_video(self, youtube_id, category_name=None):
-        video, created = Video.objects.get_or_create(youtube_id=youtube_id)
+        video, created = Video.objects.ºn(youtube_id=youtube_id)
         # if new video or missing info, download info:
 
         if not video.full_response:
@@ -127,43 +127,6 @@ class Downloader:
                     video.save()
 
     @staticmethod
-    def download_all_to_ipfs():
-        ipfs = IPFS()
-        yt_dl = YoutubeDL()
-        ipfs.api.files.mkdir("/videos", parents=True)
-        files = ipfs.api.files.ls("/videos")
-        files_by_youtube_id = {}
-        if files["Entries"]:
-            for file in files["Entries"]:
-                youtube_id = parse_youtube_id(file["Name"])
-                if not youtube_id:
-                    continue
-
-                files_by_youtube_id[youtube_id] = file
-        # 'Entries': [
-        #     {'Size': 0, 'Hash': '', 'Name': 'Software', 'Type': 0}
-        # ]
-        videos = Video.objects.filter(excluded=False)
-        for video in videos:
-            if video.youtube_id in files_by_youtube_id:
-                file = files_by_youtube_id[video.youtube_id]
-                if not video.ipfs_hash:
-                    video.ipfs_hash = file["Hash"]
-                video.save()
-                continue
-            with tempfile.TemporaryDirectory() as tmpdir:
-                os.chdir(tmpdir)
-                try:
-                    video.filename = yt_dl.download_video(
-                        video.youtube_id)
-                except YoutubeDL.UnavailableError as e:
-                    logging.error(repr(e))
-                    continue
-                video.ipfs_hash = ipfs.add_file(
-                    video.filename)
-                video.save()
-
-    @staticmethod
     def download_and_register_in_ipfs(overwrite_hashes=False):
         yt_dl = YoutubeDL()
         videos_dir = os.path.abspath(settings.VIDEO_FILES_DIR)
@@ -192,20 +155,8 @@ class Downloader:
         # 'Entries': [
         #     {'Size': 0, 'Hash': '', 'Name': 'Software', 'Type': 0}
         # ]
-        videos = Video.objects.filter(excluded=False).order_by("-duration")
+        videos = Video.objects.filter(excluded=False).order_by("?")
         for video in videos:
-
-            if video.youtube_id in files_in_ipfs:
-                file = files_in_ipfs[video.youtube_id]
-
-                logging.debug("Already in IPFS:  " + str(file))
-                if not video.filename:
-                    video.filename = file["Name"]
-                if not video.ipfs_hash or overwrite_hashes:
-                    logging.debug("writing hash")
-                    video.ipfs_hash = file["Hash"]
-                video.save()
-                continue
 
             if not video.youtube_id in files_in_disk:
                 logging.debug("Downloading " + video.youtube_id)
@@ -223,6 +174,21 @@ class Downloader:
                     except OSError as e:
                         logging.exception(e)
                         continue
+            file = files_in_disk.get(video.youtube_id)
+            if file and file != video.filename:
+                video.filename = file
+
+            if video.youtube_id in files_in_ipfs:
+                file = files_in_ipfs[video.youtube_id]
+
+                logging.debug("Already in IPFS:  " + str(file))
+                if not video.filename:
+                    video.filename = file["Name"]
+                if not video.ipfs_hash or overwrite_hashes:
+                    logging.debug("writing hash")
+                    video.ipfs_hash = file["Hash"]
+                video.save()
+                continue
 
             logging.debug("Adding to IPFS: ID:%s, title: %s, Filename: %s, Hash: %s" %
                           (video.youtube_id, video.title, video.filename, video.ipfs_hash))
