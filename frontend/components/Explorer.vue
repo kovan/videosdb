@@ -40,7 +40,7 @@
                 NuxtLink(:to='"/video/" + video.slug')
                   | {{ video.title }}
               .d-flex.justify-content-between.align-items-center
-                small.text-muted {{ video.duration_humanized }}
+                small.text-muted {{ video.yt_published_date.substring(0, 10) }}, {{ video.duration_humanized }}h
       .overflow-auto(v-if='this.videos.length')
         b-pagination-nav(
           size='lg',
