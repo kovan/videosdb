@@ -6,6 +6,13 @@
          "project_id": "worpdress-279321",
          "managed_zone": "sadhguru"
       }
+    },
+    "videos.sadhguru.digital": {
+      "provider": "gcp",
+      "provider_config": {
+         "project_id": "worpdress-279321",
+         "managed_zone": "sadhguru"
+      }
     }
   }
 }
