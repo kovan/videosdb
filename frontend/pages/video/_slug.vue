@@ -2,7 +2,7 @@
 b-container.m-0.p-0.mx-auto
   b-card.m-0.p-0(:title='this.video.title')
     small
-      | {{ this.video.yt_published_date.substring(0, 10) }}, {{ this.video.duration_humanized }}h
+      | Published: {{ new Date(this.video.yt_published_date).toLocaleDateString() }}. Duration: {{ this.video.duration_humanized }}
     .my-4
       b-embed(
         type='iframe',
