@@ -115,7 +115,7 @@ export default {
     this.title = config.title
     try {
       this.categories = await this.$axios.$get(
-        '/api/categories/?ordering=-use_count'
+        '/api/categories/?ordering=name'
       )
     } catch (exception) {
       handleAxiosError(exception, this.$nuxt.context.error)
