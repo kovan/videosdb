@@ -26,8 +26,8 @@ b-container.m-0.p-0.mx-auto
           ) Using HTTP (standard)
         li
           a(
-            :href='"ipfs://" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)'
-          ) Using IPFS (experimental)
+            :href='"ipns://videos." + this.config.domain + "/" + encodeURIComponent(this.video.filename)'
+          ) Using IPFS (P2P)
 
     .my-4(v-if='this.video.categories && this.video.categories.length > 0')
       h6 Categories
