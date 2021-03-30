@@ -1,11 +1,7 @@
 TODO
 ------------------------
-- bajar videos
 - kademlia para mldonkey ver si funciona
-- crear servicio systemd para dyndns y redirigir dominios
-- añadir entrada a crontab
 - ? transmission-daemon?
-- parar VM GCP2
 
 
 - hacer backend y frontend que sirvan a varias weba a la vez

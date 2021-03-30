@@ -33,11 +33,11 @@ div
 
   .container-fluid
     .row
-      b-sidebar#sidebarMenu(v-model='sidebar_visible', backdrop, shadow)
+      b-sidebar#sidebarMenu(v-model='sidebar_visible', no-slide)
         h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
           span Categories
         ul.flex-column
-          li.nav-item(
+          li.mr-2.nav-item(
             v-for='category in this.categories',
             :key='category.id',
             @click='hideSidebar'
@@ -115,7 +115,7 @@ export default {
     this.title = config.title
     try {
       this.categories = await this.$axios.$get(
-        '/api/categories/?ordering=-use_count'
+        '/api/categories/?ordering=name'
       )
     } catch (exception) {
       handleAxiosError(exception, this.$nuxt.context.error)
