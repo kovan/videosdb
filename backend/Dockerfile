@@ -1,9 +1,11 @@
 # For more information, please refer to https://aka.ms/vscode-docker-python
-FROM python:3.8-slim-buster
+#FROM python:3.8-slim-buster
+FROM ubuntu:20.04
 RUN echo 'root:toor' | chpasswd
 SHELL ["/bin/bash", "-c"]
+ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt update
-RUN apt install git-core curl -y
+RUN apt install python3-pip git-core curl gcc libffi-dev libssl-dev python3-dev rustc postgresql-common libpq-dev -y
 RUN apt autoremove -y
 RUN apt clean
 
@@ -13,7 +15,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
-RUN pip install poetry
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+
+RUN pip3 install --upgrade pip
+RUN pip3 install poetry
 
 WORKDIR /app
 
