@@ -5,6 +5,7 @@ WORKDIR /src
 COPY package.json .
 
 RUN yarn install \
+  --network-timeout 100000 \
   --prefer-offline \
   --frozen-lockfile \
   --non-interactive \
@@ -16,6 +17,7 @@ RUN yarn build
 
 RUN rm -rf node_modules && \
   NODE_ENV=production yarn install \
+  --network-timeout 100000 \
   --prefer-offline \
   --pure-lockfile \
   --non-interactive \
