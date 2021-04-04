@@ -22,7 +22,7 @@ class Downloader:
         self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
 
     def process_video(self, youtube_id, category_name=None):
-        video, created = Video.objects.ºn(youtube_id=youtube_id)
+        video, created = Video.objects.get_or_create(youtube_id=youtube_id)
         # if new video or missing info, download info:
 
         if not video.full_response:
