@@ -48,7 +48,7 @@ b-container.m-0.p-0.mx-auto
 
     .my-4(v-if='this.video.transcript')
       h6 Transcription:
-      small {{ this.video.transcript }}
+      p {{ this.video.transcript }}
 </template>
 <script>
 
