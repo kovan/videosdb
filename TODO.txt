@@ -5,6 +5,7 @@ TODO
   2 - en local hacer un pull y un restore de la db 
   3 - redirigir el dominio por dyndns a la IP local
   4 - asegurarse de que la db que se consulta pasa a ser la local
+  5 - migrar scripts de cron
 
 - kademlia para mldonkey ver si funciona
 - ? transmission-daemon?
