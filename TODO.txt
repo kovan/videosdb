@@ -1,15 +1,20 @@
 TODO
 ------------------------
+- migración desde AWS:
+  1 - backup de la base de datos y subir a git
+  2 - en local hacer un pull y un restore de la db 
+  3 - redirigir el dominio por dyndns a la IP local
+  4 - asegurarse de que la db que se consulta pasa a ser la local
+
 - kademlia para mldonkey ver si funciona
 - ? transmission-daemon?
 
 
 - hacer backend y frontend que sirvan a varias weba a la vez
 - arrancar nodo js-ipfs para descargar por ipfs en el navegador
-- compartir por emule/bittorrent videos?
+- compartir por bittorrent videos?
 - hacer paquetes deb?
 - ver xq el $nuxt.$loading está undefined en prod
--- revisar transcripts en nithyananda prod
 - ¿?usar el jobs de django-extensions
 - infinite scroll
 - mirar la composición del bundle webpack y cómo minimizarla
@@ -32,11 +37,6 @@ TODO
     - fecha de publicacion
     - estadisticas
 
-
- ERROR  Request path contains unescaped characters (internal server error 500)
- https://www.sadhguru.digital/category/%E2%9A%A1-sadhguru-exclusive-%E2%9A%A1/
- https://www.sadhguru.digital/category/%E2%80%8Bsadhguru-on-%E2%80%8Bcorruption/
- https://www.sadhguru.digital/category/%E2%9C%A8january-2021%E2%9C%A8/
 
 
 
