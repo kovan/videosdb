@@ -47,51 +47,40 @@ services:
       - 3001:3000
     restart: always
 
-  backend-nithyananda:
-    environment:
-      - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
-    image: ${REPO}backend-latest
-    links:
-      - db
-    build:
-      context: ./backend
-    ports:
-      - 8002:8000
-    volumes:
-      - httplib_cache:/app/.cache
-      - logs:/app/logs
-    restart: always
-
-  django-migrations-nithyananda:
-    environment:
-      - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
-    command: poetry run python manage.py migrate --noinput
-    image: ${REPO}backend-latest
-    links:
-      - db
-
-  frontend-nithyananda:
-    environment:
-      - API_URL=http://backend-nithyananda:8000
-    image: ${REPO}frontend-latest
-    links:
-      - backend-nithyananda
-    build:
-      context: ./frontend
-    ports:
-      - 3002:3000
-    restart: always
-
-  # nginx:
-  #   image: ${REPO}nginx-latest
+  # backend-nithyananda:
+  #   environment:
+  #     - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
+  #   image: ${REPO}backend-latest
+  #   links:
+  #     - db
   #   build:
-  #     context: ./nginx
-  #   restart: always
-  #   depends_on:
-  #     - frontend-nithyananda
-  #     - frontend-sadhguru
+  #     context: ./backend
   #   ports:
-  #     - 8080:80
+  #     - 8002:8000
+  #   volumes:
+  #     - httplib_cache:/app/.cache
+  #     - logs:/app/logs
+  #   restart: always
+
+  # django-migrations-nithyananda:
+  #   environment:
+  #     - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
+  #   command: poetry run python manage.py migrate --noinput
+  #   image: ${REPO}backend-latest
+  #   links:
+  #     - db
+
+  # frontend-nithyananda:
+  #   environment:
+  #     - API_URL=http://backend-nithyananda:8000
+  #   image: ${REPO}frontend-latest
+  #   links:
+  #     - backend-nithyananda
+  #   build:
+  #     context: ./frontend
+  #   ports:
+  #     - 3002:3000
+  #   restart: always
 
 volumes:
   logs:
