@@ -17,17 +17,22 @@ b-container.m-0.p-0.mx-auto
       p {{ this.video.description_trimmed }}
 
     .my-4(v-if='this.video.ipfs_hash')
-      h6 Download
-      ul
-        li
-          a(
-            :href='"https://videos." + this.config.domain + "/" + encodeURIComponent(this.video.filename)',
-            download
-          ) Using HTTP (standard)
-        li
-          a(
-            :href='"ipns://videos." + this.config.domain + "/" + encodeURIComponent(this.video.filename)'
-          ) Using IPFS (P2P)
+      p(align='center')
+        b-link(
+          :href='"https://videos." + this.config.domain + "/" + encodeURIComponent(this.video.filename)',
+          download
+        )
+          b-button
+            | View / Download
+        | &nbsp;
+        b-link(
+          :href='"ipns://videos." + this.config.domain + "/" + encodeURIComponent(this.video.filename)'
+        )
+          b-button
+            | View / Download - with &nbsp;
+            b-img(src='/ipfs-logo-text-128-ice-white.png', height='24px')
+        p(align='center')
+          | NOTE: to download the videos, right click on the download link and choose "Save as.."
 
     .my-4(v-if='this.video.categories && this.video.categories.length > 0')
       h6 Categories
