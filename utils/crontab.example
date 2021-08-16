@@ -1,4 +1,3 @@
 SHELL=/usr/bin/zsh
-POETRY=/home/pi/.local/bin/poetry
-0 1  * * * cd /home/pi/prj/videosdb && nice -n 10 docker-compose run --rm backend-sadhguru nice -n 10 poetry run python manage.py videosdb -c
-0 12 * * * cd /home/pi/prj/videosdb/backend &&  nice -n 10 $POETRY run python -O manage.py videosdb -f --settings=project.settings-fileserver
+
+0 5 * * * zsh /home/pi/prj/videosdb/utils/cron-task.sh
