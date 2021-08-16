@@ -1,6 +1,4 @@
-SHELL=/bin/bash
-PATH=$PATH:/usr/bin:/usr/local/bin
-REPO=570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb:
-5 4 * * sun sudo certbot renew
-0 12 * * * cd /home/ubuntu/prj/videosdb && nice -n 10 docker-compose run --rm backend-sadhguru nice -n 10 poetry run python manage.py videosdb -c
-0 0  * * * cd /home/ubuntu/prj/videosdb && nice -n 10 docker-compose run --rm backend-nithyananda nice -n 10 poetry run python manage.py videosdb -c
+SHELL=/usr/bin/zsh
+POETRY=/home/pi/.local/bin/poetry
+0 1  * * * cd /home/pi/prj/videosdb && nice -n 10 docker-compose run --rm backend-sadhguru nice -n 10 poetry run python manage.py videosdb -c
+0 12 * * * cd /home/pi/prj/videosdb/backend &&  nice -n 10 $POETRY run python -O manage.py videosdb -f --settings=project.settings-fileserver
