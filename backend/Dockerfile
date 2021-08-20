@@ -5,7 +5,7 @@ RUN echo 'root:toor' | chpasswd
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt update
-RUN apt install python3-pip git-core curl gcc libffi-dev libssl-dev python3-dev rustc postgresql-common libpq-dev -y
+RUN apt install python3-pip git-core curl gcc libffi-dev libssl-dev python3-dev rustc postgresql-common libpq-dev python-is-python3 -y
 RUN apt autoremove -y
 RUN apt clean
 
