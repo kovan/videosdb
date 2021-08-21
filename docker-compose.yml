@@ -24,7 +24,7 @@ services:
       - 8001:8000
     volumes:
       - httplib_cache:/app/.cache
-      - logs:/app/logs
+      - logs:/tmp/
     restart: always
 
   django-migrations-sadhguru:
