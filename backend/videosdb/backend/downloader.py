@@ -200,3 +200,9 @@ class Downloader:
             video.save()
 
         ipfs.update_dnslink()
+
+#    with Telnet('localhost', 4000) as tn:    
+#        tn.write(b"ansi false\n")            
+#        tn.write(b"links shared\n")          
+#        tn.write(b"q\n")                     
+#        links = tn.read_all().decode('ascii')

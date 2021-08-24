@@ -2,6 +2,7 @@ version: "3"
 services:
   db:
     image: ${REPO}db-latest
+    platform: linux/arm/v7
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -13,9 +14,10 @@ services:
     restart: always
 
   backend-sadhguru:
+    image: ${REPO}backend-latest
+    platform: linux/arm/v7
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
-    image: ${REPO}backend-latest
     links:
       - db
     build:
@@ -28,17 +30,19 @@ services:
     restart: always
 
   django-migrations-sadhguru:
+    platform: linux/arm/v7
+    image: ${REPO}backend-latest
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
-    image: ${REPO}backend-latest
     command: poetry run python manage.py migrate --noinput
     links:
       - db
 
   frontend-sadhguru:
+    platform: linux/arm/v7
+    image: ${REPO}frontend-latest
     environment:
       - API_URL=http://backend-sadhguru:8000
-    image: ${REPO}frontend-latest
     links:
       - backend-sadhguru
     build:
@@ -47,40 +51,6 @@ services:
       - 3001:3000
     restart: always
 
-  # backend-nithyananda:
-  #   environment:
-  #     - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
-  #   image: ${REPO}backend-latest
-  #   links:
-  #     - db
-  #   build:
-  #     context: ./backend
-  #   ports:
-  #     - 8002:8000
-  #   volumes:
-  #     - httplib_cache:/app/.cache
-  #     - logs:/app/logs
-  #   restart: always
-
-  # django-migrations-nithyananda:
-  #   environment:
-  #     - DJANGO_SETTINGS_MODULE=project.settings-nithyananda
-  #   command: poetry run python manage.py migrate --noinput
-  #   image: ${REPO}backend-latest
-  #   links:
-  #     - db
-
-  # frontend-nithyananda:
-  #   environment:
-  #     - API_URL=http://backend-nithyananda:8000
-  #   image: ${REPO}frontend-latest
-  #   links:
-  #     - backend-nithyananda
-  #   build:
-  #     context: ./frontend
-  #   ports:
-  #     - 3002:3000
-  #   restart: always
 
 volumes:
   logs:
