@@ -1,5 +1,6 @@
 #/bin/bash
 
 export REPO="pi:5000/"
-export BRANCH=$(git branch --show-current)
-docker buildx bake --push
+export BRANCH=":$(git branch --show-current)"
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+docker buildx bake --set '*.platform=linux/arm/v7' --push

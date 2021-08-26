@@ -1,7 +1,7 @@
 version: "3"
 services:
   db:
-    image: ${REPO}db:${BRANCH}
+    image: ${REPO}db${BRANCH}
     platform: linux/arm/v7
     environment:
       - POSTGRES_DB=postgres
@@ -14,7 +14,7 @@ services:
     restart: always
 
   backend-sadhguru:
-    image: ${REPO}backend:${BRANCH}
+    image: ${REPO}backend${BRANCH}
 
     platform: linux/arm/v7
     environment:
@@ -32,7 +32,7 @@ services:
 
   django-migrations-sadhguru:
     platform: linux/arm/v7
-    image: ${REPO}backend:${BRANCH}
+    image: ${REPO}backend${BRANCH}
 
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
@@ -42,7 +42,7 @@ services:
 
   frontend-sadhguru:
     platform: linux/arm/v7
-    image: ${REPO}frontend:${BRANCH}
+    image: ${REPO}frontend${BRANCH}
 
     environment:
       - API_URL=http://backend-sadhguru:8000
