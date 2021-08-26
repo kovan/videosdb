@@ -29,6 +29,9 @@ WORKDIR /src
 
 COPY --from=builder /src  .
 
+ARG GIT_COMMIT
+RUN echo $(GIT_COMMIT) > /src/git-commit.txt
+
 ENV HOST 0.0.0.0
 ENV NODE_ENV=production
 EXPOSE 3000

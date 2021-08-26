@@ -1,5 +1,8 @@
 FROM postgres:13.2-alpine
+ARG GIT_COMMIT
 
 COPY create_postgres_db.sh /docker-entrypoint-initdb.d/
 WORKDIR /app
-COPY *.gz /app/
+COPY sadhguru-dump.sql.gz /app/
+
+RUN echo $(GIT_COMMIT) > /app/git-commit.txt

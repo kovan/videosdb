@@ -39,6 +39,10 @@ RUN poetry install --no-dev
 COPY --chown=appuser:appuser . .
 
 
+ARG GIT_COMMIT
+RUN echo $(GIT_COMMIT) > /app/git-commit.txt
+
+
 EXPOSE 8000
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
