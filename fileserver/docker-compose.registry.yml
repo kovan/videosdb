@@ -6,5 +6,5 @@ services:
       ports:
         - 5000:5000
       volumes:
-        - /mnt/registry:/var/lib/registry
+        - /mnt/docker-registry:/var/lib/registry
 
