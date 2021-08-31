@@ -139,7 +139,7 @@ class YoutubeAPI:
 
         result = ""
         for d in transcripts:
-            result += d["text"] + " "
+            result += d["text"] + "\n"
         return _sentence_case(result.capitalize() + ".")
 
 

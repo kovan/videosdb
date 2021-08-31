@@ -14,7 +14,7 @@ b-container.m-0.p-0.mx-auto
 
     .my-4(v-if='this.video.description_trimmed')
       h6 Description
-      p {{ this.video.description_trimmed }}
+      p(style='white-space: pre-line') {{ this.video.description_trimmed }}
 
     .my-4(v-if='this.video.ipfs_hash')
       p(align='center')
@@ -53,7 +53,7 @@ b-container.m-0.p-0.mx-auto
 
     .my-4(v-if='this.video.transcript')
       h6 Transcription:
-      p {{ this.video.transcript }}
+      p(style='white-space: pre-line') {{ this.video.transcript }}
 </template>
 <script>
 
@@ -94,5 +94,6 @@ export default {
 </script>
 
 <style>
+white-space: pre-line;
 </style>
 

@@ -1,6 +1,16 @@
 # For more information, please refer to https://aka.ms/vscode-docker-python
 #FROM python:3.8-slim-buster
 FROM ubuntu:20.04
+ARG GIT_COMMIT=unspecified
+LABEL git_commit=$GIT_COMMIT
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+
 RUN echo 'root:toor' | chpasswd
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
@@ -9,13 +19,6 @@ RUN apt install python3-pip git-core curl gcc libffi-dev libssl-dev python3-dev 
 RUN apt autoremove -y
 RUN apt clean
 
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Turns off buffering for easier container logging
-ENV PYTHONUNBUFFERED=1
-
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 RUN pip3 install --upgrade pip
 RUN pip3 install poetry
@@ -37,10 +40,6 @@ VOLUME /app/logs
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
 RUN poetry install --no-dev
 COPY --chown=appuser:appuser . .
-
-
-ARG GIT_COMMIT
-RUN echo $(GIT_COMMIT) > /app/git-commit.txt
 
 
 EXPOSE 8000
