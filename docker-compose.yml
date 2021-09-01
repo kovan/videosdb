@@ -14,6 +14,8 @@ services:
     ports:
       - 5432:5432
     restart: always
+    volumes:
+      - db:/var/lib/postgresql/data
 
   backend-sadhguru:
     image: ${REPO}backend:${TAG:-latest}
@@ -64,3 +66,4 @@ services:
 volumes:
   logs:
   httplib_cache:
+  db:
