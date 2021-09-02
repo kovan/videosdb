@@ -16,6 +16,8 @@ services:
     restart: always
     volumes:
       - db:/var/lib/postgresql/data
+    healthcheck:
+      interval: 1h
 
   backend-sadhguru:
     image: ${REPO}backend:${TAG:-latest}
@@ -35,6 +37,8 @@ services:
       - httplib_cache:/app/.cache
       - logs:/tmp/
     restart: always
+    healthcheck:
+      interval: 1h
 
   django-migrations-sadhguru:
     platform: linux/arm/v7
@@ -61,6 +65,8 @@ services:
     ports:
       - 3001:3000
     restart: always
+    healthcheck:
+      interval: 1h
 
 
 volumes:
