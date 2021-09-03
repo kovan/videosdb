@@ -1,6 +1,6 @@
 <template lang="pug">
 b-container
-  h2.text-center Tag: {{ this.tag.name }}
+  h1.text-center Tag: {{ this.tag.name }}
   Explorer(:tags='this.tag.id')
 </template>
 

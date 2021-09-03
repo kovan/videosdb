@@ -1,9 +1,10 @@
 <template lang="pug">
 b-container.m-0.p-0.mx-auto
-  b-card.m-0.p-0(:title='this.video.title')
+  b-card.m-0.p-0
     small
       | Published: {{ new Date(this.video.yt_published_date).toLocaleDateString() }}. Duration: {{ this.video.duration_humanized }}
     .my-4
+      h1 {{ this.video.title }}
       b-embed(
         type='iframe',
         aspect='16by9',
