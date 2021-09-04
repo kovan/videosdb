@@ -24,6 +24,9 @@ export default {
       src: '~/plugins/vue-plugin-load-script.js',
       ssr: false,
     },
+    {
+      src: '~/plugins/bootstrap-vue.js',
+    },    
   ],
 
   // Auto import components (https://go.nuxtjs.dev/config-components)
@@ -40,7 +43,7 @@ export default {
   modules: [
     // https://go.nuxtjs.dev/axios
     '@nuxtjs/axios',
-    'bootstrap-vue/nuxt',
+    // 'bootstrap-vue/nuxt',
   ],
 
   // bootstrapVue: {
