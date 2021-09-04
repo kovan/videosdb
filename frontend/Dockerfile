@@ -1,5 +1,4 @@
 FROM node:latest as builder
-ARG GIT_COMMIT=unspecified
 
 WORKDIR /src
 
@@ -35,5 +34,7 @@ ENV HOST 0.0.0.0
 ENV NODE_ENV=production
 EXPOSE 3000
 
+ARG GIT_COMMIT=unspecified
 LABEL git_commit=$GIT_COMMIT
+
 CMD [ "npx", "nuxt", "start" ]
