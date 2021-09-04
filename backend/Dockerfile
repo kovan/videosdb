@@ -42,8 +42,6 @@ COPY --chown=appuser:appuser . .
 
 EXPOSE 8000
 
-ARG GIT_COMMIT=unspecified
-LABEL git_commit=$GIT_COMMIT
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 # File wsgi.py was not found in subfolder: 'videosdb'. Please enter the Python path to wsgi file.

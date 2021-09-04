@@ -9,8 +9,6 @@ services:
       - POSTGRES_PASSWORD=postgres
     build:
       context: ./db
-      args:
-        - GIT_COMMIT="${GIT_COMMIT}"
     ports:
       - 5432:5432
     restart: always
@@ -29,8 +27,6 @@ services:
       - db
     build:
       context: ./backend
-      args:
-        - GIT_COMMIT="${GIT_COMMIT}"
     ports:
       - 8001:8000
     volumes:
@@ -60,8 +56,6 @@ services:
       - backend-sadhguru
     build:
       context: ./frontend
-      args:
-        - GIT_COMMIT="${GIT_COMMIT}"
     ports:
       - 3001:3000
     restart: always
