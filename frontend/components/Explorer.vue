@@ -28,7 +28,8 @@
               b-img.bd-placeholder-img.card-img-top(
                 :src='video.thumbnails.medium.url',
                 width='100%',
-                :id='video.youtube_id'
+                :id='video.youtube_id',
+                :alt='video.title'
               )
               b-popover(
                 :target='video.youtube_id',
@@ -40,7 +41,8 @@
                 NuxtLink(:to='"/video/" + video.slug')
                   | {{ video.title }}
               .d-flex.justify-content-between.align-items-center
-                small.text-muted {{ new Date(video.yt_published_date).toLocaleDateString() }}
+                small.text-muted Published: {{ new Date(video.yt_published_date).toLocaleDateString() }}
+                small.text-muted Duration: {{ video.duration_humanized }}
       .overflow-auto(v-if='this.videos.length')
         b-pagination-nav(
           size='lg',
