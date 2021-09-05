@@ -1,4 +1,6 @@
 export REPO="pi:5000/"
-docker-compose pull
+git pull
+export TAG="$(git rev-parse --short HEAD)"
+docker-compose pull --no-parallel
 docker-compose up -d --no-build
 
