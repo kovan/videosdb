@@ -13,9 +13,12 @@ function handleAxiosError(axiosError, errorFunc) {
   }
 }
 function getConfigForRequest(req) {
-  const host = req
-    ? req.headers.host.split(':')[0]
-    : window.location.host.split(':')[0]
+  const host = req?
+    req.headers.host.split(':')[0]
+    : (typeof(window) != "undefined") ? 
+      window.location.host.split(':')[0]
+      : null;
+    
 
   var config = null
 
