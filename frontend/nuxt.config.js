@@ -1,5 +1,7 @@
-import path from 'path'
-import fs from 'fs'
+
+import axios from 'axios'
+
+const ApiURL = process.env.API_URL || 'http://localhost:8000';
 
 export default {
   // target: 'static',
@@ -44,6 +46,7 @@ export default {
   modules: [
     // https://go.nuxtjs.dev/axios
     '@nuxtjs/axios',
+    '@nuxtjs/sitemap'
     // 'bootstrap-vue/nuxt',
   ],
 
@@ -56,7 +59,7 @@ export default {
   axios: {
     proxy: true,
     debug: process.env.DEBUG ? true : false,
-    baseURL: process.env.API_URL || 'http://localhost:8000',
+    baseURL: ApiURL
   },
 
   // privateRuntimeConfig: {
@@ -65,8 +68,51 @@ export default {
   //   },
   // },
 
+  sitemap: {
+    cacheTime: 86400000, // 24h
+    gzip: true,
+    routes: async () => {
+      
+      let [ videos, categories, tags ] = await Promise.all([
+        axios.get(ApiURL +'/api/videos/?no_pagination'),
+        axios.get(ApiURL +'/api/categories/?no_pagination'),
+        axios.get(ApiURL +'/api/tags/?no_pagination')
+      ])
+
+      videos =  videos.data.map( (video) => {
+        return {
+          url: `/video/${video.slug}`,
+          video: [{
+              thumbnail_loc: video.thumbnails.medium.url,
+              title: video.title,
+              description: video.description_trimmed ? video.description_trimmed : "",
+              content_loc: "https://videos.sadhguru.digital/" + encodeURIComponent(video.filename),
+              player_loc: `https://www.youtube.com/watch?v=${video.youtube_id}`,
+              duration: video.duration_seconds
+            }
+          ],
+          lastmod: video.modified_date,
+          priority: 0.9
+        }
+      })
+      
+      let result =  videos.concat(
+        categories.data.map( (cat) => `/categories/${cat.slug}`).concat(
+          tags.data.map( (tag) => `/tags/${tag.slug}`)))
+        
+      result.push({
+        url: "/",
+        changefreq: "daily"
+      })
+
+      return result
+
+
+    },
+  },
+
   proxy: {
-    '/api': process.env.API_URL || 'http://localhost:8000',
+    '/api': ApiURL,
   },
 
   // Build Configuration (https://go.nuxtjs.dev/config-build)

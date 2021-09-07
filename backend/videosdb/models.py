@@ -156,8 +156,8 @@ class Video(DirtyFieldsMixin, models.Model):
         return self.description
 
     @property
-    def duration_humanized(self):
-        return str(isodate.parse_duration(self.duration))
+    def duration_seconds(self):
+        return isodate.parse_duration(self.duration).total_seconds()
 
     def load_from_youtube_info(self, info):
         from django.utils.dateparse import parse_datetime

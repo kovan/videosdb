@@ -42,7 +42,7 @@
                   | {{ video.title }}
               .d-flex.justify-content-between.align-items-center
                 small.text-muted Published: {{ new Date(video.yt_published_date).toLocaleDateString() }}
-                small.text-muted Duration: {{ video.duration_humanized }}
+                small.text-muted Duration: {{ new Date(video.duration_seconds * 1000).toISOString().substr(11, 8) }}
       .overflow-auto(v-if='this.videos.length')
         b-pagination-nav(
           size='lg',

@@ -3,9 +3,12 @@ from datetime import date, timedelta
 from django.db.models import Count
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
+
+from django.conf import settings
 from rest_framework import filters, serializers, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 
 from .models import Category, Tag, Video
 
@@ -15,6 +18,13 @@ def random_video(request):
     video = Video.objects.filter(excluded=False).order_by("?").first()
     serializer = VideoListSerializer(video)
     return Response(serializer.data)
+
+
+class AllowNoPaginationViewSet(viewsets.ReadOnlyModelViewSet):
+    def paginate_queryset(self, queryset):
+        if self.paginator and "no_pagination" in self.request.query_params:
+            return None
+        return super().paginate_queryset(queryset)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -44,7 +54,7 @@ class VideoSerializer(serializers.ModelSerializer):
         model = Video
         lookup_field = "slug"
         fields = ["id", "youtube_id", "yt_published_date",
-                  "categories", "tags", "duration_humanized", "transcript", "thumbnail",
+                  "categories", "tags", "duration_seconds", "transcript", "thumbnail",
                   "slug", "view_count", "dislike_count",
                   "favorite_count", "comment_count", "title", "thumbnails",
                   "description_trimmed", "filename", "ipfs_hash"]
@@ -57,13 +67,13 @@ class VideoListSerializer(serializers.ModelSerializer):
         model = Video
         lookup_field = "slug"
         fields = ["id", "youtube_id", "yt_published_date",
-                  "categories", "duration_humanized", "thumbnail",
+                  "categories", "duration_seconds", "thumbnail",
                   "slug", "view_count", "dislike_count",
                   "favorite_count", "comment_count", "title", "thumbnails",
-                  "description_trimmed"]
+                  "description_trimmed", "modified_date"]
 
 
-class TagViewSet(viewsets.ReadOnlyModelViewSet):
+class TagViewSet(AllowNoPaginationViewSet):
     lookup_field = "slug"
     serializer_class = TagSerializer
     filter_backends = [filters.OrderingFilter,
@@ -74,7 +84,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
 
 
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+class CategoryViewSet(AllowNoPaginationViewSet):
     pagination_class = None
     lookup_field = "slug"
     serializer_class = CategorySerializer
@@ -86,7 +96,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.annotate(use_count=Count("video"))
 
 
-class VideoViewSet(viewsets.ReadOnlyModelViewSet):
+class VideoViewSet(AllowNoPaginationViewSet):
 
     lookup_field = "slug"
     serializer_class = VideoSerializer

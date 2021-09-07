@@ -2,7 +2,8 @@
 b-container.m-0.p-0.mx-auto
   b-card.m-0.p-0
     small
-      | Published: {{ new Date(this.video.yt_published_date).toLocaleDateString() }}. Duration: {{ this.video.duration_humanized }}
+      | Published: {{ new Date(this.video.yt_published_date).toLocaleDateString() }}.
+      | Duration: {{ new Date(this.video.duration_seconds * 1000).toISOString().substr(11, 8) }}
     .my-4
       h1 {{ this.video.title }}
       b-embed(
