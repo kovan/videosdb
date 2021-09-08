@@ -122,7 +122,9 @@ export default {
         config.devtool = 'inline-source-map'
       }
     },
-    extractCSS: true,
+    optimizeCSS: true,
+    parallel: true,
+    cache: true
   },
   server: {
     // https:

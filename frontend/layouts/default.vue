@@ -50,6 +50,10 @@ div
 
   footer.text-muted.text-center
     .my-3
+      p For more resources visit:
+        a(href='https://isha.sadhguru.org/global/en/wisdom')
+          |
+          | https://isha.sadhguru.org/global/en/wisdom
       p
         small(v-if='this.version')
           | version: {{ this.version }}
@@ -78,7 +82,7 @@ export default {
   },
   computed: {
     version () {
-      return process.env.VIDEOSDB_CURRENT_GIT_SHA;
+      return process.env.TAG;
     },
   },
   methods: {
