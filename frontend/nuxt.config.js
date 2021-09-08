@@ -85,7 +85,7 @@ export default {
           video: [{
               thumbnail_loc: video.thumbnails.medium.url,
               title: video.title,
-              description: video.description_trimmed ? video.description_trimmed : "",
+              description: video.description_trimmed ? video.description_trimmed : video.title,
               content_loc: "https://videos.sadhguru.digital/" + encodeURIComponent(video.filename),
               player_loc: `https://www.youtube.com/watch?v=${video.youtube_id}`,
               duration: video.duration_seconds
