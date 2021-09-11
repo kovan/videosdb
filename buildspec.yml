@@ -4,6 +4,7 @@ env:
   variables:
     TAG: "$CODEBUILD_RESOLVED_SOURCE_VERSION"
     REPO: "570555265801.dkr.ecr.ap-south-1.amazonaws.com/"
+    DOCKER_BUILDKIT: 1
 phases:
   pre_build:
     commands:
