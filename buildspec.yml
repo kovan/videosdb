@@ -1,5 +1,9 @@
 version: 0.2
 
+env:
+  variables:
+    TAG: "$CODEBUILD_RESOLVED_SOURCE_VERSION"
+    REPO: "570555265801.dkr.ecr.ap-south-1.amazonaws.com/"
 phases:
   pre_build:
     commands:
@@ -9,10 +13,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker images...
-      - docker build -t videosdb:backend-latest backend
-      - docker tag videosdb:backend-latest 570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb:backend-latest
+      - docker buildx bake --push 
   post_build:
     commands:
       - echo Build completed on `date`
-      - echo Pushing the Docker image...
-      - docker push 570555265801.dkr.ecr.ap-south-1.amazonaws.com/videosdb:backend-latest
