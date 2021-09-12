@@ -43,7 +43,9 @@ div
             @click='hideSidebar'
           )
             NuxtLink(:to='`/category/${category.slug}`')
-              | {{ category.name }}
+              | {{ category.name }}&nbsp
+            small
+              | ({{ category.use_count }} videos)
 
       main.col-md-12.col-lg-12.ml-sm-auto.px-md-4.pt-4(role='main')
         nuxt

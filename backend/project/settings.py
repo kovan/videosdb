@@ -131,8 +131,6 @@ USE_L10N = True
 USE_TZ = True
 
 CORS_ORIGIN_WHITELIST = [
-    'http://192.168.0.19:5000',
-    'http://localhost:8000',
     'http://localhost:8080',
     'http://localhost:3000'
 ]
@@ -160,7 +158,6 @@ LOGGING = {
     },
     'handlers': {
         'file': {
-            'level': 'TRACE',
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1000000,
             "backupCount": 10,
@@ -168,7 +165,6 @@ LOGGING = {
             'formatter': 'verbose'
         },
         'console': {
-            #            'level': os.environ.get("LOGLEVEL", "INFO"),
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
             'stream': sys.stderr
@@ -176,16 +172,19 @@ LOGGING = {
     },
     'loggers': {
         'videosdb': {
-            'level':  os.environ.get("LOGLEVEL", "INFO"),
-            'propagate': True,
+            'handlers': ['file', 'console'],
+            'level': os.environ.get("LOGLEVEL", "INFO"),
+            'propagate': False,
         },
         "property_manager": {
+            'handlers': ['file', 'console'],
             "level": "INFO",
-            'propagate': True,
+            'propagate': False,
         },
         'django': {
+            'handlers': ['file', 'console'],
             'level': os.environ.get("LOGLEVEL", "INFO"),
-            'propagate': True,
+            'propagate': False,
         },
         '': {
             'handlers': ['file', 'console'],
