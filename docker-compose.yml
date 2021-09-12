@@ -2,7 +2,7 @@ version: "3"
 services:
   db:
     image: ${REPO}db:${TAG:-latest}
-    platform: linux/arm/v7
+    #    platform: linux/arm/v7
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -20,7 +20,7 @@ services:
   backend-sadhguru:
     image: ${REPO}backend:${TAG:-latest}
 
-    platform: linux/arm/v7
+    #    platform: linux/arm/v7
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
     links:
@@ -37,7 +37,7 @@ services:
       interval: 1h
 
   django-migrations-sadhguru:
-    platform: linux/arm/v7
+          #platform: linux/arm/v7
     image: ${REPO}backend:${TAG:-latest}
 
     environment:
@@ -47,7 +47,7 @@ services:
       - db
 
   frontend-sadhguru:
-    platform: linux/arm/v7
+          #    platform: linux/arm/v7
     image: ${REPO}frontend:${TAG:-latest}
 
     environment:
