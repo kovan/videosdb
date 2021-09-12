@@ -70,7 +70,7 @@ class VideoListSerializer(serializers.ModelSerializer):
                   "categories", "duration_seconds", "thumbnail",
                   "slug", "view_count", "dislike_count",
                   "favorite_count", "comment_count", "title", "thumbnails",
-                  "description_trimmed", "modified_date"]
+                  "description_trimmed", "modified_date", "filename"]
 
 
 class TagViewSet(AllowNoPaginationViewSet):
