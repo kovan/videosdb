@@ -6,7 +6,8 @@ b-container.m-0.p-0.mx-auto
       | Duration: {{ new Date(this.video.duration_seconds * 1000).toISOString().substr(11, 8) }}
     .my-4
       h1 {{ this.video.title }}
-      youtube(:video-id='this.video.youtube_id', ref='youtube')
+      p(align='center')
+        youtube(:video-id='this.video.youtube_id', ref='youtube')
 
     .my-4(v-if='this.video.description_trimmed')
       h6 Description
