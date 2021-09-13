@@ -7,6 +7,7 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - TAG=${TAG}
     build:
       context: ./db
     ports:
@@ -36,16 +37,6 @@ services:
     healthcheck:
       interval: 1h
 
-  django-migrations-sadhguru:
-          #platform: linux/arm/v7
-    image: ${REPO}backend:${TAG:-latest}
-
-    environment:
-      - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
-    command: poetry run python manage.py migrate --noinput
-    links:
-      - db
-
   frontend-sadhguru:
           #    platform: linux/arm/v7
     image: ${REPO}frontend:${TAG:-latest}
@@ -63,6 +54,44 @@ services:
     healthcheck:
       interval: 1h
 
+  # backend-sadhguru-cron:
+  #   image: ${REPO}backend:${TAG:-latest}
+  #   environment:
+  #     - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
+  #   build:
+  #     context: ./backend
+  #   entrypoint: ["su", "-c", "cron -f"]
+  #   links:
+  #     -  backend-sadhguru   
+  #   volumes:
+  #     - httplib_cache:/app/.cache
+  #     - logs:/tmp/         
+  #   restart: always
+  #   healthcheck:
+  #     interval: 1h      
+
+  # nginx:
+  #   image: ${REPO}nginx:${TAG:-latest}
+  #   build:
+  #     context: ./nginx
+  #   ports:
+  #     - 80:80
+  #     - 443:443
+  #   restart: always
+  #   healthcheck:
+  #     interval: 1h
+
+  # nginx-cron:
+  #   image: ${REPO}nginx:${TAG:-latest}
+  #   build:
+  #     context: ./nginx
+  #   entrypoint: ["su", "-c", "cron -f"]
+  #   links:
+  #     - nginx      
+  #   restart: always
+  #   healthcheck:
+  #     interval: 1h
+      
 
 volumes:
   logs:

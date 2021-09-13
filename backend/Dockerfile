@@ -1,48 +1,51 @@
-# For more information, please refer to https://aka.ms/vscode-docker-python
-#FROM python:3.8-slim-buster
-FROM ubuntu:20.04
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
 
-# Turns off buffering for easier container logging
-ENV PYTHONUNBUFFERED=1
-
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
-
+FROM python:bullseye
 RUN echo 'root:toor' | chpasswd
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt update
-RUN apt install python3-pip git-core curl gcc libffi-dev libssl-dev python3-dev rustc postgresql-common libpq-dev python-is-python3 -y
-RUN apt autoremove -y
+#RUN apt install -y cron 
+RUN apt install -y python3-virtualenv
+RUN apt install -y postgresql-common 
+RUN apt install -y sudo
+
 RUN apt clean
 
+RUN pip install certifi
+COPY install_certificates.py /tmp
+RUN python /tmp/install_certificates.py
 
-RUN pip3 install --upgrade pip
-RUN pip3 install poetry
 
-WORKDIR /app
 
-# Switching to a non-root user, please refer to https://aka.ms/vscode-docker-python-user-rights
+
+
 RUN useradd -m appuser
 RUN chown appuser:appuser .
+
+# COPY backend.cron /etc/cron.d
+# RUN chmod 0644 /etc/cron.d/backend.cron
+# RUN crontab /etc/cron.d/backend.cron
+
+USER appuser
+RUN wget  http://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -O - | python
+ENV PATH="/home/appuser/.poetry/bin:${PATH}"
+
+
+WORKDIR /app
 RUN mkdir /app/.cache && chown appuser:appuser /app/.cache
 RUN mkdir /app/logs && chown appuser:appuser /app/logs
-USER appuser
 
-# RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-# ENV PATH="$PATH:/home/appuser/.poetry/bin"
+
+
 
 VOLUME /app/.cache
 VOLUME /app/logs
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
 RUN poetry install --no-dev
 COPY --chown=appuser:appuser . .
-
+RUN chmod a+x /app/entrypoint.sh
 
 EXPOSE 8000
 
 
-# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-# File wsgi.py was not found in subfolder: 'videosdb'. Please enter the Python path to wsgi file.
-CMD ["poetry", "run", "gunicorn", "--preload", "--bind", "0.0.0.0:8000", "project.wsgi"]
+ENTRYPOINT  ["/app/entrypoint.sh"]
