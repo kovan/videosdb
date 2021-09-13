@@ -4,6 +4,7 @@ import axios from 'axios'
 const ApiURL = process.env.API_URL || 'http://localhost:8000';
 
 export default {
+  modern: true,
   // target: 'static',
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head() {
