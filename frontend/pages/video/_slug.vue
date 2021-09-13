@@ -6,13 +6,7 @@ b-container.m-0.p-0.mx-auto
       | Duration: {{ new Date(this.video.duration_seconds * 1000).toISOString().substr(11, 8) }}
     .my-4
       h1 {{ this.video.title }}
-      b-embed(
-        type='iframe',
-        aspect='16by9',
-        :src='"https://www.youtube.com/embed/" + this.video.youtube_id + "?rel=0"',
-        allowfullscreen,
-        autoplay
-      )
+      youtube(:video-id='this.video.youtube_id', ref='youtube')
 
     .my-4(v-if='this.video.description_trimmed')
       h6 Description
@@ -61,6 +55,7 @@ b-container.m-0.p-0.mx-auto
 
 
 import { handleAxiosError, getConfigForRequest } from "~/utils/utils"
+import VueYoutube from 'vue-youtube'
 
 export default {
   head () {
