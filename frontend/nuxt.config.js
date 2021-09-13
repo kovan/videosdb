@@ -29,6 +29,10 @@ export default {
     },
     {
       src: '~/plugins/bootstrap-vue.js',
+    },
+    {
+      src: '~/plugins/vue-youtube.js',
+      ssr: false
     },    
   ],
 
