@@ -161,7 +161,7 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1000000,
             "backupCount": 10,
-            'filename': '/tmp/videosdb.log',
+            'filename': 'logs/videosdb.log',
             'formatter': 'verbose'
         },
         'console': {
