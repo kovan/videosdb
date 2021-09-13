@@ -38,7 +38,7 @@ server {
 
 
 
-    listen 81;
+    listen 80 http2;
     server_name sadhguru.digital www.sadhguru.digital;
     return 404; # managed by Certbot
 
