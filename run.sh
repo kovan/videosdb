@@ -1,4 +1,4 @@
-export REPO=${REPO:-"pi:5000/"}
+
 git pull
 export TAG="${TAG:-$(git rev-parse --short HEAD)}"
 docker-compose pull --no-parallel
