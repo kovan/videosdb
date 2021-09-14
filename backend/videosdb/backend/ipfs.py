@@ -4,6 +4,7 @@ import sys
 from autologging import traced
 import ipfshttpclient
 from django.conf import settings
+import socket
 
 
 @traced(logging.getLogger(__name__))
@@ -47,7 +48,7 @@ class DNS:
 class IPFS:
     def __init__(self, files_root="/videos"):
 
-        self.host = settings.IPFS_HOST
+        self.host = socket.gethostbyname(settings.IPFS_HOST)
         self.port = settings.IPFS_PORT
         self.files_root = files_root
         self.dnslink_update_pending = False
