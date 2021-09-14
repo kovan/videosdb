@@ -1,6 +1,6 @@
 FROM python:bullseye
 COPY ipfs /usr/local/bin
-
+RUN mkdir -p /mnt/ipfs-repo
 COPY ipfs.config /mnt/ipfs-repo/config
 
 # these not needed because we already have the config:
