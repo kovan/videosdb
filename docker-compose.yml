@@ -32,7 +32,7 @@ services:
       - 8000:8000
     volumes:
       - httplib_cache:/app/.cache
-      - logs:/var/log
+      - logs:/app/logs
     restart: always
     healthcheck:
       interval: 1h
