@@ -1,0 +1,33 @@
+version: "3"
+services:
+
+  backend-sadhguru-fileserver:
+    image: ${REPO}backend:${TAG-latest}
+
+    environment:
+      - DJANGO_SETTINGS_MODULE=project.settings-fileserver
+    build:
+      context: ./backend
+    entrypoint: ["poetry", "run", "python", "-O", "manage.py", "videosdb","--download-and-register-in-ipfs"]
+    volumes:
+      - logs:/var/log
+      - /mnt/videos:/mnt/videos
+  ipfs:
+    image: ${REPO}ipfs:${TAG:-latest}
+    environment:
+      - IPFS_PATH=/mnt/ipfs-repo
+    build:
+      context: ./ipfs
+    ports:
+      - 18080:18080
+      - 5001:5001
+      - 14001:14001      
+    volumes:
+      - /mnt/videos:/mnt/videos
+      - /mnt/ipfs-repo:/mnt/ipfs-repo
+    restart: always
+
+volumes:
+  logs:
+
+
