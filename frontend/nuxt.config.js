@@ -103,8 +103,8 @@ export default {
       })
       
       let result =  videos.concat(
-        categories.data.map( (cat) => `/categories/${cat.slug}`).concat(
-          tags.data.map( (tag) => `/tags/${tag.slug}`)))
+        categories.data.map( (cat) => `/category/${cat.slug}`).concat(
+          tags.data.map( (tag) => `/tag/${tag.slug}`)))
         
       result.push({
         url: "/",
