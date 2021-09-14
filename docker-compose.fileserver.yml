@@ -11,7 +11,7 @@ services:
       context: ./backend
     entrypoint: ["poetry", "run", "python", "-O", "manage.py", "videosdb","--download-and-register-in-ipfs"]
     volumes:
-      - logs:/var/log
+      - logs:/app/logs
       - /mnt/videos:/mnt/videos
   ipfs:
     image: ${REPO}ipfs:${TAG:-latest}
