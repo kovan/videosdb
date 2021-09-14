@@ -2,7 +2,7 @@ version: "3"
 services:
 
   backend-sadhguru-fileserver:
-    image: ${REPO}backend-sadhguru:${TAG-latest}
+    image: ${REPO}backend:${TAG:-latest}
 
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-fileserver
