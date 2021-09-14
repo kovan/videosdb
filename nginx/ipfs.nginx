@@ -11,12 +11,6 @@ server {
         proxy_redirect off;
     }
 
-    location = /favicon.ico {
-        return 204;
-        access_log     off;
-        log_not_found  off;
-    }
-
 
     listen 443 ssl http2; # managed by Certbot
     ssl_certificate /etc/letsencrypt/live/sadhguru.digital/fullchain.pem; # managed by Certbot
