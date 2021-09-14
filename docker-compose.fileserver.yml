@@ -6,6 +6,7 @@ services:
 
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-fileserver
+      - IPFS_HOST=ipfs
     build:
       context: ./backend
     entrypoint: ["poetry", "run", "python", "-O", "manage.py", "videosdb","--download-and-register-in-ipfs"]
