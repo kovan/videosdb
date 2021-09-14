@@ -7,8 +7,8 @@ DATABASES = {
         'NAME': 'postgres',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': 'db',
-        'PORT': '',
+        'HOST': '13.126.203.46',
+        'PORT': '5432',
         'TEST': {
             "NAME": "test_videosdb",
         },
