@@ -7,7 +7,6 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - TAG=${TAG}
     build:
       context: ./db
     ports:
@@ -24,6 +23,7 @@ services:
     #    platform: linux/arm/v7
     environment:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
+      - DB_HOST=13.126.203.46
     links:
       - db
     build:

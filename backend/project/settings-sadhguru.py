@@ -7,8 +7,8 @@ DATABASES = {
         'NAME': 'postgres',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': 'db',
-        'PORT': '',
+        'HOST': os.environ.get("DB_HOST"),
+        'PORT': '5432',
         'TEST': {
             "NAME": "test_videosdb",
         },
