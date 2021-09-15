@@ -1,3 +1,4 @@
+import os
 from datetime import date, timedelta
 
 from django.db.models import Count
@@ -18,6 +19,11 @@ def random_video(request):
     video = Video.objects.filter(excluded=False).order_by("?").first()
     serializer = VideoListSerializer(video)
     return Response(serializer.data)
+
+
+@api_view(["GET"])
+def version(request):
+    return Response(os.environ.get("TAG"))
 
 
 class AllowNoPaginationViewSet(viewsets.ReadOnlyModelViewSet):
