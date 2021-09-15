@@ -23,7 +23,6 @@ function getConfigForRequest(req) {
   var config = null
 
   switch (host) {
-    case 'www.nithyananda.yoga':
     case 'nithyananda.yoga':
       config = {
         domain: 'nithyananda.yoga',
@@ -32,7 +31,6 @@ function getConfigForRequest(req) {
         gcs_url: 'https://cse.google.com/cse.js?cx=043c6e15fcd358d5a',
       }
       break
-    case 'www.sadhguru.digital':
     case 'sadhguru.digital':
       config = {
         domain: 'sadhguru.digital',
