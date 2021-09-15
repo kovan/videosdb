@@ -17,5 +17,6 @@ set -e
 # 	GRANT ALL PRIVILEGES ON DATABASE nithyananda TO nithyananda;
 # EOSQL
 
-cat /app/sadhguru-dump.sql    | psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres
+cat /app/sadhguru-dump.sql | psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres
+cat "ALTER USER postgres PASSWORD $POSTGRES_PASSWORD;"| psql --username "$POSTGRES_USER" --dbname postgres
 #gunzip -c /app/nithyananda-dump.sql.gz | psql -v ON_ERROR_STOP=1 --username  nithyananda     --dbname nithyananda
