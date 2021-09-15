@@ -75,7 +75,7 @@ export default {
 
   sitemap: {
     cacheTime: 86400000, // 24h
-    hostname: "https://www.sadhguru.digital",
+    hostname: "https://sadhguru.digital",
     gzip: true,
     routes: async () => {
       
