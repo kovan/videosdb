@@ -1,38 +1,20 @@
-FROM node:latest as builder
+FROM node:latest
 
 WORKDIR /src
 
 COPY package.json .
+COPY yarn.lock .
 
-RUN yarn install \
-  --network-timeout 100000 \
-  --prefer-offline \
-  --frozen-lockfile \
-  --non-interactive \
-  --production=false
+RUN yarn install
 
 COPY . .
 
 RUN yarn build
 
-RUN rm -rf node_modules && \
-  NODE_ENV=production yarn install \
-  --network-timeout 100000 \
-  --prefer-offline \
-  --pure-lockfile \
-  --non-interactive \
-  --production=true
-
-FROM node:alpine
-
-WORKDIR /src
-
-COPY --from=builder /src  .
-
-
-ENV HOST 0.0.0.0
 ENV NODE_ENV=production
+ENV HOST 0.0.0.0
+
 EXPOSE 3000
 
 
-CMD [ "npx", "nuxt", "start" ]
+CMD [ "yarn", "start" ]
