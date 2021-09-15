@@ -25,6 +25,7 @@ services:
       - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
       - DB_HOST=db
       - DB_PASSWORD=TBSV96364xXi2JeWZiVibnbGczFNg
+      - TAG=${TAG}
     links:
       - db
     build:
@@ -44,7 +45,6 @@ services:
 
     environment:
       - API_URL=http://backend-sadhguru:8000
-      - TAG=${TAG}
     links:
       - backend-sadhguru
     build:

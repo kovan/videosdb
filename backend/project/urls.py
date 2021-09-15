@@ -29,5 +29,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/random-video', views.random_video, name="random-video"),
+    path('api/version', views.version, name="version"),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
