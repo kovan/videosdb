@@ -16,7 +16,7 @@ b-container.m-0.p-0.mx-auto
     .my-4(v-if='this.video.ipfs_hash')
       p(align='center')
         b-link(
-          :href='"https://videos." + this.config.domain + "/" + encodeURIComponent(this.video.filename)',
+          :href='"https://videos." + this.config.domain + "/ipfs/" + this.video.ipfs_hash + "/" + encodeURIComponent(this.video.filename)',
           download
         )
           b-button
