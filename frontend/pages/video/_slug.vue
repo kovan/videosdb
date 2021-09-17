@@ -23,7 +23,7 @@ b-container.m-0.p-0.mx-auto
             | View / Download
         | &nbsp;
         b-link(
-          :href='"ipns://ipfs." + this.config.domain + "/ipfs/" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)'
+          :href='"ipfs://ipfs." + this.config.domain + "/ipfs/" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)'
         )
           b-button
             | View / Download - with &nbsp;
