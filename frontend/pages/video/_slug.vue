@@ -16,14 +16,14 @@ b-container.m-0.p-0.mx-auto
     .my-4(v-if='this.video.ipfs_hash')
       p(align='center')
         b-link(
-          :href='"https://ipfs." + this.config.domain + "/ipfs/" + this.video.ipfs_hash + "/" + encodeURIComponent(this.video.filename)',
+          :href='"https://ipfs." + this.config.domain + "/ipfs/" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)',
           download
         )
           b-button
             | View / Download
         | &nbsp;
         b-link(
-          :href='"ipns://videos." + this.config.domain + "/" + encodeURIComponent(this.video.filename)'
+          :href='"ipns://videos." + this.config.domain + "/ipfs/" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)'
         )
           b-button
             | View / Download - with &nbsp;
