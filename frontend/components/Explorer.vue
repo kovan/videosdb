@@ -150,7 +150,7 @@ export default {
 
 
     const dummy_root = "http://example.com"  // otherwise URL doesn't work
-    const url = new URL('/api/videos/', dummy_root)
+    const url = new URL('/videos/', dummy_root)
     if (this.ordering)
       url.searchParams.append("ordering", this.ordering)
     if (this.period)

@@ -31,7 +31,7 @@ export default {
   },
 
   async asyncData ({ $axios, params, error }) {
-    let url = "/api/categories/" + params.slug
+    let url = "/categories/" + params.slug
     try {
       let response = await $axios.$get(url)
       return { category: response }
