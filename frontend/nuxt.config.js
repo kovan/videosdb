@@ -1,7 +1,7 @@
 
 import axios from 'axios'
 
-const ApiURL = process.env.API_URL || 'http://localhost:8000';
+const ApiURL = process.env.API_URL || 'http://localhost:8000/api';
 
 export default {
   modern: true,
@@ -24,9 +24,7 @@ export default {
     routes: [
       "/"
     ],
-   
     fallback: true
-  
   },
   // Global CSS (https://go.nuxtjs.dev/config-css)
   // css: ['@/assets/scss/custom.scss'],
@@ -76,7 +74,7 @@ export default {
   axios: {
     //proxy: true,
     debug: process.env.DEBUG ? true : false,
-   // baseURL: ApiURL
+    baseURL: ApiURL
   },
 
   // privateRuntimeConfig: {
