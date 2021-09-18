@@ -87,7 +87,6 @@ export default {
     hostname: "https://sadhguru.digital",
     gzip: true,
     routes: async () => {
-      require('axios-debug-log/enable')
       let [ videos, categories, tags ] = await Promise.all([
         axios.get(ApiURL +'/videos/?no_pagination'),
         axios.get(ApiURL +'/categories/?no_pagination'),
