@@ -23,7 +23,10 @@ export default {
   generate: {
     routes: [
       "/"
-    ]
+    ],
+   
+    fallback: true
+  
   },
   // Global CSS (https://go.nuxtjs.dev/config-css)
   // css: ['@/assets/scss/custom.scss'],
