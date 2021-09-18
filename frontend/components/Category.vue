@@ -1,7 +1,11 @@
 <template lang="pug">
 b-container
   h1.text-center Category: {{ this.category.name }}
-  Explorer(:categories='this.category.id')
+  Explorer(
+    :current_page='this.$route.params.page',
+    :base_url='`/category/${this.$route.params.slug}/`',
+    :categories='this.category.id'
+  )
 </template>
 
 <script>

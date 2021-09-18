@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from django.db.models import Count
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
+from django.views.decorators.cache import never_cache
 
 from django.conf import settings
 from rest_framework import filters, serializers, viewsets
@@ -14,6 +15,7 @@ from rest_framework.pagination import PageNumberPagination
 from .models import Category, Tag, Video
 
 
+@never_cache
 @api_view(["GET"])
 def random_video(request):
     video = Video.objects.filter(excluded=False).order_by("?").first()
@@ -21,6 +23,7 @@ def random_video(request):
     return Response(serializer.data)
 
 
+@never_cache
 @api_view(["GET"])
 def version(request):
     return Response(os.environ.get("TAG"))
