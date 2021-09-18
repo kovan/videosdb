@@ -1,6 +1,6 @@
 <template lang="pug">
 b-container
-  Explorer
+  Explorer(:current_page='this.$route.params.page', base_url='/')
 </template>
 
 <script>

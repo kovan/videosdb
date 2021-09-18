@@ -5,7 +5,7 @@ const ApiURL = process.env.API_URL || 'http://localhost:8000';
 
 export default {
   modern: true,
-  target: 'static',
+  ssr: false,
   
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head() {
@@ -20,6 +20,11 @@ export default {
     }
   },
 
+  generate: {
+    routes: [
+      "/"
+    ]
+  },
   // Global CSS (https://go.nuxtjs.dev/config-css)
   // css: ['@/assets/scss/custom.scss'],
 
@@ -42,7 +47,10 @@ export default {
   components: true,
 
   // Modules for dev and build (recommended) (https://go.nuxtjs.dev/config-modules)
-  buildModules: ['@nuxtjs/google-analytics'],
+  buildModules: [
+    '@nuxtjs/google-analytics',
+    '@nuxtjs/router',
+  ],
 
   googleAnalytics: {
     id: 'UA-171658328-1',
@@ -137,7 +145,7 @@ export default {
     optimizeCSS: true,
     parallel: true,
     cache: true,
-    hardSource: false
+    //hardSource: false
   },
   server: {
     // https:

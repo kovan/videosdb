@@ -1,7 +1,11 @@
 <template lang="pug">
 b-container
   h1.text-center Tag: {{ this.tag.name }}
-  Explorer(:tags='this.tag.id')
+  Explorer(
+    :current_page='this.$route.params.page',
+    :base_url='`/tag/${this.$route.params.slug}/`',
+    :tags='this.tag.id'
+  )
 </template>
 
 <script>
