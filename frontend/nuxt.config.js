@@ -71,9 +71,9 @@ export default {
 
   // Axios module configuration (https://go.nuxtjs.dev/config-axios)
   axios: {
-    proxy: true,
+    //proxy: true,
     debug: process.env.DEBUG ? true : false,
-    baseURL: ApiURL
+   // baseURL: ApiURL
   },
 
   // privateRuntimeConfig: {
@@ -126,9 +126,9 @@ export default {
     },
   },
 
-  proxy: {
-    '/api': ApiURL,
-  },
+  // proxy: {
+  //   '/api': ApiURL,
+  // },
 
   // Build Configuration (https://go.nuxtjs.dev/config-build)
   build: {
