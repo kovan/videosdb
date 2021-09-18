@@ -31,6 +31,7 @@ function getConfigForRequest(req) {
         gcs_url: 'https://cse.google.com/cse.js?cx=043c6e15fcd358d5a',
       }
       break
+    default:
     case 'sadhguru.digital':
       config = {
         domain: 'sadhguru.digital',
@@ -40,13 +41,6 @@ function getConfigForRequest(req) {
         gcs_url: 'https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635',
       }
       break
-    default:
-      config = {
-        domain: host,
-        title: 'Test title',
-        subtitle: 'test subtitle',
-        gcs_url: '',
-      }
   }
 
   return config
