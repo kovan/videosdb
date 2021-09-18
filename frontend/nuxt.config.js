@@ -5,7 +5,8 @@ const ApiURL = process.env.API_URL || 'http://localhost:8000';
 
 export default {
   modern: true,
-  // target: 'static',
+  target: 'static',
+  
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head() {
     return {
@@ -128,9 +129,15 @@ export default {
         config.devtool = 'inline-source-map'
       }
     },
+    loaders:  {
+      vue: {
+         prettify: false
+      }
+    },
     optimizeCSS: true,
     parallel: true,
-    cache: true
+    cache: true,
+    hardSource: false
   },
   server: {
     // https:
