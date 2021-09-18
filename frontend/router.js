@@ -16,10 +16,6 @@ export function createRouter() {
     mode: 'history',
     routes: [
       {
-        path: '/:page?',
-        component: Home
-      },
-      {
           path: '/search',
           component: Search
       },
@@ -35,6 +31,10 @@ export function createRouter() {
           path: '/video/:slug',
           component: Video
       },
+      {
+        path: '/:page?',
+        component: Home
+      }
     ]
   })
 }
