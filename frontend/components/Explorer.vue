@@ -25,7 +25,7 @@
         .col-md-4(v-for='video in this.videos', :key='video.youtube_id')
           .card.mb-4.shadow-sm.text-center
             NuxtLink(:to='"/video/" + video.slug')
-              b-img-lazy.bd-placeholder-img.card-img-top(
+              b-img.bd-placeholder-img.card-img-top(
                 :src='video.thumbnails.medium.url',
                 width='100%',
                 :id='video.youtube_id',
