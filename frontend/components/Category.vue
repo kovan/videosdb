@@ -2,7 +2,7 @@
 b-container
   h1.text-center Category: {{ this.category.name }}
   Explorer(
-    :current_page='this.$route.params.page',
+    :current_page='this.$route.params.page || 1',
     :base_url='`/category/${this.$route.params.slug}/`',
     :categories='this.category.id'
   )
