@@ -111,18 +111,20 @@ export default {
     }
   },
   props: {
-    current_page: function () {
-      return "1";
+    current_page: () => {
+      return 1;
     },
-    base_url: function () {
+    base_url: () => {
       return "/";
     },
-    search: "",
-    categories: {
-      default: ''
+    search: () => {
+      return "";
     },
-    tags: {
-      default: ''
+    categories: () => {
+      return "";
+    },
+    tags: () => {
+      return "";
     },
   },
 

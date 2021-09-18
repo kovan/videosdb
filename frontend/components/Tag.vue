@@ -2,7 +2,7 @@
 b-container
   h1.text-center Tag: {{ this.tag.name }}
   Explorer(
-    :current_page='this.$route.params.page',
+    :current_page='this.$route.params.page || 1',
     :base_url='`/tag/${this.$route.params.slug}/`',
     :tags='this.tag.id'
   )
