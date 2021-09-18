@@ -1,7 +1,7 @@
 <template lang="pug">
 .pt-2
   .album.py-1.bg-light
-    div
+    .p-3
       .row
         .col
           .container.p-1.pb-3
@@ -46,11 +46,14 @@
       .overflow-auto(v-if='this.videos.length')
         b-pagination-nav(
           size='lg',
-          align='center',
+          align='fill',
+          :base-url='base_url',
           v-model='current_page',
-          :link-gen='linkGen',
           :number-of-pages='page_count',
-          use-router
+          use-router,
+          first-number,
+          last-number,
+          pills
         )
 </template>
 
@@ -62,7 +65,6 @@ export default {
   data: () => {
     return {
       page_count: 1,
-      current_page: 1,
       videos: [],
       period_options: [
         {
@@ -109,6 +111,12 @@ export default {
     }
   },
   props: {
+    current_page: function () {
+      return "1";
+    },
+    base_url: function () {
+      return "/";
+    },
     search: "",
     categories: {
       default: ''
@@ -119,10 +127,10 @@ export default {
   },
 
   watch: {
-    $route (to, from) {
-      this.current_page = this.$route.query.page || 1
-      this.$fetch()
-    }
+    // $route (to, from) {
+    //   this.current_page = this.$route.query.page || 1
+    //   this.$fetch()
+    // }
   },
   methods: {
     linkGen (pageNum) {
