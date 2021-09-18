@@ -87,11 +87,11 @@ export default {
     hostname: "https://sadhguru.digital",
     gzip: true,
     routes: async () => {
-      
+      require('axios-debug-log/enable')
       let [ videos, categories, tags ] = await Promise.all([
-        axios.get(ApiURL +'/api/videos/?no_pagination'),
-        axios.get(ApiURL +'/api/categories/?no_pagination'),
-        axios.get(ApiURL +'/api/tags/?no_pagination')
+        axios.get(ApiURL +'/videos/?no_pagination'),
+        axios.get(ApiURL +'/categories/?no_pagination'),
+        axios.get(ApiURL +'/tags/?no_pagination')
       ])
 
       videos =  videos.data.map( (video) => {
@@ -127,7 +127,7 @@ export default {
   },
 
   // proxy: {
-  //   '/api': ApiURL,
+  //   '': ApiURL,
   // },
 
   // Build Configuration (https://go.nuxtjs.dev/config-build)

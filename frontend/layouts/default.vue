@@ -90,7 +90,7 @@ export default {
   methods: {
     async randomVideo () {
       try {
-        var url = "/api/random-video"
+        var url = "/random-video"
         let video = await this.$axios.$get(url)
 
         this.$router.push("/video/" + video.slug)
@@ -121,7 +121,7 @@ export default {
     this.title = config.title
     try {
       this.categories = await this.$axios.$get(
-        '/api/categories/?ordering=name'
+        '/categories/?ordering=name'
       )
     } catch (exception) {
       handleAxiosError(exception, this.$nuxt.context.error)
