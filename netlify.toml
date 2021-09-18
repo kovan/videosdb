@@ -1,0 +1,7 @@
+[build]
+base = "frontend/"
+publish = "dist/"
+command = "yarn build"
+environment = { API_URL = "http://13.126.203.46:8000" }
+
+
