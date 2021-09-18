@@ -27,7 +27,7 @@ b-container.m-0.p-0.mx-auto
         )
           b-button
             | View / Download - with &nbsp;
-            b-img-lazy(src='/ipfs-logo-text-128-ice-white.png', height='24px')
+            b-img(src='/ipfs-logo-text-128-ice-white.png', height='24px')
         p(align='center')
           | NOTE: to download the videos, right click on the download link and choose "Save as.."
 
