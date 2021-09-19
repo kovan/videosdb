@@ -1,11 +1,9 @@
 
-import axios from 'axios'
-
-const ApiURL = process.env.API_URL || 'http://localhost:8000/api';
 
 export default {
   modern: true,
-  ssr: false,
+  ssr: true,
+  target: "static",
   
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head() {
@@ -21,10 +19,10 @@ export default {
   },
 
   generate: {
-    routes: [
-      "/"
-    ],
-    fallback: true
+    routes: [],
+    fallback: true,
+    crawler: false
+
   },
   // Global CSS (https://go.nuxtjs.dev/config-css)
   // css: ['@/assets/scss/custom.scss'],
@@ -51,6 +49,7 @@ export default {
   buildModules: [
     '@nuxtjs/google-analytics',
     '@nuxtjs/router',
+    '@/modules/sitemap-generator'
   ],
 
   googleAnalytics: {
@@ -74,7 +73,7 @@ export default {
   axios: {
     //proxy: true,
     debug: process.env.DEBUG ? true : false,
-    baseURL: ApiURL
+    baseURL:  process.env.API_URL || 'http://localhost:8000/api'
   },
 
   // privateRuntimeConfig: {
@@ -87,43 +86,7 @@ export default {
     cacheTime: 86400000, // 24h
     hostname: "https://www.sadhguru.digital",
     gzip: true,
-    routes: async () => {
-      let [ videos, categories, tags ] = await Promise.all([
-        axios.get(ApiURL +'/videos/?no_pagination'),
-        axios.get(ApiURL +'/categories/?no_pagination'),
-        axios.get(ApiURL +'/tags/?no_pagination')
-      ])
-
-      videos =  videos.data.map( (video) => {
-        return {
-          url: `/video/${video.slug}`,
-          video: [{
-              thumbnail_loc: video.thumbnails.medium.url,
-              title: video.title,
-              description: video.description_trimmed ? video.description_trimmed : video.title,
-              content_loc: "https://videos.sadhguru.digital/" + encodeURIComponent(video.filename),
-              player_loc: `https://www.youtube.com/watch?v=${video.youtube_id}`,
-              duration: video.duration_seconds
-            }
-          ],
-          lastmod: video.modified_date,
-          priority: 0.9
-        }
-      })
-      
-      let result =  videos.concat(
-        categories.data.map( (cat) => `/category/${cat.slug}`).concat(
-          tags.data.map( (tag) => `/tag/${tag.slug}`)))
-        
-      result.push({
-        url: "/",
-        changefreq: "daily"
-      })
-
-      return result
-
-
-    },
+    routes: [],
   },
 
   // proxy: {

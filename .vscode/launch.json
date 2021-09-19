@@ -4,6 +4,17 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+      {
+      "name": "nuxt generate",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
+      "skipFiles": ["<node_internals>/**"],
+      "args": ["generate"],
+      "type": "node",
+      "envFile": "${workspaceFolder}/frontend/.env",
+      "cwd": "${workspaceFolder}/frontend",
+      "outputCapture": "std"
+    },
 
 
     {
