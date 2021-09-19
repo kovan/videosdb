@@ -85,7 +85,7 @@ export default {
 
   sitemap: {
     cacheTime: 86400000, // 24h
-    hostname: "https://sadhguru.digital",
+    hostname: "https://www.sadhguru.digital",
     gzip: true,
     routes: async () => {
       let [ videos, categories, tags ] = await Promise.all([
