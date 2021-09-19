@@ -2,12 +2,30 @@ upstream frontend_sadhguru_upstream {
     server localhost:3000;
 }
 
+upstream backend_sadhguru_upstream {
+    server localhost:8000;
+}
+
 server {
-    if ($host = www.sadhguru.digital) {
-        return 301 https://sadhguru.digital$request_uri;
+    server_name sadhguru.digital www.sadhguru.digital;
+    
+    listen 443 ssl http2; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/sadhguru.digital-0001/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/sadhguru.digital-0001/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+    if ($host = sadhguru.digital) {
+        return 301 https://www.$host$request_uri;
     } 
 
-    server_name sadhguru.digital www.sadhguru.digital;
+    location /api {
+        proxy_pass http://backend_sadhguru_upstream;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+    }
+
     location / {
         proxy_pass http://frontend_sadhguru_upstream;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -15,17 +33,12 @@ server {
         proxy_redirect off;
     }
 
-    listen 443 ssl http2; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/sadhguru.digital-0001/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/sadhguru.digital-0001/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
 }
 
 server {
-    return 301 https://sadhguru.digital$request_uri;
-
     listen 80;
     server_name sadhguru.digital www.sadhguru.digital;
-    return 404; # managed by Certbot
+    return 301 https://$host$request_uri;
+
 }
