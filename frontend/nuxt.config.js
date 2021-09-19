@@ -19,7 +19,9 @@ export default {
   },
 
   generate: {
-    routes: [],
+    routes: [
+      "/"
+    ],
     fallback: true,
     crawler: false
 
