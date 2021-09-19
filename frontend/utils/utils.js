@@ -32,6 +32,7 @@ function getConfigForRequest(req) {
       }
       break
     default:
+    case 'www.sadhguru.digital':
     case 'sadhguru.digital':
       config = {
         domain: 'sadhguru.digital',
