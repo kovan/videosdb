@@ -2,8 +2,8 @@
 
 export default {
   modern: true,
-  ssr: true,
-  target: "static",
+  ssr: false,
+  // target: "static",
   
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head() {
