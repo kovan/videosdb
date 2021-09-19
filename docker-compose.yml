@@ -38,21 +38,21 @@ services:
     healthcheck:
       interval: 1h
 
-  frontend-sadhguru:
-          #    platform: linux/arm/v7
-    image: ${REPO}frontend:${TAG:-latest}
+  # frontend-sadhguru:
+  #         #    platform: linux/arm/v7
+  #   image: ${REPO}frontend:${TAG:-latest}
 
-    environment:
-      - API_URL=http://backend-sadhguru:8000
-    links:
-      - backend-sadhguru
-    build:
-      context: ./frontend
-    ports:
-      - 3000:3000
-    restart: always
-    healthcheck:
-      interval: 1h
+  #   environment:
+  #     - API_URL=http://backend-sadhguru:8000
+  #   links:
+  #     - backend-sadhguru
+  #   build:
+  #     context: ./frontend
+  #   ports:
+  #     - 3000:3000
+  #   restart: always
+  #   healthcheck:
+  #     interval: 1h
 
   # backend-sadhguru-cron:
   #   image: ${REPO}backend:${TAG:-latest}
