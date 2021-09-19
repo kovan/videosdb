@@ -22,7 +22,6 @@ services:
 
     #    platform: linux/arm/v7
     environment:
-      - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
       - DB_HOST=db
       - DB_PASSWORD=TBSV96364xXi2JeWZiVibnbGczFNg
       - TAG=${TAG}
@@ -58,7 +57,6 @@ services:
   # backend-sadhguru-cron:
   #   image: ${REPO}backend:${TAG:-latest}
   #   environment:
-  #     - DJANGO_SETTINGS_MODULE=project.settings-sadhguru
   #   build:
   #     context: ./backend
   #   entrypoint: ["su", "-c", "cron -f"]

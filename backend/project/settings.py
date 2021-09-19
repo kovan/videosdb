@@ -88,8 +88,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'postgres',
         'USER': 'postgres',
-        'PASSWORD': os.environ.get("DB_PASSWORD"),
-        'HOST': os.environ.get("DB_HOST"),
+        'PASSWORD': os.environ.get("DB_PASSWORD", "TBSV96364xXi2JeWZiVibnbGczFNg"),
+        'HOST': os.environ.get("DB_HOST", "db"),
         'PORT': '5432',
         'TEST': {
             "NAME": "test_videosdb",
