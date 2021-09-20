@@ -16,14 +16,14 @@ b-container.m-0.p-0.mx-auto
     .my-4(v-if='this.video.ipfs_hash')
       p(align='center')
         b-link(
-          :href='"https://ipfs." + this.config.domain + "/ipfs/" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)',
+          :href='"https://ipfs.sadhguru.digital/ipfs/" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)',
           download
         )
           b-button
             | View / Download
         | &nbsp;
         b-link(
-          :href='"ipfs://ipfs." + this.config.domain + "/ipfs/" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)'
+          :href='"ipfs://ipfs.sadhguru.digital/ipfs/" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)'
         )
           b-button
             | View / Download - with &nbsp;
@@ -56,22 +56,20 @@ b-container.m-0.p-0.mx-auto
 
 
 import { handleAxiosError } from "~/utils/utils"
-import VueYoutube from 'vue-youtube'
+
 
 export default {
-  components: {
-    VueYoutube
-  },
-  head: {
-    title: this.video.title + " - " + "Sadhguru wisdom",
-    meta: [
-      {
-        hid: "description",
-        name: "description",
-        content: this.video.description_trimmed
-      }
-    ]
-
+  head () {
+    return {
+      title: this.video.title + " - " + "Sadhguru wisdom",
+      meta: [
+        {
+          hid: "description",
+          name: "description",
+          content: this.video.description_trimmed
+        }
+      ]
+    }
   },
   data () {
     return {

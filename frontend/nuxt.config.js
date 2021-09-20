@@ -6,31 +6,15 @@ const ApiURL = process.env.API_URL || 'http://localhost:8000/api'
 
 export default {
   modern: true,
-  ssr: false,
-  //target: "static",
+  ssr: true,
+  target: "static",
   telemetry: false,
   
-  // Global page headers (https://go.nuxtjs.dev/config-head)
-  head: {
-      title: "Sadhguru wisdom",
-      meta: [
-        { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { "http-equiv": "content-language", content: "en"},
-        { 
-          hid: 'description',
-          name: 'description',
-          content: 'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.'          
-        }
-        ,
-      ],
-      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
-    
-  },
+
 
   generate: {
     workers: cpuCount,
-    workerConcurrency: 10,
+    workerConcurrency: 500,
     routes: [
       "/"
     ],
@@ -38,10 +22,10 @@ export default {
     crawler: false
 
   },
-  // Global CSS (https://go.nuxtjs.dev/config-css)
-  // css: ['@/assets/scss/custom.scss'],
 
-  // Plugins to run before rendering page (https://go.nuxtjs.dev/config-plugins)
+  css: [],
+
+
   plugins: [
     {
       src: '~/plugins/vue-plugin-load-script.js',
@@ -56,11 +40,12 @@ export default {
     },    
   ],
 
-  // Auto import components (https://go.nuxtjs.dev/config-components)
   components: true,
 
-  // Modules for dev and build (recommended) (https://go.nuxtjs.dev/config-modules)
   buildModules: [
+    '@nuxtjs/router-extras',
+    '@nuxtjs/google-analytics',
+    '@/modules/sitemap-generator'
     
   ],
 
@@ -68,16 +53,13 @@ export default {
     id: 'UA-171658328-1',
   },
 
-  // Modules (https://go.nuxtjs.dev/config-modules)
+
   modules: [
     // https://go.nuxtjs.dev/axios
+    '@nuxtjs/router-extras',
     '@nuxtjs/axios',
     '@nuxtjs/sitemap',
     'bootstrap-vue/nuxt',
-    // '@nuxtjs/pwa',
-    '@nuxtjs/router-extras',
-    '@nuxtjs/google-analytics',
-    '@/modules/sitemap-generator'
   ],
 
   bootstrapVue: {
@@ -102,18 +84,12 @@ export default {
     directives: []
   },
 
-  // Axios module configuration (https://go.nuxtjs.dev/config-axios)
   axios: {
     //proxy: true,
     debug: process.env.DEBUG ? true : false,
     baseURL:  ApiURL
   },
 
-  // privateRuntimeConfig: {
-  //   axios: {
-  //     baseURL: process.env.BASE_URL,
-  //   },
-  // },
 
   sitemap: {
     cacheTime: 86400000, // 24h
@@ -124,11 +100,7 @@ export default {
     }
   },
 
-  // proxy: {
-  //   '': ApiURL,
-  // },
 
-  // Build Configuration (https://go.nuxtjs.dev/config-build)
   build: {
     extend(config, ctx) {
       if (ctx.isDev) {
@@ -149,17 +121,26 @@ export default {
     cache: true,
     //hardSource: false
   },
-  server: {
-    // https:
-    //   process.env.NODE_ENV !== 'production'
-    //     ? {
-    //         key: fs.readFileSync(path.resolve(__dirname, 'server.key')),
-    //         cert: fs.readFileSync(path.resolve(__dirname, 'server.crt')),
-    //       }
-    //     : {},
-  },
+  server: {},
 
   env: {},
 
   serverMiddleware: [],
+
+  head: {
+      title: "Sadhguru wisdom",
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { "http-equiv": "content-language", content: "en"},
+        { 
+          hid: 'description',
+          name: 'description',
+          content: 'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.'          
+        }
+        ,
+      ],
+      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+    
+  },  
 }

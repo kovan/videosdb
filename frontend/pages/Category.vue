@@ -11,17 +11,17 @@ b-container
 <script>
 import { handleAxiosError } from "~/utils/utils"
 export default {
-  head: {
-
-    title: this.category.name + " - " + "Sadhguru wisdom",
-    meta: [
-      {
-        hid: 'description',
-        name: 'description',
-        content: "Category: " + this.category.name
-      }
-    ],
-
+  head () {
+    return {
+      title: this.category.name + " - " + "Sadhguru wisdom",
+      meta: [
+        {
+          hid: 'description',
+          name: 'description',
+          content: "Category: " + this.category.name
+        }
+      ],
+    }
   },
   data: () => {
     return {
