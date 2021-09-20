@@ -5,7 +5,6 @@ const cpuCount = os.cpus().length;
 const ApiURL = process.env.API_URL || "http://localhost:8000/api";
 
 export default {
-  modern: true,
   ssr: true,
   target: "static",
   telemetry: false,
@@ -114,6 +113,17 @@ export default {
     //parallel: true,
     //cache: true,
     //hardSource: false
+    babel: {
+      presets({ isClient }, preset) {
+        if (isClient) {
+          // https://babeljs.io/docs/en/babel-preset-env
+          preset[1].targets = {
+            chrome: "58",
+          };
+        }
+        return [preset];
+      },
+    },
   },
   server: {},
 
