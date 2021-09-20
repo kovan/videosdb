@@ -1,124 +1,120 @@
-import { getSitemap } from './modules/sitemap-generator'
+import { getSitemap } from "./utils/utils";
 
-const os = require('os')
-const cpuCount = os.cpus().length
-const ApiURL = process.env.API_URL || 'http://localhost:8000/api'
+const os = require("os");
+const cpuCount = os.cpus().length;
+const ApiURL = process.env.API_URL || "http://localhost:8000/api";
 
 export default {
   modern: true,
   ssr: true,
   target: "static",
   telemetry: false,
-  
-
 
   generate: {
     workers: cpuCount,
-    workerConcurrency: 500,
-    routes: [
-      "/"
-    ],
+    workerConcurrency: 100,
+    routes: async () => {
+      if (process.env.DEBUG) {
+        return [
+          "/video/sadhguru-about-dismantling-global-hindutva-conference/",
+        ];
+      }
+      try {
+        let sitemap = await getSitemap(ApiURL);
+        return sitemap.map((route) => route.url);
+      } catch (e) {
+        console.error(e);
+      }
+    },
     fallback: true,
-    crawler: false
-
+    crawler: false,
+    devtools: true,
   },
 
   css: [],
 
-
   plugins: [
     {
-      src: '~/plugins/vue-plugin-load-script.js',
+      src: "~/plugins/vue-plugin-load-script.js",
       ssr: false,
     },
-    // {
-    //   src: '~/plugins/bootstrap-vue.js',
-    // },
     {
-      src: '~/plugins/vue-youtube.js',
-      ssr: false
-    },    
+      src: "~/plugins/vue-youtube.js",
+      ssr: false,
+    },
   ],
 
   components: true,
 
-  buildModules: [
-    '@nuxtjs/router-extras',
-    '@nuxtjs/google-analytics',
-    '@/modules/sitemap-generator'
-    
-  ],
+  buildModules: ["@nuxtjs/router-extras", "@nuxtjs/google-analytics"],
 
   googleAnalytics: {
-    id: 'UA-171658328-1',
+    id: "UA-171658328-1",
   },
-
 
   modules: [
     // https://go.nuxtjs.dev/axios
-    '@nuxtjs/router-extras',
-    '@nuxtjs/axios',
-    '@nuxtjs/sitemap',
-    'bootstrap-vue/nuxt',
+    "@nuxtjs/router-extras",
+    "@nuxtjs/axios",
+    "@nuxtjs/sitemap",
+    "bootstrap-vue/nuxt",
   ],
 
   bootstrapVue: {
     // bootstrapCSS: false,
     // bootstrapVueCSS: false,
     componentPlugins: [
-      'LayoutPlugin',
-      'FormSelectPlugin',
-      'ImagePlugin',
-      'PopoverPlugin',
-      'PaginationNavPlugin',
-      'ButtonPlugin',
-      'NavPlugin',
-      'CardPlugin',
-      'EmbedPlugin',
-      'LinkPlugin',
-      'SidebarPlugin'
-      
+      "LayoutPlugin",
+      "FormSelectPlugin",
+      "ImagePlugin",
+      "PopoverPlugin",
+      "PaginationNavPlugin",
+      "ButtonPlugin",
+      "NavPlugin",
+      "CardPlugin",
+      "EmbedPlugin",
+      "LinkPlugin",
+      "SidebarPlugin",
     ],
     directivePlugins: [],
     components: ["BIcon", "BIconSearch", "BIconShuffle"],
-    directives: []
+    directives: [],
   },
 
   axios: {
     //proxy: true,
     debug: process.env.DEBUG ? true : false,
-    baseURL:  ApiURL
+    baseURL: ApiURL,
   },
-
 
   sitemap: {
     cacheTime: 86400000, // 24h
     hostname: "https://www.sadhguru.digital",
     gzip: true,
     routes: async () => {
-      return getSitemap(ApiURL)
-    }
+      return getSitemap(ApiURL);
+    },
   },
-
 
   build: {
     extend(config, ctx) {
       if (ctx.isDev) {
-        config.devtool = 'inline-source-map'
+        config.devtool = "inline-source-map";
       } else {
         if (ctx.isClient) {
-           config.optimization.splitChunks.maxSize = 250000
+          config.optimization.splitChunks.maxSize = 250000;
         }
       }
     },
-    loaders:  {
+    loaders: {
       vue: {
-         prettify: false
-      }
+        prettify: false,
+      },
     },
     optimizeCSS: true,
-    parallel: true,
-    cache: true,
+    extractCSS: true,
+    //parallel: true,
+    //cache: true,
     //hardSource: false
   },
   server: {},
@@ -128,19 +124,18 @@ export default {
   serverMiddleware: [],
 
   head: {
-      title: "Sadhguru wisdom",
-      meta: [
-        { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { "http-equiv": "content-language", content: "en"},
-        { 
-          hid: 'description',
-          name: 'description',
-          content: 'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.'          
-        }
-        ,
-      ],
-      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
-    
-  },  
-}
+    title: "Sadhguru wisdom",
+    meta: [
+      { charset: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { "http-equiv": "content-language", content: "en" },
+      {
+        hid: "description",
+        name: "description",
+        content:
+          "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
+      },
+    ],
+    link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
+  },
+};
