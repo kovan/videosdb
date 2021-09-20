@@ -78,26 +78,24 @@ async function generateSitemap(baseURL) {
       priority: 0.9,
     };
   });
+
   function transform(obj, type) {
     return {
       url: `/${type}/${obj.slug}`,
     };
   }
 
-  let result = videos;
+  categories = categories.data.map((cat) => transform(cat, "category"));
+  tags = tags.data.map((tag) => transform(tag, "tag"));
 
-  result = result.concat(
-    categories.data.map((cat) => transform(cat, "category"))
-  );
+  let result = [
+    {
+      url: "/",
+      changefreq: "daily",
+    },
+  ];
 
-  result = result.concat(tags.data.map((tag) => transform(tag, "tag")));
-
-  result.push({
-    url: "/",
-    changefreq: "daily",
-  });
-
-  return result;
+  return result.concat(videos).concat(categories).concat(tags);
 }
 async function getSitemap(baseURL) {
   if (sitemap) {

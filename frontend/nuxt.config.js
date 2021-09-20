@@ -82,8 +82,6 @@ export default {
   },
 
   axios: {
-    //proxy: true,
-    debug: process.env.DEBUG ? true : false,
     baseURL: ApiURL,
   },
 
