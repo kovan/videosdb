@@ -11,16 +11,21 @@ export default {
   telemetry: false,
   
   // Global page headers (https://go.nuxtjs.dev/config-head)
-  head() {
-    return {
+  head: {
+      title: "Sadhguru wisdom",
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { "http-equiv": "content-language", content: "en"}
+        { "http-equiv": "content-language", content: "en"},
+        { 
+          hid: 'description',
+          name: 'description',
+          content: 'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.'          
+        }
         ,
       ],
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
-    }
+    
   },
 
   generate: {
@@ -42,9 +47,9 @@ export default {
       src: '~/plugins/vue-plugin-load-script.js',
       ssr: false,
     },
-    {
-      src: '~/plugins/bootstrap-vue.js',
-    },
+    // {
+    //   src: '~/plugins/bootstrap-vue.js',
+    // },
     {
       src: '~/plugins/vue-youtube.js',
       ssr: false
@@ -56,9 +61,7 @@ export default {
 
   // Modules for dev and build (recommended) (https://go.nuxtjs.dev/config-modules)
   buildModules: [
-    '@nuxtjs/router-extras',
-    '@nuxtjs/google-analytics',
-    '@/modules/sitemap-generator'
+    
   ],
 
   googleAnalytics: {
@@ -69,14 +72,35 @@ export default {
   modules: [
     // https://go.nuxtjs.dev/axios
     '@nuxtjs/axios',
-    '@nuxtjs/sitemap'
-    // 'bootstrap-vue/nuxt',
+    '@nuxtjs/sitemap',
+    'bootstrap-vue/nuxt',
+    // '@nuxtjs/pwa',
+    '@nuxtjs/router-extras',
+    '@nuxtjs/google-analytics',
+    '@/modules/sitemap-generator'
   ],
 
-  // bootstrapVue: {
-  //   bootstrapCSS: false,
-  //   bootstrapVueCSS: false,
-  // },
+  bootstrapVue: {
+    // bootstrapCSS: false,
+    // bootstrapVueCSS: false,
+    componentPlugins: [
+      'LayoutPlugin',
+      'FormSelectPlugin',
+      'ImagePlugin',
+      'PopoverPlugin',
+      'PaginationNavPlugin',
+      'ButtonPlugin',
+      'NavPlugin',
+      'CardPlugin',
+      'EmbedPlugin',
+      'LinkPlugin',
+      'SidebarPlugin'
+      
+    ],
+    directivePlugins: [],
+    components: ["BIcon", "BIconSearch", "BIconShuffle"],
+    directives: []
+  },
 
   // Axios module configuration (https://go.nuxtjs.dev/config-axios)
   axios: {
