@@ -91,6 +91,9 @@ export default {
 }
 </script>
 
-<style>
-</style>
 
+<router>
+  {
+    path: '/video/:slug'
+  }
+</router>

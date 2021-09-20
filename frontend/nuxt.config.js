@@ -19,9 +19,6 @@ export default {
   },
 
   generate: {
-    routes: [
-      "/"
-    ],
     fallback: true,
     crawler: false
 
@@ -49,8 +46,8 @@ export default {
 
   // Modules for dev and build (recommended) (https://go.nuxtjs.dev/config-modules)
   buildModules: [
+    '@nuxtjs/router-extras',
     '@nuxtjs/google-analytics',
-    '@nuxtjs/router',
     '@/modules/sitemap-generator'
   ],
 

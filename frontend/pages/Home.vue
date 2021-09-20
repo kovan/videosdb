@@ -23,5 +23,9 @@ export default {
 }
 </script>
 
-<style>
-</style>
+
+<router>
+  {
+    path: '/:page?'
+  }
+</router>

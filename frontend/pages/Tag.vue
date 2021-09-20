@@ -1,10 +1,10 @@
 <template lang="pug">
 b-container
-  h1.text-center Category: {{ this.category.name }}
+  h1.text-center Tag: {{ this.tag.name }}
   Explorer(
     :current_page='this.$route.params.page || 1',
-    :base_url='`/category/${this.$route.params.slug}/`',
-    :categories='this.category.id'
+    :base_url='`/tag/${this.$route.params.slug}/`',
+    :tags='this.tag.id'
   )
 </template>
 
@@ -14,30 +14,36 @@ export default {
   head () {
     const config = getConfigForRequest(this.$nuxt.context.req)
     return {
-      title: this.category.name + " - " + config.title,
+      title: this.tag.name + " - " + config.title,
       meta: [
         {
           hid: 'description',
           name: 'description',
-          content: "Category: " + this.category.name
+          content: "Tag: " + this.tag.name
         }
       ],
     }
   },
   data: () => {
     return {
-      category: {}
+      tag: {}
     }
   },
 
   async asyncData ({ $axios, params, error }) {
-    let url = "/categories/" + params.slug
+    let url = "/tags/" + params.slug
     try {
       let response = await $axios.$get(url)
-      return { category: response }
+      return { tag: response }
     } catch (exception) {
       handleAxiosError(exception, error)
     }
   }
 }
 </script>
+
+<router>
+  {
+    path: '/tag/:slug/:page?'
+  }
+</router>
