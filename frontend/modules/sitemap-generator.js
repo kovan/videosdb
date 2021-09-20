@@ -49,11 +49,17 @@ async function generate_sitemap(baseURL) {
 
 export default  function () {
   this.nuxt.hook('generate:extendRoutes', async (routes) => {
+    console.debug("adding routes")
     try {
       let baseURL = this.nuxt.options.axios.baseURL
       let sitemap = await generate_sitemap(baseURL)
       this.nuxt.options.sitemap.routes = sitemap
-      routes = routes.concat(sitemap.map( route => route.url))
+      let newRoutes = sitemap.map( entry => {
+        return { 
+          route: entry.url, 
+          payload: null
+        }})
+      routes.push(...newRoutes)
     } catch (e) {
       console.error(e)
     }

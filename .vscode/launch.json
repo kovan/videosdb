@@ -13,7 +13,8 @@
       "type": "node",
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
-      "outputCapture": "std"
+      "outputCapture": "std",
+      "justMyCode": false
     },
 
 
@@ -26,7 +27,8 @@
       "type": "node",
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
-      "outputCapture": "std"
+      "outputCapture": "std",
+      "justMyCode": false
     },
     {
       "name": "nuxt build",
@@ -37,7 +39,8 @@
       "type": "node",
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
-      "outputCapture": "std"
+      "outputCapture": "std",
+      "justMyCode": false
     },
     {
       "name": "nuxt start",
@@ -48,14 +51,16 @@
       "type": "node",
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
-      "outputCapture": "std"
+      "outputCapture": "std",
+      "justMyCode": false
     },    
     {
       "type": "node",
       "request": "attach",
       "name": "Attach Program",
       "skipFiles": ["<node_internals>/**"],
-      "port": 9229
+      "port": 9229,
+      "justMyCode": false
     },
     {
       "name": "Django: Tests",
@@ -77,7 +82,8 @@
       "program": "manage.py",
       "args": ["videosdb", "--publish-one", "CR5HtTsUl5E"],
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/backend"
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": false
     },
     {
       "name": "Django: download-one",
@@ -86,7 +92,8 @@
       "program": "manage.py",
       "args": ["videosdb", "--download-one", "CR5HtTsUl5E"],
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/backend"
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": false
     },
     {
       "name": "Django custom",
