@@ -6,8 +6,8 @@ const ApiURL = process.env.API_URL || 'http://localhost:8000/api'
 
 export default {
   modern: true,
-  ssr: true,
-  target: "static",
+  ssr: false,
+  //target: "static",
   telemetry: false,
   
   // Global page headers (https://go.nuxtjs.dev/config-head)
