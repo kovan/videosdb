@@ -1,7 +1,9 @@
 import axios from 'axios'
 require('axios-debug-log')
 
-async function generate_sitemap(baseURL) {
+var sitemap = null
+
+async function generateSitemap(baseURL) {
 
   let [ videos, categories, tags ] = await Promise.all([
     axios.get(baseURL +'/videos/?no_pagination'),
@@ -46,14 +48,20 @@ async function generate_sitemap(baseURL) {
 
   return result;
 }
+export async function getSitemap(baseURL){
+  if (sitemap) {
+    return sitemap
+  }
+  sitemap = generateSitemap(baseURL)
+  return sitemap
+}
 
 export default  function () {
   this.nuxt.hook('generate:extendRoutes', async (routes) => {
     console.debug("adding routes")
     try {
       let baseURL = this.nuxt.options.axios.baseURL
-      let sitemap = await generate_sitemap(baseURL)
-      this.nuxt.options.sitemap.routes = sitemap
+      let sitemap = await getSitemap(baseURL)
       let newRoutes = sitemap.map( entry => {
         return { 
           route: entry.url, 

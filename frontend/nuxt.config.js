@@ -1,9 +1,14 @@
+import { getSitemap } from './modules/sitemap-generator'
 
+const os = require('os')
+const cpuCount = os.cpus().length
+const ApiURL = process.env.API_URL || 'http://localhost:8000/api'
 
 export default {
   modern: true,
-  ssr: false,
+  ssr: true,
   target: "static",
+  telemetry: false,
   
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head() {
@@ -19,6 +24,8 @@ export default {
   },
 
   generate: {
+    workers: cpuCount,
+    workerConcurrency: 10,
     routes: [
       "/"
     ],
@@ -75,7 +82,7 @@ export default {
   axios: {
     //proxy: true,
     debug: process.env.DEBUG ? true : false,
-    baseURL:  process.env.API_URL || 'http://localhost:8000/api'
+    baseURL:  ApiURL
   },
 
   // privateRuntimeConfig: {
@@ -88,7 +95,9 @@ export default {
     cacheTime: 86400000, // 24h
     hostname: "https://www.sadhguru.digital",
     gzip: true,
-    routes: [],
+    routes: async () => {
+      return getSitemap(ApiURL)
+    }
   },
 
   // proxy: {
