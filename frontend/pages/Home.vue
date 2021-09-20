@@ -4,21 +4,18 @@ b-container
 </template>
 
 <script>
-import { getConfigForRequest } from "~/utils/utils"
+
 
 export default {
-  head () {
-    const config = getConfigForRequest(this.$nuxt.context.req)
-    return {
-      title: config.title,
-      meta: [
-        {
-          hid: 'description',
-          name: 'description',
-          content: config.subtitle
-        }
-      ],
-    }
+  head: {
+    title: "Sadhguru wisdom",
+    meta: [
+      {
+        hid: 'description',
+        name: 'description',
+        content: 'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.'
+      }
+    ],
   }
 }
 </script>

@@ -55,27 +55,27 @@ b-container.m-0.p-0.mx-auto
 <script>
 
 
-import { handleAxiosError, getConfigForRequest } from "~/utils/utils"
+import { handleAxiosError } from "~/utils/utils"
 import VueYoutube from 'vue-youtube'
 
 export default {
-  head () {
-    const config = getConfigForRequest(this.$nuxt.context.req)
-    return {
-      title: this.video.title + " - " + config.title,
-      meta: [
-        {
-          hid: "description",
-          name: "description",
-          content: this.video.description_trimmed
-        }
-      ]
-    }
+  components: {
+    VueYoutube
+  },
+  head: {
+    title: this.video.title + " - " + "Sadhguru wisdom",
+    meta: [
+      {
+        hid: "description",
+        name: "description",
+        content: this.video.description_trimmed
+      }
+    ]
+
   },
   data () {
     return {
-      video: {},
-      config: getConfigForRequest(this.$nuxt.context.req)
+      video: {}
     }
   },
   async asyncData ({ $axios, params, error }) {

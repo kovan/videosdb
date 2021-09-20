@@ -9,20 +9,17 @@ b-container
 </template>
 
 <script>
-import { handleAxiosError, getConfigForRequest } from "~/utils/utils"
+import { handleAxiosError } from "~/utils/utils"
 export default {
-  head () {
-    const config = getConfigForRequest(this.$nuxt.context.req)
-    return {
-      title: this.tag.name + " - " + config.title,
-      meta: [
-        {
-          hid: 'description',
-          name: 'description',
-          content: "Tag: " + this.tag.name
-        }
-      ],
-    }
+  head: {
+    title: this.tag.name + "Sadhguru wisdom",
+    meta: [
+      {
+        hid: 'description',
+        name: 'description',
+        content: "Tag: " + this.tag.name
+      }
+    ],
   },
   data: () => {
     return {

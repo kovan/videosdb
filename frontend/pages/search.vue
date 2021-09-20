@@ -8,39 +8,34 @@ div
 <script>
 
 
-import { handleAxiosError, getConfigForRequest } from "~/utils/utils"
-
+const URL = 'https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635'
 export default {
   data () {
     return {
       loaded: false,
-      config: {}
     }
   },
-  created () {
-    this.config = getConfigForRequest(this.$nuxt.context.req)
-  },
   mounted () {
-    this.$loadScript(this.config.gcs_url).then(() => {
+    this.$loadScript(URL).then(() => {
       this.loaded = true
     })
   },
   destroyed () {
-    this.$unloadScript(this.config.gcs_url).then(() => {
+    this.$unloadScript(URL).then(() => {
       this.loaded = false
     })
   },
-  head () {
-    return {
-      title: "Search" + " - " + this.config.title,
-      meta: [
-        {
-          hid: 'description',
-          name: 'description',
-          content: "Search"
-        }
-      ]
-    }
+  head: {
+
+    title: "Search" + " - " + "Sadhguru wisdom",
+    meta: [
+      {
+        hid: 'description',
+        name: 'description',
+        content: "Search"
+      }
+    ]
+
   }
 }
 </script>
