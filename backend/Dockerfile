@@ -12,7 +12,7 @@ RUN apt install -y sudo
 RUN apt clean
 
 RUN pip install certifi
-COPY install_certificates.py /tmp
+COPY utils/install_certificates.py /tmp
 RUN python /tmp/install_certificates.py
 
 
@@ -22,7 +22,7 @@ RUN python /tmp/install_certificates.py
 RUN useradd -m appuser
 RUN chown appuser:appuser .
 
-COPY backend.cron /etc/cron.d
+COPY utils/backend.cron /etc/cron.d
 RUN chmod 0644 /etc/cron.d/backend.cron
 RUN crontab /etc/cron.d/backend.cron
 
@@ -42,10 +42,11 @@ VOLUME /app/.cache
 VOLUME /app/logs
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
 RUN poetry install --no-dev
+
 COPY --chown=appuser:appuser . .
-RUN chmod a+x /app/entrypoint.sh
+RUN chmod a+x /app/utils/entrypoint.sh
 
 EXPOSE 8000
 
 
-ENTRYPOINT  ["/app/entrypoint.sh"]
+ENTRYPOINT  ["/app/utils/entrypoint.sh"]
