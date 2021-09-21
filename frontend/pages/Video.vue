@@ -82,16 +82,6 @@ export default {
     try {
       var url = '/videos/' + params.slug + "/"
       let video = await $axios.$get(url)
-      //       video.yt_published_date = new Date(this.video.yt_published_date).toLocaleDateString()
-      // try {
-      //   video.duration_seconds = new Date(this.video.duration_seconds * 1000).toISOString().substr(11, 8)
-      // } catch (e) {
-      //   if (e instanceof RangeError) {
-      //     video.duration_seconds = 0
-      //   } else {
-      //     throw e;
-      //   }
-      // }
       return { video }
     } catch (exception) {
       handleAxiosError(exception, error)

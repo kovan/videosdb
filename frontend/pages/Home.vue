@@ -23,6 +23,6 @@ export default {
 
 <router>
   {
-    path: '/:page?'
+    path: '/'
   }
 </router>

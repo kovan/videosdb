@@ -43,6 +43,6 @@ export default {
 
 <router>
   {
-    path: '/category/:slug/:page?'
+    path: '/category/:slug'
   }
 </router>

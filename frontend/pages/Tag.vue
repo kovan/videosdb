@@ -43,6 +43,6 @@ export default {
 
 <router>
   {
-    path: '/tag/:slug/:page?'
+    path: '/tag/:slug'
   }
 </router>

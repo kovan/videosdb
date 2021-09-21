@@ -42,3 +42,9 @@ export default {
 
 <style>
 </style>
+
+<router>
+  {
+    path: '/search'
+  }
+</router>

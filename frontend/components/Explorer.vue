@@ -55,7 +55,8 @@
           use-router,
           first-number,
           last-number,
-          pills
+          pills,
+          :link-gen='linkGen'
         )
 </template>
 
@@ -131,12 +132,20 @@ export default {
   },
 
   watch: {
-    // $route (to, from) {
-    //   this.current_page = this.$route.query.page || 1
-    //   this.$fetch()
-    // }
+    $route (to, from) {
+      this.current_page = this.$route.query.page || 1
+      this.$fetch()
+    }
   },
   methods: {
+    linkGen (pageNum) {
+      return {
+        path: this.$route.path,
+        query: {
+          page: pageNum
+        }
+      }
+    },
 
     handleChange () {
       this.$fetch()
