@@ -59,7 +59,7 @@ async function generateSitemap(baseURL) {
 
   videos = videos.data.map((video) => {
     return {
-      url: `/video/${video.slug}`,
+      url: `/video/${video.slug}/`,
       video: [
         {
           thumbnail_loc: video.thumbnails.medium.url,
@@ -81,7 +81,7 @@ async function generateSitemap(baseURL) {
 
   function transform(obj, type) {
     return {
-      url: `/${type}/${obj.slug}`,
+      url: `/${type}/${obj.slug}/`,
     };
   }
 
