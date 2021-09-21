@@ -133,6 +133,9 @@ export default {
   serverMiddleware: [],
 
   head: {
+    htmlAttrs: {
+      lang: "en",
+    },
     title: "Sadhguru wisdom",
     meta: [
       { charset: "utf-8" },
