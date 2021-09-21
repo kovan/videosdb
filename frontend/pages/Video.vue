@@ -30,7 +30,7 @@ b-container.m-0.p-0.mx-auto
             | View / Download
         | &nbsp;
         b-link(
-          :href='"ipfs://ipfs.sadhguru.digital/ipfs/" + this.video.ipfs_hash + "?filename=" + encodeURIComponent(this.video.filename)'
+          :href='"ipns://videos.sadhguru.digital/" + encodeURIComponent(this.video.filename)'
         )
           b-button
             | View / Download - with &nbsp;
