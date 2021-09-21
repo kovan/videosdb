@@ -137,14 +137,6 @@ export default {
     // }
   },
   methods: {
-    linkGen (pageNum) {
-      return {
-        path: this.$route.path,
-        query: {
-          page: pageNum
-        }
-      }
-    },
 
     handleChange () {
       this.$fetch()
