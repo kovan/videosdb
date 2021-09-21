@@ -28,6 +28,7 @@ export default {
     fallback: true,
     crawler: false,
     devtools: true,
+    interval: 50, // in milliseconds
   },
 
   css: [],
@@ -85,7 +86,7 @@ export default {
   },
 
   sitemap: {
-    cacheTime: 86400000, // 24h
+    cacheTime: 86400000 * 2, // 48h
     hostname: "https://www.sadhguru.digital",
     gzip: true,
     routes: async () => {
