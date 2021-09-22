@@ -8,19 +8,6 @@ async def client():
         yield client
 
 
-# def is_port_open(host, port):
-
-#     a_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-#     location = (host, port)
-#     result_of_check = a_socket.connect_ex(location)
-#     a_socket.close()
-#     if result_of_check == 0:
-#         return True
-#     else:
-#         return False
-
-
 @pytest.mark.asyncio
 async def test_no_404(client):
     r = await client.get("https://www.sadhguru.digital")
@@ -60,6 +47,18 @@ async def test_ipfs_up(client):
 
 
 @pytest.mark.asyncio
-async def test_videos_up(client):
+async def test_ipfs_videos_up(client):
     r = await client.get("https://videos.sadhguru.digital/asdf")
     assert r.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_ipfs_one_video(client):
+    r = await client.request("HEAD", 'https://ipfs.sadhguru.digital/ipfs/Qmauotw36R8HqgXpBQcNWr8MQTWqNo32d7h1NUMR8Apdeo')
+    assert r.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_ipfs_videos_one_video(client):
+    r = await client.request("HEAD", 'https://videos.sadhguru.digital/Sadhguru%20-%20Living%20Life%20in%20Style%20%5B5Hn2YNJSrIk%5D.mp4')
+    assert r.status_code == 200
