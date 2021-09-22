@@ -13,7 +13,7 @@ b-container.m-0.p-0.mx-auto
             ref='youtube',
             resize='true',
             fitParent,
-            resizeDelay=10
+            resizeDelay=0
           )
 
     .my-4(v-if='this.video.description_trimmed')

@@ -1,7 +1,7 @@
 <template lang="pug">
 div
   b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle
-    NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ title }}
+    NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') Sadhgur wisdom
 
     b-button.mx-1(
       squared,
@@ -33,10 +33,10 @@ div
 
   .container-fluid
     .row
-      b-sidebar#sidebarMenu(v-model='sidebar_visible', no-slide)
-        h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
-          span Categories
-        LazyHydrate(when-visible)
+      LazyHydrate(never, :trigger-hydration='sidebar_visible')
+        b-sidebar#sidebarMenu(v-model='sidebar_visible', no-slide)
+          h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
+            span Categories
           ul.flex-column
             li.mr-2.nav-item(
               v-for='category in this.categories',
@@ -103,6 +103,7 @@ export default {
       }
     },
     toggleSidebar () {
+
       this.sidebar_visible = !this.sidebar_visible
     },
     hideSidebar (event) {
