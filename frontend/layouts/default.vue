@@ -33,7 +33,7 @@ div
 
   .container-fluid
     .row
-      LazyHydrate(never, :trigger-hydration='!sidebar_visible')
+      LazyHydrate(when-visible)
         b-sidebar#sidebarMenu(v-model='sidebar_visible', no-slide)
           h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
             span Categories
