@@ -29,6 +29,7 @@ export default {
     crawler: false,
     devtools: true,
     interval: 50, // in milliseconds
+    manifest: false,
   },
 
   css: ["~/assets/scss/custom.scss"],
