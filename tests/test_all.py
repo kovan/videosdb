@@ -1,5 +1,3 @@
-
-
 import pytest
 from httpx import AsyncClient
 
@@ -8,6 +6,7 @@ from httpx import AsyncClient
 async def client():
     async with AsyncClient() as client:
         yield client
+
 
 # def is_port_open(host, port):
 
@@ -29,15 +28,23 @@ async def test_no_404(client):
 
 
 @pytest.mark.asyncio
+async def test_app_loaded(client):
+    r = await client.get("https://www.sadhguru.digital")
+    assert "Sadhguru wisdom" in r.text
+
+
+@pytest.mark.asyncio
 async def test_http_to_https(client):
     r = await client.get("http://www.sadhguru.digital")
-    assert r.status_code == 301
+    assert r.url.scheme == "https"
+    assert r.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_non_www_to_www(client):
     r = await client.get("https://sadhguru.digital")
-    assert r.status_code == 301
+    assert r.url.host == "www.sadhguru.digital"
+    assert r.status_code == 200
 
 
 @pytest.mark.asyncio
@@ -47,12 +54,12 @@ async def test_api_no_404(client):
 
 
 @pytest.mark.asyncio
-async def test_ipfs_no_404(client):
+async def test_ipfs_up(client):
     r = await client.get("https://ipfs.sadhguru.digital")
-    assert r.status_code == 200
+    assert r.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_ipfs_videos_no_404(client):
-    r = await client.get("https://videos.sadhguru.digital")
-    assert r.status_code == 200
+async def test_videos_up(client):
+    r = await client.get("https://videos.sadhguru.digital/asdf")
+    assert r.status_code == 404
