@@ -31,7 +31,7 @@ export default {
     interval: 50, // in milliseconds
   },
 
-  css: [],
+  css: ["~/assets/scss/custom.scss"],
 
   plugins: [
     {
@@ -61,8 +61,8 @@ export default {
   ],
 
   bootstrapVue: {
-    // bootstrapCSS: false,
-    // bootstrapVueCSS: false,
+    bootstrapCSS: false,
+    bootstrapVueCSS: false,
     componentPlugins: [
       "LayoutPlugin",
       "FormSelectPlugin",
