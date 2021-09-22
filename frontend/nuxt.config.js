@@ -47,14 +47,16 @@ export default {
 
   components: true,
 
-  buildModules: ["@nuxtjs/router-extras", "@nuxtjs/google-analytics"],
-
-  googleAnalytics: {
-    id: "UA-171658328-1",
-  },
+  buildModules: [
+    "@nuxtjs/google-analytics",
+    "@nuxtjs/router-extras",
+    "@nuxtjs/axios",
+    "@nuxtjs/sitemap",
+    "bootstrap-vue/nuxt",
+  ],
 
   modules: [
-    // https://go.nuxtjs.dev/axios
+    "@nuxtjs/google-analytics",
     "@nuxtjs/router-extras",
     "@nuxtjs/axios",
     "@nuxtjs/sitemap",
@@ -150,5 +152,9 @@ export default {
       },
     ],
     link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
+  },
+
+  googleAnalytics: {
+    id: "UA-171658328-1",
   },
 };

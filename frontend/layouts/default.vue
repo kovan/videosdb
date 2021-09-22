@@ -1,7 +1,7 @@
 <template lang="pug">
 div
   b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle
-    NuxtLink.mr-auto.h4.mt-1.text-white.align-middle(to='/') Sadhguru wisdom
+    NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') Sadhguru wisdom
 
     b-button.mx-1(
       squared,
