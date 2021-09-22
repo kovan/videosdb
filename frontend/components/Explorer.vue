@@ -46,25 +46,29 @@
                 small.text-muted Published: {{ new Date(video.yt_published_date).toLocaleDateString() }}
                 small.text-muted Duration: {{ new Date(video.duration_seconds * 1000).toISOString().substr(11, 8) }}
       .overflow-auto(v-if='this.videos.length')
-        b-pagination-nav(
-          size='lg',
-          align='fill',
-          :base-url='base_url',
-          v-model='current_page',
-          :number-of-pages='page_count',
-          use-router,
-          first-number,
-          last-number,
-          pills,
-          :link-gen='linkGen'
-        )
+        LazyHidrate(when-visible)
+          b-pagination-nav(
+            size='lg',
+            align='fill',
+            :base-url='base_url',
+            v-model='current_page',
+            :number-of-pages='page_count',
+            use-router,
+            first-number,
+            last-number,
+            pills,
+            :link-gen='linkGen'
+          )
 </template>
 
 <script >
 
 import { handleAxiosError } from "~/utils/utils"
+import LazyHydrate from 'vue-lazy-hydration';
 export default {
-
+  components: {
+    LazyHydrate
+  },
   data: () => {
     return {
       page_count: 1,

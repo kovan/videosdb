@@ -36,16 +36,17 @@ div
       b-sidebar#sidebarMenu(v-model='sidebar_visible', no-slide)
         h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
           span Categories
-        ul.flex-column
-          li.mr-2.nav-item(
-            v-for='category in this.categories',
-            :key='category.id',
-            @click='hideSidebar'
-          )
-            NuxtLink(:to='`/category/${category.slug}`')
-              | {{ category.name }}&nbsp
-            small
-              | ({{ category.use_count }} videos)
+        LazyHydrate(when-visible)
+          ul.flex-column
+            li.mr-2.nav-item(
+              v-for='category in this.categories',
+              :key='category.id',
+              @click='hideSidebar'
+            )
+              NuxtLink(:to='`/category/${category.slug}`')
+                | {{ category.name }}&nbsp
+              small
+                | ({{ category.use_count }} videos)
 
       main.col-md-12.col-lg-12.ml-sm-auto.px-md-4.pt-4(role='main')
         nuxt
@@ -64,12 +65,14 @@ div
 <script>
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
 import { handleAxiosError, getConfigForRequest } from "~/utils/utils"
+import LazyHydrate from 'vue-lazy-hydration';
 export default {
   scrollToTop: true,
   components: {
     BIcon,
     BIconSearch,
-    BIconShuffle
+    BIconShuffle,
+    LazyHydrate
   },
   data () {
     const config = getConfigForRequest(this.$nuxt.context.req)
