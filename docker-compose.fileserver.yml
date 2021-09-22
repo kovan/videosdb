@@ -10,7 +10,7 @@ services:
       - DB_PASSWORD=TBSV96364xXi2JeWZiVibnbGczFNg
     build:
       context: ./backend
-    entrypoint: ["poetry", "run", "python", "-O", "manage.py", "videosdb","--download-and-register-in-ipfs"]
+    entrypoint: ["nice", "-n", "20", "poetry", "run", "python", "-O", "manage.py", "videosdb","--download-and-register-in-ipfs"]
     volumes:
       - logs:/app/logs
       - /mnt/videos:/mnt/videos
