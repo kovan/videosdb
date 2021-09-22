@@ -1,7 +1,7 @@
 <template lang="pug">
 div
   b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle
-    NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') Sadhgur wisdom
+    NuxtLink.mr-auto.h4.mt-1.text-white.align-middle(to='/') Sadhguru wisdom
 
     b-button.mx-1(
       squared,
@@ -29,7 +29,7 @@ div
       span.navbar-toggler-icon
 
   .p-1.px-2.mt-2(v-if='subtitle')
-    h6.text-center {{ subtitle }}
+    h6.text-center Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.
 
   .container-fluid
     .row
