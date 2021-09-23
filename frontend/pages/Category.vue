@@ -1,5 +1,5 @@
 <template lang="pug">
-b-container
+b-container.p-0.m-0
   h1.text-center Category: {{ this.category.name }}
   Explorer(
     :current_page='this.$route.params.page || 1',

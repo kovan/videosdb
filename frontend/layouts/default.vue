@@ -48,7 +48,7 @@ div
               small
                 | ({{ category.use_count }} videos)
 
-      main.col-md-12.col-lg-12.ml-sm-auto.px-md-4.pt-4(role='main')
+      main.p-0.m-0.col-md-12.col-lg-12.ml-sm-auto.px-md-4(role='main')
         nuxt
 
   footer.text-muted.text-center
