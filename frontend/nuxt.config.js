@@ -37,23 +37,17 @@ export default {
   plugins: [
     {
       src: "~/plugins/vue-plugin-load-script.js",
-      ssr: false,
+      mode: "client",
     },
     {
       src: "~/plugins/vue-youtube.js",
-      ssr: false,
+      mode: "client",
     },
   ],
 
   components: true,
 
-  buildModules: [
-    "@nuxtjs/google-analytics",
-    "@nuxtjs/router-extras",
-    "@nuxtjs/axios",
-    "@nuxtjs/sitemap",
-    "bootstrap-vue/nuxt",
-  ],
+  buildModules: ["~/modules/dns-cache.js"],
 
   modules: [
     "@nuxtjs/google-analytics",
