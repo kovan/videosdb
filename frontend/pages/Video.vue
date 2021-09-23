@@ -11,7 +11,7 @@ b-container.m-0.p-0.mx-auto
           youtube(
             :video-id='this.video.youtube_id',
             ref='youtube',
-            resize='true',
+            resize,
             fitParent,
             resizeDelay=0
           )
