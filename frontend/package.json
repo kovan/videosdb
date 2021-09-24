@@ -6,7 +6,7 @@
     "dev": "nuxt",
     "build": "nuxt build",
     "start": "nuxt start",
-    "generate": "nuxt generate",
+    "generate": "API_BROWSER_URL=https://backend.sadhguru.digital/api nuxt generate",
     "generate-cluster": "nuxt-generate --build",
     "test": "jest",
     "dev-debug": "node node_modules/.bin/nuxt"
