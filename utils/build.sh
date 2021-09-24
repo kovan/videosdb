@@ -16,5 +16,5 @@ docker buildx bake --push --set "*.platform=$PLATFORM"  $@
 
 for image in db backend
 do
-    docker tag $REPO$service:$TAG $REPO$service:latest
+    docker tag $REPO$image:$TAG $REPO$image:latest
 done
