@@ -25,10 +25,11 @@ export default {
         console.error(e);
       }
     },
+    concurrency: 12,
     fallback: true,
     crawler: false,
     devtools: true,
-    interval: 50, // in milliseconds
+    //interval: 50, // in milliseconds
     manifest: false,
   },
 
@@ -56,6 +57,12 @@ export default {
     "@nuxtjs/sitemap",
     "bootstrap-vue/nuxt",
   ],
+  
+  axios: {
+    baseURL: ApiURL,
+  },
+
+
 
   bootstrapVue: {
     bootstrapCSS: false,
