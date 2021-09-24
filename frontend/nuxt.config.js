@@ -25,7 +25,7 @@ export default {
         console.error(e);
       }
     },
-    concurrency: 12,
+    concurrency: 50,
     fallback: true,
     crawler: false,
     devtools: true,
