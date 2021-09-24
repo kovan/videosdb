@@ -19,4 +19,4 @@ do
     docker tag $REPO$image:$TAG $REPO$image:latest
 done
 
-docker-compose push
+docker-compose push $@
