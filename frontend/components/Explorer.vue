@@ -1,7 +1,7 @@
 <template lang="pug">
 .pt-2
   .album.py-1.bg-light
-    .p-3
+    .px-3
       .row
         .col
           .container.p-1.pb-3
@@ -155,6 +155,24 @@ export default {
     handleChange () {
       this.$fetch()
     }
+
+    // getSrcSetAndSizes (video) {
+    //   let srcset = ""
+    //   let sizes = ""
+    //   const resolutions = {
+    //     default: 120,
+    //     medium: 320,
+    //     high: 480,
+    //     standard: 640
+    //   }
+    //   for (const res in resolutions) {
+    //     if (video.thumbnails.hasOwnProperty(res)) {
+    //       srcset += `${video.thumbnails[res].url} ${resolutions[res]}w, `
+    //       sizes += `(max-width: ${resolutions[res]}px) ${resolutions[res]}px, `
+    //     }
+    //   }
+    //   return [srcset.slice(0, -2), sizes.slice(0, -2)]
+    // }
   },
   async fetch () {
 

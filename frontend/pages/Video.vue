@@ -28,15 +28,16 @@ b-container.m-0.p-0.mx-auto
         )
           b-button
             | View / Download
-        | &nbsp;
+      p(align='center') 
         b-link(
           :href='"ipns://videos.sadhguru.digital/" + encodeURIComponent(this.video.filename)'
         )
           b-button
             | View / Download - with &nbsp;
             b-img(src='/ipfs-logo-text-128-ice-white.png', height='24px')
-        p(align='center')
-          | NOTE: to download the videos, right click on the download link and choose "Save as.."
+
+      p(align='center')
+        | NOTE: to download the videos, right click on the download link and choose "Save as.."
 
     .my-4(v-if='this.video.categories && this.video.categories.length > 0')
       h6 Categories

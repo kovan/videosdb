@@ -31,12 +31,14 @@ div
   .p-1.px-2.mt-2(v-if='subtitle')
     h6.text-center Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.
 
-  .container-fluid
+  b-container
     .row
       LazyHydrate(when-visible)
-        b-sidebar#sidebarMenu(v-model='sidebar_visible', no-slide)
-          h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
-            span Categories
+        b-sidebar#sidebarMenu(
+          v-model='sidebar_visible',
+          no-slide,
+          title='Categories'
+        )
           ul.flex-column
             li.mr-2.nav-item(
               v-for='category in this.categories',
@@ -48,7 +50,7 @@ div
               small
                 | ({{ category.use_count }} videos)
 
-      main.p-0.m-0.col-md-12.col-lg-12.ml-sm-auto.px-md-4(role='main')
+      main.col-md-12.col-lg-12.ml-sm-auto.px-md-4.pt-4(role='main')
         nuxt
 
   footer.text-muted.text-center
