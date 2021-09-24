@@ -78,10 +78,6 @@ export default {
     directives: [],
   },
 
-  axios: {
-    baseURL: ApiURL,
-  },
-
   sitemap: {
     cacheTime: 86400000 * 2, // 48h
     hostname: "https://www.sadhguru.digital",
