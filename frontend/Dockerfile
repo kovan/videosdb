@@ -9,5 +9,5 @@ RUN yarn install
 
 COPY . .
 
-RUN yarn generate
+CMD yarn generate
 
