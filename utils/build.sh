@@ -11,10 +11,12 @@ then
 fi
 
 
-docker buildx bake --push --set "*.platform=$PLATFORM"  $@
+docker buildx bake --set "*.platform=$PLATFORM"  $@
 
 
 for image in db backend
 do
     docker tag $REPO$image:$TAG $REPO$image:latest
 done
+
+docker-compose push
