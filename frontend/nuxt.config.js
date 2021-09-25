@@ -10,8 +10,6 @@ export default {
   telemetry: false,
 
   generate: {
-    workers: cpuCount,
-    workerConcurrency: 100,
     routes: async () => {
       if (process.env.DEBUG) {
         return [
@@ -25,11 +23,11 @@ export default {
         console.error(e);
       }
     },
-    concurrency: 50,
+    concurrency: 100,
     fallback: true,
     crawler: false,
     devtools: true,
-    //interval: 50, // in milliseconds
+    interval: 50, // in milliseconds
     manifest: false,
   },
 
@@ -48,7 +46,7 @@ export default {
 
   components: true,
 
-  buildModules: ["~/modules/dns-cache.js"],
+  buildModules: [],
 
   modules: [
     "@nuxtjs/google-analytics",
@@ -56,13 +54,16 @@ export default {
     "@nuxtjs/axios",
     "@nuxtjs/sitemap",
     "bootstrap-vue/nuxt",
+    "~/modules/dns-cache.js"
   ],
   
   axios: {
     baseURL: ApiURL,
   },
 
-
+  publicRuntimeConfig: {
+    version: process.env.NUXT_ENV_CURRENT_GIT_SHA ,
+  },
 
   bootstrapVue: {
     bootstrapCSS: false,

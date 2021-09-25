@@ -59,9 +59,6 @@ div
         a(href='https://isha.sadhguru.org/global/en/wisdom')
           |
           | https://isha.sadhguru.org/global/en/wisdom
-      p
-        small(v-if='this.version')
-          | version: {{ this.version }}
 </template>
 
 <script>
@@ -86,11 +83,6 @@ export default {
       title: config.title,
       subtitle: config.subtitle,
     }
-  },
-  computed: {
-    version () {
-      return process.env.TAG;
-    },
   },
   methods: {
     async randomVideo () {
