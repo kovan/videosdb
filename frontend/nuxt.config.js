@@ -10,8 +10,6 @@ export default {
   telemetry: false,
 
   generate: {
-    workers: cpuCount,
-    workerConcurrency: 100,
     routes: async () => {
       if (process.env.DEBUG) {
         return [
@@ -25,10 +23,12 @@ export default {
         console.error(e);
       }
     },
+    concurrency: 100,
     fallback: true,
     crawler: false,
     devtools: true,
     interval: 50, // in milliseconds
+    manifest: false,
   },
 
   css: ["~/assets/scss/custom.scss"],
@@ -36,29 +36,34 @@ export default {
   plugins: [
     {
       src: "~/plugins/vue-plugin-load-script.js",
-      ssr: false,
+      mode: "client",
     },
     {
       src: "~/plugins/vue-youtube.js",
-      ssr: false,
+      mode: "client",
     },
   ],
 
   components: true,
 
-  buildModules: ["@nuxtjs/router-extras", "@nuxtjs/google-analytics"],
-
-  googleAnalytics: {
-    id: "UA-171658328-1",
-  },
+  buildModules: [],
 
   modules: [
-    // https://go.nuxtjs.dev/axios
+    "@nuxtjs/google-analytics",
     "@nuxtjs/router-extras",
     "@nuxtjs/axios",
     "@nuxtjs/sitemap",
     "bootstrap-vue/nuxt",
+    "~/modules/dns-cache.js"
   ],
+  
+  axios: {
+    baseURL: ApiURL,
+  },
+
+  publicRuntimeConfig: {
+    version: process.env.NUXT_ENV_CURRENT_GIT_SHA ,
+  },
 
   bootstrapVue: {
     bootstrapCSS: false,
@@ -79,10 +84,6 @@ export default {
     directivePlugins: [],
     components: ["BIcon", "BIconSearch", "BIconShuffle"],
     directives: [],
-  },
-
-  axios: {
-    baseURL: ApiURL,
   },
 
   sitemap: {
@@ -149,5 +150,9 @@ export default {
       },
     ],
     link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
+  },
+
+  googleAnalytics: {
+    id: "UA-171658328-1",
   },
 };

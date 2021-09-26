@@ -38,6 +38,35 @@ services:
     healthcheck:
       interval: 1h
 
+  backend-sadhguru-fileserver:
+    image: ${REPO}backend:${TAG:-latest}
+
+    environment:
+      - IPFS_HOST=ipfs
+      - DB_HOST=13.126.203.46
+      - DB_PASSWORD=TBSV96364xXi2JeWZiVibnbGczFNg
+    build:
+      context: ./backend
+    entrypoint: ["nice", "-n", "20", "poetry", "run", "python", "-O", "manage.py", "videosdb","--download-and-register-in-ipfs"]
+    volumes:
+      - logs:/app/logs
+      - /mnt/videos:/mnt/videos
+  ipfs:
+    image: ${REPO}ipfs:${TAG:-latest}
+    environment:
+      - IPFS_PATH=/mnt/ipfs-repo
+    build:
+      context: ./ipfs
+    ports:
+      - 18080:18080
+      - 5001:5001
+      - 14001:14001      
+    volumes:
+      - /mnt/videos:/mnt/videos
+      - /mnt/ipfs-repo:/mnt/ipfs-repo
+    restart: always
+
+
   # frontend-sadhguru:
   #         #    platform: linux/arm/v7
   #   image: ${REPO}frontend:${TAG:-latest}

@@ -1,7 +1,7 @@
 <template lang="pug">
 div
   b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle
-    NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') Sadhgur wisdom
+    NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') Sadhguru wisdom
 
     b-button.mx-1(
       squared,
@@ -29,14 +29,16 @@ div
       span.navbar-toggler-icon
 
   .p-1.px-2.mt-2(v-if='subtitle')
-    h6.text-center {{ subtitle }}
+    h6.text-center Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.
 
-  .container-fluid
+  b-container
     .row
-      LazyHydrate(never, :trigger-hydration='sidebar_visible')
-        b-sidebar#sidebarMenu(v-model='sidebar_visible', no-slide)
-          h3.sidebar-heading.d-flex.justify-content-between.align-items-center.px-3.mt-4.mb-1.text-muted
-            span Categories
+      LazyHydrate(when-visible)
+        b-sidebar#sidebarMenu(
+          v-model='sidebar_visible',
+          no-slide,
+          title='Categories'
+        )
           ul.flex-column
             li.mr-2.nav-item(
               v-for='category in this.categories',
@@ -57,9 +59,6 @@ div
         a(href='https://isha.sadhguru.org/global/en/wisdom')
           |
           | https://isha.sadhguru.org/global/en/wisdom
-      p
-        small(v-if='this.version')
-          | version: {{ this.version }}
 </template>
 
 <script>
@@ -84,11 +83,6 @@ export default {
       title: config.title,
       subtitle: config.subtitle,
     }
-  },
-  computed: {
-    version () {
-      return process.env.TAG;
-    },
   },
   methods: {
     async randomVideo () {

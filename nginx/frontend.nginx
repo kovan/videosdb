@@ -3,7 +3,7 @@ upstream frontend_sadhguru_upstream {
 }
 
 upstream backend_sadhguru_upstream {
-    server localhost:8000;
+    server localhost:8000 fail_timeout=0;
 }
 
 server {
@@ -26,12 +26,15 @@ server {
         proxy_redirect off;
     }
 
-    location / {
-        proxy_pass http://frontend_sadhguru_upstream;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Host $host;
-        proxy_redirect off;
-    }
+#    location / {
+#        proxy_pass http://frontend_sadhguru_upstream;
+#        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#        proxy_set_header Host $host;
+#        proxy_redirect off;
+#    }
+
+
+
 
 
 }

@@ -15,6 +15,12 @@ async def test_no_404(client):
 
 
 @pytest.mark.asyncio
+async def test_sitemap_exists(client):
+    r = await client.request("HEAD", "https://www.sadhguru.digital/sitemap.xml")
+    assert r.status_code == 200
+
+
+@pytest.mark.asyncio
 async def test_app_loaded(client):
     r = await client.get("https://www.sadhguru.digital")
     assert "Sadhguru wisdom" in r.text
