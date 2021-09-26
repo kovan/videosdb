@@ -1,0 +1,4 @@
+FROM jonasal/nginx-certbot:latest
+
+COPY backend.nginx.conf /etc/nginx/user_conf.d/
+
