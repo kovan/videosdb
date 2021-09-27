@@ -7,14 +7,13 @@ b-container.m-0.p-0.mx-auto
     .my-4
       h1 {{ this.video.title }}
       p(align='center')
-        client-only
-          youtube(
-            :video-id='this.video.youtube_id',
-            ref='youtube',
-            resize,
-            fitParent,
-            resizeDelay=0
-          )
+        youtube(
+          :video-id='this.video.youtube_id',
+          ref='youtube',
+          resize,
+          fitParent,
+          resizeDelay=0
+        )
 
     .my-4(v-if='this.video.description_trimmed')
       h6 Description
