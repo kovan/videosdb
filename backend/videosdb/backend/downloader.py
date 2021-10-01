@@ -138,10 +138,11 @@ class Downloader:
         files_in_ipfs = {}
         if files["Entries"]:
             for file in files["Entries"]:
-                youtube_id = parse_youtube_id(file["Name"])
-                if not youtube_id or youtube_id in files_in_ipfs:
-                    raise Exception()
-                files_in_ipfs[youtube_id] = file
+                if file.lower().endswith(".mp4"):
+                    youtube_id = parse_youtube_id(file["Name"])
+                    if not youtube_id or youtube_id in files_in_ipfs:
+                        raise Exception()
+                    files_in_ipfs[youtube_id] = file
 
         files_in_disk = {}
         for file in os.listdir(videos_dir):
@@ -201,8 +202,8 @@ class Downloader:
 
         ipfs.update_dnslink()
 
-#    with Telnet('localhost', 4000) as tn:    
-#        tn.write(b"ansi false\n")            
-#        tn.write(b"links shared\n")          
-#        tn.write(b"q\n")                     
+#    with Telnet('localhost', 4000) as tn:
+#        tn.write(b"ansi false\n")
+#        tn.write(b"links shared\n")
+#        tn.write(b"q\n")
 #        links = tn.read_all().decode('ascii')
