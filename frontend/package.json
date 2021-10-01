@@ -7,7 +7,7 @@
     "buildx": "nuxt build",
     "start": "nuxt start",
     "build": "API_BROWSER_URL=https://backend.sadhguru.digital/api  NUXT_ENV_CURRENT_GIT_SHA=`git rev-parse --short HEAD` nuxt generate",
-    "generate": "API_BROWSER_URL=https://backend.sadhguru.digital/api  NUXT_ENV_CURRENT_GIT_SHA=`git rev-parse --short HEAD` nuxt generate",
+    "generate": "yarn build",
     "generate-cluster": "nuxt-generate --build",
     "test": "jest",
     "dev-debug": "node node_modules/.bin/nuxt"
