@@ -138,7 +138,7 @@ class Downloader:
         files_in_ipfs = {}
         if files["Entries"]:
             for file in files["Entries"]:
-                if file.lower().endswith(".mp4"):
+                if file["Name"].lower().endswith(".mp4"):
                     youtube_id = parse_youtube_id(file["Name"])
                     if not youtube_id or youtube_id in files_in_ipfs:
                         raise Exception()
