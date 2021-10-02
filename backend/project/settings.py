@@ -180,22 +180,22 @@ LOGGING = {
     'loggers': {
         'videosdb': {
             'handlers': ['file', 'console'],
-            'level': os.environ.get("LOGLEVEL", "INFO"),
+            'level': os.environ.get("LOGLEVEL", "WARNING"),
             'propagate': False,
         },
         "property_manager": {
             'handlers': ['file', 'console'],
-            "level": "INFO",
+            "level": "WARNING",
             'propagate': False,
         },
         'django': {
             'handlers': ['file', 'console'],
-            'level': os.environ.get("LOGLEVEL", "INFO"),
+            'level': os.environ.get("LOGLEVEL", "WARNING"),
             'propagate': False,
         },
         '': {
             'handlers': ['file', 'console'],
-            'level': os.environ.get("LOGLEVEL", "INFO"),
+            'level': os.environ.get("LOGLEVEL", "WARNING"),
             'propagate': True
         }
     },

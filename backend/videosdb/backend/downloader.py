@@ -167,7 +167,6 @@ class Downloader:
                         video.filename = yt_dl.download_video(
                             video.youtube_id)
                     except YoutubeDL.UnavailableError as e:
-                        logging.error(repr(e))
                         continue
                     video.save()
                     try:

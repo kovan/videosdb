@@ -4,10 +4,7 @@ RUN echo 'root:toor' | chpasswd
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt update
-RUN apt install -y cron 
 RUN apt install -y python3-virtualenv
-RUN apt install -y postgresql-common 
-RUN apt install -y sudo
 
 RUN apt clean
 
@@ -16,19 +13,13 @@ COPY utils/install_certificates.py /tmp
 RUN python /tmp/install_certificates.py
 
 
-
-
-
 RUN useradd -m appuser
 RUN chown appuser:appuser .
-
-COPY utils/backend.cron /etc/cron.d
-RUN chmod 0644 /etc/cron.d/backend.cron
-RUN crontab /etc/cron.d/backend.cron
-
 USER appuser
+
 RUN wget  http://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -O - | python
 ENV PATH="/home/appuser/.poetry/bin:${PATH}"
+
 
 
 WORKDIR /app
