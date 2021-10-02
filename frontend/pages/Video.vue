@@ -8,10 +8,12 @@ b-container.m-0.p-0.mx-auto
       h1 {{ this.video.title }}
       p(align='center')
         client-only
-          youtube(:video-id='this.video.youtube_id')
+          LazyYoutube(
+            :src='`https://www.youtube.com/watch?v=${this.video.youtube_id}`'
+          )
 
     .my-4(v-if='this.video.description_trimmed')
-      h6 Description
+      strong Description
       p(style='white-space: pre-line') {{ this.video.description_trimmed }}
 
     .my-4(v-if='this.video.ipfs_hash')
@@ -28,20 +30,24 @@ b-container.m-0.p-0.mx-auto
         )
           b-button
             | View / Download - with &nbsp;
-            b-img(src='/ipfs-logo-text-128-ice-white.png', height='24px')
+            b-img(
+              src='/ipfs-logo-text-128-ice-white.png',
+              height='24px',
+              alt='IPFS Logo'
+            )
 
       p(align='center')
         | NOTE: to download the videos, right click on the download link and choose "Save as.."
 
     .my-4(v-if='this.video.categories && this.video.categories.length > 0')
-      h6 Categories
+      strong Categories
       ul
         li(v-for='cat in this.video.categories', :key='cat.id')
           NuxtLink(:to='"/category/" + cat.slug')
             | {{ cat.name }}
 
     .my-4(v-if='this.video.tags && this.video.tags.length > 0')
-      h6 Tags
+      strong Tags
       NuxtLink.p-1(
         :to='"/tag/" + tag.slug',
         v-for='tag in this.video.tags',
@@ -51,7 +57,7 @@ b-container.m-0.p-0.mx-auto
           | {{ tag.name }}
 
     .my-4(v-if='this.video.transcript')
-      h6 Transcription:
+      strong Transcription:
       p(style='white-space: pre-line') {{ this.video.transcript }}
 </template>
 <script>
