@@ -27,7 +27,7 @@ jobs:
         env:
           NODE_ENV: production
       - name: Build static files
-        run: npm build
+        run: yarn generate
         working-directory: frontend
       - name: Check files changes
         id: hash

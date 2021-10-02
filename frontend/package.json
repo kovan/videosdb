@@ -6,8 +6,8 @@
     "dev": "nuxt",
     "buildx": "nuxt build",
     "start": "nuxt start",
-    "build": "API_BROWSER_URL=https://backend.sadhguru.digital/api  NUXT_ENV_CURRENT_GIT_SHA=`git rev-parse --short HEAD` nuxt generate",
-    "generate": "yarn build",
+    "build": "nuxt build",
+    "generate": "API_BROWSER_URL=https://backend.sadhguru.digital/api  NUXT_ENV_CURRENT_GIT_SHA=`git rev-parse --short HEAD` nuxt generate",
     "generate-cluster": "nuxt-generate --build",
     "test": "jest",
     "dev-debug": "node node_modules/.bin/nuxt"
@@ -43,6 +43,7 @@
     "pug": "^3.0.0",
     "pug-plain-loader": "^1.1.0",
     "sass-loader": "^10.1.1",
+    "ssdeploy": "^0.7.1",
     "vue-jest": "^3.0.4"
   }
 }
