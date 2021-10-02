@@ -1,4 +1,3 @@
 import Vue from 'vue'
-import VueYoutube from 'vue-youtube'
- 
-Vue.use(VueYoutube)
+import VueYouTubeEmbed from 'vue-youtube-embed'
+Vue.use(VueYouTubeEmbed)
