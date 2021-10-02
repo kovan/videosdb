@@ -5,7 +5,7 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = ">3.6.0,<3.6.1 || >3.6.1,<3.7.0 || >3.7.0,<3.7.1 || >3.7.1"
+python = ">=3.6.2,<3.7.0 || >3.7.0,<3.7.1 || >3.7.1"
 Django = "^3.1.4"
 Autologging = "^1.3.2"
 youtube-transcript-api = {git = "https://github.com/jdepoix/youtube-transcript-api.git"}
@@ -20,7 +20,7 @@ django-extensions = "^3.1.0"
 six = "^1.15.0"
 django-test-without-migrations = "^0.6"
 isodate = "^0.6.0"
-ipfshttpclient = {git = "https://github.com/kovan/py-ipfs-http-client.git"}
+ipfshttpclient = {git = "https://github.com/ipfs-shipyard/py-ipfs-http-client.git"}
 executor = "^23.2"
 youtube-dl = {git = "https://github.com/ytdl-org/youtube-dl.git"}
 google-cloud-dns = "^0.32.1"
