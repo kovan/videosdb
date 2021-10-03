@@ -8,6 +8,7 @@ services:
       - IPFS_HOST=ipfs
       - DB_HOST=13.126.203.46
       - DB_PASSWORD=TBSV96364xXi2JeWZiVibnbGczFNg
+      - PYTHONWARNINGS=ignore
     build:
       context: ./backend
     entrypoint: ["nice", "-n", "20", "poetry", "run", "python", "-O", "manage.py", "videosdb","--download-and-register-in-ipfs"]

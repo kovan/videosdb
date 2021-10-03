@@ -48,13 +48,14 @@ b-container.m-0.p-0.mx-auto
 
     .my-4(v-if='this.video.tags && this.video.tags.length > 0')
       strong Tags
-      NuxtLink.p-1(
-        :to='"/tag/" + tag.slug',
-        v-for='tag in this.video.tags',
-        :key='tag.id'
-      )
-        b-button.mt-2(size='sm', pill)
-          | {{ tag.name }}
+      p
+        NuxtLink.p-1(
+          :to='"/tag/" + tag.slug',
+          v-for='tag in this.video.tags',
+          :key='tag.id'
+        )
+          b-button.mt-2(size='sm', pill)
+            | {{ tag.name }}
 
     .my-4(v-if='this.video.transcript')
       strong Transcription:
