@@ -46,15 +46,15 @@ export default {
 
   components: true,
 
-  buildModules: [],
-
-  modules: [
+  buildModules: [
     "@nuxtjs/google-analytics",
     "@nuxtjs/router-extras",
     "@nuxtjs/axios",
     "@nuxtjs/sitemap",
     "bootstrap-vue/nuxt",
-    "~/modules/dns-cache.js"
+    "~/modules/dns-cache.js"],
+
+  modules: [
   ],
   
   axios: {
