@@ -26,10 +26,11 @@ jobs:
           working-directory: frontend
         env:
           NODE_ENV: production
-          API_URL: https://backend.sadhguru.digital/api
       - name: Build static files
         run: yarn generate
         working-directory: frontend
+        env:
+          API_URL: https://backend.sadhguru.digital/api
       - name: Check files changes
         id: hash
         run: npx ssdeploy changed
