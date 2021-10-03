@@ -13,7 +13,7 @@ import { handleAxiosError } from "~/utils/utils"
 export default {
   head () {
     return {
-      title: this.tag.name + "Sadhguru wisdom",
+      title: this.tag.name + " - Sadhguru wisdom",
       meta: [
         {
           hid: 'description',
