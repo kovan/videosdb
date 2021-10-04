@@ -1,5 +1,6 @@
 <template lang="pug">
 b-container.m-0.p-0.mx-auto
+  script(type='application/ld+json', v-html='this.video_json')
   b-card.m-0.p-0
     small
       | Published: {{ new Date(this.video.yt_published_date).toLocaleDateString() }}.
@@ -83,6 +84,23 @@ export default {
   data () {
     return {
       video: {}
+    }
+  },
+  computed: {
+    video_json: function () {
+      let json = {
+        "@context": "https://schema.org",
+        "@type": "VideoObject",
+        "name": this.video.title,
+        "description": this.video.description_trimmed,
+        "thumbnailUrl": Object.values(this.video.thumbnails).map(thumb => thumb.url),
+        "uploadDate": this.video.yt_published_date,
+        "duration": this.video.duration,
+        "contentUrl": "https://videos.sadhguru.digital/" +
+          encodeURIComponent(this.video.filename),
+        "embedUrl": `https://www.youtube.com/watch?v=${this.video.youtube_id}`,
+      }
+      return JSON.stringify(json)
     }
   },
   async asyncData ({ $axios, params, error }) {
