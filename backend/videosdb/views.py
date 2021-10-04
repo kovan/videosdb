@@ -64,7 +64,7 @@ class VideoSerializer(serializers.ModelSerializer):
         lookup_field = "slug"
         fields = ["id", "youtube_id", "yt_published_date",
                   "categories", "tags", "duration_seconds", "transcript", "thumbnail",
-                  "slug", "view_count", "dislike_count",
+                  "slug", "view_count", "dislike_count", "duration",
                   "favorite_count", "comment_count", "title", "thumbnails",
                   "description_trimmed", "filename", "ipfs_hash"]
 
