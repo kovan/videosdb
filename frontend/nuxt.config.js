@@ -31,7 +31,7 @@ export default {
     manifest: false,
   },
 
-  css: ["~/assets/scss/custom.scss"],
+  //css: ["~/assets/scss/custom.scss"],
 
   plugins: [
     {
@@ -47,6 +47,7 @@ export default {
   components: true,
 
   buildModules: [
+    'nuxt-purgecss',
     "@nuxtjs/google-analytics",
     "@nuxtjs/router-extras",
     "@nuxtjs/axios",
@@ -66,8 +67,8 @@ export default {
   },
 
   bootstrapVue: {
-    bootstrapCSS: false,
-    bootstrapVueCSS: false,
+    bootstrapCSS: true,
+    bootstrapVueCSS: true,
     componentPlugins: [
       "LayoutPlugin",
       "FormSelectPlugin",
