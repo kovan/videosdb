@@ -47,7 +47,7 @@ export default {
   components: true,
 
   buildModules: [
-    'nuxt-purgecss',
+   // 'nuxt-purgecss',
     "@nuxtjs/google-analytics",
     "@nuxtjs/router-extras",
     "@nuxtjs/axios",
