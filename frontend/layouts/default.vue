@@ -28,8 +28,8 @@ div
     )
       span.navbar-toggler-icon
 
-  .p-1.px-2.mt-2(v-if='subtitle')
-    h6.text-center Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.
+  .p-1.px-2.mt-2.text-center(v-if='subtitle')
+    strong Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.
 
   b-container
     .row
