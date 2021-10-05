@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-prueba",
+  "name": "videosdb",
   "version": "1.0.1",
   "private": true,
   "scripts": {
@@ -25,7 +25,6 @@
     "esm": "^3.2.25",
     "nuxt": "^2.15",
     "nuxt-generate-cluster": "^2.7.0",
-    "nuxt-purgecss": "^1.0.0",
     "pug": "^3.0.0",
     "pug-plain-loader": "^1.1.0",
     "ssdeploy": "^0.7.1",
