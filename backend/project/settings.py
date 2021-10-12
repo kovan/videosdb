@@ -123,6 +123,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# DataFlair #Local Memory Cache
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'DataFlair',
+    }
+}
+# Key in `CACHES` dict
+CACHE_MIDDLEWARE_ALIAS = 'default'
+
+# Additional prefix for cache keys
+CACHE_MIDDLEWARE_KEY_PREFIX = ''
+
+# Cache key TTL in seconds
+CACHE_MIDDLEWARE_SECONDS = 600
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/

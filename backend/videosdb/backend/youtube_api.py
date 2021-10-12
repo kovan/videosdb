@@ -163,7 +163,7 @@ class YoutubeDL:
                                   "http://www.youtube.com/watch?v=" + _id)
         logging.info(cmd)
         try:
-            execute(cmd, asynchronous=asynchronous)
+            execute(cmd, asynchronous=asynchronous, silent=True)
         except executor.ExternalCommandFailed as e:
             raise self.UnavailableError(repr(e))
         files = os.listdir(".")
@@ -186,7 +186,7 @@ class YoutubeDL:
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
-                result = execute(cmd, capture_stderr=True)
+                result = execute(cmd, capture=True, capture_stderr=True)
                 with io.open(youtube_id + ".info.json") as f:
                     video_json = json.load(f)
         except executor.ExternalCommandFailed as e:
