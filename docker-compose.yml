@@ -20,8 +20,7 @@ services:
     image: ${REPO}backend:${TAG:-latest}
 
     environment:
-      - DB_HOST=db
-      - DB_PASSWORD=TBSV96364xXi2JeWZiVibnbGczFNg
+      - DATABASE_URL=psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db:5432/postgres
       - TAG=${TAG}
     links:
       - db

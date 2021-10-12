@@ -12,7 +12,10 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 from autologging import TRACE
 import os
+
+import environ
 import sys
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,6 +33,14 @@ DEBUG = True if "VIDEOSDB_DEBUG" in os.environ else False
 ALLOWED_HOSTS = ["*"]
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+env = environ.Env(DEBUG=(bool, False))
+env_file = os.path.join(BASE_DIR, ".env")
+
+if os.path.isfile(env_file):
+    # Use a local secret file, if provided
+
+    env.read_env(env_file)
 
 # Application definition
 
@@ -82,19 +93,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'project.wsgi.application'
 
-
+# For Google CLoud App Engine:
+# Use django-environ to parse the connection string
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': os.environ.get("DB_PASSWORD", "TBSV96364xXi2JeWZiVibnbGczFNg"),
-        'HOST': os.environ.get("DB_HOST", "db"),
-        'PORT': '5432',
-        'TEST': {
-            "NAME": "test_videosdb",
-        },
-    },
+    "default":
+        env.db_url(
+            "DATABASE_URL",
+            default="psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db:5432/postgres"
+        ),
+
     'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sadhguru.sqlite3'),
@@ -103,6 +110,10 @@ DATABASES = {
         },
     }
 }
+
+if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
+    DATABASES["default"]["HOST"] = "127.0.0.1"
+    DATABASES["default"]["PORT"] = 5432
 
 
 # Password validation
