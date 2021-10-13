@@ -1,6 +1,13 @@
 steps:
+- name: node:latest
+  dir: "frontend"
+  env:
+  - 'API_URL="https://worpdress-279321.uc.r.appspot.com/api"'
+  - 'API_BROWSER_URL="https://worpdress-279321.uc.r.appspot.com/api"'
+  entrypoint: "yarn"
+  args: ["generate"]
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   dir: "backend"
   entrypoint: 'bash'
-  args: ['-c', 'gcloud config set app/cloud_build_timeout 1600 && gcloud app deploy']
+  args: ['-c', 'gcloud config set app/cloud_build_timeout 1600 && gcloud app deploy']  
 timeout: '1600s'
