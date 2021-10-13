@@ -190,13 +190,13 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'maxBytes': 1000000,
-            "backupCount": 10,
-            'filename': 'logs/videosdb.log',
-            'formatter': 'verbose'
-        },
+        # 'file': {
+        #     'class': 'logging.handlers.RotatingFileHandler',
+        #     'maxBytes': 1000000,
+        #     "backupCount": 10,
+        #     'filename': 'logs/videosdb.log',
+        #     'formatter': 'verbose'
+        # },
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
@@ -205,22 +205,22 @@ LOGGING = {
     },
     'loggers': {
         'videosdb': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': os.environ.get("LOGLEVEL", "WARNING"),
             'propagate': False,
         },
         "property_manager": {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             "level": "WARNING",
             'propagate': False,
         },
         'django': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': os.environ.get("LOGLEVEL", "WARNING"),
             'propagate': False,
         },
         '': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': os.environ.get("LOGLEVEL", "WARNING"),
             'propagate': True
         }
