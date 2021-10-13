@@ -108,7 +108,7 @@ DATABASES = {
         'TEST': {
             "NAME": "dbtest.sqlite3",
         },
-    }
+            }
 }
 
 if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
@@ -231,7 +231,7 @@ LOGGING = {
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT = "static"
 MEDIA_ROOT = "media"
 
 

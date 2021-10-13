@@ -1,13 +1,14 @@
 runtime: python39
 env_variables:
   DATABASE_URL: postgres://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@//cloudsql/worpdress-279321:asia-south1:db2/postgres
+
 handlers:
 
 - url: /api/.*
   script: auto
 
-# This configures Google App Engine to serve the files in the app's static
-# directory.
+- url: static/
+  static_files: static/
 
 - url: /
   static_files: dist/index.html
