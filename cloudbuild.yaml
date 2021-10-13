@@ -7,8 +7,8 @@ steps:
   dir: "frontend"
   
   env:
-  - 'API_URL="https://worpdress-279321.uc.r.appspot.com/api"'
-  - 'API_BROWSER_URL="https://worpdress-279321.uc.r.appspot.com/api"'  
+    - 'API_URL="https://worpdress-279321.uc.r.appspot.com/api"'
+    - 'API_BROWSER_URL="https://worpdress-279321.uc.r.appspot.com/api"'  
   entrypoint: "yarn"  
   args: ["generate"]
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
