@@ -63,9 +63,9 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',
+    # 'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',
+    # 'django.middleware.cache.FetchFromCacheMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -134,21 +134,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# DataFlair #Local Memory Cache
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'DataFlair',
-    }
-}
-# Key in `CACHES` dict
-CACHE_MIDDLEWARE_ALIAS = 'default'
+# # DataFlair #Local Memory Cache
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+#         'LOCATION': 'DataFlair',
+#     }
+# }
+# # Key in `CACHES` dict
+# CACHE_MIDDLEWARE_ALIAS = 'default'
 
-# Additional prefix for cache keys
-CACHE_MIDDLEWARE_KEY_PREFIX = ''
+# # Additional prefix for cache keys
+# CACHE_MIDDLEWARE_KEY_PREFIX = ''
 
-# Cache key TTL in seconds
-CACHE_MIDDLEWARE_SECONDS = 600
+# # Cache key TTL in seconds
+# CACHE_MIDDLEWARE_SECONDS = 600
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/

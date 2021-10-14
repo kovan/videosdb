@@ -1,6 +1,6 @@
 runtime: python39
 env_variables:
-  DATABASE_URL: postgres://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@//cloudsql/worpdress-279321:asia-south1:db2/postgres
+  DATABASE_URL: postgres://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@//cloudsql/worpdress-279321:asia-south1:db3/postgres
 
 handlers:
 
