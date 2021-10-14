@@ -35,7 +35,8 @@ export default {
 
   plugins: [
     {
-      src: "~/plugins/axios.js"
+      src: "~/plugins/axios.js",
+      mode: "server"
     },
     {
       src: "~/plugins/vue-plugin-load-script.js",

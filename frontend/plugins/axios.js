@@ -1,3 +1,3 @@
 export default function ({$axios}) {
-    $axios.defaults.timeout = 10000
+    $axios.defaults.timeout = 30000
 }
