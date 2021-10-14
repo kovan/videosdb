@@ -110,6 +110,7 @@ DATABASES = {
         },
             }
 }
+DATABASES["default"]["CONN_MAX_AGE"] = None
 
 if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
     DATABASES["default"]["HOST"] = "127.0.0.1"
