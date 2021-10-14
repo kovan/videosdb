@@ -3,7 +3,9 @@ env_variables:
   DATABASE_URL: postgres://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@//cloudsql/worpdress-279321:asia-south1:db3/postgres
 
 automatic_scaling:
-  max_instances: 7
+  max_instances: 18
+
+entrypoint: gunicorn -b :$PORT main:app
 
 handlers:
 
