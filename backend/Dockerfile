@@ -37,7 +37,7 @@ RUN poetry install --no-dev
 COPY --chown=appuser:appuser . .
 RUN chmod a+x /app/utils/entrypoint.sh
 
-EXPOSE 8000
+EXPOSE $PORT
 
 
 ENTRYPOINT  ["/app/utils/entrypoint.sh"]
