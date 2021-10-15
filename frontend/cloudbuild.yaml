@@ -7,9 +7,9 @@ steps:
 
 - name: node:latest
   dir: "frontend"
-  # env:
-  #   - 'API_URL=https://backend.sadhguru.digital/api'
-  #   - 'API_BROWSER_URL=https://backend.sadhguru.digital/api'  
+  env:
+    - 'API_URL=$API_URL'
+    - 'API_BROWSER_URL=$API_BROWSER_URL'  
 
   entrypoint: "yarn"  
   args: ["generate"]
