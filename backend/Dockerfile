@@ -1,5 +1,5 @@
 
-FROM python:bullseye
+FROM python:3.9-bullseye
 RUN echo 'root:toor' | chpasswd
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
