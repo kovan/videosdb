@@ -1,5 +1,5 @@
 
-FROM python:bullseye
+FROM python:3.9-bullseye
 RUN echo 'root:toor' | chpasswd
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
@@ -14,6 +14,7 @@ RUN python /tmp/install_certificates.py
 
 
 RUN useradd -m appuser
+WORKDIR /app
 RUN chown appuser:appuser .
 USER appuser
 
@@ -22,7 +23,6 @@ ENV PATH="/home/appuser/.poetry/bin:${PATH}"
 
 
 
-WORKDIR /app
 RUN mkdir /app/.cache && chown appuser:appuser /app/.cache
 RUN mkdir /app/logs && chown appuser:appuser /app/logs
 

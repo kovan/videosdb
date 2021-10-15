@@ -12,7 +12,10 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 from autologging import TRACE
 import os
+
+import environ
 import sys
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,6 +33,14 @@ DEBUG = True if "VIDEOSDB_DEBUG" in os.environ else False
 ALLOWED_HOSTS = ["*"]
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+env = environ.Env(DEBUG=(bool, False))
+env_file = os.path.join(BASE_DIR, ".env")
+
+if os.path.isfile(env_file):
+    # Use a local secret file, if provided
+
+    env.read_env(env_file)
 
 # Application definition
 
@@ -52,9 +63,9 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',
+    # 'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',
+    # 'django.middleware.cache.FetchFromCacheMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -82,27 +93,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'project.wsgi.application'
 
-
+# For Google CLoud App Engine:
+# Use django-environ to parse the connection string
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': os.environ.get("DB_PASSWORD", "TBSV96364xXi2JeWZiVibnbGczFNg"),
-        'HOST': os.environ.get("DB_HOST", "db"),
-        'PORT': '5432',
-        'TEST': {
-            "NAME": "test_videosdb",
-        },
-    },
+    "default":
+        env.db_url(
+            "DATABASE_URL",
+            default="psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db:5432/postgres"
+        ),
+
     'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sadhguru.sqlite3'),
         'TEST': {
             "NAME": "dbtest.sqlite3",
         },
-    }
+            }
 }
+DATABASES["default"]["CONN_MAX_AGE"] = None
+
+if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
+    DATABASES["default"]["HOST"] = "127.0.0.1"
+    DATABASES["default"]["PORT"] = 5432
 
 
 # Password validation
@@ -123,6 +135,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# # DataFlair #Local Memory Cache
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+#         'LOCATION': 'DataFlair',
+#     }
+# }
+# # Key in `CACHES` dict
+# CACHE_MIDDLEWARE_ALIAS = 'default'
+
+# # Additional prefix for cache keys
+# CACHE_MIDDLEWARE_KEY_PREFIX = ''
+
+# # Cache key TTL in seconds
+# CACHE_MIDDLEWARE_SECONDS = 600
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
@@ -164,13 +191,13 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'maxBytes': 1000000,
-            "backupCount": 10,
-            'filename': 'logs/videosdb.log',
-            'formatter': 'verbose'
-        },
+        # 'file': {
+        #     'class': 'logging.handlers.RotatingFileHandler',
+        #     'maxBytes': 1000000,
+        #     "backupCount": 10,
+        #     'filename': 'logs/videosdb.log',
+        #     'formatter': 'verbose'
+        # },
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
@@ -179,22 +206,22 @@ LOGGING = {
     },
     'loggers': {
         'videosdb': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': os.environ.get("LOGLEVEL", "WARNING"),
             'propagate': False,
         },
         "property_manager": {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             "level": "WARNING",
             'propagate': False,
         },
         'django': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': os.environ.get("LOGLEVEL", "WARNING"),
             'propagate': False,
         },
         '': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': os.environ.get("LOGLEVEL", "WARNING"),
             'propagate': True
         }
@@ -205,7 +232,7 @@ LOGGING = {
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT = "static"
 MEDIA_ROOT = "media"
 
 

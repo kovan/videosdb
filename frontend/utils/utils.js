@@ -51,52 +51,67 @@ function getConfigForRequest(req) {
 }
 
 async function generateSitemap(baseURL) {
-  let [videos, categories, tags] = await Promise.all([
-    axios.get(baseURL + "/videos/?no_pagination"),
-    axios.get(baseURL + "/categories/?no_pagination"),
-    axios.get(baseURL + "/tags/?no_pagination"),
-  ]);
 
-  videos = videos.data.map((video) => {
-    return {
-      url: `/video/${video.slug}/`,
-      video: [
-        {
-          thumbnail_loc: video.thumbnails.medium.url,
-          title: video.title,
-          description: video.description_trimmed
-            ? video.description_trimmed
-            : video.title,
-          content_loc:
-            "https://videos.sadhguru.digital/" +
-            encodeURIComponent(video.filename),
-          player_loc: `https://www.youtube.com/watch?v=${video.youtube_id}`,
-          duration: video.duration_seconds,
-        },
-      ],
-      lastmod: video.modified_date,
-      priority: 0.9,
-    };
-  });
 
   function transform(obj, type) {
-    return {
-      url: `/${type}/${obj.slug}/`,
-    };
+    if (type == "video") 
+      return {
+        url: `/video/${obj.slug}/`,
+        video: [
+          {
+            thumbnail_loc: obj.thumbnails.medium.url,
+            title: obj.title,
+            description: obj.description_trimmed
+              ? obj.description_trimmed
+              : obj.title,
+            content_loc:
+              "https://videos.sadhguru.digital/" +
+              encodeURIComponent(obj.filename),
+            player_loc: `https://www.youtube.com/watch?v=${obj.youtube_id}`,
+            duration: obj.duration_seconds,
+          },
+        ],
+        lastmod: obj.modified_date,
+        priority: 0.9,
+      }      
+    else
+      return {
+        url: `/${type}/${obj.slug}/`,
+      }
   }
 
-  categories = categories.data.map((cat) => transform(cat, "category"));
-  tags = tags.data.map((tag) => transform(tag, "tag"));
-
-  let result = [
+  var results = [
     {
       url: "/",
       changefreq: "daily",
     },
-  ];
+  ]  
+  
+  async function download(url, type) {
+    try {
+      let response = await axios.get(url)
+      let container = type == "category" ? response.data : response.data.results
+      container.forEach((item) => {
+        results.push(transform(item, type))
+      })
+      if (response.data.next)
+        await download(response.data.next, type)
 
-  return result.concat(videos).concat(categories).concat(tags);
+    } catch (e) {
+      console.error(e)
+    }    
+  }
+
+  await Promise.all([
+    download(baseURL + "/videos/", "video"),
+    download(baseURL + "/categories/", "category"),
+    download(baseURL + "/tags/", "tag")
+  ])
+
+  return results
 }
+
+
 async function getSitemap(baseURL) {
   if (sitemap) {
     return sitemap;

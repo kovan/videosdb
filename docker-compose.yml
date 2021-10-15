@@ -20,8 +20,7 @@ services:
     image: ${REPO}backend:${TAG:-latest}
 
     environment:
-      - DB_HOST=db
-      - DB_PASSWORD=TBSV96364xXi2JeWZiVibnbGczFNg
+      - DATABASE_URL=psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db:5432/postgres
       - TAG=${TAG}
     links:
       - db
@@ -54,20 +53,13 @@ services:
       - backend-sadhguru
 
 
-  # frontend-sadhguru:
+  # frontend:
   #   image: ${REPO}frontend:${TAG:-latest}
-
   #   environment:
-  #     - API_URL=http://backend-sadhguru:8000
-  #   links:
-  #     - backend-sadhguru
+  #     - API_URL=http://backend-sadhguru:8000/api
+  #     - API_BROWSER_URL=https://backend.sadhguru.digital/api  
   #   build:
   #     context: ./frontend
-  #   ports:
-  #     - 3000:3000
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     interval: 1h
 
       
 

@@ -130,7 +130,8 @@ class VideoViewSet(AllowNoPaginationViewSet):
         return serializer_class
 
     def get_queryset(self):
-        queryset = Video.objects.exclude(excluded=True).exclude(title=None)
+        queryset = Video.objects.exclude(excluded=True).exclude(
+            title=None).order_by("-yt_published_date")
         period = self.request.query_params.get('period', None)
         if period:
 

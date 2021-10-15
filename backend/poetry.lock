@@ -165,6 +165,19 @@ Django = ">=1.11"
 pytz = ">=2015.7"
 
 [[package]]
+name = "django-environ"
+version = "0.7.0"
+description = "A package that allows you to utilize 12factor inspired environment variables to configure your Django application."
+category = "main"
+optional = false
+python-versions = ">=3.4,<4"
+
+[package.extras]
+develop = ["coverage[toml] (>=5.0a4)", "pytest (>=4.6.11)", "furo (>=2021.8.17b43,<2021.9.0)", "sphinx (>=3.5.0)", "sphinx-notfound-page"]
+docs = ["furo (>=2021.8.17b43,<2021.9.0)", "sphinx (>=3.5.0)", "sphinx-notfound-page"]
+testing = ["coverage[toml] (>=5.0a4)", "pytest (>=4.6.11)"]
+
+[[package]]
 name = "django-extensions"
 version = "3.1.1"
 description = "Extensions for Django"
@@ -914,8 +927,8 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.6.2,<3.7.0 || >3.7.0,<3.7.1 || >3.7.1"
-content-hash = "ea928591799a9472d8e36522c0c17664e30352049e731f084e5041574a72d900"
+python-versions = ">=3.6.2,<3.7.0 || >3.7.0,<3.7.1 || >3.7.1,<4"
+content-hash = "6b9084280d5779807e8c08e70efae784154b17e28d1e388b371decd39f102a2c"
 
 [metadata.files]
 appnope = [
@@ -981,6 +994,10 @@ django-cors-headers = [
 ]
 django-dirtyfields = [
     {file = "django-dirtyfields-1.5.0.tar.gz", hash = "sha256:7d7e8cf2fa153057cb4b51b5262c6f5b4594f23cd651e2f41746614bedfdf6f6"},
+]
+django-environ = [
+    {file = "django-environ-0.7.0.tar.gz", hash = "sha256:b99bd3704221f8b717c8517d8146e53fdee509d9e99056be560060003b92213e"},
+    {file = "django_environ-0.7.0-py2.py3-none-any.whl", hash = "sha256:20a5a3570333d3718c0a7ca834290ef850e2b96237ae4ca0a05823b3a0cb3363"},
 ]
 django-extensions = [
     {file = "django-extensions-3.1.1.tar.gz", hash = "sha256:674ad4c3b1587a884881824f40212d51829e662e52f85b012cd83d83fe1271d9"},
