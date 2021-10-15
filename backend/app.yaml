@@ -2,10 +2,10 @@ runtime: python39
 env_variables:
   DATABASE_URL: psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db.sadhguru.digital:5432/postgres
 
-automatic_scaling:
-  max_instances: 18
+# automatic_scaling:
+#   max_instances: 18
 
-entrypoint: gunicorn -b :$PORT main:app
+#entrypoint: gunicorn -b :$PORT main:app
 
 handlers:
 

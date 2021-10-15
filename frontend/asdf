@@ -1,0 +1,10 @@
+FROM node:latest
+WORKDIR /app
+RUN curl -O https://storage.googleapis.com/pub/gsutil.tar.gz
+RUN tar xf gsutil.tar.gz
+
+COPY creds.json .
+RUN export GOOGLE_CLOUD_PROJECT=worpdress-279321
+RUN ./gsutil/gsutil auth activate-service-account asdf-925@worpdress-279321.iam.gserviceaccount.com --key-file=creds.json
+
+
