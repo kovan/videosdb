@@ -53,21 +53,13 @@ services:
       - backend-sadhguru
 
 
-  # frontend-sadhguru:
+  # frontend:
   #   image: ${REPO}frontend:${TAG:-latest}
-
   #   environment:
-  #     - API_URL=http://backend-sadhguru:8000
+  #     - API_URL=http://backend-sadhguru:8000/api
   #     - API_BROWSER_URL=https://backend.sadhguru.digital/api  
-  #   links:
-  #     - backend-sadhguru
   #   build:
   #     context: ./frontend
-  #   ports:
-  #     - 3000:3000
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     interval: 1h
 
       
 
