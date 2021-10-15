@@ -1,0 +1,18 @@
+steps:
+
+- name: node:latest
+  dir: "frontend"
+  entrypoint: "yarn"
+  args: ["install"]
+
+- name: node:latest
+  dir: "frontend"
+  env:
+    - 'API_URL=https://backend.sadhguru.digital/api'
+    - 'API_BROWSER_URL=https://backend.sadhguru.digital/api'  
+
+  entrypoint: "yarn"  
+  args: ["generate"]
+
+- name: gcr.io/cloud-builders/gsutil
+  args: ["-m", "rsync", "-r", "-c", "-d", "./dist", "gs://www.sadhguru.digital"]

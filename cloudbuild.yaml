@@ -1,19 +1,19 @@
 steps:
-- name: node:latest
-  dir: "frontend"
-  entrypoint: "yarn"
-  args: ["install"]
-- name: node:latest
-  dir: "frontend"
-  env:
-    - 'API_URL=https://worpdress-279321.uc.r.appspot.com/api'
-    - 'API_BROWSER_URL=https://worpdress-279321.uc.r.appspot.com/api'  
-  entrypoint: "yarn"  
-  args: ["generate"]
+# - name: node:latest
+#   dir: "frontend"
+#   entrypoint: "yarn"
+#   args: ["install"]
+# - name: node:latest
+#   dir: "frontend"
+#   env:
+#     - 'API_URL=https://worpdress-279321.uc.r.appspot.com/api'
+#     - 'API_BROWSER_URL=https://worpdress-279321.uc.r.appspot.com/api'  
+#   entrypoint: "yarn"  
+#   args: ["generate"]
 
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: 'bash'
-  args: ['-c', 'mv frontend/dist backend/']  
+# - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+#   entrypoint: 'bash'
+#   args: ['-c', 'mv frontend/dist backend/']  
 
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   dir: "backend"

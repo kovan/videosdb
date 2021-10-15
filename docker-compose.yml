@@ -22,6 +22,7 @@ services:
     environment:
       - DATABASE_URL=psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db:5432/postgres
       - TAG=${TAG}
+      - PORT=8000
     links:
       - db
     build:
