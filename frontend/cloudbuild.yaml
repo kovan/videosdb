@@ -8,8 +8,8 @@ steps:
 - name: node:latest
   dir: "frontend"
   env:
-    - 'API_URL=$API_URL'
-    - 'API_BROWSER_URL=$API_BROWSER_URL'  
+    - 'API_URL=$_API_URL'
+    - 'API_BROWSER_URL=$_API_BROWSER_URL'  
 
   entrypoint: "yarn"  
   args: ["generate"]
