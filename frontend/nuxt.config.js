@@ -23,7 +23,7 @@ export default {
         console.error(e);
       }
     },
-    concurrency: 100,
+    concurrency: 20,
     fallback: true,
     crawler: false,
     devtools: true,

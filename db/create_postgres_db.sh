@@ -18,5 +18,5 @@ set -e
 # EOSQL
 
 cat /app/sadhguru-dump.sql | psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres
-echo "ALTER USER postgres PASSWORD $POSTGRES_PASSWORD;"| psql --username "$POSTGRES_USER" --dbname postgres
+echo "ALTER USER postgres WITH PASSWORD '$POSTGRES_PASSWORD';"| psql --username "$POSTGRES_USER" --dbname postgres
 #gunzip -c /app/nithyananda-dump.sql.gz | psql -v ON_ERROR_STOP=1 --username  nithyananda     --dbname nithyananda

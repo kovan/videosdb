@@ -18,5 +18,4 @@ steps:
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   dir: "backend"
   entrypoint: 'bash'
-  args: ['-c', 'gcloud config set app/cloud_build_timeout 7200 && gcloud app deploy']  
-timeout: '7200s'
+  args: ['-c', 'gcloud app deploy']
