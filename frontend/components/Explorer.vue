@@ -193,9 +193,9 @@ export default {
       url.searchParams.append("search", this.search)
 
     try {
-      let response = await this.$axios.$get(url.href.replace(dummy_root, ""), { progress: true })
-      this.videos = response.results
-      this.page_count = response.count == 0 ? 0 : Math.floor(response.count / response.results.length)
+      let response = await this.$axios.get(url.href.replace(dummy_root, ""))
+      this.videos = response.data.results
+      this.page_count = response.data.count == 0 ? 0 : Math.floor(response.data.count / response.data.results.length)
     } catch (exception) {
       handleAxiosError(exception, this.$nuxt.context.error)
     }

@@ -3,12 +3,17 @@ import { getStats } from 'axios-cached-dns-resolve'
 
 const os = require("os");
 const cpuCount = os.cpus().length;
-const ApiURL = process.env.API_URL || "http://localhost:8000/api";
+const baseURL = process.env.BASE_URL || "http://localhost:8000/api"
 
 export default {
   ssr: true,
   target: "static",
   telemetry: false,
+
+  publicRuntimeConfig: {
+    baseURL: baseURL,
+    version: process.env.NUXT_ENV_CURRENT_GIT_SHA ,    
+  },
 
   generate: {
     routes: async () => {
@@ -18,7 +23,7 @@ export default {
         ];
       }
       try {
-        let sitemap = await getSitemap(ApiURL);
+        let sitemap = await getSitemap(baseURL);
         return sitemap.map((route) => route.url);
       } catch (e) {
         console.error(e);
@@ -36,14 +41,13 @@ export default {
 
   plugins: [
     {
-      src: "~/plugins/axios.js",
-      mode: "server"
-    },
-    {
+      src: "~/plugins/axios.server.js"
+    },{
+      src: "~/plugins/axios.client.js"
+    },{
       src: "~/plugins/vue-plugin-load-script.js",
       mode: "client",
-    },
-    {
+    },{
       src: "~/plugins/vue-youtube.js",
       mode: "client",
     },
@@ -52,10 +56,8 @@ export default {
   components: true,
 
   buildModules: [
-   // 'nuxt-purgecss',
     "@nuxtjs/google-analytics",
     "@nuxtjs/router-extras",
-    "@nuxtjs/axios",
     "@nuxtjs/sitemap",
     "bootstrap-vue/nuxt"],
 
@@ -63,13 +65,6 @@ export default {
     //"~/modules/dns-cache.js"
   ],
   
-  axios: {
-    baseURL: ApiURL,
-  },
-
-  publicRuntimeConfig: {
-    version: process.env.NUXT_ENV_CURRENT_GIT_SHA ,
-  },
 
   bootstrapVue: {
     bootstrapCSS: true,
@@ -97,7 +92,7 @@ export default {
     hostname: "https://www.sadhguru.digital",
     gzip: true,
     routes: async () => {
-      return getSitemap(ApiURL);
+      return getSitemap(baseURL);
     },
   },
 

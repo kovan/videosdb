@@ -107,7 +107,7 @@ export default {
 
     try {
       var url = '/videos/' + params.slug + "/"
-      let video = await $axios.$get(url)
+      let video = (await $axios.get(url)).data
       return { video }
     } catch (exception) {
       handleAxiosError(exception, error)

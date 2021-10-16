@@ -1,14 +1,7 @@
 import axios from "axios";
 require("axios-debug-log");
-import { config, registerInterceptor } from 'axios-cached-dns-resolve'
-config.logging.enabled = true
-config.logging.level = "trace"
 
-function setupAxios(axios) {
-  //registerInterceptor(axios)
-  axios.defaults.timeout = 30000
 
-}
 
 
 var sitemap = null
@@ -82,10 +75,9 @@ async function getSitemap(baseURL) {
   }
   api = axios.create()
 
-  setupAxios(api)
 
   sitemap = generateSitemap(baseURL);
   return sitemap;
 }
 
-export { getSitemap, setupAxios };
+export { getSitemap};

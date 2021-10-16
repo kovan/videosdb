@@ -13,6 +13,7 @@ function handleAxiosError(axiosError, errorFunc) {
       message: axiosError.code,
     });
   }
+  throw axiosError
 }
 function getConfigForRequest(req) {
   const host = req

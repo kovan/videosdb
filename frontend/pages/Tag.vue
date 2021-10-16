@@ -32,8 +32,8 @@ export default {
   async asyncData ({ $axios, params, error }) {
     let url = "/tags/" + params.slug + "/"
     try {
-      let response = await $axios.$get(url)
-      return { tag: response }
+      let response = await $axios.get(url)
+      return { tag: response.data }
     } catch (exception) {
       handleAxiosError(exception, error)
     }

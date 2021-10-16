@@ -13,11 +13,12 @@
     "dev-debug": "node node_modules/.bin/nuxt"
   },
   "dependencies": {
-    "@nuxtjs/axios": "^5.12.5",
     "@nuxtjs/google-analytics": "^2.4.0",
     "@nuxtjs/proxy": "^2.1.0",
     "@nuxtjs/router-extras": "^1.1.1",
     "@nuxtjs/sitemap": "^2.4.0",
+    "axios": "^0.23.0",
+    "axios-cache-adapter": "^2.7.3",
     "axios-cached-dns-resolve": "^3.0.4",
     "axios-debug-log": "^0.8.4",
     "bootstrap": "^4.6.0",
