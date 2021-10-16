@@ -9,7 +9,7 @@ b-container.p-0.m-0
 </template>
 
 <script>
-import { handleAxiosError } from "~/utils/utils"
+import { handleAxiosError } from "~/utils/utils.client"
 export default {
   head () {
     return {

@@ -65,7 +65,7 @@ b-container.m-0.p-0.mx-auto
 <script>
 
 
-import { handleAxiosError } from "~/utils/utils"
+import { handleAxiosError } from "~/utils/utils.client"
 
 
 export default {

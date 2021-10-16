@@ -12,6 +12,9 @@
       "args": ["generate"],
       "type": "node",
       "envFile": "${workspaceFolder}/frontend/.env",
+      "env": {
+        "DEBUG": "1"
+      },
       "cwd": "${workspaceFolder}/frontend",
       "outputCapture": "std",
       "justMyCode": false

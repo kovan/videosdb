@@ -64,7 +64,7 @@
 
 <script >
 
-import { handleAxiosError } from "~/utils/utils"
+import { handleAxiosError } from "~/utils/utils.client"
 import LazyHydrate from 'vue-lazy-hydration';
 export default {
   components: {

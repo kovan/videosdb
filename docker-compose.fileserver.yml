@@ -6,7 +6,7 @@ services:
 
     environment:
       - IPFS_HOST=ipfs
-      - DATABASE_URL=psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@13.126.203.46:5432/postgres
+      - DATABASE_URL=psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db.sadhguru.digital:5432/postgres
       - PYTHONWARNINGS=ignore
     build:
       context: ./backend

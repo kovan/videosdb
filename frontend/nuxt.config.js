@@ -1,4 +1,5 @@
-import { getSitemap } from "./utils/utils";
+import { getSitemap } from "./utils/utils.server";
+import { getStats } from 'axios-cached-dns-resolve'
 
 const os = require("os");
 const cpuCount = os.cpus().length;
@@ -23,7 +24,7 @@ export default {
         console.error(e);
       }
     },
-    concurrency: 20,
+    concurrency: 100,
     fallback: true,
     crawler: false,
     devtools: true,
@@ -56,10 +57,10 @@ export default {
     "@nuxtjs/router-extras",
     "@nuxtjs/axios",
     "@nuxtjs/sitemap",
-    "bootstrap-vue/nuxt",
-    "~/modules/dns-cache.js"],
+    "bootstrap-vue/nuxt"],
 
   modules: [
+    //"~/modules/dns-cache.js"
   ],
   
   axios: {
@@ -137,6 +138,15 @@ export default {
   env: {},
 
   serverMiddleware: [],
+
+  hooks: {
+    generate: {
+      done(generator, errors) {
+          console.log("DNS CACHE STATS: ", getStats())
+      }
+    }
+
+  },
 
   head: {
     htmlAttrs: {

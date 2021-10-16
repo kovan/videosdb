@@ -63,7 +63,7 @@ div
 
 <script>
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-import { handleAxiosError, getConfigForRequest } from "~/utils/utils"
+import { handleAxiosError, getConfigForRequest } from "~/utils/utils.client"
 import LazyHydrate from 'vue-lazy-hydration';
 export default {
   scrollToTop: true,
