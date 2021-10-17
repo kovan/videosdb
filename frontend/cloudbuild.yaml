@@ -15,4 +15,4 @@ steps:
   args: ["generate"]
 
 - name: gcr.io/cloud-builders/gsutil
-  args: ["-m", "rsync", "-r", "-c", "-d", "./dist", "gs://$_GS_BUCKET"]
+  args: ["-m", "rsync", "-r", "-c", "-d", "./dist", "$_GS_BUCKET"]
