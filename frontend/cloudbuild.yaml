@@ -15,6 +15,7 @@ steps:
   args: ["generate"]
 
 - name: gcr.io/cloud-builders/gsutil
+  dir: "frontend"
   args: ["-m", "rsync", "-r", "-c", "-d", "./dist", "$_GS_BUCKET"]
 
 timeout: 3600s
