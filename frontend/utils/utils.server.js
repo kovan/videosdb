@@ -1,4 +1,6 @@
 import axios from "axios";
+
+import { registerInterceptor } from 'axios-cached-dns-resolve'
 require("axios-debug-log");
 
 
@@ -74,7 +76,7 @@ async function getSitemap(baseURL) {
     return sitemap;
   }
   api = axios.create()
-
+    //registerInterceptor(api)
 
   sitemap = generateSitemap(baseURL);
   return sitemap;

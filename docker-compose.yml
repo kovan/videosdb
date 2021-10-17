@@ -8,8 +8,6 @@ services:
       - POSTGRES_PASSWORD=TBSV96364xXi2JeWZiVibnbGczFNg
     build:
       context: ./db
-    ports:
-      - 5432:5432
     restart: unless-stopped
     volumes:
       - db:/var/lib/postgresql/data
@@ -20,7 +18,7 @@ services:
     image: ${REPO}backend:${TAG:-latest}
 
     environment:
-      - DATABASE_URL=psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db:5432/postgres
+      - DATABASE_URL=psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@pgbouncer:5432/postgres
       - TAG=${TAG}
       - PORT=8000
     links:
@@ -62,7 +60,17 @@ services:
   #   build:
   #     context: ./frontend
 
-      
+  pgbouncer:
+    image: edoburu/pgbouncer
+    environment:
+      - DATABASE_URL=psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db:5432/postgres
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    links:
+      - db
+    healthcheck:
+      interval: 1h      
 
 volumes:
   logs:

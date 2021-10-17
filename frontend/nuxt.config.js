@@ -10,10 +10,14 @@ export default {
   target: "static",
   telemetry: false,
 
-  publicRuntimeConfig: {
+  privateRuntimeConfig: {
     baseURL: baseURL,
     version: process.env.NUXT_ENV_CURRENT_GIT_SHA ,    
   },
+
+  publicRuntimeConfig: {
+    baseURL: process.env.API_BROWSER_URL || baseURL
+  },  
 
   generate: {
     routes: async () => {

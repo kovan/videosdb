@@ -1,22 +1,23 @@
 import axios from "axios"
+import { registerInterceptor } from 'axios-cached-dns-resolve'
+import { cacheAdapterEnhancer } from 'axios-extensions';
 
-import { config, registerInterceptor } from 'axios-cached-dns-resolve'
-import { setupCache } from 'axios-cache-adapter'
+var myaxios = null
 
 export default function({ app, $config }, inject) {
-  
-    // Create `axios-cache-adapter` instance
-    const cache = setupCache({
-        maxAge: 60 * 60 * 1000
-    })    
-    let myaxios = axios.create({
-        baseURL: $config.baseURL,
-        adapter: cache.adapter
-    })
-    
-    registerInterceptor(myaxios)
+    if (!myaxios) {
+        myaxios = axios.create({
+            baseURL: $config.baseURL,
+            adapter: cacheAdapterEnhancer(axios.defaults.adapter)
+
+        })
+
+        registerInterceptor(myaxios)
+        console.log("Axios caches installed")    
+
+    }
+
     inject("axios", myaxios)
     
-
 }
 
