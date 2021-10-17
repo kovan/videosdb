@@ -16,6 +16,6 @@ steps:
 
 - name: gcr.io/cloud-builders/gsutil
   dir: "frontend"
-  args: ["-m", "rsync", "-r","-J", "-c", "-d", "./dist", "$_GS_BUCKET"]
+  args: ["-m", "-q", "rsync", "-r","-J", "-c", "-d", "./dist", "$_GS_BUCKET"]
 
 timeout: 7200s
