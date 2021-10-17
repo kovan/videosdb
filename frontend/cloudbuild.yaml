@@ -3,7 +3,7 @@ steps:
   entrypoint: "poetry"  
   args: ["run", "python", "-O", "manage.py", "videosdb", "---check-for-new-videos"]
   env:
-    - 'DATABASE_URL=psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db.sadhguru.digital:5432/postgres'
+    - 'DATABASE_URL=$_DATABASE_URL'
   
 - name: node:latest
   dir: "frontend"
