@@ -37,7 +37,7 @@ export default {
     fallback: true,
     crawler: false,
     devtools: true,
-    interval: 50, // in milliseconds
+    interval: 100, // in milliseconds
     manifest: false,
   },
 
