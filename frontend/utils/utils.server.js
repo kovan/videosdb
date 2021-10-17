@@ -76,7 +76,7 @@ async function getSitemap(baseURL) {
     return sitemap;
   }
   api = axios.create()
-    //registerInterceptor(api)
+  registerInterceptor(api)
 
   sitemap = generateSitemap(baseURL);
   return sitemap;
