@@ -182,7 +182,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname}\t{asctime}:{name} -> {filename}:{lineno:d}.{funcName}: {message}',
+            'format': '{levelname}\t{asctime}:{name}.{funcName} ({filename}:{lineno:d}): {message}',
             'style': '{',
         },
         'simple': {

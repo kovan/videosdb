@@ -42,10 +42,15 @@ class Downloader:
             video.save()
             return
 
+        if created:
+            logger.info("New video found: " + str(video))
+
         if category_name:
             category, created = Category.objects.get_or_create(
                 name=category_name)
             video.categories.add(category)
+            if created:
+                logger.info("New category found: " + str(video))
 
         video.save()
 
@@ -69,6 +74,8 @@ class Downloader:
                     playlist["title"] == "Popular uploads":
                 return
 
+            logger.info("Processing playlist: " + str(playlist["title"]))
+
             video_ids = self.yt_api.list_playlist_videos(playlist["id"])
 
             if playlist["title"] == "Uploads from " + playlist["channel_title"]:
@@ -78,6 +85,9 @@ class Downloader:
 
         channel_info = list(self.yt_api.get_channel_info(
             channel_id))[0]
+
+        logger.info("Processing channel: " +
+                    str(channel_info["snippet"]["title"]))
 
         all_uploads_playlist = self.yt_api.get_playlist_info(
             channel_info["contentDetails"]["relatedPlaylists"]["uploads"])
@@ -101,14 +111,19 @@ class Downloader:
         self.enqueue_videos([v.youtube_id for v in all])
 
     def check_for_new_videos(self):
+        logger.info("Checking for new videos...")
         channel_id = settings.YOUTUBE_CHANNEL["id"]
         try:
             self.enqueue_channel(channel_id)
         except YoutubeAPI.YoutubeAPIError as e:
             logging.exception(e)
+
         self.fill_transcripts()
 
+        logger.info("Checking for new videos done.")
+
     def fill_transcripts(self):
+        logger.info("Filling transcripts...")
         videos = Video.objects.filter(excluded=False)
         for video in videos:
             if not video.transcript and video.transcript_available is None:
@@ -116,7 +131,7 @@ class Downloader:
                     video.transcript = self.yt_api.get_video_transcript(
                         video.youtube_id)
                     video.transcript_available = True
-                    logger.debug("Transcription downloaded")
+                    logger.info("Transcription downloaded")
                 except youtube_transcript_api.TooManyRequests as e:
                     logger.warn(e)
                     video.transcript_available = None  # leave None so that it retries later

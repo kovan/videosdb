@@ -1,16 +1,22 @@
 steps:
-- name: gcr.io/worpdress-279321/backend:latest
-  entrypoint: "poetry"  
-  args: ["run", "python", "-O", "manage.py", "videosdb", "---check-for-new-videos"]
-  env:
-    - 'DATABASE_URL=$_DATABASE_URL'
-  
-- name: node:latest
+- id: check-for-new-videos
+  waitFor: ["-"]
+  name: docker
+  args: ["run", "--rm", "-e", "DATABASE_URL=$_DATABASE_URL", "-e", "LOGLEVEL=INFO", "backend", 
+    "poetry", "run", "python", "-O", 
+    "manage.py", "videosdb", "--check-for-new-videos"]
+
+ 
+- id: node-install-deps
+  waitFor: ["-"]
+  name: node:latest
   dir: "frontend"
   entrypoint: "yarn"
   args: ["install"]
 
-- name: node:latest
+- id: nuxt-generate
+  waitFor: ["node-install-deps", "check-for-new-videos"]
+  name: node:latest
   dir: "frontend"
   env:
     - 'API_URL=$_API_URL'
@@ -19,7 +25,9 @@ steps:
   entrypoint: "yarn"  
   args: ["generate"]
 
-- name: gcr.io/cloud-builders/gsutil
+- id: deploy-to-gs
+  waitFor: ["nuxt-generate"]
+  name: gcr.io/cloud-builders/gsutil
   dir: "frontend"
   args: ["-m", "-q", "rsync", "-r","-J", "-c", "-d", "./dist", "$_GS_BUCKET"]
 
