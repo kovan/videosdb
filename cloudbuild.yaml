@@ -9,14 +9,14 @@ steps:
  
 - id: node-install-deps
   waitFor: ["-"]
-  name: node:latest
+  name: node:14
   dir: "frontend"
   entrypoint: "yarn"
   args: ["install"]
 
 - id: nuxt-generate
   waitFor: ["node-install-deps", "check-for-new-videos"]
-  name: node:latest
+  name: node:14
   dir: "frontend"
   env:
     - 'API_URL=$_API_URL'
