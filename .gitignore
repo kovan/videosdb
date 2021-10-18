@@ -19,3 +19,4 @@ backend/videos/
 # Local Netlify folder
 .netlify
 backend/dist
+.firebase

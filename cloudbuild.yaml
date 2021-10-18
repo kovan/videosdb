@@ -1,21 +1,31 @@
 steps:
-# - name: node:latest
-#   dir: "frontend"
-#   entrypoint: "yarn"
-#   args: ["install"]
-# - name: node:latest
-#   dir: "frontend"
-#   env:
-#     - 'API_URL=https://worpdress-279321.uc.r.appspot.com/api'
-#     - 'API_BROWSER_URL=https://worpdress-279321.uc.r.appspot.com/api'  
-#   entrypoint: "yarn"  
-#   args: ["generate"]
+- id: check-for-new-videos
+  waitFor: ["-"]
+  name: docker
+  args: ["run", "--rm", "-e", "DATABASE_URL=$_DATABASE_URL", "-e", "LOGLEVEL=INFO", "gcr.io/worpdress-279321/backend", 
+    "poetry", "run", "python", "-O", 
+    "manage.py", "videosdb", "--check-for-new-videos"]
 
-# - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-#   entrypoint: 'bash'
-#   args: ['-c', 'mv frontend/dist backend/']  
+ 
+- id: node-install-deps
+  waitFor: ["-"]
+  name: node:latest
+  dir: "frontend"
+  entrypoint: "yarn"
+  args: ["install"]
 
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  dir: "backend"
-  entrypoint: 'bash'
-  args: ['-c', 'gcloud app deploy']
+- id: nuxt-generate
+  waitFor: ["node-install-deps", "check-for-new-videos"]
+  name: node:latest
+  dir: "frontend"
+  env:
+    - 'API_URL=$_API_URL'
+    - 'API_BROWSER_URL=$_API_BROWSER_URL'
+
+  entrypoint: "yarn"  
+  args: ["generate"]
+
+- name: gcr.io/worpdress-279321/firebase
+  args: ['deploy', '--only=hosting']
+
+timeout: 7200s
