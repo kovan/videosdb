@@ -16,7 +16,7 @@ db.sqlite3
 logs/log
 backend/videos/
 
-# Local Netlify folder
 .netlify
 backend/dist
 .firebase
+.pytest_cache
