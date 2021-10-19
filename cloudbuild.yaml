@@ -2,7 +2,7 @@ steps:
 - id: check-for-new-videos
   waitFor: ["-"]
   name: docker
-  args: ["run", "--rm", "-e", "DATABASE_URL=$_DATABASE_URL", "-e", "LOGLEVEL=INFO", "gcr.io/worpdress-279321/backend", 
+  args: ["run", "--rm", "-e", "DATABASE_URL=$_DATABASE_URL", "-e", "LOGLEVEL=INFO", "us-central1-docker.pkg.dev/worpdress-279321/videosdb/backend:latest", 
     "poetry", "run", "python", "-O", 
     "manage.py", "videosdb", "--check-for-new-videos"]
 

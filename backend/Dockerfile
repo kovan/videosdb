@@ -33,4 +33,5 @@ COPY --chown=appuser:appuser . .
 
 EXPOSE $PORT
 
-CMD ["poetry", "run", "gunicorn", "--bind", "0.0.0.0:$PORT", "--log-level=info", "--log-file=-", "project.wsgi"]
+
+CMD ["/bin/bash", "-c",  "poetry run gunicorn --bind 0.0.0.0:$PORT --log-level=info --log-file=- project.wsgi"]
