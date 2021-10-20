@@ -8,6 +8,8 @@ services:
       - POSTGRES_PASSWORD=TBSV96364xXi2JeWZiVibnbGczFNg
     build:
       context: ./db
+    ports:
+      - 5431:5432
     restart: unless-stopped
     volumes:
       - db:/var/lib/postgresql/data

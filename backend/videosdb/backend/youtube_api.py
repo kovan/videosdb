@@ -122,7 +122,10 @@ class YoutubeAPI:
         url = self.root_url + "/search?part=snippet&type=video"
         url += "&relatedToVideoId=" + youtube_id
         items = self._make_request(url)
-        return items
+        unique = dict()
+        for result in items:
+            unique[result["id"]["videoId"]] = result
+        return unique.values()
 
     def get_channel_info(self, channel_id):
         url = self.root_url + "/channels?part=snippet%2CcontentDetails%2Cstatistics"
