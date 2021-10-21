@@ -4,8 +4,6 @@ steps:
     name: docker
     args: 
       - run
-      - --name
-      - generate
       - --rm
       - -e
       - DATABASE_URL=$_DATABASE_URL
@@ -24,7 +22,8 @@ steps:
     name: docker
     args:
       - run
-      - --rm
+      - --name
+      - generate
       - -e
       - API_URL=$_API_URL
       - -e
