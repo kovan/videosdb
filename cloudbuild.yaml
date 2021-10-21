@@ -1,31 +1,40 @@
 steps:
-- id: check-for-new-videos
-  waitFor: ["-"]
-  name: docker
-  args: ["run", "--rm", "-e", "DATABASE_URL=$_DATABASE_URL", "-e", "LOGLEVEL=INFO", "us-central1-docker.pkg.dev/worpdress-279321/videosdb/backend:latest", 
-    "poetry", "run", "python", "-O", 
-    "manage.py", "videosdb", "--check-for-new-videos"]
 
- 
-- id: node-install-deps
-  waitFor: ["-"]
-  name: node:14
-  dir: "frontend"
-  entrypoint: "yarn"
-  args: ["install"]
+  - id: check-for-new-videos
+    name: docker
+    args: 
+      - run
+      - --rm
+      - -e
+      - DATABASE_URL=$_DATABASE_URL
+      - -e
+      - LOGLEVEL=INFO
+      - us-central1-docker.pkg.dev/worpdress-279321/videosdb/backend 
+      - poetry
+      - run
+      - python
+      - -O
+      - manage.py
+      - videosdb
+      - --check-for-new-videos
 
-- id: nuxt-generate
-  waitFor: ["node-install-deps", "check-for-new-videos"]
-  name: node:14
-  dir: "frontend"
-  env:
-    - 'API_URL=$_API_URL'
-    - 'API_BROWSER_URL=$_API_BROWSER_URL'
+  - id: generate
+    name: docker
+    args:
+      - run
+      - --rm
+      - -e
+      - API_URL=$_API_URL
+      - -e
+      - API_BROWSER_URL=$_API_BROWSER_URL
+      - gcr.io/worpdress-279321/frontend
+      - yarn
+      - generate
+    dir: frontend
 
-  entrypoint: "yarn"  
-  args: ["generate"]
-
-- name: gcr.io/worpdress-279321/firebase
-  args: ['deploy', '--only=hosting']
+  - name: gcr.io/worpdress-279321/firebase
+    args: 
+      - deploy
+      - --only=hosting
 
 timeout: 7200s
