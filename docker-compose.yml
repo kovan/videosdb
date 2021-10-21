@@ -22,13 +22,13 @@ services:
     environment:
       - DATABASE_URL=psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@pgbouncer:5432/postgres
       - TAG=${TAG}
-      - PORT=8000
+      - PORT=80
     links:
       - db
     build:
       context: ./backend
     ports:
-      - 8000:8000
+      - 80:80
     volumes:
       - httplib_cache:/app/.cache
       - logs:/app/logs
