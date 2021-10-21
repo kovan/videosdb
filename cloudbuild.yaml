@@ -31,7 +31,6 @@ steps:
       - gcr.io/worpdress-279321/frontend
       - yarn
       - generate
-    dir: frontend
 
   - id: copy
     name: docker
