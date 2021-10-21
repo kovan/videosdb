@@ -38,7 +38,7 @@ steps:
     args:
       - cp
       - generate:/src/dist
-      - .
+      - frontend/
 
 
   - name: gcr.io/worpdress-279321/firebase
