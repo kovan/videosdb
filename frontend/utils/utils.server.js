@@ -2,9 +2,18 @@ import axios from "axios";
 
 import { registerInterceptor } from 'axios-cached-dns-resolve'
 require("axios-debug-log");
+import { cacheAdapterEnhancer } from 'axios-extensions';
 
+function createAxios(baseURL) {
+        let myaxios =  axios.create({
+            baseURL: baseURL,
+            adapter: cacheAdapterEnhancer(axios.defaults.adapter)
+        })  
+        registerInterceptor(myaxios)
 
-
+        console.log("Axios created. baseURL: " + baseURL)
+        return myaxios
+}
 
 var sitemap = null
 var api = null
@@ -75,11 +84,12 @@ async function getSitemap(baseURL) {
   if (sitemap) {
     return sitemap;
   }
-  api = axios.create()
-  registerInterceptor(api)
+
+  api = createAxios(baseURL)
+
 
   sitemap = generateSitemap(baseURL);
   return sitemap;
 }
 
-export { getSitemap};
+export { getSitemap, createAxios};
