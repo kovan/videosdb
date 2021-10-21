@@ -4,6 +4,8 @@ steps:
     name: docker
     args: 
       - run
+      - --name
+      - generate
       - --rm
       - -e
       - DATABASE_URL=$_DATABASE_URL
@@ -31,6 +33,14 @@ steps:
       - yarn
       - generate
     dir: frontend
+
+  - id: copy
+    name: docker
+    args:
+      - cp
+      - generate:/src/dist
+      - .
+
 
   - name: gcr.io/worpdress-279321/firebase
     args: 
