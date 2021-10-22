@@ -99,22 +99,15 @@ DATABASES = {
     "default":
         env.db_url(
             "DATABASE_URL",
-            default="psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db:5432/postgres"
+            default="psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db:5431/postgres"
         ),
 
-    'sqlite': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sadhguru.sqlite3'),
-        'TEST': {
-            "NAME": "dbtest.sqlite3",
-        },
-            }
 }
 #DATABASES["default"]["CONN_MAX_AGE"] = None
 
-if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
-    DATABASES["default"]["HOST"] = "127.0.0.1"
-    DATABASES["default"]["PORT"] = 5432
+# if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
+#     DATABASES["default"]["HOST"] = "127.0.0.1"
+#     DATABASES["default"]["PORT"] = 5432
 
 
 # Password validation
@@ -246,5 +239,8 @@ YOUTUBE_CHANNEL = {
     "name": "Sadhguru"
 }
 TRUNCATE_DESCRIPTION_AFTER = "#Sadhguru"
-YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
 VIDEO_FILES_DIR = "/mnt/videos"
+
+YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
+YOUTUBE_KEY_2 = "AIzaSyBS_oLkjg3skPbC49VmPit3dPFPPnZDPRQ"
+YOUTUBE_KEY_3 = "AIzaSyBV1J9SPIGKSpl5nxHdzwS6mx5aIFfjpXE"

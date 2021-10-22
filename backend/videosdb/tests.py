@@ -81,7 +81,7 @@ class DownloaderTest(TestCase):
 
 class YoutubeAPITest(TestCase):
     def setUp(self):
-        self.api = YoutubeAPI(settings.YOUTUBE_KEY)
+        self.api = YoutubeAPI(settings.YOUTUBE_KEY_2)
 
     def test_related(self):
         #r = self.api.get_related_videos("G2QmUoGjgzc")

@@ -58,6 +58,38 @@ b-container.m-0.p-0.mx-auto
           b-button.mt-2(size='sm', pill)
             | {{ tag.name }}
 
+    .my-4(v-if='this.video.related_videos')
+      p
+        h2 Related videos:
+      
+      .col-md-4(
+        v-for='related in this.video.related_videos',
+        :key='related.youtube_id'
+      )
+        LazyHydrate(when-visible)
+          .card.mb-4.shadow-sm.text-center
+            NuxtLink(:to='"/video/" + related.slug')
+              b-img-lazy.bd-placeholder-img.card-img-top(
+                :src='related.thumbnails.medium.url',
+                height='180',
+                width='320',
+                :id='related.youtube_id',
+                :alt='related.title',
+                fluid
+              )
+              b-popover(
+                :target='related.youtube_id',
+                triggers='hover focus',
+                :content='related.description_trimmed'
+              )
+            .card-body
+              p.card-text
+                NuxtLink(:to='"/video/" + related.slug')
+                  | {{ related.title }}
+              .d-flex.justify-content-between.align-items-center
+                small.text-muted Published: {{ new Date(related.yt_published_date).toLocaleDateString() }}
+                small.text-muted Duration: {{ new Date(related.duration_seconds * 1000).toISOString().substr(11, 8) }}
+
     .my-4(v-if='this.video.transcript')
       strong Transcription:
       p(style='white-space: pre-line') {{ this.video.transcript }}
@@ -67,8 +99,12 @@ b-container.m-0.p-0.mx-auto
 
 import { handleAxiosError } from "~/utils/utils.client"
 
+import LazyHydrate from 'vue-lazy-hydration';
 
 export default {
+  components: {
+    LazyHydrate
+  },
   head () {
     return {
       title: this.video.title + " - " + "Sadhguru wisdom",

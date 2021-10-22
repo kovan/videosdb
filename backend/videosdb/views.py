@@ -6,13 +6,14 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.cache import never_cache
 
-from django.conf import settings
-from rest_framework import filters, serializers, viewsets
+
+from rest_framework import filters, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
+
 
 from .models import Category, Tag, Video
+from .serializers import VideoListSerializer, TagSerializer, CategorySerializer, VideoSerializer
 
 
 @never_cache
@@ -34,52 +35,6 @@ class AllowNoPaginationViewSet(viewsets.ReadOnlyModelViewSet):
         if self.paginator and "no_pagination" in self.request.query_params:
             return None
         return super().paginate_queryset(queryset)
-
-
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tag
-        lookup_field = "slug"
-        fields = ["id", "name", "slug"]
-
-
-class CategorySerializer(serializers.ModelSerializer):
-    use_count = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = Category
-        lookup_field = "slug"
-        fields = ["id", "name", "slug", "use_count"]
-
-
-class VideoSerializer(serializers.ModelSerializer):
-    thumbnails = serializers.ListSerializer
-    categories = CategorySerializer(
-        many=True, read_only=True)
-    tags = TagSerializer(
-        many=True, read_only=True)
-
-    class Meta:
-        model = Video
-        lookup_field = "slug"
-        fields = ["id", "youtube_id", "yt_published_date",
-                  "categories", "tags", "duration_seconds", "transcript", "thumbnail",
-                  "slug", "view_count", "dislike_count", "duration",
-                  "favorite_count", "comment_count", "title", "thumbnails",
-                  "description_trimmed", "filename", "ipfs_hash"]
-
-
-class VideoListSerializer(serializers.ModelSerializer):
-    thumbnails = serializers.ListSerializer
-
-    class Meta:
-        model = Video
-        lookup_field = "slug"
-        fields = ["id", "youtube_id", "yt_published_date",
-                  "duration_seconds", "thumbnail",
-                  "slug", "view_count", "dislike_count",
-                  "favorite_count", "comment_count", "title", "thumbnails",
-                  "description_trimmed", "modified_date", "filename"]
 
 
 class TagViewSet(AllowNoPaginationViewSet):

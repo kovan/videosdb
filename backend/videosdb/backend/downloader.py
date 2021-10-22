@@ -21,7 +21,7 @@ class Downloader:
     def __init__(self):
         self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
 
-    def process_video(self, youtube_id, category_name=None):
+    def process_video(self, youtube_id, category_name=None, fetch_related=True):
         video, created = Video.objects.get_or_create(youtube_id=youtube_id)
         # if new video or missing info, download info:
 
@@ -52,7 +52,18 @@ class Downloader:
             if created:
                 logger.info("New category found: " + str(video))
 
-        video.save()
+        if video.related_videos.count() == 0 and fetch_related:
+            related_videos = self.yt_api.get_related_videos(
+                video.youtube_id, settings.YOUTUBE_CHANNEL["id"])
+            for video_dict in related_videos:
+                related_video = self.process_video(
+                    video_dict["id"]["videoId"], fetch_related=False)
+                if not related_video:
+                    continue
+                logger.info("Added new related video: " + str(related_video))
+                video.related_videos.add(related_video)
+
+        return video
 
     def enqueue_videos(self, video_ids, category_name=None):
 
@@ -123,7 +134,6 @@ class Downloader:
         logger.info("Checking for new videos done.")
 
     def fill_transcripts(self):
-        logger.info("Filling transcripts...")
         videos = Video.objects.filter(excluded=False)
         for video in videos:
             if not video.transcript and video.transcript_available is None:
@@ -131,7 +141,8 @@ class Downloader:
                     video.transcript = self.yt_api.get_video_transcript(
                         video.youtube_id)
                     video.transcript_available = True
-                    logger.info("Transcription downloaded")
+                    logger.info(
+                        "Transcription downloaded for video: " + str(video))
                 except youtube_transcript_api.TooManyRequests as e:
                     logger.warn(e)
                     video.transcript_available = None  # leave None so that it retries later

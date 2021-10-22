@@ -103,7 +103,7 @@ export default {
   build: {
     extend(config, ctx) {
       if (ctx.isDev) {
-        config.devtool = "inline-source-map";
+        config.devtool = 'source-map';
       } else {
         if (ctx.isClient) {
           config.optimization.splitChunks.maxSize = 250000;
