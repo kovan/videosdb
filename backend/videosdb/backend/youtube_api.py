@@ -122,9 +122,9 @@ class YoutubeAPI:
         for item in self._make_request(url):
             yield item["snippet"]["resourceId"]["videoId"]
 
-    def get_related_videos(self, youtube_id, channel_id):
+    def get_related_videos(self, youtube_id):
         url = self.root_url + "/search?part=snippet&type=video"
-        url += "&relatedToVideoId=" + youtube_id + "&channelId=" + channel_id
+        url += "&relatedToVideoId=" + youtube_id
         items = self._make_request(url)
         # items = json.load(open("asdf.json"))
         unique = dict()
