@@ -119,7 +119,7 @@ export default {
     this.title = config.title
     try {
       this.categories = (await this.$axios.get(
-        '/categories/?ordering=name')).data
+        '/categories/?ordering=-last_updated')).data
 
     } catch (exception) {
       handleAxiosError(exception, this.$nuxt.context.error)
