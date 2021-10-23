@@ -128,7 +128,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# # DataFlair #Local Memory Cache
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'my_cache_table',
+        'TIMEOUT': None
+    }
+}
+
+#
 # CACHES = {
 #     'default': {
 #         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',

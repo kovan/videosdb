@@ -11,6 +11,7 @@ from autologging import traced
 from executor import execute
 import re
 from urllib.parse import urljoin, urlencode
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class YoutubeAPI:
 
     def __init__(self, yt_key):
         self.yt_key = yt_key
-        self.http = httplib2.Http(".cache")
+        self.http = httplib2.Http(cache)
 
         self.root_url = "https://www.googleapis.com/youtube/v3"
 
