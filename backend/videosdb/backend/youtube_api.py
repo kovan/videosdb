@@ -35,8 +35,11 @@ def _sentence_case(text):
 @traced(logging.getLogger(__name__))
 class YoutubeAPI:
     class YoutubeAPIError(Exception):
-        def __init__(self, s):
-            self.s = s
+        def __init__(self, json):
+            self.json = json
+
+        def __str__(self):
+            return json.dumps(self.json, indent=4, sort_keys=True)
 
     def __init__(self, yt_key):
         self.yt_key = yt_key
@@ -56,8 +59,7 @@ class YoutubeAPI:
             logger.debug("request: " + final_url)
             (response, content) = self.http.request(final_url)
             if response.status != 200:
-                raise self.YoutubeAPIError("%s: %s\n %s" %
-                                           (response.status, response.reason, json.dumps(json.loads(content), indent=4, sort_keys=True)))
+                raise self.YoutubeAPIError(json.loads(content))
 
             json_response = json.loads(content)
             items = json_response["items"]

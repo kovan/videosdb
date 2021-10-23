@@ -21,7 +21,7 @@ class Downloader:
     def __init__(self):
         self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
 
-    def process_video(self, youtube_id, category_name=None, fetch_related=True):
+    def process_video(self, youtube_id, category_name=None):
         video, created = Video.objects.get_or_create(youtube_id=youtube_id)
         # if new video or missing info, download info:
 
@@ -51,17 +51,6 @@ class Downloader:
             video.categories.add(category)
             if created:
                 logger.info("New category found: " + str(video))
-
-        if video.related_videos.count() == 0 and fetch_related:
-            related_videos = self.yt_api.get_related_videos(
-                video.youtube_id, settings.YOUTUBE_CHANNEL["id"])
-            for video_dict in related_videos:
-                related_video = self.process_video(
-                    video_dict["id"]["videoId"], fetch_related=False)
-                if not related_video:
-                    continue
-                logger.info("Added new related video: " + str(related_video))
-                video.related_videos.add(related_video)
 
         return video
 
@@ -126,31 +115,50 @@ class Downloader:
         channel_id = settings.YOUTUBE_CHANNEL["id"]
         try:
             self.enqueue_channel(channel_id)
+            self.fill_related_videos()
+            # this usually raises when YT API quota has been exeeced:
         except YoutubeAPI.YoutubeAPIError as e:
             logging.exception(e)
 
         self.fill_transcripts()
-
         logger.info("Checking for new videos done.")
 
+    def fill_related_videos(self):
+        for video in Video.objects.filter(excluded=False).order_by("-yt_published_date"):
+            if video.related_videos.count() > 0:
+                continue
+
+            related_videos = self.yt_api.get_related_videos(video.youtube_id)
+            for video_dict in related_videos:
+                # for now skip videos from other channels:
+                if video_dict["snippet"]["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
+                    continue
+                related_video = self.process_video(video_dict["id"]["videoId"])
+                if not related_video:
+                    continue
+
+                video.related_videos.add(related_video)
+                logger.info("Added new related video: %s to video %s" %
+                            (related_video, video))
+
     def fill_transcripts(self):
-        videos = Video.objects.filter(excluded=False)
-        for video in videos:
-            if not video.transcript and video.transcript_available is None:
-                try:
-                    video.transcript = self.yt_api.get_video_transcript(
-                        video.youtube_id)
-                    video.transcript_available = True
-                    logger.info(
-                        "Transcription downloaded for video: " + str(video))
-                except youtube_transcript_api.TooManyRequests as e:
-                    logger.warn(e)
-                    video.transcript_available = None  # leave None so that it retries later
-                    break
-                except youtube_transcript_api.CouldNotRetrieveTranscript as e:
-                    video.transcript_available = False
-                finally:
-                    video.save()
+        for video in Video.objects.filter(excluded=False).order_by("-yt_published_date"):
+            if video.transcript or video.transcript_available is not None:
+                continue
+            try:
+                video.transcript = self.yt_api.get_video_transcript(
+                    video.youtube_id)
+                video.transcript_available = True
+                logger.info(
+                    "Transcription downloaded for video: " + str(video))
+            except youtube_transcript_api.TooManyRequests as e:
+                logger.warn(e)
+                video.transcript_available = None  # leave None so that it retries later
+                break
+            except youtube_transcript_api.CouldNotRetrieveTranscript as e:
+                video.transcript_available = False
+            finally:
+                video.save()
 
     @staticmethod
     def download_and_register_in_ipfs(overwrite_hashes=False):
