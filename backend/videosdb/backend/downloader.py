@@ -128,7 +128,8 @@ class Downloader:
         logger.info("Checking for new videos done.")
 
     def fill_related_videos(self):
-        for video in Video.objects.filter(excluded=False).order_by("-yt_published_date"):
+        # order randomly and use remaining daily quota to download a few related lists:
+        for video in Video.objects.filter(excluded=False).order_by("?"):
             if video.related_videos.count() > 0:
                 continue
 
