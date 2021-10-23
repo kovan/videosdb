@@ -22,10 +22,8 @@ RUN wget  http://raw.githubusercontent.com/python-poetry/poetry/master/get-poetr
 ENV PATH="/home/appuser/.poetry/bin:${PATH}"
 
 
-RUN mkdir /app/.cache && chown appuser:appuser /app/.cache
 RUN mkdir /app/logs && chown appuser:appuser /app/logs
 
-VOLUME /app/.cache
 VOLUME /app/logs
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
 RUN poetry install --no-dev

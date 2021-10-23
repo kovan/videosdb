@@ -30,7 +30,6 @@ services:
     ports:
       - 80:80
     volumes:
-      - httplib_cache:/app/.cache
       - logs:/app/logs
     restart: unless-stopped
     healthcheck:
@@ -76,6 +75,5 @@ services:
 
 volumes:
   logs:
-  httplib_cache:
   db:
   nginx_secrets:
