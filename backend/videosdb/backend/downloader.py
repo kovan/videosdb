@@ -1,17 +1,19 @@
-from collections import namedtuple
-from .youtube_api import YoutubeAPI, YoutubeDL, parse_youtube_id
-import shutil
-import re
-import random
-from django.conf import settings
-from videosdb.models import Video, Category
-from autologging import traced
-from .ipfs import IPFS
-import logging
-import tempfile
-import os
-import youtube_transcript_api
 import itertools
+import logging
+import os
+import random
+import re
+import shutil
+import tempfile
+from collections import namedtuple
+
+import youtube_transcript_api
+from autologging import traced
+from django.conf import settings
+from videosdb.models import Category, Video
+
+from .ipfs import IPFS
+from .youtube_api import YoutubeAPI, YoutubeDL, parse_youtube_id
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +116,8 @@ class Downloader:
         logger.info("Checking for new videos...")
         channel_id = settings.YOUTUBE_CHANNEL["id"]
         try:
+            # order here is important because we don't want the quota
+            # to be exhausted while crawling the channel
             self.enqueue_channel(channel_id)
             self.fill_related_videos()
             # this usually raises when YT API quota has been exeeced:
@@ -234,9 +238,3 @@ class Downloader:
             video.save()
 
         ipfs.update_dnslink()
-
-#    with Telnet('localhost', 4000) as tn:
-#        tn.write(b"ansi false\n")
-#        tn.write(b"links shared\n")
-#        tn.write(b"q\n")
-#        links = tn.read_all().decode('ascii')

@@ -12,11 +12,12 @@ class TagSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     use_count = serializers.IntegerField(read_only=True)
+    last_updated = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Category
         lookup_field = "slug"
-        fields = ["id", "name", "slug", "use_count"]
+        fields = ["id", "name", "slug", "use_count",  "last_updated"]
 
 
 class RelatedVideoSrializer(serializers.ModelSerializer):

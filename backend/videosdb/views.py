@@ -5,7 +5,7 @@ from django.db.models import Count
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.cache import never_cache
-
+from django.db.models import Max
 
 from rest_framework import filters, viewsets
 from rest_framework.decorators import api_view
@@ -55,9 +55,10 @@ class CategoryViewSet(AllowNoPaginationViewSet):
     filter_backends = [filters.OrderingFilter,
                        DjangoFilterBackend,
                        filters.SearchFilter]
-    ordering_fields = ["name", "use_count"]
+    ordering_fields = ["name", "use_count", "last_updated"]
     search_fields = ["name"]
-    queryset = Category.objects.annotate(use_count=Count("video"))
+    queryset = Category.objects.annotate(use_count=Count(
+        "video"), last_updated=Max("video__yt_published_date"))
 
 
 class VideoViewSet(AllowNoPaginationViewSet):
