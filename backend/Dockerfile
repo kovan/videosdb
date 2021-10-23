@@ -22,7 +22,7 @@ RUN wget  http://raw.githubusercontent.com/python-poetry/poetry/master/get-poetr
 ENV PATH="/home/appuser/.poetry/bin:${PATH}"
 
 
-RUN mkdir /app/logs && chown appuser:appuser /app/logs
+RUN mkdir -p /app/logs && chown appuser:appuser /app/logs
 
 VOLUME /app/logs
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
