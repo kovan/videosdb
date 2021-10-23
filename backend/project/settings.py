@@ -132,7 +132,8 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'my_cache_table',
-        'TIMEOUT': None
+        'TIMEOUT': None,
+        'MAX_ENTRIES': sys.maxsize
     }
 }
 
@@ -249,6 +250,7 @@ YOUTUBE_CHANNEL = {
 TRUNCATE_DESCRIPTION_AFTER = "#Sadhguru"
 VIDEO_FILES_DIR = "/mnt/videos"
 
-YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
+YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"  # works, primary
 YOUTUBE_KEY_2 = "AIzaSyBS_oLkjg3skPbC49VmPit3dPFPPnZDPRQ"
 YOUTUBE_KEY_3 = "AIzaSyBV1J9SPIGKSpl5nxHdzwS6mx5aIFfjpXE"
+YOUTUBE_KEY_4 = "AIzaSyCRG-LiGKbn0ZFzNUU7qD3nzwkAw8I9Oa4"  # works

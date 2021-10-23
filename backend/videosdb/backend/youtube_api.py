@@ -13,6 +13,7 @@ import re
 from urllib.parse import urljoin, urlencode
 from django.core.cache import cache
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -56,7 +57,7 @@ class YoutubeAPI:
             (response, content) = self.http.request(final_url)
             if response.status != 200:
                 raise self.YoutubeAPIError("%s: %s\n %s" %
-                                           (response.status, response.reason, json.loads(content)))
+                                           (response.status, response.reason, json.dumps(json.loads(content), indent=4, sort_keys=True)))
 
             json_response = json.loads(content)
             items = json_response["items"]
@@ -123,7 +124,7 @@ class YoutubeAPI:
         url = self.root_url + "/search?part=snippet&type=video"
         url += "&relatedToVideoId=" + youtube_id + "&channelId=" + channel_id
         items = self._make_request(url)
-        #items = json.load(open("asdf.json"))
+        # items = json.load(open("asdf.json"))
         unique = dict()
         for result in items:
             unique[result["id"]["videoId"]] = result
