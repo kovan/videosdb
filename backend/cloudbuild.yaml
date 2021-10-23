@@ -1,6 +1,6 @@
 steps:
  # Build and push the container image 
-- name: 'gcr.io/kaniko-project/executor:latest'
+- name: 'gcr.io/kaniko-project/executor:v1.6.0'
   dir: "backend"
   args:
   - --destination=gcr.io/$PROJECT_ID/backend:latest
