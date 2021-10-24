@@ -9,7 +9,7 @@ steps:
       - DATABASE_URL=$_DATABASE_URL
       - -e
       - LOGLEVEL=INFO
-      - us-central1-docker.pkg.dev/worpdress-279321/videosdb/backend 
+      - gcr.io/worpdress-279321/backend
       - poetry
       - run
       - python
