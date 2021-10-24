@@ -48,18 +48,9 @@ services:
       - 443:443
     volumes:
       - nginx_secrets:/etc/letsencrypt
-      #- ./user_conf.d:/etc/nginx/user_conf.d
     links:
       - backend-sadhguru
 
-
-  # frontend:
-  #   image: ${REPO}frontend:${TAG:-latest}
-  #   environment:
-  #     - API_URL=http://backend-sadhguru:8000/api
-  #     - API_BROWSER_URL=https://backend.sadhguru.digital/api  
-  #   build:
-  #     context: ./frontend
 
   pgbouncer:
     image: edoburu/pgbouncer
