@@ -136,7 +136,7 @@ class Downloader:
             related_videos = self.yt_api.get_related_videos(video.youtube_id)
             for video_dict in related_videos:
                 # for now skip videos from other channels:
-                if video_dict["snippet"]["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
+                if "snippet" in video_dict and video_dict["snippet"]["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
                     continue
                 related_video = self.process_video(video_dict["id"]["videoId"])
                 if not related_video:
