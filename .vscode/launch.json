@@ -5,6 +5,7 @@
   "version": "0.2.0",
   "configurations": [
 
+
       {
       "name": "yarn generate",
       "request": "launch",
@@ -104,9 +105,10 @@
       "type": "python",
       "request": "launch",
       "program": "manage.py",
-      "args": ["videosdb", "-c"],
+      "args": ["runscript", "cachetest"],
      "env": {
-        "LOGLEVEL": "DEBUG"
+//        "LOGLEVEL": "DEBUG",
+//        "VIDEOSDB_DEBUG": "1"
       },      
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/backend",

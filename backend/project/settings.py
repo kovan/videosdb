@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 from autologging import TRACE
 import os
-
+import hashlib
 import environ
 import sys
 
@@ -128,12 +128,16 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'my_cache_table',
-        'TIMEOUT': 2592000,  # one month in seconds
-        'MAX_ENTRIES': 2147483647  # max int32
+        'TIMEOUT': 7776000,  # 3 months in seconds
+
+        "OPTIONS": {
+            'MAX_ENTRIES': 2147483647,  # max int32
+        }
     }
 }
 
