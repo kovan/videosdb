@@ -133,7 +133,7 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'my_cache_table',
         'TIMEOUT': 2592000,  # one month in seconds
-        'MAX_ENTRIES': sys.maxsize
+        'MAX_ENTRIES': 2147483647  # max int32
     }
 }
 
