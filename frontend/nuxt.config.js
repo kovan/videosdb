@@ -3,7 +3,7 @@ import { getStats } from 'axios-cached-dns-resolve'
 
 const os = require("os");
 const cpuCount = os.cpus().length;
-const baseURL = process.env.API_URL || "http://localhost:8000/api"
+const baseURL = process.env.API_URL || "http://localhost/api"
 
 export default {
   ssr: true,

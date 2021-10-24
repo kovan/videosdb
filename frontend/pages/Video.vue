@@ -17,6 +17,13 @@ b-container.m-0.p-0.mx-auto
       strong Description
       p(style='white-space: pre-line') {{ this.video.description_trimmed }}
 
+    .my-4(v-if='this.video.categories && this.video.categories.length > 0')
+      strong Categories
+      ul
+        li(v-for='cat in this.video.categories', :key='cat.id')
+          NuxtLink(:to='"/category/" + cat.slug')
+            | {{ cat.name }}
+
     .my-4(v-if='this.video.ipfs_hash')
       p(align='center')
         b-link(
@@ -40,16 +47,8 @@ b-container.m-0.p-0.mx-auto
       p(align='center')
         | NOTE: to download the videos, right click on the download link and choose "Save as.."
 
-    .my-4(v-if='this.video.categories && this.video.categories.length > 0')
-      strong Categories
-      ul
-        li(v-for='cat in this.video.categories', :key='cat.id')
-          NuxtLink(:to='"/category/" + cat.slug')
-            | {{ cat.name }}
-
     .my-4(v-if='this.video.tags && this.video.tags.length > 0')
-      strong Tags
-      p
+      p.text-center
         NuxtLink.p-1(
           :to='"/tag/" + tag.slug',
           v-for='tag in this.video.tags',
@@ -58,7 +57,9 @@ b-container.m-0.p-0.mx-auto
           b-button.mt-2(size='sm', pill)
             | {{ tag.name }}
 
-    .my-4(v-if='this.video.related_videos')
+    .my-4(
+      v-if='this.video.related_videos && this.video.related_videos.length > 0'
+    )
       p
         h2 Related videos:
       .album.py-1.bg-light
@@ -92,7 +93,8 @@ b-container.m-0.p-0.mx-auto
                     small.text-muted Duration: {{ new Date(related.duration_seconds * 1000).toISOString().substr(11, 8) }}
 
     .my-4(v-if='this.video.transcript')
-      strong Transcription:
+      p
+        strong Transcription:
       p(style='white-space: pre-line') {{ this.video.transcript }}
 </template>
 <script>
