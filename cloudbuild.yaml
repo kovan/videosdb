@@ -8,7 +8,7 @@ steps:
       - -e
       - DATABASE_URL=$_DATABASE_URL
       - -e
-      - LOGLEVEL=INFO
+      - LOGLEVEL=$_LOGLEVEL
       - gcr.io/worpdress-279321/backend
       - poetry
       - run
