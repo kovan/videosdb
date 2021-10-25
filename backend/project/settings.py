@@ -99,7 +99,7 @@ DATABASES = {
     "default":
         env.db_url(
             "DATABASE_URL",
-            default="psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db:5431/postgres"
+            default="psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@localhost:5431/postgres"
         ),
 
 }
