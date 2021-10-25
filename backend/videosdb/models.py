@@ -32,6 +32,7 @@ class Tag(DirtyFieldsMixin, models.Model):
         if not self.is_dirty():
             return
         super(Tag, self).save(*args, **kwargs)
+        logger.debug("SAVED tag: " + str(self))
 
 
 class Category(DirtyFieldsMixin, models.Model):
@@ -54,6 +55,7 @@ class Category(DirtyFieldsMixin, models.Model):
         if not self.is_dirty():
             return
         super(Category, self).save(*args, **kwargs)
+        logger.debug("SAVED category: " + str(self))
 
 
 class Video(DirtyFieldsMixin, models.Model):
@@ -100,7 +102,8 @@ class Video(DirtyFieldsMixin, models.Model):
     comment_count = models.IntegerField(null=True, help_text="commentCount")
     definition = models.CharField(
         max_length=256, null=True, help_text="definition")
-    related_videos = models.ManyToManyField("self")
+    related_videos = models.ManyToManyField(
+        "self",  symmetrical=False)
     ipfs_hash = models.CharField(max_length=256, null=True)
     filename = models.CharField(max_length=256, null=True)
 

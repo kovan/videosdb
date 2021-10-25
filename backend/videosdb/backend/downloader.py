@@ -6,6 +6,7 @@ import re
 import shutil
 import tempfile
 from collections import namedtuple
+from xml.dom import NotFoundErr
 
 import youtube_transcript_api
 from autologging import traced
@@ -24,14 +25,18 @@ class Downloader:
         self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
 
     def process_video(self, youtube_id, category_name=None):
-        video, created = Video.objects.get_or_create(youtube_id=youtube_id)
-        # if new video or missing info, download info:
+        try:
+            video = Video.objects.get(youtube_id=youtube_id)
+        except Video.DoesNotExist:
+            video = Video(youtube_id=youtube_id)
+            logger.info("New video found: " + str(video))
 
         if not video.full_response:
             info = self.yt_api.get_video_info(video.youtube_id)
             if not info:
                 video.excluded = True
             else:
+                video.save()
                 video.load_from_youtube_info(info)
 
         # some playlists include videos from other channels
@@ -40,12 +45,10 @@ class Downloader:
         if video.channel_id != settings.YOUTUBE_CHANNEL["id"]:
             video.excluded = True
 
-        if video.excluded:
-            video.save()
-            return
+        video.save()
 
-        if created:
-            logger.info("New video found: " + str(video))
+        if video.excluded:
+            return
 
         if category_name:
             category, created = Category.objects.get_or_create(
@@ -58,12 +61,6 @@ class Downloader:
 
     def enqueue_videos(self, video_ids, category_name=None):
 
-        # threads = []
-        # for i in range(len(video_ids)):
-        #     thread = self.loop.create_task(
-        #         process_video(video_ids[i], category_name))
-        #     threads.append(thread)
-        # self.loop.run_until_complete(asyncio.gather(*threads))
         for yid in video_ids:
             self.process_video(yid, category_name)
 
