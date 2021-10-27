@@ -34,5 +34,5 @@ COPY --chown=appuser:appuser . .
 EXPOSE $PORT
 
 
-CMD ["/bin/bash", "-c",  "poetry run gunicorn --bind 0.0.0.0:$PORT --threads=3  --timeout 90 --log-level=info --log-file=- project.wsgi"]
+CMD ["/bin/bash", "-c",  "poetry run gunicorn --bind 0.0.0.0:$PORT --threads=3  --timeout 300 --log-level=info --log-file=- project.wsgi"]
 #CMD ["/app/utils/entrypoint.sh"]
