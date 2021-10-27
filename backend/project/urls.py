@@ -20,7 +20,7 @@ from videosdb import views
 #from django.views.generic import TemplateView
 
 router = routers.DefaultRouter()
-router.register(r'categories', views.CategoryViewSet)
+router.register(r'categories', views.PlaylistViewSet)
 router.register(r'tags', views.TagViewSet)
 router.register(r'videos', views.VideoViewSet, basename="videos")
 

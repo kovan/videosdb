@@ -5,3 +5,4 @@ test_media/
 dist/
 static/
 .venv
+node_modules

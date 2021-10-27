@@ -7,9 +7,10 @@ import logging
 import json
 import httplib2
 import youtube_transcript_api
-from autologging import traced
+
 from executor import execute
 import re
+import os
 from urllib.parse import urljoin, urlencode
 from django.core.cache import cache
 
@@ -32,20 +33,22 @@ def _sentence_case(text):
     return final
 
 
-@traced(logging.getLogger(__name__))
 class YoutubeAPI:
+
     class YoutubeAPIError(Exception):
-        def __init__(self, json):
+        def __init__(self, status, json):
+            self.status = status
             self.json = json
 
         def __str__(self):
-            return json.dumps(self.json, indent=4, sort_keys=True)
+            return "%s %s" % (self.status, json.dumps(self.json, indent=4, sort_keys=True))
 
     def __init__(self, yt_key):
         self.yt_key = yt_key
-        self.http = httplib2.Http(cache)
+        self.http = httplib2.Http("httplib2_cache")
 
-        self.root_url = "https://www.googleapis.com/youtube/v3"
+        self.api_host = os.environ.get(
+            "YOUTUBE_API_HOST", "https://www.googleapis.com")
 
     def _make_request(self, url):
         url += "&key=" + self.yt_key
@@ -57,14 +60,17 @@ class YoutubeAPI:
             else:
                 final_url = url
             logger.debug("request: " + final_url)
-            (response, content) = self.http.request(final_url)
+            (response, content) = self.http.request(
+                self.api_host + "/youtube/v3" + final_url)
+            logger.debug("response: " + str(response))
             if response.status != 200:
-                raise self.YoutubeAPIError(json.loads(content))
+                raise self.YoutubeAPIError(
+                    response.status, json.loads(content))
 
             json_response = json.loads(content)
             items = json_response["items"]
             for item in items:
-                yield item
+                yield (item, response.fromcache)
 
             if not "nextPageToken" in json_response:
                 break
@@ -72,73 +78,79 @@ class YoutubeAPI:
                 page_token = json_response["nextPageToken"]
 
     def get_playlist_info(self, playlist_id):
-        url = self.root_url + "/playlists?part=snippet"
+        url = "/playlists?part=snippet"
         url += "&id=" + playlist_id
-        items = list(self._make_request(url))
+        items, fromcache = self._make_request(url)
+        items = list(items)
         playlist = {
             "id": playlist_id,
             "title": items[0]["snippet"]["title"],
             "channel_title": items[0]["snippet"]["channelTitle"]
         }
-        return playlist
+        return playlist, fromcache
 
     def list_channnelsection_playlists(self, channel_id):
-        url = self.root_url + "/channelSections?part=contentDetails"
+        url = "/channelSections?part=contentDetails"
         url += "&channelId=" + channel_id
+        items, fromcache = self._make_request(url)
 
-        for item in self._make_request(url):
+        for item in items:
             details = item.get("contentDetails")
             if not details:
                 continue
             if not "playlists" in details:
                 continue
             for id in details["playlists"]:
-                yield self.get_playlist_info(id)
+                yield id
 
     def list_channel_playlists(self, channel_id):
-        url = self.root_url + "/playlists?part=snippet%2C+contentDetails"
+        url = "/playlists?part=snippet%2C+contentDetails"
         url += "&channelId=" + channel_id
 
-        for item in self._make_request(url):
-            yield self.get_playlist_info(item["id"])
+        items, fromcache = self._make_request(url)
+
+        for item in items:
+            yield item["id"]
 
     def get_video_info(self, youtube_id):
-        url = self.root_url + "/videos?part=snippet,contentDetails,statistics"
+        url = "/videos?part=snippet,contentDetails,statistics"
         url += "&id=" + youtube_id
-        items = list(self._make_request(url))
+
+        items, fromcache = self._make_request(url)
+        items = list(items)
         if items:
             video_info = {
                 **items[0]["snippet"],
                 **items[0]["contentDetails"],
                 **items[0]["statistics"],
             }
-            return video_info
-        return None
+            return video_info, fromcache
+        return None, fromcache
 
     def list_playlist_videos(self, playlist_id):
-        url = self.root_url + "/playlistItems?part=snippet"
+        url = "/playlistItems?part=snippet"
         url += "&playlistId=" + playlist_id
+        items, fromcache = self._make_request(url)
 
-        for item in self._make_request(url):
-            yield item["snippet"]["resourceId"]["videoId"]
+        for item in items:
+            yield item["snippet"]["resourceId"]["videoId"], fromcache
 
     def get_related_videos(self, youtube_id):
-        url = self.root_url + "/search?part=snippet&type=video"
+        url = "/search?part=snippet&type=video"
         url += "&relatedToVideoId=" + youtube_id
-        items = self._make_request(url)
-        # items = json.load(open("asdf.json"))
+        items, fromcache = self._make_request(url)
         unique = dict()
         for result in items:
             unique[result["id"]["videoId"]] = result
-        return unique.values()
+        return unique.values(), fromcache
 
     def get_channel_info(self, channel_id):
-        url = self.root_url + "/channels?part=snippet%2CcontentDetails%2Cstatistics"
+        url = "/channels?part=snippet%2CcontentDetails%2Cstatistics"
         url += "&id=" + channel_id
-        return self._make_request(url)
+        return list(self._make_request(url))[0]
 
     def get_video_transcript(self, youtube_id):
-        # url = self.root_url + "/captions?part=id,snippet&videoId=" + youtube_id
+        # url = "/captions?part=id,snippet&videoId=" + youtube_id
         # transcripts = self.transcript_fetcher.fetch(youtube_id)
         # transcript = transcripts.find_transcript(
         #     ("en", "en-US", "en-GB")).fetch()
@@ -151,7 +163,6 @@ class YoutubeAPI:
         return _sentence_case(result.capitalize() + ".")
 
 
-@traced(logging.getLogger(__name__))
 class YoutubeDL:
     class UnavailableError(Exception):
         def __init__(self, s):

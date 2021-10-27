@@ -1,13 +1,11 @@
 import os
 import logging
 import sys
-from autologging import traced
 import ipfshttpclient
 from django.conf import settings
 import socket
 
 
-@traced(logging.getLogger(__name__))
 class DNS:
     def __init__(self, dns_zone):
         self.dns_zone = dns_zone
@@ -44,7 +42,6 @@ class DNS:
         self._update_record(record_name, "A", 300, new_ip)
 
 
-@traced(logging.getLogger(__name__))
 class IPFS:
     def __init__(self, files_root="/videos"):
 

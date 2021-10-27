@@ -12,14 +12,14 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 
-from .models import Category, Tag, Video
-from .serializers import VideoListSerializer, TagSerializer, CategorySerializer, VideoSerializer
+from .models import Playlist, Tag, Video
+from .serializers import VideoListSerializer, TagSerializer, PlaylistSerializer, VideoSerializer
 
 
 @never_cache
 @api_view(["GET"])
 def random_video(request):
-    video = Video.objects.filter(excluded=False).order_by("?").first()
+    video = Video.objects.all().order_by("?").first()
     serializer = VideoListSerializer(video)
     return Response(serializer.data)
 
@@ -48,17 +48,17 @@ class TagViewSet(AllowNoPaginationViewSet):
     queryset = Tag.objects.all()
 
 
-class CategoryViewSet(AllowNoPaginationViewSet):
+class PlaylistViewSet(AllowNoPaginationViewSet):
     pagination_class = None
     lookup_field = "slug"
-    serializer_class = CategorySerializer
+    serializer_class = PlaylistSerializer
     filter_backends = [filters.OrderingFilter,
                        DjangoFilterBackend,
                        filters.SearchFilter]
     ordering_fields = ["name", "use_count", "last_updated"]
     search_fields = ["name"]
-    queryset = Category.objects.annotate(use_count=Count(
-        "video"), last_updated=Max("video__yt_published_date"))
+    queryset = Playlist.objects.annotate(use_count=Count(
+        "videos"), last_updated=Max("videos__yt_data__yt_data.publishedAt"))
 
 
 class VideoViewSet(AllowNoPaginationViewSet):
@@ -68,7 +68,7 @@ class VideoViewSet(AllowNoPaginationViewSet):
     filter_backends = [filters.OrderingFilter,
                        filters.SearchFilter,
                        DjangoFilterBackend]
-    ordering_fields = ["yt_published_date", "view_count",
+    ordering_fields = ["yt_data.publishedAt", "view_count",
                        "comment_count", "favorited_count", "like_count", "title"]
     search_fields = ["title", "description",
                      "transcript", "tags__name", "categories__name"]
@@ -86,8 +86,7 @@ class VideoViewSet(AllowNoPaginationViewSet):
         return serializer_class
 
     def get_queryset(self):
-        queryset = Video.objects.exclude(excluded=True).exclude(
-            title=None).order_by("-yt_published_date")
+        queryset = Video.objects.all().order_by("-yt_data.publishedAt")
         period = self.request.query_params.get('period', None)
         if period:
 
@@ -101,6 +100,6 @@ class VideoViewSet(AllowNoPaginationViewSet):
                 start_date = date(1, 1, 1)
             end_date = timezone.now() + timedelta(days=1)
 
-            queryset = queryset.filter(yt_published_date__range=[
+            queryset = queryset.filter(yt_data__publishedAt__range=[
                                        start_date, end_date])
         return queryset

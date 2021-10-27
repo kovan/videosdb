@@ -6,6 +6,8 @@
   "configurations": [
 
 
+
+
       {
       "name": "yarn generate",
       "request": "launch",
@@ -73,7 +75,7 @@
       "request": "launch",
       "program": "manage.py",
       "env": {
-        "DEBUG": "1"
+      //  "DEBUG": "1"
       },
       "args": ["test", "-n", "--noinput"],
       "console": "integratedTerminal",
@@ -101,15 +103,29 @@
       "justMyCode": false
     },
     {
+      "name": "Django: check",
+      "type": "python",
+      "request": "launch",
+      "program": "manage.py",
+      "args": ["videosdb", "-c"],
+      "env": {
+          "LOGLEVEL": "DEBUG",
+          "VIDEOSDB_DEBUG": "1"
+        },      
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": false
+    },    
+    {
       "name": "Django custom",
       "type": "python",
       "request": "launch",
       "program": "manage.py",
-      "args": ["runscript", "cachetest"],
-     "env": {
-//        "LOGLEVEL": "DEBUG",
-//        "VIDEOSDB_DEBUG": "1"
-      },      
+      "args": ["videosdb", "-c"],
+      "env": {
+          "LOGLEVEL": "DEBUG",
+          "VIDEOSDB_DEBUG": "1"
+        },      
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/backend",
       "justMyCode": false

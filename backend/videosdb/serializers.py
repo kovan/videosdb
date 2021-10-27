@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Category, Tag, Video
+from .models import Playlist, Tag, Video
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -10,26 +10,27 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "slug"]
 
 
-class CategorySerializer(serializers.ModelSerializer):
+class PlaylistSerializer(serializers.ModelSerializer):
     use_count = serializers.IntegerField(read_only=True)
     last_updated = serializers.DateTimeField(read_only=True)
 
     class Meta:
-        model = Category
+        model = Playlist
         lookup_field = "slug"
-        fields = ["id", "name", "slug", "use_count",  "last_updated"]
+        fields = ["id", "yt_playlist_id", "name",
+                  "slug", "use_count",  "last_updated"]
 
 
 class RelatedVideoSrializer(serializers.ModelSerializer):
     class Meta:
         model = Video
-        fields = ["id", "youtube_id", "yt_published_date",
+        fields = ["id", "youtube_id", "yt_data.publishedAt",
                   "duration_seconds", "title", "thumbnails", "slug"]
 
 
 class VideoSerializer(serializers.ModelSerializer):
     thumbnails = serializers.ListSerializer
-    categories = CategorySerializer(
+    categories = PlaylistSerializer(
         many=True, read_only=True)
     tags = TagSerializer(
         many=True, read_only=True)
@@ -39,7 +40,7 @@ class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
         lookup_field = "slug"
-        fields = ["id", "youtube_id", "yt_published_date",
+        fields = ["id", "youtube_id", "yt_data.publishedAt",
                   "categories", "tags", "duration_seconds", "transcript", "thumbnail",
                   "slug", "view_count", "dislike_count", "duration",
                   "favorite_count", "comment_count", "title", "thumbnails",
@@ -52,7 +53,7 @@ class VideoListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
         lookup_field = "slug"
-        fields = ["id", "youtube_id", "yt_published_date",
+        fields = ["id", "youtube_id", "yt_data.publishedAt",
                   "duration_seconds", "thumbnail",
                   "slug", "view_count", "dislike_count",
                   "favorite_count", "comment_count", "title", "thumbnails",
