@@ -70,7 +70,7 @@ class YoutubeAPI:
             json_response = json.loads(content)
             items = json_response["items"]
             for item in items:
-                yield (item, response.fromcache)
+                yield item
 
             if not "nextPageToken" in json_response:
                 break
@@ -80,19 +80,19 @@ class YoutubeAPI:
     def get_playlist_info(self, playlist_id):
         url = "/playlists?part=snippet"
         url += "&id=" + playlist_id
-        items, fromcache = self._make_request(url)
+        items= self._make_request(url)
         items = list(items)
         playlist = {
             "id": playlist_id,
             "title": items[0]["snippet"]["title"],
             "channel_title": items[0]["snippet"]["channelTitle"]
         }
-        return playlist, fromcache
+        return playlist
 
     def list_channnelsection_playlists(self, channel_id):
         url = "/channelSections?part=contentDetails"
         url += "&channelId=" + channel_id
-        items, fromcache = self._make_request(url)
+        items= self._make_request(url)
 
         for item in items:
             details = item.get("contentDetails")
@@ -107,7 +107,7 @@ class YoutubeAPI:
         url = "/playlists?part=snippet%2C+contentDetails"
         url += "&channelId=" + channel_id
 
-        items, fromcache = self._make_request(url)
+        items= self._make_request(url)
 
         for item in items:
             yield item["id"]
@@ -116,7 +116,7 @@ class YoutubeAPI:
         url = "/videos?part=snippet,contentDetails,statistics"
         url += "&id=" + youtube_id
 
-        items, fromcache = self._make_request(url)
+        items= self._make_request(url)
         items = list(items)
         if items:
             video_info = {
@@ -124,25 +124,25 @@ class YoutubeAPI:
                 **items[0]["contentDetails"],
                 **items[0]["statistics"],
             }
-            return video_info, fromcache
-        return None, fromcache
+            return video_info
+        return None
 
     def list_playlist_videos(self, playlist_id):
         url = "/playlistItems?part=snippet"
         url += "&playlistId=" + playlist_id
-        items, fromcache = self._make_request(url)
+        items= self._make_request(url)
 
         for item in items:
-            yield item["snippet"]["resourceId"]["videoId"], fromcache
+            yield item["snippet"]["resourceId"]["videoId"]
 
     def get_related_videos(self, youtube_id):
         url = "/search?part=snippet&type=video"
         url += "&relatedToVideoId=" + youtube_id
-        items, fromcache = self._make_request(url)
+        items= self._make_request(url)
         unique = dict()
         for result in items:
             unique[result["id"]["videoId"]] = result
-        return unique.values(), fromcache
+        return unique.values()
 
     def get_channel_info(self, channel_id):
         url = "/channels?part=snippet%2CcontentDetails%2Cstatistics"

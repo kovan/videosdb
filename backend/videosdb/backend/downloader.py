@@ -10,7 +10,10 @@ from xml.dom import NotFoundErr
 
 import youtube_transcript_api
 from django.conf import settings
-from videosdb.models import Playlist, Video
+#
+#
+#
+#from videosdb.models import Playlist, Video
 
 from .ipfs import IPFS
 from .youtube_api import YoutubeAPI, YoutubeDL, parse_youtube_id
@@ -126,9 +129,7 @@ class Downloader:
     def _sync_db_with_youtube(self):
 
         def _process_video(video_id):
-            yt_data, fromcache = self.yt_api.get_video_info(video_id)
-            if fromcache or not yt_data:
-                return
+            yt_data= self.yt_api.get_video_info(video_id)
 
             # some playlists include videos from other channels
             # for now exclude those videos
@@ -146,7 +147,7 @@ class Downloader:
 
         def _process_playlist(playlist_id):
 
-            playlist, fromcache = self.yt_api.get_playlist_info(playlist_id)
+            playlist= self.yt_api.get_playlist_info(playlist_id)
 
             if playlist["channel_title"] != settings.YOUTUBE_CHANNEL["name"]:
                 return
@@ -156,11 +157,8 @@ class Downloader:
 
             logger.info("Processing playlist: " + str(playlist["title"]))
 
-            video_ids, fromcache = self.yt_api.list_playlist_videos(
+            video_ids= self.yt_api.list_playlist_videos(
                 playlist["id"])
-
-            if fromcache:
-                return
 
             playlist_obj = None
             if playlist["title"] != "Uploads from " + playlist["channel_title"]:
@@ -177,7 +175,7 @@ class Downloader:
                     playlist_obj.videos.add(video_obj)
 
         channel_id = settings.YOUTUBE_CHANNEL["id"]
-        channel_info, fromcache = self.yt_api.get_channel_info(
+        channel_info= self.yt_api.get_channel_info(
             channel_id)
 
         logger.info("Processing channel: " +
@@ -187,13 +185,13 @@ class Downloader:
 
         _process_playlist(all_uploads_playlist_id)
 
-        channnelsection_playlist_ids, fromcache = self.yt_api.list_channnelsection_playlists(
+        channnelsection_playlist_ids= self.yt_api.list_channnelsection_playlists(
             channel_id)
 
         for playlist_id in channnelsection_playlist_ids:
             _process_playlist(playlist_id)
 
-        channel_playlists_ids, fromcache = self.yt_api.list_channel_playlists(
+        channel_playlists_ids= self.yt_api.list_channel_playlists(
             channel_id)
 
         for playlist_id in channel_playlists_ids:
@@ -205,10 +203,8 @@ class Downloader:
             if video.related_videos.count() > 0:
                 continue
 
-            related_videos, fromcache = self.yt_api.get_related_videos(
+            related_videos= self.yt_api.get_related_videos(
                 video.youtube_id)
-            if fromcache:
-                continue
 
             for video_dict in related_videos:
                 # for now skip videos from other channels:
