@@ -24,6 +24,7 @@ youtube-dl = {git = "https://github.com/ytdl-org/youtube-dl.git"}
 google-cloud-dns = "^0.32.1"
 psycopg2 = "^2.9.1"
 django-environ = "^0.7.0"
+google-cloud-datastore = "^2.3.0"
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.4"
