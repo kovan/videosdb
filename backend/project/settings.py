@@ -253,9 +253,12 @@ YOUTUBE_CHANNEL = {
 TRUNCATE_DESCRIPTION_AFTER = "#Sadhguru"
 VIDEO_FILES_DIR = "/mnt/videos"
 
-if DEBUG:
-    YOUTUBE_KEY = "AIzaSyCRG-LiGKbn0ZFzNUU7qD3nzwkAw8I9Oa4"  # works
-else:
-    YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"  # works, primary
-#YOUTUBE_KEY_2 = "AIzaSyBS_oLkjg3skPbC49VmPit3dPFPPnZDPRQ"
-#YOUTUBE_KEY_3 = "AIzaSyBV1J9SPIGKSpl5nxHdzwS6mx5aIFfjpXE"
+
+# YOUTUBE_KEY = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"  # works, primary
+# YOUTUBE_KEY = "AIzaSyCRG-LiGKbn0ZFzNUU7qD3nzwkAw8I9Oa4"  # works
+# YOUTUBE_KEY = "AIzaSyCvLLl93DvwWg5hnqizEbDz5hBE9fAmXnc" # doesn't work
+# YOUTUBE_KEY = "AIzaSyBS_oLkjg3skPbC49VmPit3dPFPPnZDPRQ"
+# YOUTUBE_KEY = "AIzaSyBV1J9SPIGKSpl5nxHdzwS6mx5aIFfjpXE"
+
+# works, used for testing, responses in HAR file
+YOUTUBE_KEY = "AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs"
