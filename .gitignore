@@ -1,5 +1,6 @@
 .cache
 *.swp
+*.#
 __pycache__/
 backend/tmp/
 backend/db.sqlite3
