@@ -43,9 +43,15 @@ class YoutubeAPI:
 
     def __init__(self, yt_key):
         self.yt_key = yt_key
-        self.http = httplib2.Http(cache)
+        if "YOUTUBE_API_NO_CACHE" in os.environ:
+            self.http = httplib2.Http()
+        else:
+            self.http = httplib2.Http(cache)
 
-        self.root_url = "https://www.googleapis.com/youtube/v3"
+        if "YOUTUBE_API_URL" in os.environ:
+            self.root_url = os.environ["YOUTUBE_API_URL"]
+        else:
+            self.root_url = "https://www.googleapis.com/youtube/v3"
 
     def _make_request(self, url):
         url += "&key=" + self.yt_key
