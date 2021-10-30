@@ -117,6 +117,12 @@ export default {
           name: "description",
           content: this.video.description_trimmed
         }
+      ],
+      link: [
+        {
+          rel: "canonical",
+          href: `https://www.sadhguru.digital/video/${this.video.slug}/`
+        }
       ]
     }
   },
