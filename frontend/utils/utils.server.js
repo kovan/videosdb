@@ -40,11 +40,12 @@ async function generateSitemap(baseURL) {
           },
         ],
         lastmod: obj.modified_date,
-        priority: 0.9,
+        priority: 1.0,
       }      
     else
       return {
         url: `/${type}/${obj.slug}/`,
+        priority: 0.1
       }
   }
 
