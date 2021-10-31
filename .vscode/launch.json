@@ -94,13 +94,18 @@
       "type": "python",
       "request": "launch",
       "program": "manage.py",
+      "django": true,
       "env": {
-        //  "DEBUG": "1"
+        "DEBUG": "1",
+        "LOGLEVEL": "INFO",
+        "YOUTUBE_API_NO_CACHE": "1",
+        "YOUTUBE_API_URL": "http://localhost:2000/youtube/v3"
       },
       "args": [
         "test",
-        "-n",
-        "--noinput"
+        "--nomigrations",
+        "--noinput",
+        "--keepdb"
       ],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/backend",

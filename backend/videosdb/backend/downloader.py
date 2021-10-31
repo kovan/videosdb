@@ -5,6 +5,7 @@ import random
 import re
 import shutil
 import tempfile
+import asyncio
 from collections import namedtuple
 from xml.dom import NotFoundErr
 
@@ -40,13 +41,15 @@ class Downloader:
         try:
             # order here is important because we don't want the quota
             # to be exhausted while crawling the channel or the videos info
-            self._sync_db_with_youtube()
-            self._fill_related_videos()
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(self._sync_db_with_youtube())
+
+            # self._fill_related_videos()
             # this usually raises when YT API quota has been exeeced:
         except YoutubeAPI.YoutubeAPIError as e:
             logging.exception(e)
 
-        self._fill_transcripts()  # this does not use YT API quota
+        # self._fill_transcripts()  # this does not use YT API quota
         logger.info("Checking for new videos done.")
 
     @staticmethod
@@ -126,10 +129,10 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
-    def _sync_db_with_youtube(self):
+    async def _sync_db_with_youtube(self):
 
-        def _process_video(video_id):
-            yt_data= self.yt_api.get_video_info(video_id)
+        async def _process_video(video_id):
+            yt_data = await self.yt_api.get_video_info(video_id)
 
             # some playlists include videos from other channels
             # for now exclude those videos
@@ -145,9 +148,9 @@ class Downloader:
 
             logger.debug("Processed video: " + str(video))
 
-        def _process_playlist(playlist_id):
+        async def _process_playlist(playlist_id):
 
-            playlist= self.yt_api.get_playlist_info(playlist_id)
+            playlist = await self.yt_api.get_playlist_info(playlist_id)
 
             if playlist["channel_title"] != settings.YOUTUBE_CHANNEL["name"]:
                 return
@@ -157,7 +160,7 @@ class Downloader:
 
             logger.info("Processing playlist: " + str(playlist["title"]))
 
-            video_ids= self.yt_api.list_playlist_videos(
+            video_ids = await self.yt_api.list_playlist_videos(
                 playlist["id"])
 
             playlist_obj = None
@@ -175,7 +178,7 @@ class Downloader:
                     playlist_obj.videos.add(video_obj)
 
         channel_id = settings.YOUTUBE_CHANNEL["id"]
-        channel_info= self.yt_api.get_channel_info(
+        channel_info = await self.yt_api.get_channel_info(
             channel_id)
 
         logger.info("Processing channel: " +
@@ -185,16 +188,12 @@ class Downloader:
 
         _process_playlist(all_uploads_playlist_id)
 
-        channnelsection_playlist_ids= self.yt_api.list_channnelsection_playlists(
-            channel_id)
-
-        for playlist_id in channnelsection_playlist_ids:
+        async for playlist_id in self.yt_api.list_channnelsection_playlists(
+                channel_id):
             _process_playlist(playlist_id)
 
-        channel_playlists_ids= self.yt_api.list_channel_playlists(
-            channel_id)
-
-        for playlist_id in channel_playlists_ids:
+        async for playlist_id in self.yt_api.list_channel_playlists(
+                channel_id):
             _process_playlist(playlist_id)
 
     def _fill_related_videos(self):
@@ -203,7 +202,7 @@ class Downloader:
             if video.related_videos.count() > 0:
                 continue
 
-            related_videos= self.yt_api.get_related_videos(
+            related_videos = self.yt_api.get_related_videos(
                 video.youtube_id)
 
             for video_dict in related_videos:

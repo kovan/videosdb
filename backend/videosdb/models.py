@@ -16,36 +16,47 @@ class Tag(models.Model):
     slug = models.SlugField(unique=True, max_length=256,
                             null=True, db_index=True)
 
+    def __init__(self, name):
+        self.name = name
+        self.slug = uuslug(self.yt_data.title, instance=self)
+
     def __str__(self):
         return self.name
 
-    def save(self, *args, **kwargs):
-        if not self.slug and self.name:
-            self.slug = uuslug(self.name, instance=self)
+    # def save(self, *args, **kwargs):
+    #     if not self.slug and self.name:
+    #         self.slug = uuslug(self.name, instance=self)
 
-        super(Tag, self).save(*args, **kwargs)
-        logger.debug("SAVED tag: " + str(self))
+    #     super(Tag, self).save(*args, **kwargs)
+    #     logger.debug("SAVED tag: " + str(self))
+
+
+class PersistentVideoData(models.Model):
+    # data that does not come from Youtube
+    transcript = models.TextField(null=True)
+    transcript_available = models.BooleanField(null=True)
+    ipfs_hash = models.CharField(max_length=256, null=True)
+    filename = models.CharField(max_length=256, null=True)
 
 
 class Video(models.Model):
-    class Meta:
-        indexes = [
-            models.Index(fields=["youtube_id"]),
-            models.Index(fields=["slug"]),
-            models.Index(fields=["id"])
-        ]
-    yt_data = models.JSONField()
+    # Here goes data that comes from Youtube only
+
     youtube_id = models.CharField(
         max_length=16, unique=True, db_index=True)
-    tags = models.ManyToManyField(Tag)
-    transcript = models.TextField(null=True)
-    transcript_available = models.BooleanField(null=True)
+    yt_data = models.JSONField()
     slug = models.SlugField(unique=True, max_length=4096,
                             null=True, db_index=True)
+    tags = models.ManyToManyField(Tag)
     related_videos = models.ManyToManyField(
         "self",  symmetrical=False)
-    ipfs_hash = models.CharField(max_length=256, null=True)
-    filename = models.CharField(max_length=256, null=True)
+
+  #  data = models.OneToOneField(PersistentVideoData, null=True)
+
+    def __init__(self, yt_data):
+        self.yt_data = yt_data
+        self.youtube_id = yt_data.id
+        self.slug = uuslug(self.yt_data.title, instance=self)
 
     def __str__(self):
         return str(self.youtube_id)
@@ -57,11 +68,11 @@ class Video(models.Model):
             if created:
                 logger.debug("Discovered tag: " + str(self))
 
-    def save(self, *args, **kwargs):
-        if not self.slug and self.yt_data.title:
-            self.slug = uuslug(self.yt_data.title, instance=self)
-        super(Video, self).save(*args, **kwargs)
-        logger.debug("Saved video: " + str(self))
+    # def save(self, *args, **kwargs):
+    #     if not self.slug and self.yt_data.title:
+    #         self.slug = uuslug(self.yt_data.title, instance=self)
+    #     super(Video, self).save(*args, **kwargs)
+    #     logger.debug("Saved video: " + str(self))
 
     @property
     def description_trimmed(self):
@@ -83,20 +94,26 @@ class Video(models.Model):
 
 
 class Playlist(models.Model):
+    # Here goes data that comes from Youtube only
+    youtube_id = models.CharField(
+        max_length=256, unique=True, db_index=True)
+    yt_data = models.JSONField()
+
     slug = models.SlugField(unique=True, max_length=256,
                             null=True, db_index=True)
 
-    yt_data = models.JSONField()
-    yt_playlist_id = models.CharField(
-        max_length=256, unique=True, db_index=True)
-
     videos = models.ManyToManyField(Video)
 
-    def __str__(self):
-        return self.yt_playlist_id
+    def __init__(self, yt_data):
+        self.yt_data = yt_data
+        self.youtube_id = yt_data.id
+        self.slug = uuslug(self.yt_data.title, instance=self)
 
-    def save(self, *args, **kwargs):
-        if not self.slug and self.yt_data.title:
-            self.slug = uuslug(self.yt_data.title, instance=self)
-        super(Playlist, self).save(*args, **kwargs)
-        logger.debug("SAVED Playlist: " + str(self))
+    def __str__(self):
+        return self.youtube_id
+
+    # def save(self, *args, **kwargs):
+    #     if not self.slug and self.yt_data.title:
+    #         self.slug = uuslug(self.yt_data.title, instance=self)
+    #     super(Playlist, self).save(*args, **kwargs)
+    #     logger.debug("SAVED Playlist: " + str(self))
