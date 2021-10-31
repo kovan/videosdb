@@ -45,10 +45,15 @@ class YoutubeAPI:
 
     def __init__(self, yt_key):
         self.yt_key = yt_key
-        self.http = httplib2.Http("httplib2_cache")
+        if "YOUTUBE_API_NO_CACHE" in os.environ:
+            self.http = httplib2.Http()
+        else:
+            self.http = httplib2.Http(cache)
 
-        self.api_host = os.environ.get(
-            "YOUTUBE_API_HOST", "https://www.googleapis.com")
+        if "YOUTUBE_API_URL" in os.environ:
+            self.root_url = os.environ["YOUTUBE_API_URL"]
+        else:
+            self.root_url = "https://www.googleapis.com/youtube/v3"
 
     def _make_request(self, url):
         url += "&key=" + self.yt_key
@@ -80,7 +85,7 @@ class YoutubeAPI:
     def get_playlist_info(self, playlist_id):
         url = "/playlists?part=snippet"
         url += "&id=" + playlist_id
-        items= self._make_request(url)
+        items = self._make_request(url)
         items = list(items)
         playlist = {
             "id": playlist_id,
@@ -92,7 +97,7 @@ class YoutubeAPI:
     def list_channnelsection_playlists(self, channel_id):
         url = "/channelSections?part=contentDetails"
         url += "&channelId=" + channel_id
-        items= self._make_request(url)
+        items = self._make_request(url)
 
         for item in items:
             details = item.get("contentDetails")
@@ -107,7 +112,7 @@ class YoutubeAPI:
         url = "/playlists?part=snippet%2C+contentDetails"
         url += "&channelId=" + channel_id
 
-        items= self._make_request(url)
+        items = self._make_request(url)
 
         for item in items:
             yield item["id"]
@@ -116,7 +121,7 @@ class YoutubeAPI:
         url = "/videos?part=snippet,contentDetails,statistics"
         url += "&id=" + youtube_id
 
-        items= self._make_request(url)
+        items = self._make_request(url)
         items = list(items)
         if items:
             video_info = {
@@ -130,7 +135,7 @@ class YoutubeAPI:
     def list_playlist_videos(self, playlist_id):
         url = "/playlistItems?part=snippet"
         url += "&playlistId=" + playlist_id
-        items= self._make_request(url)
+        items = self._make_request(url)
 
         for item in items:
             yield item["snippet"]["resourceId"]["videoId"]
@@ -138,7 +143,7 @@ class YoutubeAPI:
     def get_related_videos(self, youtube_id):
         url = "/search?part=snippet&type=video"
         url += "&relatedToVideoId=" + youtube_id
-        items= self._make_request(url)
+        items = self._make_request(url)
         unique = dict()
         for result in items:
             unique[result["id"]["videoId"]] = result
