@@ -146,10 +146,13 @@ class YoutubeAPI:
     async def get_related_videos(self, youtube_id):
         url = "/search?part=snippet&type=video"
         url += "&relatedToVideoId=" + youtube_id
-        unique = dict()
-        async for result in self._request_many(url):
-            unique[result["id"]["videoId"]] = result
-        return unique.values()
+        result = dict()
+        async for video in self._request_many(url):
+            if video["id"]["videoId"] in result:
+                continue
+
+            result[video["id"]["videoId"]] = result
+        return result.values()
 
     async def get_channel_info(self, channel_id):
         url = "/channels?part=snippet%2CcontentDetails%2Cstatistics"

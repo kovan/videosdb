@@ -4,12 +4,12 @@ import os
 import shutil
 import tempfile
 from collections import namedtuple
-
+from django.db import transaction
 import youtube_transcript_api
 from aiostream import async_, stream
 from django.conf import settings
 from videosdb.models import PersistentVideoData, Playlist, Tag, Video
-from asgiref.sync import sync_to_async
+from asgiref.sync import sync_to_async, async_to_sync
 
 from .ipfs import IPFS
 from .youtube_api import YoutubeAPI, YoutubeDL, parse_youtube_id
@@ -34,11 +34,9 @@ class Downloader:
     def check_for_new_videos(self):
         logger.info("Checking for new videos...")
         try:
-            # order here is important because we don't want the quota
-            # to be exhausted while crawling the channel or the videos info
-            asyncio.run(self._sync_db_with_youtube())
-
-            # self._fill_related_videos()
+            with transaction.atomic():
+                asyncio.run(self._sync_db_with_youtube())
+                self._fill_related_videos()
             # this usually raises when YT API quota has been exeeced:
         except YoutubeAPI.YoutubeAPIError as e:
             logging.exception(e)
@@ -126,6 +124,11 @@ class Downloader:
     async def _sync_db_with_youtube(self):
 
         @sync_to_async
+        def _prepare_db():
+            for model in (Video, Playlist, Tag):
+                model.objects.all().delete()
+
+        @sync_to_async
         def _add_video_to_db(video):
             video, created = Video.objects.get_or_create(youtube_id=video["id"],
                                                          defaults={"yt_data": video})
@@ -195,16 +198,16 @@ class Downloader:
             asyncgenerator(all_uploads_playlist_id)
         )
 
+        await _prepare_db()
+
+        # this triggers everything:
         async for id in playlist_ids:
             asyncio.create_task(_process_playlist(id))
 
     def _fill_related_videos(self):
         # order randomly and use remaining daily quota to download a few related lists:
         for video in Video.objects.all().order_by("?"):
-            if video.related_videos.count() > 0:
-                continue
-
-            related_videos = self.yt_api.get_related_videos(
+            related_videos = async_to_sync(self.yt_api.get_related_videos)(
                 video.youtube_id)
 
             for video_dict in related_videos:
