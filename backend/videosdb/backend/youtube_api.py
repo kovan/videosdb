@@ -72,8 +72,7 @@ class YoutubeAPI:
                 final_url = url
             logger.debug("requesting: " + final_url)
             response = await self.http.get(
-                self.root_url + final_url)
-            logger.debug("response: " + str(response))
+                self.root_url + final_url, timeout=30.0)
             json_response = json.loads(response.text)
             if response.status_code != 200:
                 raise self.YoutubeAPIError(

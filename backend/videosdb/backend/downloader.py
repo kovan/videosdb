@@ -1,21 +1,14 @@
-import itertools
+import asyncio
 import logging
 import os
-import random
-import re
-import aiostream
 import shutil
 import tempfile
-import asyncio
 from collections import namedtuple
-from xml.dom import NotFoundErr
 
 import youtube_transcript_api
+from aiostream import async_, stream
 from django.conf import settings
-#
-#
-#
-from videosdb.models import Playlist, Video, PersistentVideoData, Tag
+from videosdb.models import PersistentVideoData, Playlist, Tag, Video
 
 from .ipfs import IPFS
 from .youtube_api import YoutubeAPI, YoutubeDL, parse_youtube_id
@@ -186,23 +179,21 @@ class Downloader:
 
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
-        playlists = aiostream.stream.merge(
+        playlist_ids = stream.merge(
             self.yt_api.list_channnelsection_playlist_ids(channel_id),
             self.yt_api.list_channel_playlist_ids(channel_id),
             asyncgenerator(all_uploads_playlist_id)
         )
+        tasks = []
+        async for id in playlist_ids:
+            task = asyncio.create_task(_process_playlist(id))
+            tasks.append(task)
+            videos = self.yt_api.list_playlist_videos(id)
+            async for video in videos:
+                task = asyncio.create_task(_process_video(video))
+                tasks.append(task)
 
-        result = {}
-        async for playlist_id in playlists:
-            playlist = await _process_playlist(playlist_id)
-            if not playlist:
-                continue
-            result[playlist["id"]] = playlist
-            async for video_id in self.yt_api.list_playlist_videos(playlist["id"]):
-                video = await _process_video(video_id)
-                if not video:
-                    continue
-                result[playlist["id"]][video["id"]] = video
+        asyncio.gather(*tasks)
 
     def _fill_related_videos(self):
         # order randomly and use remaining daily quota to download a few related lists:
