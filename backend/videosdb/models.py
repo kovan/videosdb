@@ -28,6 +28,8 @@ class Tag(models.Model):
 
 
 class PersistentVideoData(models.Model):
+    youtube_id = models.CharField(
+        max_length=16, unique=True, db_index=True)
     # data that does not come from Youtube
     transcript = models.TextField(null=True)
     transcript_available = models.BooleanField(null=True)
@@ -47,7 +49,8 @@ class Video(models.Model):
     related_videos = models.ManyToManyField(
         "self",  symmetrical=False)
 
-  #  data = models.OneToOneField(PersistentVideoData, null=True)
+    data = models.OneToOneField(
+        PersistentVideoData, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return str(self.youtube_id)

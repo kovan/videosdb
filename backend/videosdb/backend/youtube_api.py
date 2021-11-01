@@ -76,7 +76,7 @@ class YoutubeAPI:
             json_response = json.loads(response.text)
             if response.status_code != 200:
                 raise self.YoutubeAPIError(
-                    response.status, json_response)
+                    response.status_code, json_response)
 
             items = json_response["items"]
 

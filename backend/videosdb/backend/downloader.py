@@ -33,13 +33,17 @@ class Downloader:
 
     def check_for_new_videos(self):
         logger.info("Checking for new videos...")
-        try:
-            with transaction.atomic():
+        with transaction.atomic():
+            try:
                 asyncio.run(self._sync_db_with_youtube())
                 self._fill_related_videos()
-            # this usually raises when YT API quota has been exeeced:
-        except YoutubeAPI.YoutubeAPIError as e:
-            logging.exception(e)
+                self._reconnect_video_data()
+
+            except YoutubeAPI.YoutubeAPIError as e:
+                # this usually raises when YT API quota has been exeeced (HTTP code 403)
+                logging.exception(e)
+                if e.status != 403:
+                    raise e
 
         # self._fill_transcripts()  # this does not use YT API quota
         logger.info("Checking for new videos done.")
@@ -121,6 +125,15 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
+    def _reconnect_video_data(self):
+        for data in PersistentVideoData.objects.all():
+            try:
+                video = Video.objects.get(youtube_id=data.youtube_id)
+                video.data = data
+                video.save()
+            except Video.DoesNotExist:
+                pass
+
     async def _sync_db_with_youtube(self):
 
         @sync_to_async
@@ -129,12 +142,14 @@ class Downloader:
                 model.objects.all().delete()
 
         @sync_to_async
-        def _add_video_to_db(video):
+        def _add_video_to_db(video, playlist=None):
             video, created = Video.objects.get_or_create(youtube_id=video["id"],
                                                          defaults={"yt_data": video})
-
+            if playlist:
+                video.playlist_set.add(
+                    Playlist.objects.get(youtube_id=playlist["id"]))
             if created:
-                logger.info("New video found: " + str(video))
+                logger.debug("New video: " + str(video))
 
         @sync_to_async
         def _add_playlist_to_db(playlist):
@@ -144,9 +159,9 @@ class Downloader:
                 defaults={"yt_data": playlist})
 
             if created:
-                logger.info("New playlist found: " + str(playlist_obj))
+                logger.debug("New playlist: " + str(playlist_obj))
 
-        async def _process_video(video_id):
+        async def _process_video(video_id, playlist):
             video = await self.yt_api.get_video_info(video_id)
 
             if not video:
@@ -157,7 +172,7 @@ class Downloader:
             if video["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
                 return
 
-            await _add_video_to_db(video)
+            await _add_video_to_db(video, playlist)
 
             logger.debug("Processed video: " + video_id)
 
@@ -173,12 +188,15 @@ class Downloader:
 
             logger.info("Processing playlist: " + str(playlist["title"]))
 
+            playlist = playlist if playlist["title"] != "Uploads from " + \
+                playlist["channel_title"] else None
+
+            if playlist:
+                await _add_playlist_to_db(playlist)
+
             videos = self.yt_api.list_playlist_videos(playlist_id)
             async for video in videos:
-                asyncio.create_task(_process_video(video))
-
-            if playlist["title"] != "Uploads from " + playlist["channel_title"]:
-                await _add_playlist_to_db(playlist)
+                asyncio.create_task(_process_video(video, playlist))
 
         async def asyncgenerator(item):
             yield item
