@@ -134,11 +134,11 @@ class Downloader:
         async def _process_video(video_id):
             yt_data = await self.yt_api.get_video_info(video_id)
 
+            if not yt_data:
+                return
             # some playlists include videos from other channels
             # for now exclude those videos
             # in the future maybe exclude whole playlist
-            if not yt_data:
-                return
             if yt_data["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
                 return
 
@@ -174,9 +174,7 @@ class Downloader:
 
             async for video_id in self.yt_api.list_playlist_videos(
                     playlist["id"]):
-                await _process_video(video_id)
-
-            return playlist
+                yield video_id
 
         channel_id = settings.YOUTUBE_CHANNEL["id"]
         channel_info = await self.yt_api.get_channel_info(
@@ -191,9 +189,12 @@ class Downloader:
             self.yt_api.list_channnelsection_playlists(channel_id),
             self.yt_api.list_channel_playlists(channel_id)
         )
-
+        videos = {}
         async for playlist_id in playlists:
-            await _process_playlist(playlist_id)
+            async for video_id in _process_playlist(playlist_id):
+                video = await _process_video(video_id)
+                if video:
+                    videos[video["id"]] = video
 
         await _process_playlist(all_uploads_playlist_id)
 
