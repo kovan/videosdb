@@ -18,17 +18,16 @@ class Tag(models.Model):
 
     def __init__(self, name):
         self.name = name
-        self.slug = uuslug(self.yt_data.title, instance=self)
 
     def __str__(self):
         return self.name
 
-    # def save(self, *args, **kwargs):
-    #     if not self.slug and self.name:
-    #         self.slug = uuslug(self.name, instance=self)
+    def save(self, *args, **kwargs):
+        if not self.slug and self.name:
+            self.slug = uuslug(self.name, instance=self)
 
-    #     super(Tag, self).save(*args, **kwargs)
-    #     logger.debug("SAVED tag: " + str(self))
+        super(Tag, self).save(*args, **kwargs)
+        logger.debug("SAVED tag: " + str(self))
 
 
 class PersistentVideoData(models.Model):
@@ -55,8 +54,7 @@ class Video(models.Model):
 
     def __init__(self, yt_data):
         self.yt_data = yt_data
-        self.youtube_id = yt_data.id
-        self.slug = uuslug(self.yt_data.title, instance=self)
+        self.youtube_id = yt_data["id"]
 
     def __str__(self):
         return str(self.youtube_id)
@@ -68,11 +66,11 @@ class Video(models.Model):
             if created:
                 logger.debug("Discovered tag: " + str(self))
 
-    # def save(self, *args, **kwargs):
-    #     if not self.slug and self.yt_data.title:
-    #         self.slug = uuslug(self.yt_data.title, instance=self)
-    #     super(Video, self).save(*args, **kwargs)
-    #     logger.debug("Saved video: " + str(self))
+    def save(self, *args, **kwargs):
+        if not self.slug and self.yt_data["title"]:
+            self.slug = uuslug(self.yt_data["title"], instance=self)
+        super(Video, self).save(*args, **kwargs)
+        logger.debug("Saved video: " + str(self))
 
     @property
     def description_trimmed(self):
@@ -106,14 +104,13 @@ class Playlist(models.Model):
 
     def __init__(self, yt_data):
         self.yt_data = yt_data
-        self.youtube_id = yt_data.id
-        self.slug = uuslug(self.yt_data.title, instance=self)
+        self.youtube_id = yt_data["id"]
 
     def __str__(self):
         return self.youtube_id
 
-    # def save(self, *args, **kwargs):
-    #     if not self.slug and self.yt_data.title:
-    #         self.slug = uuslug(self.yt_data.title, instance=self)
-    #     super(Playlist, self).save(*args, **kwargs)
-    #     logger.debug("SAVED Playlist: " + str(self))
+    def save(self, *args, **kwargs):
+        if not self.slug and self.yt_data["title"]:
+            self.slug = uuslug(self.yt_data["title"], instance=self)
+        super(Playlist, self).save(*args, **kwargs)
+        logger.debug("SAVED Playlist: " + str(self))

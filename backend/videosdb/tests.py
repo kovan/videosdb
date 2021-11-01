@@ -41,36 +41,36 @@ logger = logging.getLogger(__name__)
 # from httplib2 code:
 
 
-def httplib2_decode_cache_entry(cache_entry):
-    info, content = cache_entry.split(b"\r\n\r\n", 1)
-    info = email.message_from_bytes(info)
-    for k, v in info.items():
-        if v.startswith("=?") and v.endswith("?="):
-            info.replace_header(
-                k, str(*email.header.decode_header(v)[0])
-            )
-    return info
+# def httplib2_decode_cache_entry(cache_entry):
+#     info, content = cache_entry.split(b"\r\n\r\n", 1)
+#     info = email.message_from_bytes(info)
+#     for k, v in info.items():
+#         if v.startswith("=?") and v.endswith("?="):
+#             info.replace_header(
+#                 k, str(*email.header.decode_header(v)[0])
+#             )
+#     return info
 
 
-def fake_request(dummy, url):
-    cache = httplib2.FileCache("httplib2_cache")
-    cached_raw = cache.get(url)
-    response = Mock()
-    if not cached_raw:
-        response.status = 404
-        return (response, "[]")
-    info = httplib2_decode_cache_entry(cached_raw)
-    return (200, info)
+# def fake_request(dummy, url):
+#     cache = httplib2.FileCache("httplib2_cache")
+#     cached_raw = cache.get(url)
+#     response = Mock()
+#     if not cached_raw:
+#         response.status = 404
+#         return (response, "[]")
+#     info = httplib2_decode_cache_entry(cached_raw)
+#     return (200, info)
 
 
 class DownloaderTest(TestCase):
-    def setUp(self):
-        settings.DEBUG = 1
-        self.yt_api = create_autospec(httplib2.Http, spec_set=True)
+    # def setUp(self):
+    #settings.DEBUG = 1
 
-    @patch.object(httplib2.Http, "request", new=fake_request)
+    # @patch.object(httplib2.Http, "request", new=fake_request)
     def test_check_for_new_videos(self):
         dl = Downloader()
+        dl.yt_api.yt_key = settings.YOUTUBE_KEY_TESTING
         dl.check_for_new_videos()
         self.assertTrue(Video.objects.all().count() > 1)
         self.assertTrue(Playlist.objects.all().count() > 1)

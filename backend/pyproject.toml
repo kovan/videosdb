@@ -26,6 +26,7 @@ psycopg2 = "^2.9.1"
 django-environ = "^0.7.0"
 google-cloud-datastore = "^2.3.0"
 httpx-caching = {git = "https://github.com/kovan/httpx-caching.git"}
+aiostream = "^0.4.3"
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.4"

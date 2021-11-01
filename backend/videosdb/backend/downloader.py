@@ -137,6 +137,8 @@ class Downloader:
             # some playlists include videos from other channels
             # for now exclude those videos
             # in the future maybe exclude whole playlist
+            if not yt_data:
+                return
             if yt_data["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
                 return
 
@@ -185,15 +187,15 @@ class Downloader:
 
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
+        playlists = aiostream.stream.merge(
+            self.yt_api.list_channnelsection_playlists(channel_id),
+            self.yt_api.list_channel_playlists(channel_id)
+        )
+
+        async for playlist_id in playlists:
+            await _process_playlist(playlist_id)
+
         await _process_playlist(all_uploads_playlist_id)
-
-        async for playlist_id in self.yt_api.list_channnelsection_playlists(
-                channel_id):
-            await _process_playlist(playlist_id)
-
-        async for playlist_id in self.yt_api.list_channel_playlists(
-                channel_id):
-            await _process_playlist(playlist_id)
 
     def _fill_related_videos(self):
         # order randomly and use remaining daily quota to download a few related lists:
