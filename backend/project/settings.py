@@ -27,7 +27,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '4!_fouo%ikguf72o=em+(v0m)pdo7^8ae*vw$xs9&+l-dsa#*u'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if "VIDEOSDB_DEBUG" in os.environ else False
+
 
 ALLOWED_HOSTS = ["*"]
 
@@ -227,7 +227,7 @@ LOGGING = {
         },
         '': {
             'handlers': ['console'],
-            'level': os.environ.get("LOGLEVEL", "WARNING"),
+            'level': "WARNING",
             'propagate': True
         }
     },

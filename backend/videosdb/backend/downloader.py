@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import re
+import aiostream
 import shutil
 import tempfile
 import asyncio
@@ -14,7 +15,7 @@ from django.conf import settings
 #
 #
 #
-#from videosdb.models import Playlist, Video
+from videosdb.models import Playlist, Video, PersistentVideoData, Tag
 
 from .ipfs import IPFS
 from .youtube_api import YoutubeAPI, YoutubeDL, parse_youtube_id
@@ -41,8 +42,7 @@ class Downloader:
         try:
             # order here is important because we don't want the quota
             # to be exhausted while crawling the channel or the videos info
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(self._sync_db_with_youtube())
+            asyncio.run(self._sync_db_with_youtube())
 
             # self._fill_related_videos()
             # this usually raises when YT API quota has been exeeced:
@@ -137,16 +137,18 @@ class Downloader:
             # some playlists include videos from other channels
             # for now exclude those videos
             # in the future maybe exclude whole playlist
-            if yt_data["channel_id"] != settings.YOUTUBE_CHANNEL["id"]:
+            if yt_data["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
                 return
 
-            video, created = Video.objects.get_or_create(youtube_id=video_id,
-                                                         defaults={"yt_data": yt_data})
+            # video, created = Video.objects.get_or_create(youtube_id=video_id,
+            #                                              defaults={"yt_data": yt_data})
 
-            if created:
-                logger.info("New video found: " + str(video))
+            # if created:
+            #     logger.info("New video found: " + str(video))
 
-            logger.debug("Processed video: " + str(video))
+            logger.debug("Processed video: " + video_id)
+
+            return yt_data
 
         async def _process_playlist(playlist_id):
 
@@ -160,22 +162,19 @@ class Downloader:
 
             logger.info("Processing playlist: " + str(playlist["title"]))
 
-            video_ids = await self.yt_api.list_playlist_videos(
-                playlist["id"])
+            # if playlist["title"] != "Uploads from " + playlist["channel_title"]:
+            #     playlist_obj, created = Playlist.objects.get_or_create(
+            #         yt_playlist_id=playlist["id"],
+            #         defaults={"yt_data": playlist})
 
-            playlist_obj = None
-            if playlist["title"] != "Uploads from " + playlist["channel_title"]:
-                playlist_obj, created = Playlist.objects.get_or_create(
-                    yt_playlist_id=playlist["id"],
-                    defaults={"yt_data": playlist})
+            #     if created:
+            #         logger.info("New playlist found: " + str(playlist_obj))
 
-                if created:
-                    logger.info("New playlist found: " + str(playlist_obj))
+            async for video_id in self.yt_api.list_playlist_videos(
+                    playlist["id"]):
+                await _process_video(video_id)
 
-            for video_id in video_ids:
-                video_obj = _process_video(video_id)
-                if playlist_obj and video_obj:
-                    playlist_obj.videos.add(video_obj)
+            return playlist
 
         channel_id = settings.YOUTUBE_CHANNEL["id"]
         channel_info = await self.yt_api.get_channel_info(
@@ -186,15 +185,15 @@ class Downloader:
 
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
-        _process_playlist(all_uploads_playlist_id)
+        await _process_playlist(all_uploads_playlist_id)
 
         async for playlist_id in self.yt_api.list_channnelsection_playlists(
                 channel_id):
-            _process_playlist(playlist_id)
+            await _process_playlist(playlist_id)
 
         async for playlist_id in self.yt_api.list_channel_playlists(
                 channel_id):
-            _process_playlist(playlist_id)
+            await _process_playlist(playlist_id)
 
     def _fill_related_videos(self):
         # order randomly and use remaining daily quota to download a few related lists:

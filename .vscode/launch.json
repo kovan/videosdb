@@ -96,10 +96,11 @@
       "program": "manage.py",
       "django": true,
       "env": {
-        "DEBUG": "1",
-        "LOGLEVEL": "INFO",
+        //"DEBUG": "1",
+        "LOGLEVEL": "DEBUG",
         "YOUTUBE_API_NO_CACHE": "1",
-        "YOUTUBE_API_URL": "http://localhost:2000/youtube/v3"
+        "YOUTUBE_API_URL": "http://localhost:2000/youtube/v3",
+        "PYTHONDEVMODE": "1"
       },
       "args": [
         "test",
@@ -150,7 +151,7 @@
       ],
       "env": {
         "LOGLEVEL": "DEBUG",
-        "VIDEOSDB_DEBUG": "1"
+        "DEBUG": "1"
       },
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/backend",
@@ -167,7 +168,7 @@
       ],
       "env": {
         "LOGLEVEL": "DEBUG",
-        "VIDEOSDB_DEBUG": "1"
+        "DEBUG": "1"
       },
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/backend",

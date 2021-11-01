@@ -129,6 +129,9 @@ class YoutubeAPI:
         if not item:
             return None
         return {
+            "id": item["id"],
+            "kind": item["kind"],
+            "etag": item["etag"],
             **item["snippet"],
             **item["contentDetails"],
             **item["statistics"],
