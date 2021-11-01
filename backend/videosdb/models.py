@@ -16,9 +16,6 @@ class Tag(models.Model):
     slug = models.SlugField(unique=True, max_length=256,
                             null=True, db_index=True)
 
-    def __init__(self, name):
-        self.name = name
-
     def __str__(self):
         return self.name
 
@@ -51,10 +48,6 @@ class Video(models.Model):
         "self",  symmetrical=False)
 
   #  data = models.OneToOneField(PersistentVideoData, null=True)
-
-    def __init__(self, yt_data):
-        self.yt_data = yt_data
-        self.youtube_id = yt_data["id"]
 
     def __str__(self):
         return str(self.youtube_id)
@@ -101,10 +94,6 @@ class Playlist(models.Model):
                             null=True, db_index=True)
 
     videos = models.ManyToManyField(Video)
-
-    def __init__(self, yt_data):
-        self.yt_data = yt_data
-        self.youtube_id = yt_data["id"]
 
     def __str__(self):
         return self.youtube_id

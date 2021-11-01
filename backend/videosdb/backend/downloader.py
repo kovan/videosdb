@@ -9,6 +9,7 @@ import youtube_transcript_api
 from aiostream import async_, stream
 from django.conf import settings
 from videosdb.models import PersistentVideoData, Playlist, Tag, Video
+from asgiref.sync import sync_to_async
 
 from .ipfs import IPFS
 from .youtube_api import YoutubeAPI, YoutubeDL, parse_youtube_id
@@ -124,26 +125,37 @@ class Downloader:
 
     async def _sync_db_with_youtube(self):
 
-        async def _process_video(video_id):
-            yt_data = await self.yt_api.get_video_info(video_id)
+        @sync_to_async
+        def _add_video_to_db(video):
+            video, created = Video.objects.get_or_create(youtube_id=video["id"],
+                                                         defaults={"yt_data": video})
 
-            if not yt_data:
+            if created:
+                logger.info("New video found: " + str(video))
+
+        @sync_to_async
+        def _add_playlist_to_db(playlist):
+
+            playlist_obj, created = Playlist.objects.get_or_create(
+                youtube_id=playlist["id"],
+                defaults={"yt_data": playlist})
+
+            if created:
+                logger.info("New playlist found: " + str(playlist_obj))
+
+        async def _process_video(video_id):
+            video = await self.yt_api.get_video_info(video_id)
+
+            if not video:
                 return
             # some playlists include videos from other channels
             # for now exclude those videos
             # in the future maybe exclude whole playlist
-            if yt_data["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
+            if video["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
                 return
-
-            # video, created = Video.objects.get_or_create(youtube_id=video_id,
-            #                                              defaults={"yt_data": yt_data})
-
-            # if created:
-            #     logger.info("New video found: " + str(video))
+            await _add_video_to_db(video)
 
             logger.debug("Processed video: " + video_id)
-
-            return yt_data
 
         async def _process_playlist(playlist_id):
 
@@ -157,15 +169,12 @@ class Downloader:
 
             logger.info("Processing playlist: " + str(playlist["title"]))
 
-            # if playlist["title"] != "Uploads from " + playlist["channel_title"]:
-            #     playlist_obj, created = Playlist.objects.get_or_create(
-            #         yt_playlist_id=playlist["id"],
-            #         defaults={"yt_data": playlist})
+            videos = self.yt_api.list_playlist_videos(playlist_id)
+            async for video in videos:
+                asyncio.create_task(_process_video(video))
 
-            #     if created:
-            #         logger.info("New playlist found: " + str(playlist_obj))
-
-            return playlist
+            if playlist["title"] != "Uploads from " + playlist["channel_title"]:
+                await _add_playlist_to_db(playlist)
 
         async def asyncgenerator(item):
             yield item
@@ -184,16 +193,9 @@ class Downloader:
             self.yt_api.list_channel_playlist_ids(channel_id),
             asyncgenerator(all_uploads_playlist_id)
         )
-        tasks = []
+
         async for id in playlist_ids:
             task = asyncio.create_task(_process_playlist(id))
-            tasks.append(task)
-            videos = self.yt_api.list_playlist_videos(id)
-            async for video in videos:
-                task = asyncio.create_task(_process_video(video))
-                tasks.append(task)
-
-        asyncio.gather(*tasks)
 
     def _fill_related_videos(self):
         # order randomly and use remaining daily quota to download a few related lists:
