@@ -153,6 +153,7 @@ class Downloader:
             # in the future maybe exclude whole playlist
             if video["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
                 return
+
             await _add_video_to_db(video)
 
             logger.debug("Processed video: " + video_id)
@@ -195,7 +196,7 @@ class Downloader:
         )
 
         async for id in playlist_ids:
-            task = asyncio.create_task(_process_playlist(id))
+            asyncio.create_task(_process_playlist(id))
 
     def _fill_related_videos(self):
         # order randomly and use remaining daily quota to download a few related lists:
