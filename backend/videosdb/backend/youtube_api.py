@@ -101,7 +101,7 @@ class YoutubeAPI:
         }
         return playlist
 
-    async def list_channnelsection_playlists(self, channel_id):
+    async def list_channnelsection_playlist_ids(self, channel_id):
         url = "/channelSections?part=contentDetails"
         url += "&channelId=" + channel_id
 
@@ -114,7 +114,7 @@ class YoutubeAPI:
             for id in details["playlists"]:
                 yield id
 
-    async def list_channel_playlists(self, channel_id):
+    async def list_channel_playlist_ids(self, channel_id):
         url = "/playlists?part=snippet%2C+contentDetails"
         url += "&channelId=" + channel_id
 

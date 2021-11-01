@@ -172,9 +172,10 @@ class Downloader:
             #     if created:
             #         logger.info("New playlist found: " + str(playlist_obj))
 
-            async for video_id in self.yt_api.list_playlist_videos(
-                    playlist["id"]):
-                yield video_id
+            return playlist
+
+        async def asyncgenerator(item):
+            yield item
 
         channel_id = settings.YOUTUBE_CHANNEL["id"]
         channel_info = await self.yt_api.get_channel_info(
@@ -186,17 +187,22 @@ class Downloader:
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
         playlists = aiostream.stream.merge(
-            self.yt_api.list_channnelsection_playlists(channel_id),
-            self.yt_api.list_channel_playlists(channel_id)
+            self.yt_api.list_channnelsection_playlist_ids(channel_id),
+            self.yt_api.list_channel_playlist_ids(channel_id),
+            asyncgenerator(all_uploads_playlist_id)
         )
-        videos = {}
-        async for playlist_id in playlists:
-            async for video_id in _process_playlist(playlist_id):
-                video = await _process_video(video_id)
-                if video:
-                    videos[video["id"]] = video
 
-        await _process_playlist(all_uploads_playlist_id)
+        result = {}
+        async for playlist_id in playlists:
+            playlist = await _process_playlist(playlist_id)
+            if not playlist:
+                continue
+            result[playlist["id"]] = playlist
+            async for video_id in self.yt_api.list_playlist_videos(playlist["id"]):
+                video = await _process_video(video_id)
+                if not video:
+                    continue
+                result[playlist["id"]][video["id"]] = video
 
     def _fill_related_videos(self):
         # order randomly and use remaining daily quota to download a few related lists:
