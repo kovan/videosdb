@@ -144,6 +144,7 @@ class YoutubeAPI:
             yield item["snippet"]["resourceId"]["videoId"]
 
     async def get_related_videos(self, youtube_id):
+        logging.debug("getting related videos")
         url = "/search?part=snippet&type=video"
         url += "&relatedToVideoId=" + youtube_id
         result = dict()
@@ -151,7 +152,7 @@ class YoutubeAPI:
             if video["id"]["videoId"] in result:
                 continue
 
-            result[video["id"]["videoId"]] = result
+            result[video["id"]["videoId"]] = video
         return result.values()
 
     async def get_channel_info(self, channel_id):
