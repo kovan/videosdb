@@ -29,7 +29,7 @@ class Tag(models.Model):
 
 class PersistentVideoData(models.Model):
     youtube_id = models.CharField(
-        max_length=16, unique=True, db_index=True)
+        max_length=16, unique=True)
     # data that does not come from Youtube
     transcript = models.TextField(null=True)
     transcript_available = models.BooleanField(null=True)
@@ -41,7 +41,7 @@ class Video(models.Model):
     # Here goes data that comes from Youtube only
 
     youtube_id = models.CharField(
-        max_length=16, unique=True, db_index=True)
+        max_length=16, unique=True)
     yt_data = models.JSONField()
     slug = models.SlugField(unique=True, max_length=4096,
                             null=True, db_index=True)
