@@ -24,7 +24,6 @@ class Downloader:
 
     def __init__(self):
         logging.getLogger("asyncio").setLevel(logging.WARNING)
-        self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
 
     def download_one(self, youtube_id):
         self.enqueue_videos([youtube_id])
@@ -37,9 +36,9 @@ class Downloader:
         logger.info("Checking for new videos...")
         with transaction.atomic():
             try:
-                tasks = asyncio.run(self._sync_db_with_youtube())
+                async_to_sync(self._sync_db_with_youtube)()
                 self._reconnect_video_data()
-                asyncio.run(self._fill_related_videos())
+                self._fill_related_videos()
 
             except YoutubeAPI.YoutubeAPIError as e:
                 # this usually raises when YT API quota has been exeeced (HTTP code 403)
@@ -146,15 +145,16 @@ class Downloader:
 
         @sync_to_async
         def _add_video_to_db(video, playlist=None):
-            video, created = Video.objects.get_or_create(youtube_id=video["id"],
-                                                         defaults={"yt_data": video})
+            video_obj, created = Video.objects.get_or_create(youtube_id=video["id"],
+                                                             defaults={"yt_data": video})
             if not created:
                 return
 
             if playlist:
-                video.playlist_set.add(
+                video_obj.playlist_set.add(
                     Playlist.objects.get(youtube_id=playlist["id"]))
-            logger.debug("New video: " + str(video))
+            logger.debug("New video: " + str(video_obj))
+            return video_obj
 
         @sync_to_async
         def _add_playlist_to_db(playlist):
@@ -167,9 +167,10 @@ class Downloader:
                 return
 
             logger.debug("New playlist: " + str(playlist_obj))
+            return playlist_obj
 
         async def _process_video(video_id, playlist):
-            video = await self.yt_api.get_video_info(video_id)
+            video = await yt_api.get_video_info(video_id)
 
             if not video:
                 return
@@ -185,7 +186,7 @@ class Downloader:
 
         async def _process_playlist(playlist_id):
 
-            playlist = await self.yt_api.get_playlist_info(playlist_id)
+            playlist = await yt_api.get_playlist_info(playlist_id)
 
             if playlist["channel_title"] != settings.YOUTUBE_CHANNEL["name"]:
                 return
@@ -201,7 +202,7 @@ class Downloader:
             if playlist:
                 await _add_playlist_to_db(playlist)
 
-            videos = self.yt_api.list_playlist_videos(playlist_id)
+            videos = yt_api.list_playlist_videos(playlist_id)
             async for video in videos:
                 tasks.append(asyncio.create_task(
                     _process_video(video, playlist)))
@@ -209,8 +210,13 @@ class Downloader:
         async def asyncgenerator(item):
             yield item
 
+        yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
+        await yt_api.init()
+
+        await _prepare_db()
+
         channel_id = settings.YOUTUBE_CHANNEL["id"]
-        channel_info = await self.yt_api.get_channel_info(
+        channel_info = await yt_api.get_channel_info(
             channel_id)
 
         logger.info("Processing channel: " +
@@ -219,39 +225,41 @@ class Downloader:
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
         playlist_ids = stream.merge(
-            self.yt_api.list_channnelsection_playlist_ids(channel_id),
-            self.yt_api.list_channel_playlist_ids(channel_id),
+            yt_api.list_channnelsection_playlist_ids(channel_id),
+            yt_api.list_channel_playlist_ids(channel_id),
             asyncgenerator(all_uploads_playlist_id)
         )
-
-        await _prepare_db()
 
         tasks = []
         async with playlist_ids.stream() as streamer:
             async for id in streamer:
                 tasks.append(asyncio.create_task(_process_playlist(id)))
 
-        await asyncio.gather(*tasks)
+        # start all:
+        results = await asyncio.gather(*tasks)
+        return results
 
-    async def _fill_related_videos(self):
-        # order randomly and use remaining daily quota to download a few related lists:
-        for video in sync_to_async(Video.objects.all)():
-            related_videos = await self.yt_api.get_related_videos(video.youtube_id)
+    def _fill_related_videos(self):
+        # use remaining YT API daily quota to download a few related video lists:
+        logger.info("Filling related videos info.")
+        for video in Video.objects.all().order_by("-yt_data__publishedAt"):
+            related_videos = async_to_sync(
+                self.yt_api.get_related_videos)(video.youtube_id)
 
             for video_dict in related_videos:
 
                 # for now skip videos from other channels:
-                if "snippet" in video_dict and video_dict["snippet"]["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
+                if "snippet" in video_dict and video_dict["snippet"]["channelId"] \
+                        != settings.YOUTUBE_CHANNEL["id"]:
                     continue
 
                 try:
                     id = video_dict["id"]["videoId"]
-                    related_video = sync_to_async(
-                        Video.objects.get)(youtube_id=id)
+                    related_video = Video.objects.get(youtube_id=id)
                 except Video.DoesNotExist:
                     continue
 
-                sync_to_async(video.related_videos.add)(related_video)
+                video.related_videos.add(related_video)
                 logger.info("Added new related video: %s to video %s" %
                             (related_video, video))
 

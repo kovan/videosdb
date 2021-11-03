@@ -64,15 +64,14 @@ logger = logging.getLogger(__name__)
 
 
 class DownloaderTest(TestCase):
-    # def setUp(self):
-    #settings.DEBUG = 1
+    def setUp(self):
+        os.environ.setdefault("YOUTUBE_API_KEY", settings.YOUTUBE_KEY_TESTING)
 
     # @patch.object(httplib2.Http, "request", new=fake_request)
     def test_check_for_new_videos(self):
         v = Video(youtube_id="CR5HtTsUl5E", yt_data={"title": "hi"})
         v.save()
         dl = Downloader()
-        dl.yt_api.yt_key = settings.YOUTUBE_KEY_TESTING
         dl.check_for_new_videos()
         self.assertTrue(Video.objects.all().count() > 1)
         self.assertTrue(Playlist.objects.all().count() > 1)

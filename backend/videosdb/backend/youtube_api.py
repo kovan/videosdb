@@ -6,9 +6,9 @@ import tempfile
 import logging
 import json
 import youtube_transcript_api
-
+import aiohttp
 import httpx
-from httpx_caching import CachingClient
+#from httpx_caching import CachingClient
 
 from executor import execute
 import re
@@ -46,16 +46,14 @@ class YoutubeAPI:
             return "%s %s" % (self.status, json.dumps(self.json, indent=4, sort_keys=True))
 
     def __init__(self, yt_key):
-        self.yt_key = yt_key
-        self.http = httpx.AsyncClient()
+        self.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
+        # if not "YOUTUBE_API_NO_CACHE" in os.environ:
+        #     self.http = CachingClient(self.http)
+        self.root_url = os.environ.get(
+            "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
 
-        if not "YOUTUBE_API_NO_CACHE" in os.environ:
-            self.http = CachingClient(self.http)
-
-        if "YOUTUBE_API_URL" in os.environ:
-            self.root_url = os.environ["YOUTUBE_API_URL"]
-        else:
-            self.root_url = "https://www.googleapis.com/youtube/v3"
+    async def init(self):
+        self.http = aiohttp.ClientSession()  # httpx.AsyncClient()
 
     async def _request_one(self, url):
         async for item in self._request_many(url):
@@ -71,12 +69,12 @@ class YoutubeAPI:
             else:
                 final_url = url
             logger.debug("requesting: " + final_url)
-            response = await self.http.get(
-                self.root_url + final_url, timeout=10.0)
-            json_response = json.loads(response.text)
-            if response.status_code != 200:
-                raise self.YoutubeAPIError(
-                    response.status_code, json_response)
+            async with self.http.get(
+                    self.root_url + final_url) as response:
+                json_response = await response.json()  # json.loads(response.text)
+            # if response.status_code != 200:
+            #     raise self.YoutubeAPIError(
+            #         response.status_code, json_response)
 
             items = json_response["items"]
 

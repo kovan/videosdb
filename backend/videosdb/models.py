@@ -38,6 +38,7 @@ class PersistentVideoData(models.Model):
 
 
 class Video(models.Model):
+
     # Here goes data that comes from Youtube only
 
     youtube_id = models.CharField(
@@ -51,6 +52,10 @@ class Video(models.Model):
 
     data = models.OneToOneField(
         PersistentVideoData, null=True, on_delete=models.SET_NULL)
+
+    @classmethod
+    def create(cls, yt_data):
+        return cls(youtube_id=yt_data["id"], yt_data=yt_data)
 
     def __str__(self):
         return str(self.youtube_id)
@@ -97,6 +102,10 @@ class Playlist(models.Model):
                             null=True, db_index=True)
 
     videos = models.ManyToManyField(Video)
+
+    @classmethod
+    def create(cls, yt_data):
+        return cls(youtube_id=yt_data["id"], yt_data=yt_data)
 
     def __str__(self):
         return self.youtube_id
