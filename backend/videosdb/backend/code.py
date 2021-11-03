@@ -1,9 +1,8 @@
-import logging
-import sys
 import os
-from django.conf import settings
+
+import videosdb.backend.ipfs
+
 from .downloader import Downloader
-from .ipfs import IPFS
 
 
 def dbg():
@@ -37,9 +36,9 @@ def handle(*args, **options):
         downloader.download_one(options["dl_video_id"])
 
     if options["download_and_register_in_ipfs"]:
-        downloader = Downloader()
-        downloader.download_and_register_in_ipfs(options["overwrite_hashes"])
+        videosdb.backend.ipfs.download_and_register_in_ipfs(
+            options["overwrite_hashes"])
 
     if options["update_dnslink"]:
-        ipfs = IPFS()
+        ipfs = videosdb.backend.ipfs.IPFS()
         ipfs.update_dnslink(force=True)

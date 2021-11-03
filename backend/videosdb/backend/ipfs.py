@@ -1,9 +1,14 @@
 import os
 import logging
+import shutil
 import sys
+import tempfile
 import ipfshttpclient
 from django.conf import settings
 import socket
+
+from videosdb.backend.youtube_api import YoutubeDL, parse_youtube_id
+from videosdb.models import Video
 
 
 class DNS:
@@ -90,3 +95,78 @@ class IPFS:
         dns.update_dnslink("videos." +
                            settings.VIDEOSDB_DOMAIN, root_hash)
         self.dnslink_update_pending = False
+
+
+def download_and_register_in_ipfs(overwrite_hashes=False):
+    yt_dl = YoutubeDL()
+    videos_dir = os.path.abspath(settings.VIDEO_FILES_DIR)
+    if not os.path.exists(videos_dir):
+        os.mkdir(videos_dir)
+    ipfs = IPFS()
+
+    files = ipfs.api.files.ls("/videos", opts=dict(long=True))
+    files_in_ipfs = {}
+    if files["Entries"]:
+        for file in files["Entries"]:
+            if file["Name"].lower().endswith(".mp4"):
+                youtube_id = parse_youtube_id(file["Name"])
+                if not youtube_id or youtube_id in files_in_ipfs:
+                    raise Exception()
+                files_in_ipfs[youtube_id] = file
+
+    files_in_disk = {}
+    for file in os.listdir(videos_dir):
+        youtube_id = parse_youtube_id(file)
+        if file.endswith(".part"):
+            continue
+        if not youtube_id or youtube_id in files_in_disk:
+            raise Exception()
+        files_in_disk[youtube_id] = file
+
+    # 'Entries': [
+    #     {'Size': 0, 'Hash': '', 'Name': 'Software', 'Type': 0}
+    # ]
+    videos = Video.objects.all().order_by("?")
+    for video in videos:
+
+        if not video.youtube_id in files_in_disk:
+            logging.debug("Downloading " + video.youtube_id)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.chdir(tmpdir)
+                try:
+                    video.filename = yt_dl.download_video(
+                        video.youtube_id)
+                except YoutubeDL.UnavailableError as e:
+                    continue
+                video.save()
+                try:
+                    shutil.move(video.filename, videos_dir)
+                except OSError as e:
+                    logging.exception(e)
+                    continue
+        file = files_in_disk.get(video.youtube_id)
+        if file and file != video.filename:
+            video.filename = file
+
+        if video.youtube_id in files_in_ipfs:
+            file = files_in_ipfs[video.youtube_id]
+
+            logging.debug("Already in IPFS:  " + str(file))
+            if not video.filename:
+                video.filename = file["Name"]
+            if not video.ipfs_hash or overwrite_hashes:
+                logging.debug("writing hash")
+                video.ipfs_hash = file["Hash"]
+            video.save()
+            continue
+
+        logging.debug("Adding to IPFS: ID:%s, title: %s, Filename: %s, Hash: %s" %
+                      (video.youtube_id, video.title, video.filename, video.ipfs_hash))
+        video.ipfs_hash = ipfs.add_file(videos_dir + "/" +
+                                        video.filename,
+                                        wrap_with_directory=True,
+                                        nocopy=True)
+
+        video.save()
+
+    ipfs.update_dnslink()
