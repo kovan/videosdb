@@ -7,7 +7,7 @@ import logging
 import json
 import youtube_transcript_api
 
-from httpx import AsyncClient
+import httpx
 from httpx_caching import CachingClient
 
 from executor import execute
@@ -47,7 +47,7 @@ class YoutubeAPI:
 
     def __init__(self, yt_key):
         self.yt_key = yt_key
-        self.http = AsyncClient()
+        self.http = httpx.AsyncClient()
 
         if not "YOUTUBE_API_NO_CACHE" in os.environ:
             self.http = CachingClient(self.http)
@@ -72,7 +72,7 @@ class YoutubeAPI:
                 final_url = url
             logger.debug("requesting: " + final_url)
             response = await self.http.get(
-                self.root_url + final_url, timeout=600.0)
+                self.root_url + final_url, timeout=10.0)
             json_response = json.loads(response.text)
             if response.status_code != 200:
                 raise self.YoutubeAPIError(
@@ -144,7 +144,7 @@ class YoutubeAPI:
             yield item["snippet"]["resourceId"]["videoId"]
 
     async def get_related_videos(self, youtube_id):
-        logging.debug("getting related videos")
+        logging.info("getting related videos")
         url = "/search?part=snippet&type=video"
         url += "&relatedToVideoId=" + youtube_id
         result = dict()

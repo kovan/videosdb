@@ -94,13 +94,17 @@
       "type": "python",
       "request": "launch",
       "program": "manage.py",
+      "pythonArgs": [
+        "-W",
+        "default"
+      ],
       "django": true,
       "env": {
-        //"DEBUG": "1",
+        "DEBUG": "1",
         "LOGLEVEL": "INFO",
         "YOUTUBE_API_NO_CACHE": "1",
         "YOUTUBE_API_URL": "http://127.0.0.1:2000/youtube/v3",
-        //"PYTHONDEVMODE": "1"
+        "PYTHONDEVMODE": "1"
       },
       "args": [
         "test",
