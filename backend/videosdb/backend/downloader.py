@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import sys
 import shutil
 import tempfile
 from collections import namedtuple
@@ -22,6 +23,7 @@ class Downloader:
     # PUBLIC: -------------------------------------------------------------
 
     def __init__(self):
+        logging.getLogger("asyncio").setLevel(logging.WARNING)
         self.yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
 
     def download_one(self, youtube_id):
@@ -35,9 +37,9 @@ class Downloader:
         logger.info("Checking for new videos...")
         with transaction.atomic():
             try:
-                asyncio.run(self._sync_db_with_youtube())
+                tasks = asyncio.run(self._sync_db_with_youtube())
                 self._reconnect_video_data()
-                self._fill_related_videos()
+                asyncio.run(self._fill_related_videos())
 
             except YoutubeAPI.YoutubeAPIError as e:
                 # this usually raises when YT API quota has been exeeced (HTTP code 403)
@@ -179,7 +181,7 @@ class Downloader:
 
             await _add_video_to_db(video, playlist)
 
-            logger.debug("Processed video: " + video_id)
+            logger.info("Processing video: " + video_id)
 
         async def _process_playlist(playlist_id):
 
@@ -201,7 +203,8 @@ class Downloader:
 
             videos = self.yt_api.list_playlist_videos(playlist_id)
             async for video in videos:
-                asyncio.create_task(_process_video(video, playlist))
+                tasks.append(asyncio.create_task(
+                    _process_video(video, playlist)))
 
         async def asyncgenerator(item):
             yield item
@@ -223,16 +226,17 @@ class Downloader:
 
         await _prepare_db()
 
-        # this triggers everything:
+        tasks = []
         async with playlist_ids.stream() as streamer:
             async for id in streamer:
-                asyncio.create_task(_process_playlist(id))
+                tasks.append(asyncio.create_task(_process_playlist(id)))
 
-    def _fill_related_videos(self):
+        await asyncio.gather(*tasks)
+
+    async def _fill_related_videos(self):
         # order randomly and use remaining daily quota to download a few related lists:
-        for video in Video.objects.all():
-            related_videos = asyncio.run(self.yt_api.get_related_videos(
-                video.youtube_id))
+        for video in sync_to_async(Video.objects.all)():
+            related_videos = await self.yt_api.get_related_videos(video.youtube_id)
 
             for video_dict in related_videos:
 
@@ -242,11 +246,12 @@ class Downloader:
 
                 try:
                     id = video_dict["id"]["videoId"]
-                    related_video = Video.objects.get(youtube_id=id)
+                    related_video = sync_to_async(
+                        Video.objects.get)(youtube_id=id)
                 except Video.DoesNotExist:
                     continue
 
-                video.related_videos.add(related_video)
+                sync_to_async(video.related_videos.add)(related_video)
                 logger.info("Added new related video: %s to video %s" %
                             (related_video, video))
 
