@@ -21,3 +21,9 @@ backend/videos/
 backend/dist
 .firebase
 .pytest_cache
+backend/firebase-debug.log
+backend/firestore-debug.log
+backend/ui-debug.log
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

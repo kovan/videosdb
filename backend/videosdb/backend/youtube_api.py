@@ -53,50 +53,12 @@ class YoutubeAPI:
             "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
 
     async def init(self):
-        self.http = aiohttp.ClientSession()  # httpx.AsyncClient()
-
-    async def _request_one(self, url):
-        async for item in self._request_many(url):
-            return item
-
-    async def _request_many(self, url):
-        url += "&key=" + self.yt_key
-        page_token = None
-
-        while True:
-            if page_token:
-                final_url = url + "&pageToken=" + page_token
-            else:
-                final_url = url
-            logger.debug("requesting: " + final_url)
-            async with self.http.get(
-                    self.root_url + final_url) as response:
-                json_response = await response.json()  # json.loads(response.text)
-            # if response.status_code != 200:
-            #     raise self.YoutubeAPIError(
-            #         response.status_code, json_response)
-
-            items = json_response["items"]
-
-            for item in items:
-                yield item
-
-            if not "nextPageToken" in json_response:
-                break
-            else:
-                page_token = json_response["nextPageToken"]
+        self.http = httpx.AsyncClient()  # aiohttp.ClientSession()
 
     async def get_playlist_info(self, playlist_id):
         url = "/playlists?part=snippet"
         url += "&id=" + playlist_id
-        item = await self._request_one(url)
-
-        playlist = {
-            "id": playlist_id,
-            "title": item["snippet"]["title"],
-            "channel_title": item["snippet"]["channelTitle"]
-        }
-        return playlist
+        return await self._request_one(url)
 
     async def list_channnelsection_playlist_ids(self, channel_id):
         url = "/channelSections?part=contentDetails"
@@ -125,21 +87,14 @@ class YoutubeAPI:
         item = await self._request_one(url)
         if not item:
             return None
-        return {
-            "id": item["id"],
-            "kind": item["kind"],
-            "etag": item["etag"],
-            **item["snippet"],
-            **item["contentDetails"],
-            **item["statistics"],
-        }
+        return item
 
     async def list_playlist_videos(self, playlist_id):
         url = "/playlistItems?part=snippet"
         url += "&playlistId=" + playlist_id
 
         async for item in self._request_many(url):
-            yield item["snippet"]["resourceId"]["videoId"]
+            yield item
 
     async def get_related_videos(self, youtube_id):
         logging.info("getting related videos")
@@ -170,6 +125,41 @@ class YoutubeAPI:
         for d in transcripts:
             result += d["text"] + "\n"
         return _sentence_case(result.capitalize() + ".")
+
+
+# ------- PRIVATE-------------------------------------------------------
+
+    async def _request_one(self, url):
+        async for item in self._request_many(url):
+            return item
+
+    async def _request_many(self, url):
+        url += "&key=" + self.yt_key
+        page_token = None
+
+        while True:
+            if page_token:
+                final_url = url + "&pageToken=" + page_token
+            else:
+                final_url = url
+            logger.debug("requesting: " + final_url)
+
+            response = await self.http.get(
+                self.root_url + final_url, timeout=10.0)
+            json_response = json.loads(response.text)
+            if response.status_code != 200:
+                raise self.YoutubeAPIError(
+                    response.status_code, json_response)
+
+            items = json_response["items"]
+
+            for item in items:
+                yield item
+
+            if not "nextPageToken" in json_response:
+                break
+            else:
+                page_token = json_response["nextPageToken"]
 
 
 class YoutubeDL:
