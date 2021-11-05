@@ -27,7 +27,8 @@ django-environ = "^0.7.0"
 google-cloud-datastore = "^2.3.0"
 aiostream = "^0.4.3"
 google-cloud-firestore = "^2.3.4"
-httpx = "0.20.0"
+httpx = {extras = ["http2"], version = "^0.20.0"}
+aiogoogle = "^3.1.0"
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.4"

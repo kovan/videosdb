@@ -21,7 +21,6 @@ class Downloader:
 
     def __init__(self):
         logging.getLogger("asyncio").setLevel(logging.WARNING)
-        self.db = firestore.AsyncClient()
 
     def download_one(self, youtube_id):
         self.enqueue_videos([youtube_id])
@@ -31,10 +30,18 @@ class Downloader:
         self.enqueue_videos([v.youtube_id for v in all])
 
     def check_for_new_videos(self):
+        asyncio.run(self._check_for_new_videos())
+
+
+# PRIVATE: -------------------------------------------------------------------
+
+    async def _check_for_new_videos(self):
+        self.db = firestore.AsyncClient()
+        self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
         logger.info("Checking for new videos...")
 
         try:
-            asyncio.run(self._sync_db_with_youtube())
+            await self._sync_db_with_youtube()
             # self._reconnect_video_data()
             # self._fill_related_videos()
 
@@ -47,9 +54,6 @@ class Downloader:
 
         # self._fill_transcripts()  # this does not use YT API quota
         logger.info("Checking for new videos done.")
-
-
-# PRIVATE: -------------------------------------------------------------------
 
     def _reconnect_video_data(self):
         for data in PersistentVideoData.objects.all():
@@ -79,7 +83,7 @@ class Downloader:
                 return
 
             video_id = playlist_item["snippet"]["resourceId"]["videoId"]
-            video = await yt_api.get_video_info(video_id)
+            video = await self.yt_api.get_video_info(video_id)
 
             if not video:
                 return
@@ -90,7 +94,7 @@ class Downloader:
 
         async def _process_playlist(playlist_id):
 
-            playlist = await yt_api.get_playlist_info(playlist_id)
+            playlist = await self.yt_api.get_playlist_info(playlist_id)
             if playlist["snippet"]["channelTitle"] != settings.YOUTUBE_CHANNEL["name"]:
                 return
 
@@ -106,7 +110,7 @@ class Downloader:
 
             await _add_playlist_to_db(playlist)
 
-            playlist_items = yt_api.list_playlist_videos(playlist_id)
+            playlist_items = self.yt_api.list_playlist_videos(playlist_id)
             async for playlist_item in playlist_items:
                 tasks.append(asyncio.create_task(
                     _process_video(playlist_item)))
@@ -114,11 +118,8 @@ class Downloader:
         async def asyncgenerator(item):
             yield item
 
-        yt_api = YoutubeAPI(settings.YOUTUBE_KEY)
-        await yt_api.init()
-
         channel_id = settings.YOUTUBE_CHANNEL["id"]
-        channel_info = await yt_api.get_channel_info(
+        channel_info = await self.yt_api.get_channel_info(
             channel_id)
 
         logger.info("Processing channel: " +
@@ -127,8 +128,8 @@ class Downloader:
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
         playlist_ids = stream.merge(
-            yt_api.list_channnelsection_playlist_ids(channel_id),
-            yt_api.list_channel_playlist_ids(channel_id),
+            self.yt_api.list_channnelsection_playlist_ids(channel_id),
+            self.yt_api.list_channel_playlist_ids(channel_id),
             asyncgenerator(all_uploads_playlist_id)
         )
 
@@ -158,8 +159,9 @@ class Downloader:
             logger.info("Added new related videos to video %s" %
                         (video))
 
-    def _fill_transcripts(self):
-        for video in Video.objects.all().order_by("-yt_data__publishedAt"):
+    async def _fill_transcripts(self):
+        async for video in self.db.collection("videos") \
+                .order_by("-publishedAt", direction=firestore.Query.DESCENDING):
             if video.transcript or video.transcript_available is not None:
                 continue
             try:

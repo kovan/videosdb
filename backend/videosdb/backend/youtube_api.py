@@ -1,21 +1,24 @@
 import re
 import os
+
 import executor
 import io
 import tempfile
 import logging
 import json
 import youtube_transcript_api
-import aiohttp
+#import aiohttp
 import httpx
 #from httpx_caching import CachingClient
+import aiogoogle
+from aiogoogle import Aiogoogle
 
 from executor import execute
 import re
 import os
 from urllib.parse import urljoin, urlencode
 from django.core.cache import cache
-
+from aiogoogle import Aiogoogle
 
 logger = logging.getLogger(__name__)
 
@@ -45,15 +48,20 @@ class YoutubeAPI:
         def __str__(self):
             return "%s %s" % (self.status, json.dumps(self.json, indent=4, sort_keys=True))
 
-    def __init__(self, yt_key):
-        self.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
+    @classmethod
+    async def create(cls, yt_key):
+        obj = cls()
+        obj.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
         # if not "YOUTUBE_API_NO_CACHE" in os.environ:
         #     self.http = CachingClient(self.http)
-        self.root_url = os.environ.get(
+        obj.root_url = os.environ.get(
             "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
 
-    async def init(self):
-        self.http = httpx.AsyncClient()  # aiohttp.ClientSession()
+        obj.http = httpx.AsyncClient(http2=True)  # aiohttp.ClientSession()
+        async with Aiogoogle(api_key=obj.yt_key) as aiogoogle:
+            obj.yt_api = await aiogoogle.discover("youtube", "v3")
+
+        return obj
 
     async def get_playlist_info(self, playlist_id):
         url = "/playlists?part=snippet"
@@ -128,6 +136,7 @@ class YoutubeAPI:
 
 
 # ------- PRIVATE-------------------------------------------------------
+
 
     async def _request_one(self, url):
         async for item in self._request_many(url):
