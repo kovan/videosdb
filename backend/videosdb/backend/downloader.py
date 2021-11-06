@@ -1,6 +1,6 @@
 import asyncio
 import logging
-#from google.cloud import firestore
+# from google.cloud import firestore
 
 from django.db import transaction
 import youtube_transcript_api
@@ -55,17 +55,24 @@ class Downloader:
             Tag.objects.all().delete()
 
             # first videos:
-            for id, video in videos.items():
-                video = Video.objects.create(youtube_id=id,
-                                             yt_data=video)
+            l = (Video(youtube_id=id, yt_data=video)
+                 for id, video in videos.items())
+            Video.objects.bulk_create(l)
+
+            for video in Video.objects.all():
                 video.create_tags()
+                video.create_slug()
 
             # then playlists:
-            for id, playlist in playlists.items():
-                playlist_obj = Playlist.objects.create(
-                    youtube_id=id,
-                    yt_data=playlist)
+            l = (Playlist(youtube_id=id, yt_data=playlist)
+                 for id, playlist in playlists.items())
+            Playlist.objects.bulk_create(l)
 
+            for id, playlist in playlists.items():
+                playlist_obj = Playlist.objects.get(youtube_id=id)
+                playlist_obj.create_slug()
+
+                # fill related videos:
                 for item in playlist["items"]:
                     video_id = item["snippet"]["resourceId"]["videoId"]
                     try:
@@ -80,9 +87,17 @@ class Downloader:
             _write_to_db(videos, playlists)
 
 # PRIVATE: -------------------------------------------------------------------
+    def _reconnect_video_data(self):
+        for data in PersistentVideoData.objects.all():
+            try:
+                video = Video.objects.get(youtube_id=data.youtube_id)
+                video.data = data
+                video.save()
+            except Video.DoesNotExist:
+                pass
 
     async def _check_for_new_videos(self):
-        #self.db = firestore.AsyncClient()
+        # self.db = firestore.AsyncClient()
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
         logger.info("Checking for new videos...")
 
@@ -100,15 +115,6 @@ class Downloader:
 
         # self._fill_transcripts()  # this does not use YT API quota
         logger.info("Checking for new videos done.")
-
-    def _reconnect_video_data(self):
-        for data in PersistentVideoData.objects.all():
-            try:
-                video = Video.objects.get(youtube_id=data.youtube_id)
-                video.data = data
-                video.save()
-            except Video.DoesNotExist:
-                pass
 
     async def _sync_db_with_youtube(self):
 

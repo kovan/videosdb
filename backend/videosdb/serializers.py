@@ -1,6 +1,11 @@
 from rest_framework import serializers
 
-from .models import Playlist, Tag, Video
+from .models import Playlist, Tag, Video, PersistentVideoData
+
+VIDEO_FIELDS = ["id", "youtube_id", "yt_data",
+                "categories", "tags", "duration_seconds",
+                "slug",
+                "description_trimmed", "related_videos"]
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -17,15 +22,14 @@ class PlaylistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Playlist
         lookup_field = "slug"
-        fields = ["id", "yt_playlist_id", "name",
+        fields = ["id", "youtube_id", "yt_data",
                   "slug", "use_count",  "last_updated"]
 
 
 class RelatedVideoSrializer(serializers.ModelSerializer):
     class Meta:
         model = Video
-        fields = ["id", "youtube_id", "yt_data.publishedAt",
-                  "duration_seconds", "title", "thumbnails", "slug"]
+        fields = VIDEO_FIELDS
 
 
 class VideoSerializer(serializers.ModelSerializer):
@@ -40,11 +44,7 @@ class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
         lookup_field = "slug"
-        fields = ["id", "youtube_id", "yt_data.publishedAt",
-                  "categories", "tags", "duration_seconds", "transcript", "thumbnail",
-                  "slug", "view_count", "dislike_count", "duration",
-                  "favorite_count", "comment_count", "title", "thumbnails",
-                  "description_trimmed", "filename", "ipfs_hash", "related_videos"]
+        fields = VIDEO_FIELDS
 
 
 class VideoListSerializer(serializers.ModelSerializer):
@@ -53,8 +53,10 @@ class VideoListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
         lookup_field = "slug"
-        fields = ["id", "youtube_id", "yt_data.publishedAt",
-                  "duration_seconds", "thumbnail",
-                  "slug", "view_count", "dislike_count",
-                  "favorite_count", "comment_count", "title", "thumbnails",
-                  "description_trimmed", "modified_date", "filename"]
+        fields = VIDEO_FIELDS
+
+
+class PersistentVideoDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PersistentVideoData
+        fields = ["filename", "ipfs_hash",  "transcript", "youtube_id"]
