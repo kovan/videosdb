@@ -79,8 +79,7 @@ class Downloader:
                         video = Video.objects.get(youtube_id=video_id)
                         playlist_obj.videos.add(video)
                     except Video.DoesNotExist as e:
-                        logger.warn("Playlist %s contains a video that doesn't exist. (ID: %s)"
-                                    % (playlist["id"], video_id))
+                        pass
 
         videos, playlists = _download()
         with transaction.atomic():
@@ -91,7 +90,7 @@ class Downloader:
         for data in PersistentVideoData.objects.all():
             try:
                 video = Video.objects.get(youtube_id=data.youtube_id)
-                video.data = data
+                video_data = data
                 video.save()
             except Video.DoesNotExist:
                 pass
@@ -161,9 +160,6 @@ class Downloader:
             logger.info("Processing playlist: " +
                         str(playlist["snippet"]["title"]))
 
-            # playlist = playlist if playlist["snippet"]["title"] != "Uploads from " + \
-            #     playlist["snippet"]["channelTitle"] else None
-
             playlist_items = self.yt_api.list_playlist_videos(playlist_id)
             playlist["items"] = []
             async for playlist_item in playlist_items:
@@ -174,6 +170,11 @@ class Downloader:
                 tasks.append(asyncio.create_task(
                     _process_video(playlist_item)))
                 playlist["items"].append(playlist_item)
+
+            if playlist["snippet"]["title"] == "Uploads from " + \
+                    playlist["snippet"]["channelTitle"]:
+                return None
+
             return playlist
 
         async def asyncgenerator(item):
@@ -221,24 +222,24 @@ class Downloader:
             logger.info("Added new related videos to video %s" %
                         (video))
 
-    async def _fill_transcripts(self):
-        async for video in self.db.collection("videos")\
-                .order_by("-publishedAt", direction=firestore.Query.DESCENDING):
-            if video.transcript or video.transcript_available is not None:
+    def _fill_transcripts(self):
+        for video in Video.objects.all():
+            video_data = video.data
+            if video_data.transcript or video_data.transcript_available is not None:
                 continue
             try:
-                video.transcript = self.yt_api.get_video_transcript(
+                video_data.transcript = self.yt_api.get_video_transcript(
                     video.youtube_id)
-                video.transcript_available = True
+                video_data.transcript_available = True
                 logger.info(
                     "Transcription downloaded for video: " + str(video))
             except youtube_transcript_api.TooManyRequests as e:
                 logger.warn(e)
-                video.transcript_available = None  # leave None so that it retries later
+                video_data.transcript_available = None  # leave None so that it retries later
                 break
             except youtube_transcript_api.CouldNotRetrieveTranscript as e:
                 logger.info(
                     "Transcription not available for video: " + str(video))
-                video.transcript_available = False
+                video_data.transcript_available = False
             finally:
-                video.save()
+                video_data.save()
