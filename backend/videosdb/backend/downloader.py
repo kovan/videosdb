@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from google.cloud import firestore
+#from google.cloud import firestore
 
 from django.db import transaction
 import youtube_transcript_api
@@ -30,18 +30,67 @@ class Downloader:
         self.enqueue_videos([v.youtube_id for v in all])
 
     def check_for_new_videos(self):
-        asyncio.run(self._check_for_new_videos())
+        def _add_item_to_db(item):
+            if item["kind"] == "youtube#playList":
+                playlist_obj, created = Playlist.objects.get_or_create(
+                    youtube_id=item["id"],
+                    defaults={"yt_data": item})
+
+                playlist_obj.videos.add(
+                    Playlist.objects.get(youtube_id=playlist["id"]))
+
+            elif item["kind"] == "youtube#video":
+                video_obj, created = Video.objects.get_or_create(youtube_id=item["id"],
+                                                                 defaults={"yt_data": item})
+                if not created:
+                    return
+
+                logger.debug("New video: " + str(video_obj))
+
+        with transaction.atomic():
+            Video.objects.all().delete()
+            Playlist.objects.all().delete()
+            Tag.objects.all().delete()
+            videos = {}
+            playlists = {}
+            for item in asyncio.run(self._check_for_new_videos()):
+                if not item:
+                    continue
+                logging.debug("Processing item " + str(item))
+                if item["kind"] == "youtube#playlist":
+                    playlists[item["id"]] = item
+                elif item["kind"] == "youtube#video":
+                    videos[item["id"]] = item
+                else:
+                    raise Exception("unknown item: " + str(item))
+
+            # first videos:
+            for id, video in videos.items():
+                Video.objects.create(youtube_id=id,
+                                     yt_data=video)
+
+            # then playlists:
+            for id, playlist in playlists.items():
+                playlist = Playlist.objects.create(
+                    youtube_id=id,
+                    yt_data=playlist)
+
+                for item in playlists["items"]:
+                    # should already exists:
+                    video = Video.objects.get(
+                        item["snippet"]["resourceId"]["videoId"])
+                    playlist.videos.add(video)
 
 
 # PRIVATE: -------------------------------------------------------------------
 
     async def _check_for_new_videos(self):
-        self.db = firestore.AsyncClient()
+        #self.db = firestore.AsyncClient()
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
         logger.info("Checking for new videos...")
 
         try:
-            await self._sync_db_with_youtube()
+            return await self._sync_db_with_youtube()
             # self._reconnect_video_data()
             # self._fill_related_videos()
 
@@ -66,31 +115,37 @@ class Downloader:
 
     async def _sync_db_with_youtube(self):
 
-        async def _add_video_to_db(video, playlist_item=None):
-            ref = self.db.collection("videos")
-            await ref.document(video["id"]).set(video)
+        # async def _add_video_to_db(video, playlist_item=None):
+        #     ref = self.db.collection("videos")
+        #     await ref.document(video["id"]).set(video)
 
-        async def _add_playlist_to_db(playlist):
+        # async def _add_playlist_to_db(playlist):
 
-            ref = self.db.collection("playlists")
-            await ref.document(playlist["id"]).set(playlist)
+        #     ref = self.db.collection("playlists")
+        #     await ref.document(playlist["id"]).set(playlist)
 
         async def _process_video(playlist_item):
+            video_id = playlist_item["snippet"]["resourceId"]["videoId"]
+
+            if video_id in processed_videos:
+                return
+
             # some playlists include videos from other channels
             # for now exclude those videos
             # in the future maybe exclude whole playlist
             if playlist_item["snippet"]["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
                 return
 
-            video_id = playlist_item["snippet"]["resourceId"]["videoId"]
             video = await self.yt_api.get_video_info(video_id)
+            processed_videos.add(video_id)
 
             if not video:
                 return
 
-            await _add_video_to_db(video, playlist_item)
+            # await _add_video_to_db(video, playlist_item)
 
             logger.info("Processing video: " + video_id)
+            return video
 
         async def _process_playlist(playlist_id):
 
@@ -108,12 +163,15 @@ class Downloader:
             # playlist = playlist if playlist["snippet"]["title"] != "Uploads from " + \
             #     playlist["snippet"]["channelTitle"] else None
 
-            await _add_playlist_to_db(playlist)
+            # await _add_playlist_to_db(playlist)
 
             playlist_items = self.yt_api.list_playlist_videos(playlist_id)
+            playlist["items"] = []
             async for playlist_item in playlist_items:
                 tasks.append(asyncio.create_task(
                     _process_video(playlist_item)))
+                playlist["items"].append(playlist_item)
+            return playlist
 
         async def asyncgenerator(item):
             yield item
@@ -134,6 +192,7 @@ class Downloader:
         )
 
         tasks = []
+        processed_videos = set()  # just not to not process same video twice
         async with playlist_ids.stream() as streamer:
             async for id in streamer:
                 tasks.append(asyncio.create_task(_process_playlist(id)))
@@ -160,7 +219,7 @@ class Downloader:
                         (video))
 
     async def _fill_transcripts(self):
-        async for video in self.db.collection("videos") \
+        async for video in self.db.collection("videos")\
                 .order_by("-publishedAt", direction=firestore.Query.DESCENDING):
             if video.transcript or video.transcript_available is not None:
                 continue
