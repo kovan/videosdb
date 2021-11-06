@@ -98,7 +98,6 @@
         "-W",
         "default"
       ],
-      "django": true,
       "env": {
         "DEBUG": "1",
         "LOGLEVEL": "INFO",

@@ -60,12 +60,12 @@ class Video(models.Model):
     def __str__(self):
         return str(self.youtube_id)
 
-    def set_tags(self, tags):
-        for tag in tags:
+    def create_tags(self):
+        if not "tags" in self.yt_data["snippet"]:
+            return
+        for tag in self.yt_data["snippet"]["tags"]:
             tag_obj, created = Tag.objects.get_or_create(name=tag.lower())
             self.tags.add(tag_obj)
-            if created:
-                logger.debug("Discovered tag: " + str(self))
 
     def save(self, *args, **kwargs):
         if not self.slug:

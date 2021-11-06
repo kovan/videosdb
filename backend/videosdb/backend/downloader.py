@@ -31,10 +31,8 @@ class Downloader:
 
     def check_for_new_videos(self):
 
-        with transaction.atomic():
-            Video.objects.all().delete()
-            Playlist.objects.all().delete()
-            Tag.objects.all().delete()
+        def _download():
+
             videos = {}
             playlists = {}
             for item in asyncio.run(self._check_for_new_videos()):
@@ -48,10 +46,19 @@ class Downloader:
                 else:
                     raise Exception("unknown item: " + str(item))
 
+            return videos, playlists
+
+        def _write_to_db(videos, playlists):
+
+            Video.objects.all().delete()
+            Playlist.objects.all().delete()
+            Tag.objects.all().delete()
+
             # first videos:
             for id, video in videos.items():
-                Video.objects.create(youtube_id=id,
-                                     yt_data=video)
+                video = Video.objects.create(youtube_id=id,
+                                             yt_data=video)
+                video.create_tags()
 
             # then playlists:
             for id, playlist in playlists.items():
@@ -60,14 +67,19 @@ class Downloader:
                     yt_data=playlist)
 
                 for item in playlist["items"]:
-                    # should already exists:
-                    video = Video.objects.get(
-                        youtube_id=item["snippet"]["resourceId"]["videoId"])
-                    playlist_obj.videos.add(video)
+                    video_id = item["snippet"]["resourceId"]["videoId"]
+                    try:
+                        video = Video.objects.get(youtube_id=video_id)
+                        playlist_obj.videos.add(video)
+                    except Video.DoesNotExist as e:
+                        logger.warn("Playlist %s contains a video that doesn't exist. (ID: %s)"
+                                    % (playlist["id"], video_id))
 
+        videos, playlists = _download()
+        with transaction.atomic():
+            _write_to_db(videos, playlists)
 
 # PRIVATE: -------------------------------------------------------------------
-
 
     async def _check_for_new_videos(self):
         #self.db = firestore.AsyncClient()
@@ -112,9 +124,6 @@ class Downloader:
         async def _process_video(playlist_item):
             video_id = playlist_item["snippet"]["resourceId"]["videoId"]
 
-            if video_id in processed_videos:
-                return
-
             # some playlists include videos from other channels
             # for now exclude those videos
             # in the future maybe exclude whole playlist
@@ -122,6 +131,7 @@ class Downloader:
                 return
 
             video = await self.yt_api.get_video_info(video_id)
+
             processed_videos.add(video_id)
 
             if not video:
@@ -151,6 +161,10 @@ class Downloader:
             playlist_items = self.yt_api.list_playlist_videos(playlist_id)
             playlist["items"] = []
             async for playlist_item in playlist_items:
+                video_id = playlist_item["snippet"]["resourceId"]["videoId"]
+                if video_id in processed_videos:
+                    continue
+
                 tasks.append(asyncio.create_task(
                     _process_video(playlist_item)))
                 playlist["items"].append(playlist_item)
