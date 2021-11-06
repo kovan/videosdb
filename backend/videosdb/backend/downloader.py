@@ -30,22 +30,6 @@ class Downloader:
         self.enqueue_videos([v.youtube_id for v in all])
 
     def check_for_new_videos(self):
-        def _add_item_to_db(item):
-            if item["kind"] == "youtube#playList":
-                playlist_obj, created = Playlist.objects.get_or_create(
-                    youtube_id=item["id"],
-                    defaults={"yt_data": item})
-
-                playlist_obj.videos.add(
-                    Playlist.objects.get(youtube_id=playlist["id"]))
-
-            elif item["kind"] == "youtube#video":
-                video_obj, created = Video.objects.get_or_create(youtube_id=item["id"],
-                                                                 defaults={"yt_data": item})
-                if not created:
-                    return
-
-                logger.debug("New video: " + str(video_obj))
 
         with transaction.atomic():
             Video.objects.all().delete()
@@ -71,18 +55,19 @@ class Downloader:
 
             # then playlists:
             for id, playlist in playlists.items():
-                playlist = Playlist.objects.create(
+                playlist_obj = Playlist.objects.create(
                     youtube_id=id,
                     yt_data=playlist)
 
-                for item in playlists["items"]:
+                for item in playlist["items"]:
                     # should already exists:
                     video = Video.objects.get(
-                        item["snippet"]["resourceId"]["videoId"])
-                    playlist.videos.add(video)
+                        youtube_id=item["snippet"]["resourceId"]["videoId"])
+                    playlist_obj.videos.add(video)
 
 
 # PRIVATE: -------------------------------------------------------------------
+
 
     async def _check_for_new_videos(self):
         #self.db = firestore.AsyncClient()
@@ -162,8 +147,6 @@ class Downloader:
 
             # playlist = playlist if playlist["snippet"]["title"] != "Uploads from " + \
             #     playlist["snippet"]["channelTitle"] else None
-
-            # await _add_playlist_to_db(playlist)
 
             playlist_items = self.yt_api.list_playlist_videos(playlist_id)
             playlist["items"] = []

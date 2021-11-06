@@ -68,8 +68,8 @@ class Video(models.Model):
                 logger.debug("Discovered tag: " + str(self))
 
     def save(self, *args, **kwargs):
-        if not self.slug and self.yt_data["title"]:
-            self.slug = uuslug(self.yt_data["title"], instance=self)
+        if not self.slug:
+            self.slug = uuslug(self.yt_data["snippet"]["title"], instance=self)
         super(Video, self).save(*args, **kwargs)
         logger.debug("Saved video: " + str(self))
 
@@ -111,7 +111,7 @@ class Playlist(models.Model):
         return self.youtube_id
 
     def save(self, *args, **kwargs):
-        if not self.slug and self.yt_data["title"]:
-            self.slug = uuslug(self.yt_data["title"], instance=self)
+        if not self.slug:
+            self.slug = uuslug(self.yt_data["snippet"]["title"], instance=self)
         super(Playlist, self).save(*args, **kwargs)
         logger.debug("SAVED Playlist: " + str(self))

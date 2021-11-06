@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 #     return v
 
 
-# #TEST_VIDEO_INFO = settings.BASE_DIR + "/videosdb/test_data/test_video_info.json"
+TEST_VIDEO_INFO = settings.BASE_DIR + "/videosdb/test_data/test_video_info.json"
 #HTTPLIB2_CACHE = settings.BASE_DIR + "/videosdb/test_data/httplib2_cache"
 
 # from httplib2 code:
@@ -69,7 +69,8 @@ class DownloaderTest(TestCase):
 
     # @patch.object(httplib2.Http, "request", new=fake_request)
     def test_check_for_new_videos(self):
-        v = Video(youtube_id="CR5HtTsUl5E", yt_data={"title": "hi"})
+        v = Video(youtube_id="CR5HtTsUl5E",
+                  yt_data=json.load(open(TEST_VIDEO_INFO)))
         v.save()
         dl = Downloader()
         dl.check_for_new_videos()
