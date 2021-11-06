@@ -83,6 +83,7 @@ class Downloader:
 
         videos, playlists = _download()
         with transaction.atomic():
+            logging.info("Writing new data to database...")
             _write_to_db(videos, playlists)
 
 # PRIVATE: -------------------------------------------------------------------
@@ -202,6 +203,7 @@ class Downloader:
                 tasks.append(asyncio.create_task(_process_playlist(id)))
 
         # start all:
+        logging.info("Waiting for API results...")
         results = await asyncio.gather(*tasks)
         return results
 
