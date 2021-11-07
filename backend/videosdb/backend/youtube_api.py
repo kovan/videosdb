@@ -162,15 +162,7 @@ class YoutubeAPI:
             return item
 
     async def _request_many(self, url):
-        url += "&key=" + self.yt_key
-        page_token = None
-
-        while True:
-            if page_token:
-                final_url = url + "&pageToken=" + page_token
-            else:
-                final_url = url
-            logger.debug("requesting: " + final_url)
+        async def _raw_get(url):
             headers = {}
             cached = await self.cache.get(final_url)
             if cached:
@@ -190,8 +182,20 @@ class YoutubeAPI:
                 json_response = cached["content"]
             elif response.status_code >= 400:
                 raise self.YoutubeAPIError(
-                    response.status_code, json_response)
+                    response.status_code, response.json())
 
+            return json_response
+
+        url += "&key=" + self.yt_key
+        page_token = None
+
+        while True:
+            if page_token:
+                final_url = url + "&pageToken=" + page_token
+            else:
+                final_url = url
+            logger.debug("requesting: " + final_url)
+            json_response = await _raw_get(url)
             items = json_response["items"]
 
             for item in items:
