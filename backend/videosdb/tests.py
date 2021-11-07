@@ -69,9 +69,9 @@ class DownloaderTest(TestCase):
 
     # @patch.object(httplib2.Http, "request", new=fake_request)
     def test_check_for_new_videos(self):
-        v = Video(youtube_id="CR5HtTsUl5E",
-                  yt_data=json.load(open(TEST_VIDEO_INFO)))
-        v.save()
+        # v = Video(youtube_id="CR5HtTsUl5E",
+        #           yt_data=json.load(open(TEST_VIDEO_INFO)))
+        # v.save()
         dl = Downloader()
         dl.check_for_new_videos()
         self.assertTrue(Video.objects.all().count() > 1)

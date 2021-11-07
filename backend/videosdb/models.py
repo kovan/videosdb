@@ -53,12 +53,14 @@ class Video(models.Model):
 
     @classmethod
     def create(cls, yt_data):
-        return cls(youtube_id=yt_data["id"], yt_data=yt_data)
+        obj = cls(youtube_id=yt_data["id"], yt_data=yt_data)
+        obj.slug = uuslug(yt_data["snippet"]["title"], instance=obj)
+        return obj
 
     def __str__(self):
         return "Video " + str(self.youtube_id)
 
-    def create_tags(self):
+    def populate_tags(self):
         if not "tags" in self.yt_data["snippet"]:
             return
         for tag in self.yt_data["snippet"]["tags"]:
@@ -66,11 +68,6 @@ class Video(models.Model):
             tag_obj.create_slug()
             tag_obj.save()
             self.tags.add(tag_obj)
-
-    def create_slug(self):
-        if self.slug:
-            return
-        self.slug = uuslug(self.yt_data["snippet"]["title"], instance=self)
 
     @property
     def description_trimmed(self):
@@ -104,7 +101,9 @@ class Playlist(models.Model):
 
     @classmethod
     def create(cls, yt_data):
-        return cls(youtube_id=yt_data["id"], yt_data=yt_data)
+        obj = cls(youtube_id=yt_data["id"], yt_data=yt_data)
+        obj.slug = uuslug(yt_data["snippet"]["title"], instance=obj)
+        return obj
 
     def __str__(self):
         return self.youtube_id
