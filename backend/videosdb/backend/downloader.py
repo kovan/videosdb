@@ -37,7 +37,7 @@ class Downloader:
             Tag.objects.all().delete()
 
             logger.info("Sync start")
-            self._check_for_new_videos()  # this is async:
+            self._check_for_new_videos()  # this is async
             logger.info("Sync finished")
 
             for data in PersistentVideoData.objects.all():
@@ -68,8 +68,6 @@ class Downloader:
                 raise e
             else:
                 logger.exception(e)
-
-        # self._fill_transcripts()  # this does not use YT API quota
 
     async def _sync_db_with_youtube(self):
 
