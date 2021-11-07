@@ -5,6 +5,33 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Django: Tests",
+      "type": "python",
+      "request": "launch",
+      "program": "manage.py",
+      "pythonArgs": [
+        "-W",
+        "default"
+      ],
+      "env": {
+        "DEBUG": "1",
+        "LOGLEVEL": "INFO",
+        //"YOUTUBE_API_NO_CACHE": "1",
+        "YOUTUBE_API_URL": "http://127.0.0.1:2000/youtube/v3",
+        "PYTHONDEVMODE": "1",
+        "FIRESTORE_EMULATOR_HOST": "localhost:6001"
+      },
+      "args": [
+        "test",
+        "--nomigrations",
+        "--noinput",
+        "--keepdb"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": false
+    },
+    {
       "name": "Python: Current File",
       "type": "python",
       "request": "launch",
@@ -87,33 +114,6 @@
         "<node_internals>/**"
       ],
       "port": 9229,
-      "justMyCode": false
-    },
-    {
-      "name": "Django: Tests",
-      "type": "python",
-      "request": "launch",
-      "program": "manage.py",
-      "pythonArgs": [
-        "-W",
-        "default"
-      ],
-      "env": {
-        "DEBUG": "1",
-        "LOGLEVEL": "INFO",
-        //"YOUTUBE_API_NO_CACHE": "1",
-        "YOUTUBE_API_URL": "http://127.0.0.1:2000/youtube/v3",
-        "PYTHONDEVMODE": "1",
-        "FIRESTORE_EMULATOR_HOST": "localhost:6001"
-      },
-      "args": [
-        "test",
-        "--nomigrations",
-        "--noinput",
-        "--keepdb"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/backend",
       "justMyCode": false
     },
     {

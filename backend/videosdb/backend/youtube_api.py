@@ -117,7 +117,7 @@ class YoutubeAPI:
             return None
         return item
 
-    async def list_playlist_videos(self, playlist_id):
+    async def list_playlist_items(self, playlist_id):
         url = "/playlistItems?part=snippet"
         url += "&playlistId=" + playlist_id
 

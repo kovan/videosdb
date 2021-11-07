@@ -1,7 +1,8 @@
 import asyncio
 import logging
-# from google.cloud import firestore
 
+
+from google.cloud import firestore
 from django.db import transaction
 import youtube_transcript_api
 from aiostream import async_, stream
@@ -15,12 +16,42 @@ from .youtube_api import YoutubeAPI
 logger = logging.getLogger(__name__)
 
 
+class DB:
+    def __init__(self):
+        self.db = firestore.AsyncClient()
+
+    async def add_or_update(self, collection, item):
+        if type(collection) == str:
+            collection = self.db.collection(collection)
+
+        logger.debug("Writing item to db: " + str(item["id"]))
+        item_doc = collection.document(item["id"])
+        item_ref = await item_doc.get(["etag"])
+
+        # not modified
+        if item_ref.exists and item_ref.get("etag") == item["etag"]:
+            logger.debug("Item %s Not modified" % item["id"])
+            return
+
+        await item_doc.set(item)
+
+    async def add_playlist_to_db(self, playlist, playlist_items):
+        await self.add_or_update("playlists", playlist)
+
+        async for item in playlist_items:
+            items_col = self.db.collection("playlists").document(
+                playlist["id"]).collection("playlist_items")
+
+            self.add_or_update(items_col, item)
+
+
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
 
     def __init__(self):
         logging.getLogger("asyncio").setLevel(logging.WARNING)
+        self.db = DB()
 
     def download_one(self, youtube_id):
         self.enqueue_videos([youtube_id])
@@ -71,23 +102,6 @@ class Downloader:
 
     async def _sync_db_with_youtube(self):
 
-        @sync_to_async(thread_sensitive=False)
-        def _add_video_to_db(video, playlist):
-            logger.debug("Writing Video to db: " + str(video["id"]))
-            v = Video.create(video)
-            v.save()
-            v.populate_tags()
-            if not playlist:
-                return
-            pl = Playlist.objects.get(youtube_id=playlist["id"])
-            v.playlist_set.add(pl)
-
-        @sync_to_async(thread_sensitive=False)
-        def _add_playlist_to_db(playlist):
-            logger.debug("Writing Playlist to db: " + str(playlist["id"]))
-            pl = Playlist.create(playlist)
-            pl.save()
-
         async def _process_video(playlist_item, playlist):
             video_id = playlist_item["snippet"]["resourceId"]["videoId"]
             if video_id in processed_videos:
@@ -105,7 +119,7 @@ class Downloader:
             if not video:
                 return
 
-            await _add_video_to_db(video, playlist)
+            await self.db.add_or_update("videos", video)
 
             logger.debug("Processing video: " + video_id)
 
@@ -125,9 +139,9 @@ class Downloader:
             logger.info("Found playlist: %s (ID: %s)" % (
                         str(playlist["snippet"]["title"]), playlist["id"]))
 
-            playlist_items = self.yt_api.list_playlist_videos(playlist_id)
+            playlist_items = self.yt_api.list_playlist_items(playlist_id)
 
-            await _add_playlist_to_db(playlist)
+            await self.db.add_playlist_to_db(playlist, playlist_items)
 
             if playlist["snippet"]["title"] == "Uploads from " + \
                     playlist["snippet"]["channelTitle"]:
@@ -150,9 +164,9 @@ class Downloader:
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
         playlist_ids = stream.merge(
+            asyncgenerator(all_uploads_playlist_id),
             self.yt_api.list_channnelsection_playlist_ids(channel_id),
-            self.yt_api.list_channel_playlist_ids(channel_id),
-            asyncgenerator(all_uploads_playlist_id)
+            self.yt_api.list_channel_playlist_ids(channel_id)
         )
 
         tasks = []
