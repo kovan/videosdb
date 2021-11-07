@@ -83,10 +83,7 @@ class Downloader:
                     except Video.DoesNotExist as e:
                         pass
 
-        videos, playlists = _download()
-        with transaction.atomic():
-            logging.info("Writing new data to database...")
-            _write_to_db(videos, playlists)
+            # attach persistent video data
             for data in PersistentVideoData.objects.all():
                 try:
                     video = Video.objects.get(youtube_id=data.youtube_id)
@@ -94,6 +91,12 @@ class Downloader:
                     video.save()
                 except Video.DoesNotExist:
                     pass
+
+        videos, playlists = _download()
+        with transaction.atomic():
+            logging.info("Writing new data to database...")
+            _write_to_db(videos, playlists)
+
 # PRIVATE: -------------------------------------------------------------------
 
     async def _check_for_new_videos(self):
