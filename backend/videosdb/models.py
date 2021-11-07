@@ -19,12 +19,10 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
-    def save(self, *args, **kwargs):
-        if not self.slug and self.name:
-            self.slug = uuslug(self.name, instance=self)
-
-        super(Tag, self).save(*args, **kwargs)
-        logger.debug("SAVED tag: " + str(self))
+    def create_slug(self):
+        if self.slug:
+            return
+        self.slug = uuslug(self.name, instance=self)
 
 
 class PersistentVideoData(models.Model):
@@ -65,6 +63,8 @@ class Video(models.Model):
             return
         for tag in self.yt_data["snippet"]["tags"]:
             tag_obj, created = Tag.objects.get_or_create(name=tag.lower())
+            tag_obj.create_slug()
+            tag_obj.save()
             self.tags.add(tag_obj)
 
     def create_slug(self):

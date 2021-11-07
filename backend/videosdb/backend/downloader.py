@@ -62,6 +62,7 @@ class Downloader:
             for video in Video.objects.all():
                 video.create_tags()
                 video.create_slug()
+                video.save()
 
             # then playlists:
             l = (Playlist(youtube_id=id, yt_data=playlist)
@@ -71,6 +72,7 @@ class Downloader:
             for id, playlist in playlists.items():
                 playlist_obj = Playlist.objects.get(youtube_id=id)
                 playlist_obj.create_slug()
+                playlist_obj.save()
 
                 # fill related videos:
                 for item in playlist["items"]:
@@ -85,16 +87,14 @@ class Downloader:
         with transaction.atomic():
             logging.info("Writing new data to database...")
             _write_to_db(videos, playlists)
-
+            for data in PersistentVideoData.objects.all():
+                try:
+                    video = Video.objects.get(youtube_id=data.youtube_id)
+                    video.data = data
+                    video.save()
+                except Video.DoesNotExist:
+                    pass
 # PRIVATE: -------------------------------------------------------------------
-    def _reconnect_video_data(self):
-        for data in PersistentVideoData.objects.all():
-            try:
-                video = Video.objects.get(youtube_id=data.youtube_id)
-                video_data = data
-                video.save()
-            except Video.DoesNotExist:
-                pass
 
     async def _check_for_new_videos(self):
         # self.db = firestore.AsyncClient()
@@ -103,7 +103,6 @@ class Downloader:
 
         try:
             return await self._sync_db_with_youtube()
-            # self._reconnect_video_data()
             # self._fill_related_videos()
 
         except YoutubeAPI.YoutubeAPIError as e:
