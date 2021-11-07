@@ -1,24 +1,22 @@
-import re
-import os
-
-import executor
 import io
-import tempfile
-import logging
 import json
-import youtube_transcript_api
-#import aiohttp
-import httpx
-#from httpx_caching import CachingClient
-import aiogoogle
-from aiogoogle import Aiogoogle
-
-from executor import execute
-import re
+import logging
 import os
-from urllib.parse import urljoin, urlencode
-from django.core.cache import cache
+import re
+import tempfile
+import hashlib
+# from httpx_caching import CachingClient
+import aiogoogle
+import executor
+# import aiohttp
+import httpx
+import jsonpickle
+import youtube_transcript_api
 from aiogoogle import Aiogoogle
+from asgiref.sync import sync_to_async
+from django.conf import settings
+from executor import execute
+from google.cloud import firestore
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +36,29 @@ def _sentence_case(text):
     return final
 
 
+class Cache:
+
+    def __init__(self):
+        self.db = firestore.AsyncClient()
+
+    @staticmethod
+    def _key_func(key):
+        return hashlib.sha256(key.encode('utf-8')).hexdigest()
+
+    async def get(self, key):
+
+        doc = await self.db.collection("cache").document(self._key_func(key)).get()
+        if doc.exists:
+            return doc.to_dict()
+        return None
+
+    async def set(self, key, val):
+        return await self.db.collection("cache").document(self._key_func(key)).set(val)
+
+    async def delete(self, key):
+        return await self.db.collection("cache").document(self._key_func(key)).delete()
+
+
 class YoutubeAPI:
 
     class YoutubeAPIError(Exception):
@@ -51,16 +72,15 @@ class YoutubeAPI:
     @classmethod
     async def create(cls, yt_key):
         obj = cls()
+
+        obj.http = httpx.AsyncClient(http2=True)
         obj.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
         # if not "YOUTUBE_API_NO_CACHE" in os.environ:
-        #     self.http = CachingClient(self.http)
+        #     obj.http = CachingClient(obj.http)
         obj.root_url = os.environ.get(
             "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
 
-        obj.http = httpx.AsyncClient(http2=True)  # aiohttp.ClientSession()
-        async with Aiogoogle(api_key=obj.yt_key) as aiogoogle:
-            obj.yt_api = await aiogoogle.discover("youtube", "v3")
-
+        obj.cache = Cache()
         return obj
 
     async def get_playlist_info(self, playlist_id):
@@ -137,7 +157,6 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
-
     async def _request_one(self, url):
         async for item in self._request_many(url):
             return item
@@ -152,11 +171,24 @@ class YoutubeAPI:
             else:
                 final_url = url
             logger.debug("requesting: " + final_url)
+            headers = {}
+            cached = await self.cache.get(final_url)
+            if cached:
+                headers["If-None-Match"] = cached["headers"]["etag"]
 
             response = await self.http.get(
-                self.root_url + final_url, timeout=10.0)
-            json_response = json.loads(response.text)
-            if response.status_code != 200:
+                self.root_url + final_url, timeout=10.0, headers=headers)
+
+            if response.status_code == 200:
+                await self.cache.set(final_url, {
+                    "headers": dict(response.headers),
+                    "content": response.json()
+                })
+                json_response = response.json()
+            elif response.status_code == 304:
+                logger.debug("Using cached response.")
+                json_response = cached["content"]
+            elif response.status_code >= 400:
                 raise self.YoutubeAPIError(
                     response.status_code, json_response)
 

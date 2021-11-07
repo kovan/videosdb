@@ -48,6 +48,9 @@ class Downloader:
                 except Video.DoesNotExist:
                     pass
 
+        self._fill_related_videos()
+        self._fill_transcripts()
+
 
 # PRIVATE: -------------------------------------------------------------------
 
@@ -70,7 +73,7 @@ class Downloader:
 
     async def _sync_db_with_youtube(self):
 
-        @sync_to_async
+        @sync_to_async(thread_sensitive=False)
         def _add_video_to_db(video, playlist):
             logger.debug("Writing Video to db: " + str(video["id"]))
             v = Video.create(video)
@@ -81,7 +84,7 @@ class Downloader:
             pl = Playlist.objects.get(youtube_id=playlist["id"])
             v.playlist_set.add(pl)
 
-        @sync_to_async
+        @sync_to_async(thread_sensitive=False)
         def _add_playlist_to_db(playlist):
             logger.debug("Writing Playlist to db: " + str(playlist["id"]))
             pl = Playlist.create(playlist)
