@@ -38,11 +38,11 @@ class DB:
     async def add_playlist_to_db(self, playlist, playlist_items):
         await self.add_or_update("playlists", playlist)
 
-        async for item in playlist_items:
+        for item in playlist_items:
             items_col = self.db.collection("playlists").document(
                 playlist["id"]).collection("playlist_items")
 
-            self.add_or_update(items_col, item)
+            await self.add_or_update(items_col, item)
 
 
 class Downloader:
@@ -62,30 +62,29 @@ class Downloader:
 
     def check_for_new_videos(self):
 
-        with transaction.atomic():
-            Video.objects.all().delete()
-            Playlist.objects.all().delete()
-            Tag.objects.all().delete()
+        # with transaction.atomic():
+        #     Video.objects.all().delete()
+        #     Playlist.objects.all().delete()
+        #     Tag.objects.all().delete()
 
-            logger.info("Sync start")
-            self._check_for_new_videos()  # this is async
-            logger.info("Sync finished")
+        logger.info("Sync start")
+        asyncio.run(self._check_for_new_videos())
+        logger.info("Sync finished")
 
-            for data in PersistentVideoData.objects.all():
-                try:
-                    video = Video.objects.get(youtube_id=data.youtube_id)
-                    video.data = data
-                    video.save()
-                except Video.DoesNotExist:
-                    pass
+        #     for data in PersistentVideoData.objects.all():
+        #         try:
+        #             video = Video.objects.get(youtube_id=data.youtube_id)
+        #             video.data = data
+        #             video.save()
+        #         except Video.DoesNotExist:
+        #             pass
 
-        self._fill_related_videos()
-        self._fill_transcripts()
+        # self._fill_related_videos()
+        # self._fill_transcripts()
 
 
 # PRIVATE: -------------------------------------------------------------------
 
-    @async_to_sync
     async def _check_for_new_videos(self):
 
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
@@ -102,7 +101,7 @@ class Downloader:
 
     async def _sync_db_with_youtube(self):
 
-        async def _process_video(playlist_item, playlist):
+        async def _process_video(playlist_item):
             video_id = playlist_item["snippet"]["resourceId"]["videoId"]
             if video_id in processed_videos:
                 return
@@ -139,7 +138,7 @@ class Downloader:
             logger.info("Found playlist: %s (ID: %s)" % (
                         str(playlist["snippet"]["title"]), playlist["id"]))
 
-            playlist_items = self.yt_api.list_playlist_items(playlist_id)
+            playlist_items = [item async for item in self.yt_api.list_playlist_items(playlist_id)]
 
             await self.db.add_playlist_to_db(playlist, playlist_items)
 
@@ -147,9 +146,9 @@ class Downloader:
                     playlist["snippet"]["channelTitle"]:
                 playlist = None
 
-            async for playlist_item in playlist_items:
+            for playlist_item in playlist_items:
                 tasks.append(asyncio.create_task(
-                    _process_video(playlist_item, playlist)))
+                    _process_video(playlist_item)))
 
         async def asyncgenerator(item):
             yield item

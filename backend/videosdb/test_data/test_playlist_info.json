@@ -1,0 +1,53 @@
+{
+    "kind": "youtube#playlistListResponse",
+    "etag": "paivCYu7WTYaCIFn4sxq8oGDW60",
+    "pageInfo": {
+        "totalResults": 1,
+        "resultsPerPage": 5
+    },
+    "items": [
+        {
+            "kind": "youtube#playlist",
+            "etag": "AlLe-b75wqSZ88oxRWSbm2pSS_w",
+            "id": "PL3uDtbb3OvDO6WK4Y8DOw9URyyeazUPds",
+            "snippet": {
+                "publishedAt": "2015-08-31T20:16:02Z",
+                "channelId": "UCcYzLCs3zrQIBVHYA1sK2sw",
+                "title": "A Ball Can Change The World",
+                "description": "“Wanting to win, at the same time, willing to lose if need be; handling your victory gracefully, handling your failure gracefully are things that sport inculcates into a human being.” – Sadhguru",
+                "thumbnails": {
+                    "default": {
+                        "url": "https://i.ytimg.com/vi/fbe8zgbwOI0/default.jpg",
+                        "width": 120,
+                        "height": 90
+                    },
+                    "medium": {
+                        "url": "https://i.ytimg.com/vi/fbe8zgbwOI0/mqdefault.jpg",
+                        "width": 320,
+                        "height": 180
+                    },
+                    "high": {
+                        "url": "https://i.ytimg.com/vi/fbe8zgbwOI0/hqdefault.jpg",
+                        "width": 480,
+                        "height": 360
+                    },
+                    "standard": {
+                        "url": "https://i.ytimg.com/vi/fbe8zgbwOI0/sddefault.jpg",
+                        "width": 640,
+                        "height": 480
+                    },
+                    "maxres": {
+                        "url": "https://i.ytimg.com/vi/fbe8zgbwOI0/maxresdefault.jpg",
+                        "width": 1280,
+                        "height": 720
+                    }
+                },
+                "channelTitle": "Sadhguru",
+                "localized": {
+                    "title": "A Ball Can Change The World",
+                    "description": "“Wanting to win, at the same time, willing to lose if need be; handling your victory gracefully, handling your failure gracefully are things that sport inculcates into a human being.” – Sadhguru"
+                }
+            }
+        }
+    ]
+}
