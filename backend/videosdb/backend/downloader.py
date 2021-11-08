@@ -1,6 +1,6 @@
 import asyncio
 import logging
-
+import os
 
 from google.cloud import firestore
 from django.db import transaction
@@ -24,15 +24,14 @@ class DB:
         if type(collection) == str:
             collection = self.db.collection(collection)
 
-        logger.debug("Writing item to db: " + str(item["id"]))
         item_doc = collection.document(item["id"])
         item_ref = await item_doc.get(["etag"])
 
         # not modified
         if item_ref.exists and item_ref.get("etag") == item["etag"]:
-            logger.debug("Item %s Not modified" % item["id"])
             return
 
+        logger.debug("Writing item to db: " + str(item["id"]))
         await item_doc.set(item)
 
     async def add_playlist_to_db(self, playlist, playlist_items):
@@ -62,25 +61,12 @@ class Downloader:
 
     def check_for_new_videos(self):
 
-        # with transaction.atomic():
-        #     Video.objects.all().delete()
-        #     Playlist.objects.all().delete()
-        #     Tag.objects.all().delete()
-
         logger.info("Sync start")
         asyncio.run(self._check_for_new_videos())
         logger.info("Sync finished")
 
-        #     for data in PersistentVideoData.objects.all():
-        #         try:
-        #             video = Video.objects.get(youtube_id=data.youtube_id)
-        #             video.data = data
-        #             video.save()
-        #         except Video.DoesNotExist:
-        #             pass
-
-        # self._fill_related_videos()
-        # self._fill_transcripts()
+        self._fill_related_videos()
+        self._fill_transcripts()
 
 
 # PRIVATE: -------------------------------------------------------------------
@@ -105,7 +91,9 @@ class Downloader:
             video_id = playlist_item["snippet"]["resourceId"]["videoId"]
             if video_id in processed_videos:
                 return
-
+            if "DEBUG" in os.environ:
+                if len(processed_videos) > 100:
+                    return
             processed_videos.add(video_id)
 
             # some playlists include videos from other channels
@@ -125,6 +113,10 @@ class Downloader:
         async def _process_playlist(playlist_id):
             if playlist_id in processed_playlists:
                 return
+            if "DEBUG" in os.environ:
+                if len(processed_playlists) > 100:
+                    return
+
             processed_playlists.add(playlist_id)
 
             playlist = await self.yt_api.get_playlist_info(playlist_id)
@@ -178,46 +170,45 @@ class Downloader:
 
         await asyncio.gather(*tasks)
 
-    def _fill_related_videos(self):
-        @async_to_sync
-        async def get_related_videos(video_id):
-            return await self.yt_api.get_related_videos(video_id)
+    async def _fill_related_videos(self):
 
         # use remaining YT API daily quota to download a few related video lists:
         logger.info("Filling related videos info.")
-        for video in Video.objects.all():
-            related_videos = get_related_videos(video.youtube_id)
-
-            for related in related_videos:
+        async for video in self.db.db.collection("videos").stream():
+            video_id = video.get("id")
+            async for related in self.yt_api.get_related_videos(video_id):
                 # for now skip videos from other channels:
                 if "snippet" in related and related["snippet"]["channelId"] \
                         != settings.YOUTUBE_CHANNEL["id"]:
                     continue
 
-                related_obj = Video.objects.get(youtube_id=related["id"])
-                video.related_videos.add(related_obj)
+                await self.db.db.collection("videos").document(video_id)\
+                    .collection("related_videos").document(related["id"]).set(related)
 
-                logger.info("Added new related videos to video %s" %
-                            (video))
+                logger.info("Added new related videos to video %s" % (video))
 
-    def _fill_transcripts(self):
-        for video in Video.objects.all():
-            video_data = video.data
-            if video_data.transcript or video_data.transcript_available is not None:
+    async def _fill_transcripts(self):
+        async for video in self.db.db.collection("videos").stream():
+            video_id = video.get("id")
+            video_data_ref = self.db.db.collection(
+                "persistent_video_datas").get(video_id)
+            video_data = video_data_ref.to_dict()
+            if video_data["transcript"] or video_data["transcript_available"] is not None:
                 continue
             try:
-                video_data.transcript = self.yt_api.get_video_transcript(
-                    video.youtube_id)
-                video_data.transcript_available = True
+                video_data["transcript"] = self.yt_api.get_video_transcript(
+                    video_id)
+                video_data["transcript_available"] = True
                 logger.info(
-                    "Transcription downloaded for video: " + str(video))
+                    "Transcription downloaded for video: " + str(video_id))
             except youtube_transcript_api.TooManyRequests as e:
                 logger.warn(e)
-                video_data.transcript_available = None  # leave None so that it retries later
+                # leave None so that it retries later
+                video_data["transcript_available"] = None
                 break
             except youtube_transcript_api.CouldNotRetrieveTranscript as e:
                 logger.info(
-                    "Transcription not available for video: " + str(video))
-                video_data.transcript_available = False
+                    "Transcription not available for video: " + str(video_id))
+                video_data["transcript_available"] = False
             finally:
-                video_data.save()
+                await video_data_ref.set(video_data)

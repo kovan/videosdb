@@ -35,6 +35,7 @@ ALLOWED_HOSTS = ["*"]
 CORS_ORIGIN_ALLOW_ALL = True
 
 env = environ.Env(DEBUG=(bool, False))
+
 env_file = os.path.join(BASE_DIR, ".env")
 
 if os.path.isfile(env_file):
