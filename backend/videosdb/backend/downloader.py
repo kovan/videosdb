@@ -20,7 +20,7 @@ class DB:
     def __init__(self):
         self.db = firestore.AsyncClient()
 
-    async def set(self, collection, id, item):
+    async def set(self, collection, id, item, deferred=False):
         if type(collection) == str:
             collection = self.db.collection(collection)
 
@@ -32,7 +32,11 @@ class DB:
             return
 
         logger.debug("Writing item to db: " + str(id))
-        await item_doc.set(item)
+
+        if deferred:
+            asyncio.create_task(item_doc.set(item))
+        else:
+            await item_doc.set(item)
 
     async def add_playlist_to_db(self, playlist, playlist_items):
         await self.set("playlists", playlist["id"], playlist)
@@ -52,13 +56,6 @@ class Downloader:
         logging.getLogger("asyncio").setLevel(logging.WARNING)
         self.db = DB()
 
-    def download_one(self, youtube_id):
-        self.enqueue_videos([youtube_id])
-
-    def download_all(self):
-        all = Video.objects.all()
-        self.enqueue_videos([v.youtube_id for v in all])
-
     def check_for_new_videos(self):
 
         logger.info("Sync start")
@@ -75,7 +72,7 @@ class Downloader:
         asyncio.get_running_loop().slow_callback_duration = 3
 
         try:
-            # await self._sync_db_with_youtube()
+            await self._sync_db_with_youtube()
             await self._fill_related_videos()
         except YoutubeAPI.YoutubeAPIError as e:
             # this usually raises when YT API quota has been exeeced (HTTP code 403)
@@ -92,9 +89,9 @@ class Downloader:
             video_id = playlist_item["snippet"]["resourceId"]["videoId"]
             if video_id in processed_videos:
                 return
-            if "DEBUG" in os.environ:
-                if len(processed_videos) > 100:
-                    return
+            if "DEBUG" in os.environ and len(processed_videos) > 100:
+                return
+
             processed_videos.add(video_id)
 
             # some playlists include videos from other channels
@@ -107,16 +104,15 @@ class Downloader:
             if not video:
                 return
 
-            await self.db.set("videos", video_id, video)
+            await self.db.set("videos", video_id, video, True)
 
             logger.debug("Processing video: " + video_id)
 
         async def _process_playlist(playlist_id):
             if playlist_id in processed_playlists:
                 return
-            if "DEBUG" in os.environ:
-                if len(processed_playlists) > 100:
-                    return
+            if "DEBUG" in os.environ and len(processed_playlists) > 100:
+                return
 
             processed_playlists.add(playlist_id)
 
@@ -139,8 +135,7 @@ class Downloader:
                 await self.db.add_playlist_to_db(playlist, playlist_items)
 
             for playlist_item in playlist_items:
-                tasks.append(asyncio.create_task(
-                    _process_video(playlist_item)))
+                asyncio.create_task(_process_video(playlist_item))
 
         async def asyncgenerator(item):
             yield item
@@ -160,15 +155,14 @@ class Downloader:
             self.yt_api.list_channel_playlist_ids(channel_id)
         )
 
-        tasks = []
         processed_videos = set()  # just not to not process same video twice
         processed_playlists = set()  # same
 
         async with playlist_ids.stream() as streamer:
             async for id in streamer:
-                tasks.append(asyncio.create_task(_process_playlist(id)))
+                asyncio.create_task(_process_playlist(id))
 
-        await asyncio.gather(*tasks)
+        await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
 
     async def _fill_related_videos(self):
 
@@ -186,17 +180,19 @@ class Downloader:
                     .collection("related_videos")
                 await self.db.set(collection, related["id"]["videoId"], related)
 
-                logger.info("Added new related videos to video %s" % (video))
+                logger.info("Added new related videos to video %s" %
+                            (video_id))
 
     async def _fill_transcripts(self):
+        logger.info("Filling transcripts.")
         async for video in self.db.db.collection("videos").stream():
             video_id = video.get("id")
             video_data_ref = self.db.db.collection(
                 "persistent_video_datas").document(video_id)
 
-            video_data = await video_data_ref.get()
-            if not video_data.exists:
-                video_data = dict()
+            video_data_doc = await video_data_ref.get()
+
+            video_data = video_data_doc.to_dict() if video_data_doc.exists else dict()
 
             if video_data.get("transcript") or video_data.get("transcript_available") is not None:
                 continue

@@ -1,3 +1,4 @@
+import asyncio
 import io
 import json
 import logging
@@ -46,17 +47,18 @@ class Cache:
         return hashlib.sha256(key.encode('utf-8')).hexdigest()
 
     async def get(self, key):
-
         doc = await self.db.collection("cache").document(self._key_func(key)).get()
         if doc.exists:
             return doc.to_dict()
         return None
 
-    async def set(self, key, val):
-        return await self.db.collection("cache").document(self._key_func(key)).set(val)
+    async def set(self, key, val):  # deferred
+        asyncio.create_task(self.db.collection(
+            "cache").document(self._key_func(key)).set(val))
 
     async def delete(self, key):
-        return await self.db.collection("cache").document(self._key_func(key)).delete()
+        asyncio.create_task(self.db.collection(
+            "cache").document(self._key_func(key)).delete())
 
 
 class YoutubeAPI:
@@ -157,11 +159,13 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     async def _request_one(self, url):
         async for item in self._request_many(url):
             return item
 
     async def _request_many(self, url):
+
         async def _raw_get(url):
             headers = {}
             cached = await self.cache.get(final_url)
@@ -171,20 +175,19 @@ class YoutubeAPI:
             response = await self.http.get(
                 self.root_url + final_url, timeout=10.0, headers=headers)
 
-            if response.status_code == 200:
-                await self.cache.set(final_url, {
-                    "headers": dict(response.headers),
-                    "content": response.json()
-                })
-                json_response = response.json()
-            elif response.status_code == 304:
+            if response.status_code == 304:
                 logger.debug("Using cached response.")
-                json_response = cached["content"]
-            elif response.status_code >= 400:
+                return cached["content"], True
+
+            if response.status_code >= 400:
                 raise self.YoutubeAPIError(
                     response.status_code, response.json())
 
-            return json_response
+            await self.cache.set(final_url, {
+                "headers": dict(response.headers),
+                "content": response.json()
+            })
+            return response.json(), False
 
         url += "&key=" + self.yt_key
         page_token = None
@@ -195,10 +198,9 @@ class YoutubeAPI:
             else:
                 final_url = url
             logger.debug("requesting: " + final_url)
-            json_response = await _raw_get(url)
-            items = json_response["items"]
+            json_response, from_cache = await _raw_get(url)
 
-            for item in items:
+            for item in json_response["items"]:
                 yield item
 
             if not "nextPageToken" in json_response:
