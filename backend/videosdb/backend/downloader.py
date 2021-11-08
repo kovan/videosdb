@@ -20,28 +20,28 @@ class DB:
     def __init__(self):
         self.db = firestore.AsyncClient()
 
-    async def add_or_update(self, collection, item):
+    async def set(self, collection, id, item):
         if type(collection) == str:
             collection = self.db.collection(collection)
 
-        item_doc = collection.document(item["id"])
+        item_doc = collection.document(id)
         item_ref = await item_doc.get(["etag"])
 
         # not modified
         if item_ref.exists and item_ref.get("etag") == item["etag"]:
             return
 
-        logger.debug("Writing item to db: " + str(item["id"]))
+        logger.debug("Writing item to db: " + str(id))
         await item_doc.set(item)
 
     async def add_playlist_to_db(self, playlist, playlist_items):
-        await self.add_or_update("playlists", playlist)
+        await self.set("playlists", playlist["id"], playlist)
 
         for item in playlist_items:
             items_col = self.db.collection("playlists").document(
                 playlist["id"]).collection("playlist_items")
 
-            await self.add_or_update(items_col, item)
+            await self.set(items_col, item["id"], item)
 
 
 class Downloader:
@@ -68,23 +68,23 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
-
     async def _check_for_new_videos(self):
 
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
+        # in seconds, for warnings, in prod this does nothing:
+        asyncio.get_running_loop().slow_callback_duration = 3
 
         try:
-            await self._sync_db_with_youtube()
-            await asyncio.gather(
-                self._fill_related_videos(),
-                self._fill_transcripts())
-
+            # await self._sync_db_with_youtube()
+            await self._fill_related_videos()
         except YoutubeAPI.YoutubeAPIError as e:
             # this usually raises when YT API quota has been exeeced (HTTP code 403)
             if e.status != 403:
                 raise e
             else:
                 logger.exception(e)
+
+        await self._fill_transcripts()
 
     async def _sync_db_with_youtube(self):
 
@@ -107,7 +107,7 @@ class Downloader:
             if not video:
                 return
 
-            await self.db.add_or_update("videos", video)
+            await self.db.set("videos", video_id, video)
 
             logger.debug("Processing video: " + video_id)
 
@@ -182,8 +182,9 @@ class Downloader:
                         != settings.YOUTUBE_CHANNEL["id"]:
                     continue
 
-                await self.db.db.collection("videos").document(video_id)\
-                    .collection("related_videos").document(related["id"]).set(related)
+                collection = self.db.db.collection("videos").document(video_id)\
+                    .collection("related_videos")
+                await self.db.set(collection, related["id"]["videoId"], related)
 
                 logger.info("Added new related videos to video %s" % (video))
 
@@ -215,4 +216,4 @@ class Downloader:
                     "Transcription not available for video: " + str(video_id))
                 video_data["transcript_available"] = False
             finally:
-                await video_data_ref.set(video_data)
+                await video_data_ref.set(video_data, merge=True)

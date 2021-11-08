@@ -74,9 +74,6 @@ class DownloaderTest(TestCase):
         # v.save()
         dl = Downloader()
         dl.check_for_new_videos()
-        self.assertTrue(Video.objects.all().count() > 1)
-        self.assertTrue(Playlist.objects.all().count() > 1)
-        self.assertTrue(Tag.objects.all().count() > 1)
 
     # @override_settings(MEDIA_ROOT="test_media")
     # class DownloaderTest(TestCase):
