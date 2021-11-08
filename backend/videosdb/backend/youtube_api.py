@@ -6,16 +6,9 @@ import os
 import re
 import tempfile
 import hashlib
-# from httpx_caching import CachingClient
-import aiogoogle
 import executor
-# import aiohttp
 import httpx
-import jsonpickle
 import youtube_transcript_api
-from aiogoogle import Aiogoogle
-from asgiref.sync import sync_to_async
-from django.conf import settings
 from executor import execute
 from google.cloud import firestore
 
@@ -52,13 +45,11 @@ class Cache:
             return doc.to_dict()
         return None
 
-    async def set(self, key, val):  # deferred
-        asyncio.create_task(self.db.collection(
-            "cache").document(self._key_func(key)).set(val))
+    async def set(self, key, val):
+        self.db.collection("cache").document(self._key_func(key)).set(val)
 
     async def delete(self, key):
-        asyncio.create_task(self.db.collection(
-            "cache").document(self._key_func(key)).delete())
+        self.db.collection("cache").document(self._key_func(key)).delete()
 
 
 class YoutubeAPI:
@@ -168,12 +159,12 @@ class YoutubeAPI:
 
         async def _raw_get(url):
             headers = {}
-            cached = await self.cache.get(final_url)
+            cached = await self.cache.get(url)
             if cached:
-                headers["If-None-Match"] = cached["headers"]["etag"]
+                headers["If-None-Match"] = cached["content"]["etag"]
 
             response = await self.http.get(
-                self.root_url + final_url, timeout=10.0, headers=headers)
+                self.root_url + url, timeout=10.0, headers=headers)
 
             if response.status_code == 304:
                 logger.debug("Using cached response.")
@@ -183,10 +174,11 @@ class YoutubeAPI:
                 raise self.YoutubeAPIError(
                     response.status_code, response.json())
 
-            await self.cache.set(final_url, {
+            asyncio.create_task(self.cache.set(url, {
+                "url": url,
                 "headers": dict(response.headers),
                 "content": response.json()
-            })
+            }))  # defer
             return response.json(), False
 
         url += "&key=" + self.yt_key

@@ -45,7 +45,7 @@ class DB:
             items_col = self.db.collection("playlists").document(
                 playlist["id"]).collection("playlist_items")
 
-            await self.set(items_col, item["id"], item)
+            await self.set(items_col, item["id"], item, True)
 
 
 class Downloader:
@@ -65,6 +65,7 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
+
     async def _check_for_new_videos(self):
 
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
@@ -80,6 +81,8 @@ class Downloader:
                 raise e
             else:
                 logger.exception(e)
+        finally:
+            await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
 
         await self._fill_transcripts()
 
@@ -162,8 +165,6 @@ class Downloader:
             async for id in streamer:
                 asyncio.create_task(_process_playlist(id))
 
-        await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
-
     async def _fill_related_videos(self):
 
         # use remaining YT API daily quota to download a few related video lists:
@@ -184,7 +185,7 @@ class Downloader:
                             (video_id))
 
     async def _fill_transcripts(self):
-        logger.info("Filling transcripts.")
+        logger.info("Filling transcripts...")
         async for video in self.db.db.collection("videos").stream():
             video_id = video.get("id")
             video_data_ref = self.db.db.collection(
