@@ -46,15 +46,15 @@ class Cache:
         return None
 
     async def set(self, key, val):
-        self.db.collection("cache").document(self._key_func(key)).set(val)
+        await self.db.collection("cache").document(self._key_func(key)).set(val)
 
     async def delete(self, key):
-        self.db.collection("cache").document(self._key_func(key)).delete()
+        await self.db.collection("cache").document(self._key_func(key)).delete()
 
 
 class YoutubeAPI:
 
-    class YoutubeAPIError(Exception):
+    class QuotaExceededError(Exception):
         def __init__(self, status, json):
             self.status = status
             self.json = json
@@ -170,9 +170,11 @@ class YoutubeAPI:
                 logger.debug("Using cached response.")
                 return cached["content"], True
 
-            if response.status_code >= 400:
-                raise self.YoutubeAPIError(
+            if response.status_code == 403:
+                raise self.QuotaExceededError(
                     response.status_code, response.json())
+
+            response.raise_for_status()
 
             asyncio.create_task(self.cache.set(url, {
                 "url": url,
