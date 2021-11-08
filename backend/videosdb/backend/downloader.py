@@ -65,18 +65,19 @@ class Downloader:
         asyncio.run(self._check_for_new_videos())
         logger.info("Sync finished")
 
-        self._fill_related_videos()
-        self._fill_transcripts()
-
 
 # PRIVATE: -------------------------------------------------------------------
+
 
     async def _check_for_new_videos(self):
 
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
 
         try:
-            await self._sync_db_with_youtube()
+            # await self._sync_db_with_youtube()
+            await asyncio.gather(
+                self._fill_related_videos(),
+                self._fill_transcripts())
 
         except YoutubeAPI.YoutubeAPIError as e:
             # this usually raises when YT API quota has been exeeced (HTTP code 403)
@@ -176,7 +177,7 @@ class Downloader:
         logger.info("Filling related videos info.")
         async for video in self.db.db.collection("videos").stream():
             video_id = video.get("id")
-            async for related in self.yt_api.get_related_videos(video_id):
+            for related in await self.yt_api.get_related_videos(video_id):
                 # for now skip videos from other channels:
                 if "snippet" in related and related["snippet"]["channelId"] \
                         != settings.YOUTUBE_CHANNEL["id"]:
@@ -191,9 +192,13 @@ class Downloader:
         async for video in self.db.db.collection("videos").stream():
             video_id = video.get("id")
             video_data_ref = self.db.db.collection(
-                "persistent_video_datas").get(video_id)
-            video_data = video_data_ref.to_dict()
-            if video_data["transcript"] or video_data["transcript_available"] is not None:
+                "persistent_video_datas").document(video_id)
+
+            video_data = await video_data_ref.get()
+            if not video_data.exists:
+                video_data = dict()
+
+            if video_data.get("transcript") or video_data.get("transcript_available") is not None:
                 continue
             try:
                 video_data["transcript"] = self.yt_api.get_video_transcript(
