@@ -14,8 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def gather_pending_tasks():
-    tasks = set(*asyncio.all_tasks() - {asyncio.current_task()})
-    asyncio.gather(*tasks)
+    asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
 
 
 class DB:
@@ -74,7 +73,6 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
-
     async def _check_for_new_videos(self):
 
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
@@ -83,7 +81,6 @@ class Downloader:
 
         try:
             video_ids = await self._sync_db_with_youtube()
-            gather_pending_tasks()
             await self._fill_related_videos(video_ids)
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
@@ -91,7 +88,6 @@ class Downloader:
             video_ids = await self.db.list_video_ids()
 
         await self._fill_transcripts(video_ids)
-        gather_pending_tasks()
 
     async def _sync_db_with_youtube(self):
 
@@ -99,7 +95,7 @@ class Downloader:
             video_id = playlist_item["snippet"]["resourceId"]["videoId"]
             if video_id in processed_videos:
                 return
-            if "DEBUG" in os.environ and len(processed_videos) > 100:
+            if "DEBUG" in os.environ and len(processed_videos) > 10:
                 return
 
             processed_videos.add(video_id)
@@ -114,14 +110,14 @@ class Downloader:
             if not video:
                 return
 
-            await self.db.set("videos", video_id, video, True)
+            asyncio.create_task(self.db.set("videos", video_id, video, True))
 
-            logger.debug("Processing video: " + video_id)
+            logger.debug("Processed video: " + video_id)
 
         async def _process_playlist(playlist_id):
             if playlist_id in processed_playlists:
                 return
-            if "DEBUG" in os.environ and len(processed_playlists) > 100:
+            if "DEBUG" in os.environ and len(processed_playlists) > 10:
                 return
 
             processed_playlists.add(playlist_id)
@@ -142,7 +138,8 @@ class Downloader:
             if playlist["snippet"]["title"] != "Uploads from " + \
                     playlist["snippet"]["channelTitle"]:
 
-                await self.db.add_playlist_to_db(playlist, playlist_items)
+                asyncio.create_task(
+                    self.db.add_playlist_to_db(playlist, playlist_items))
 
             for playlist_item in playlist_items:
                 asyncio.create_task(_process_video(playlist_item))
@@ -172,6 +169,7 @@ class Downloader:
             async for id in streamer:
                 asyncio.create_task(_process_playlist(id))
 
+        gather_pending_tasks()
         return processed_videos
 
     async def _fill_related_videos(self, video_ids):
@@ -188,11 +186,13 @@ class Downloader:
 
                 collection = self.db.db.collection("videos").document(video_id)\
                     .collection("related_videos")
-                self.db.set(
-                    collection, related["id"]["videoId"], related, True)
+                asyncio.create_task(self.db.set(
+                    collection, related["id"]["videoId"], related, True))
 
                 logger.info("Added new related videos to video %s" %
                             (video_id))
+
+        gather_pending_tasks()
 
     async def _fill_transcripts(self, video_ids):
         logger.info("Filling transcripts...")
@@ -223,3 +223,5 @@ class Downloader:
                 video_data["transcript_available"] = False
             finally:
                 asyncio.create_task(video_data_ref.set(video_data, merge=True))
+
+        gather_pending_tasks()
