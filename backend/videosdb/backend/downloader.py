@@ -133,11 +133,10 @@ class Downloader:
 
             playlist_items = [item async for item in self.yt_api.list_playlist_items(playlist_id)]
 
-            await self.db.add_playlist_to_db(playlist, playlist_items)
-
-            if playlist["snippet"]["title"] == "Uploads from " + \
+            if playlist["snippet"]["title"] != "Uploads from " + \
                     playlist["snippet"]["channelTitle"]:
-                playlist = None
+
+                await self.db.add_playlist_to_db(playlist, playlist_items)
 
             for playlist_item in playlist_items:
                 tasks.append(asyncio.create_task(
