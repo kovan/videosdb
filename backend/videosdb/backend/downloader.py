@@ -74,7 +74,7 @@ class Downloader:
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
 
         try:
-            # await self._sync_db_with_youtube()
+            await self._sync_db_with_youtube()
             await asyncio.gather(
                 self._fill_related_videos(),
                 self._fill_transcripts())
