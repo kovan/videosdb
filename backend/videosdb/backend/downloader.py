@@ -6,7 +6,7 @@ from google.cloud import firestore
 import youtube_transcript_api
 from aiostream import stream
 from django.conf import settings
-
+from asyncio import create_task
 
 from .youtube_api import YoutubeAPI
 
@@ -21,7 +21,7 @@ class DB:
     def __init__(self):
         self.db = firestore.AsyncClient()
 
-    async def set(self, collection, id, item, deferred=False):
+    async def set_item(self, collection, id, item, deferred=True):
         if type(collection) == str:
             collection = self.db.collection(collection)
 
@@ -36,18 +36,9 @@ class DB:
         logger.debug("Writing item to db: " + str(id))
 
         if deferred:
-            asyncio.create_task(item_ref.set(item))
+            create_task(item_ref.set(item))
         else:
             await item_ref.set(item)
-
-    async def add_playlist_to_db(self, playlist, playlist_items):
-        await self.set("playlists", playlist["id"], playlist)
-
-        for item in playlist_items:
-            items_col = self.db.collection("playlists").document(
-                playlist["id"]).collection("playlist_items")
-
-            await self.set(items_col, item["id"], item, True)
 
     async def list_video_ids(self):
         video_ids = []
@@ -110,7 +101,7 @@ class Downloader:
             if not video:
                 return
 
-            asyncio.create_task(self.db.set("videos", video_id, video, True))
+            create_task(self.db.set_item("videos", video_id, video))
 
             logger.debug("Processed video: " + video_id)
 
@@ -133,16 +124,22 @@ class Downloader:
             logger.info("Found playlist: %s (ID: %s)" % (
                         str(playlist["snippet"]["title"]), playlist["id"]))
 
-            playlist_items = [item async for item in self.yt_api.list_playlist_items(playlist_id)]
+            exclude_playlist = playlist["snippet"]["title"] != "Uploads from " + \
+                playlist["snippet"]["channelTitle"]
 
-            if playlist["snippet"]["title"] != "Uploads from " + \
-                    playlist["snippet"]["channelTitle"]:
+            if not exclude_playlist:
+                await self.db.set_item("playlists", playlist["id"], playlist, False)
 
-                asyncio.create_task(
-                    self.db.add_playlist_to_db(playlist, playlist_items))
+            items = self.yt_api.list_playlist_items(playlist_id)
+            async for item in items:
+                create_task(_process_video(item))
+                if exclude_playlist:
+                    continue
 
-            for playlist_item in playlist_items:
-                asyncio.create_task(_process_video(playlist_item))
+                items_col = self.db.db.collection("playlists").document(
+                    playlist["id"]).collection("playlist_items")
+
+                create_task(self.db.set_item(items_col, item["id"], item))
 
         async def asyncgenerator(item):
             yield item
@@ -167,7 +164,7 @@ class Downloader:
 
         async with playlist_ids.stream() as streamer:
             async for id in streamer:
-                asyncio.create_task(_process_playlist(id))
+                create_task(_process_playlist(id))
 
         gather_pending_tasks()
         return processed_videos
@@ -186,8 +183,8 @@ class Downloader:
 
                 collection = self.db.db.collection("videos").document(video_id)\
                     .collection("related_videos")
-                asyncio.create_task(self.db.set(
-                    collection, related["id"]["videoId"], related, True))
+                create_task(self.db.set_item(
+                    collection, related["id"]["videoId"], related))
 
                 logger.info("Added new related videos to video %s" %
                             (video_id))
@@ -222,6 +219,6 @@ class Downloader:
                     "Transcription not available for video: " + str(video_id))
                 video_data["transcript_available"] = False
             finally:
-                asyncio.create_task(video_data_ref.set(video_data, merge=True))
+                create_task(video_data_ref.set(video_data, merge=True))
 
         gather_pending_tasks()

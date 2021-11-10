@@ -29,20 +29,20 @@ async def test_app_loaded(client):
 @pytest.mark.asyncio
 async def test_http_to_https(client):
     r = await client.get("http://www.sadhguru.digital")
-    assert r.url.scheme == "https"
-    assert r.status_code == 200
+    assert r.next_request.url.scheme == "https"
+    assert r.status_code == 301
 
 
 @pytest.mark.asyncio
 async def test_non_www_to_www(client):
     r = await client.get("https://sadhguru.digital")
-    assert r.url.host == "www.sadhguru.digital"
-    assert r.status_code == 200
+    assert r.next_request.url.host == "www.sadhguru.digital"
+    assert r.status_code == 301
 
 
 @pytest.mark.asyncio
 async def test_api_no_404(client):
-    r = await client.get("https://backend.sadhguru.digital/api")
+    r = await client.get("https://backend.sadhguru.digital/api/")
     assert r.status_code == 200
 
 
