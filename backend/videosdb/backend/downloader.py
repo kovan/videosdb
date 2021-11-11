@@ -76,6 +76,7 @@ class Downloader:
 
         try:
             video_ids = await self._sync_db_with_youtube()
+            gather_pending_tasks()
             await self._fill_related_videos(video_ids)
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
@@ -83,6 +84,8 @@ class Downloader:
             video_ids = await self.db.list_video_ids()
 
         await self._fill_transcripts(video_ids)
+
+        gather_pending_tasks()
 
     async def _sync_db_with_youtube(self):
 
@@ -128,15 +131,13 @@ class Downloader:
             logger.info("Found playlist: %s (ID: %s)" % (
                         str(playlist["snippet"]["title"]), playlist["id"]))
 
-            playlist_items = [item async for item in self.yt_api.list_playlist_items(playlist_id)]
-
             exclude_playlist = playlist["snippet"]["title"] == "Uploads from " + \
                 playlist["snippet"]["channelTitle"]
 
             if not exclude_playlist:
-                await self.set("playlists", playlist["id"], playlist, False)
+                await self.db.set("playlists", playlist["id"], playlist, False)
 
-            for item in playlist_items:
+            async for item in self.yt_api.list_playlist_items(playlist_id):
                 asyncio.create_task(_process_video(item))
                 if exclude_playlist:
                     continue
@@ -144,7 +145,7 @@ class Downloader:
                 items_col = self.db.db.collection("playlists").document(
                     playlist["id"]).collection("playlist_items")
 
-                self.db.set(items_col, item["id"], item)
+                await self.db.set(items_col, item["id"], item)
 
         async def asyncgenerator(item):
             yield item
