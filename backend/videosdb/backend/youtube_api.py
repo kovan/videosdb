@@ -111,10 +111,12 @@ class YoutubeAPI:
             yield item["id"]
 
     async def get_video_info(self, youtube_id):
-        url = "/videos?part=snippet,contentDetails,statistics"
-        url += "&id=" + youtube_id
-
-        item = await self._request_one(url)
+        url = "/videos"
+        params = {
+            "part": "snippet,contentDetails,statistics",
+            "id": youtube_id
+        }
+        item = await self._request_one(url, params)
         if not item:
             return None
         return item
