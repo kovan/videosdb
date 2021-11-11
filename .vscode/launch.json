@@ -16,10 +16,10 @@
       "env": {
         "DEBUG": "1",
         "LOGLEVEL": "DEBUG",
+        //"YOUTUBE_API_NO_CACHE": "1",
         "YOUTUBE_API_URL": "http://127.0.0.1:2000/youtube/v3",
         "PYTHONDEVMODE": "1",
-        "FIRESTORE_EMULATOR_HOST": "localhost:6001",
-        //        "HTTP_PROXY": "http://localhost:3128"
+        "FIRESTORE_EMULATOR_HOST": "localhost:6001"
       },
       "args": [
         "test",

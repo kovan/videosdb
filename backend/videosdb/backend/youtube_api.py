@@ -9,11 +9,6 @@ import hashlib
 import executor
 import httpx
 import youtube_transcript_api
-import aiogoogle
-
-from aiogoogle.sessions.aiohttp_session import AiohttpSession
-import aiohttp
-from aiogoogle import Aiogoogle
 from executor import execute
 from google.cloud import firestore
 
@@ -81,26 +76,6 @@ class YoutubeAPI:
         obj.cache = Cache()
         return obj
 
-    #     obj.aiogoogle = Aiogoogle(
-    #         api_key=yt_key, session_factory=lambda: AiohttpSession(trust_env=True))
-    #     obj.api = await obj.aiogoogle.discover('youtube', 'v3')
-    #     return obj
-
-    # async def _aiogoogle_run(self, method):
-    #     async with self.aiogoogle:
-    #         return await self.aiogoogle.as_api_key(
-    #             method
-    #         )
-
-    # async def aio_list_playlist_items(self, playlist_id):
-    #     result = await self._aiogoogle_run(
-    #         self.api.playlistItems.list(
-    #             id=playlist_id,
-    #             part="snippet"
-    #         )
-    #     )
-    #     return result
-
     async def get_playlist_info(self, playlist_id):
         url = "/playlists?part=snippet"
         url += "&id=" + playlist_id
@@ -109,7 +84,7 @@ class YoutubeAPI:
     async def list_channnelsection_playlist_ids(self, channel_id):
         url = "/channelSections?part=contentDetails"
         url += "&channelId=" + channel_id
-        ids = []
+
         async for item in self._request_many(url):
             details = item.get("contentDetails")
             if not details:
@@ -117,25 +92,30 @@ class YoutubeAPI:
             if not "playlists" in details:
                 continue
             for id in details["playlists"]:
-                ids.append(id)
-        return ids
+                yield id
 
     async def list_channel_playlist_ids(self, channel_id):
         url = "/playlists?part=snippet%2C+contentDetails"
         url += "&channelId=" + channel_id
 
-        return (item["id"] async for item in self._request_many(url))
+        async for item in self._request_many(url):
+            yield item["id"]
 
     async def get_video_info(self, youtube_id):
         url = "/videos?part=snippet,contentDetails,statistics"
         url += "&id=" + youtube_id
 
-        return await self._request_one(url)
+        item = await self._request_one(url)
+        if not item:
+            return None
+        return item
 
     async def list_playlist_items(self, playlist_id):
         url = "/playlistItems?part=snippet"
         url += "&playlistId=" + playlist_id
-        return (item async for item in self._request_many(url))
+
+        async for item in self._request_many(url):
+            yield item
 
     async def get_related_videos(self, youtube_id):
         logging.info("getting related videos")
@@ -174,12 +154,10 @@ class YoutubeAPI:
     async def _request_one(self, url):
         async for item in self._request_many(url):
             return item
-        else:
-            return None
 
     async def _request_many(self, url):
 
-        async def _get_with_cache(url):
+        async def _raw_get(url):
             headers = {}
             cached = await self.cache.get(url)
             if cached:
@@ -190,21 +168,23 @@ class YoutubeAPI:
 
             if response.status_code == 304:
                 logger.debug("Using cached response.")
-                return response, cached["content"], True
+                return cached["content"], True
 
-            if response.status_code == 200:
-                logger.debug("Using new response.")
-                asyncio.create_task(self.cache.set(url, {
-                    "url": url,
-                    "headers": dict(response.headers),
-                    "content": response.json()
-                }))  # defer
+            if response.status_code == 403:
+                raise self.QuotaExceededError(
+                    response.status_code, response.json())
 
-            return response, False
+            response.raise_for_status()
+
+            asyncio.create_task(self.cache.set(url, {
+                "url": url,
+                "headers": dict(response.headers),
+                "content": response.json()
+            }))  # defer
+            return response.json(), False
 
         url += "&key=" + self.yt_key
         page_token = None
-        results = {}
 
         while True:
             if page_token:
@@ -212,27 +192,15 @@ class YoutubeAPI:
             else:
                 final_url = url
             logger.debug("requesting: " + final_url)
+            json_response, from_cache = await _raw_get(url)
 
-            if "YOUTUBE_API_ENABLE_CACHE" in os.environ:
-                response, content, from_cache = await _get_with_cache(url)
-            else:
-                response = await self.http.get(self.root_url + url, timeout=10.0)
-
-            if response.status_code == 403:
-                raise self.QuotaExceededError(
-                    response.status_code, response.json())
-
-            response.raise_for_status()
-            json_response = response.json()
-
-            results = results | json_response
+            for item in json_response["items"]:
+                yield item
 
             if not "nextPageToken" in json_response:
                 break
             else:
                 page_token = json_response["nextPageToken"]
-
-        return results
 
 
 class YoutubeDL:
