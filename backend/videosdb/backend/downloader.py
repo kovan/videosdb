@@ -34,19 +34,10 @@ class DB:
         else:
             await item_ref.set(item)
 
-    async def add_playlist_to_db(self, playlist, playlist_items):
-        await self.set("playlists", playlist["id"], playlist)
-
-        for item in playlist_items:
-            items_col = self.db.collection("playlists").document(
-                playlist["id"]).collection("playlist_items")
-
-            await self.set(items_col, item["id"], item, True)
-
     async def list_video_ids(self):
         video_ids = []
-        async for video in self.db.collection("videos").stream():
-            video_ids.append(video.get("id"))
+        async for video_doc in self.db.collection("videos").stream():
+            video_ids.append(video_doc.get("id"))
         return video_ids
 
 
@@ -67,7 +58,6 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
-
     async def _check_for_new_videos(self):
 
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
@@ -80,11 +70,10 @@ class Downloader:
             await self._fill_related_videos(video_ids)
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
-            # leave a full video_ids list for other uses:
-            video_ids = await self.db.list_video_ids()
 
+        gather_pending_tasks()
+        video_ids = await self.db.list_video_ids()
         await self._fill_transcripts(video_ids)
-
         gather_pending_tasks()
 
     async def _sync_db_with_youtube(self):
