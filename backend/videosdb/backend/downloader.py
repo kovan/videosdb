@@ -6,7 +6,7 @@ from google.cloud import firestore
 import youtube_transcript_api
 from aiostream import stream
 from django.conf import settings
-
+from asyncio import create_task
 
 from .youtube_api import YoutubeAPI
 
@@ -21,7 +21,7 @@ class DB:
     def __init__(self):
         self.db = firestore.AsyncClient()
 
-    async def set(self, collection, id, item, deferred=True):
+    async def set(self, collection, id, item):
         if type(collection) == str:
             collection = self.db.collection(collection)
 
@@ -29,10 +29,7 @@ class DB:
 
         logger.debug("Writing item to db: " + str(id))
 
-        if deferred:
-            asyncio.create_task(item_ref.set(item))
-        else:
-            await item_ref.set(item)
+        await item_ref.set(item)
 
     async def list_video_ids(self):
         video_ids = []
@@ -97,7 +94,7 @@ class Downloader:
             if not video:
                 return
 
-            asyncio.create_task(self.db.set("videos", video_id, video))
+            create_task(self.db.set("videos", video_id, video))
 
             logger.debug("Processed video: " + video_id)
 
@@ -124,17 +121,17 @@ class Downloader:
                 playlist["snippet"]["channelTitle"]
 
             if not exclude_playlist:
-                await self.db.set("playlists", playlist["id"], playlist, False)
+                await self.db.set("playlists", playlist["id"], playlist)
 
             async for item in self.yt_api.list_playlist_items(playlist_id):
-                asyncio.create_task(_process_video(item))
+                create_task(_process_video(item))
                 if exclude_playlist:
                     continue
 
                 items_col = self.db.db.collection("playlists").document(
                     playlist["id"]).collection("playlist_items")
 
-                await self.db.set(items_col, item["id"], item)
+                create_task(self.db.set(items_col, item["id"], item))
 
         async def asyncgenerator(item):
             yield item
@@ -159,7 +156,7 @@ class Downloader:
 
         async with playlist_ids.stream() as streamer:
             async for id in streamer:
-                asyncio.create_task(_process_playlist(id))
+                create_task(_process_playlist(id))
 
         gather_pending_tasks()
         return processed_videos
@@ -178,13 +175,11 @@ class Downloader:
 
                 collection = self.db.db.collection("videos").document(video_id)\
                     .collection("related_videos")
-                asyncio.create_task(self.db.set(
-                    collection, related["id"]["videoId"], related, True))
+                create_task(self.db.set(
+                    collection, related["id"]["videoId"], related))
 
                 logger.info("Added new related videos to video %s" %
                             (video_id))
-
-        gather_pending_tasks()
 
     async def _fill_transcripts(self, video_ids):
         logger.info("Filling transcripts...")
@@ -214,6 +209,4 @@ class Downloader:
                     "Transcription not available for video: " + str(video_id))
                 video_data["transcript_available"] = False
             finally:
-                asyncio.create_task(video_data_ref.set(video_data, merge=True))
-
-        gather_pending_tasks()
+                create_task(video_data_ref.set(video_data, merge=True))
