@@ -21,17 +21,11 @@ class DB:
     def __init__(self):
         self.db = firestore.AsyncClient()
 
-    async def set(self, collection, id, item, deferred=False):
+    async def set(self, collection, id, item, deferred=True):
         if type(collection) == str:
             collection = self.db.collection(collection)
 
         item_ref = collection.document(id)
-        item_doc = await item_ref.get(["etag"])
-
-        # not modified
-        if item_doc.exists and item_doc.get("etag") == item["etag"]:
-            logger.debug("Item not modified: " + str(id))
-            return
 
         logger.debug("Writing item to db: " + str(id))
 
@@ -73,6 +67,7 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
+
     async def _check_for_new_videos(self):
 
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
@@ -110,7 +105,7 @@ class Downloader:
             if not video:
                 return
 
-            asyncio.create_task(self.db.set("videos", video_id, video, True))
+            asyncio.create_task(self.db.set("videos", video_id, video))
 
             logger.debug("Processed video: " + video_id)
 
@@ -135,14 +130,21 @@ class Downloader:
 
             playlist_items = [item async for item in self.yt_api.list_playlist_items(playlist_id)]
 
-            if playlist["snippet"]["title"] != "Uploads from " + \
-                    playlist["snippet"]["channelTitle"]:
+            exclude_playlist = playlist["snippet"]["title"] == "Uploads from " + \
+                playlist["snippet"]["channelTitle"]
 
-                asyncio.create_task(
-                    self.db.add_playlist_to_db(playlist, playlist_items))
+            if not exclude_playlist:
+                await self.set("playlists", playlist["id"], playlist, False)
 
-            for playlist_item in playlist_items:
-                asyncio.create_task(_process_video(playlist_item))
+            for item in playlist_items:
+                asyncio.create_task(_process_video(item))
+                if exclude_playlist:
+                    continue
+
+                items_col = self.db.db.collection("playlists").document(
+                    playlist["id"]).collection("playlist_items")
+
+                self.db.set(items_col, item["id"], item)
 
         async def asyncgenerator(item):
             yield item

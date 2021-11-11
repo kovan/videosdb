@@ -68,12 +68,13 @@ class YoutubeAPI:
 
         obj.http = httpx.AsyncClient(http2=True)
         obj.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
-        # if not "YOUTUBE_API_NO_CACHE" in os.environ:
-        #     obj.http = CachingClient(obj.http)
+
         obj.root_url = os.environ.get(
             "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
 
-        obj.cache = Cache()
+        if "YOUTUBE_API_CACHE" in os.environ:
+            obj.cache = Cache()
+
         return obj
 
     async def get_playlist_info(self, playlist_id):
@@ -157,7 +158,7 @@ class YoutubeAPI:
 
     async def _request_many(self, url):
 
-        async def _raw_get(url):
+        async def _get_with_cache(url):
             headers = {}
             cached = await self.cache.get(url)
             if cached:
@@ -168,20 +169,14 @@ class YoutubeAPI:
 
             if response.status_code == 304:
                 logger.debug("Using cached response.")
-                return cached["content"], True
-
-            if response.status_code == 403:
-                raise self.QuotaExceededError(
-                    response.status_code, response.json())
-
-            response.raise_for_status()
+                return response, True,  cached["content"]
 
             asyncio.create_task(self.cache.set(url, {
                 "url": url,
                 "headers": dict(response.headers),
                 "content": response.json()
             }))  # defer
-            return response.json(), False
+            return response, False
 
         url += "&key=" + self.yt_key
         page_token = None
@@ -192,7 +187,19 @@ class YoutubeAPI:
             else:
                 final_url = url
             logger.debug("requesting: " + final_url)
-            json_response, from_cache = await _raw_get(url)
+
+            if hasattr(self, "cache"):
+                response, from_cache, content = await _get_with_cache(url)
+            else:
+                response = await self.http.get(
+                    self.root_url + final_url, timeout=10.0)
+
+            if response.status_code == 403:
+                raise self.QuotaExceededError(
+                    response.status_code, response.json())
+
+            response.raise_for_status()
+            json_response = response.json()
 
             for item in json_response["items"]:
                 yield item
