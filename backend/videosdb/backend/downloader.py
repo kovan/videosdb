@@ -13,10 +13,6 @@ from .youtube_api import YoutubeAPI
 logger = logging.getLogger(__name__)
 
 
-def gather_pending_tasks():
-    asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
-
-
 class DB:
     def __init__(self):
         self.db = firestore.AsyncClient()
@@ -38,6 +34,14 @@ class DB:
         return video_ids
 
 
+class TaskGatherer:
+    def __enter__(self):
+        pass
+
+    def __exit__(self, type, value, traceback):
+        asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
+
+
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
@@ -55,6 +59,7 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
+
     async def _check_for_new_videos(self):
 
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
@@ -62,16 +67,16 @@ class Downloader:
         asyncio.get_running_loop().slow_callback_duration = 3
 
         try:
-            video_ids = await self._sync_db_with_youtube()
-            gather_pending_tasks()
-            await self._fill_related_videos(video_ids)
+            with TaskGatherer():
+                video_ids = await self._sync_db_with_youtube()
+            with TaskGatherer():
+                await self._fill_related_videos(video_ids)
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
 
-        gather_pending_tasks()
         video_ids = await self.db.list_video_ids()
-        await self._fill_transcripts(video_ids)
-        gather_pending_tasks()
+        with TaskGatherer():
+            await self._fill_transcripts(video_ids)
 
     async def _sync_db_with_youtube(self):
 
@@ -158,7 +163,6 @@ class Downloader:
             async for id in streamer:
                 create_task(_process_playlist(id))
 
-        gather_pending_tasks()
         return processed_videos
 
     async def _fill_related_videos(self, video_ids):
