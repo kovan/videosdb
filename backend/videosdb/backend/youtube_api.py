@@ -9,6 +9,7 @@ import hashlib
 import executor
 import httpx
 import youtube_transcript_api
+from urllib.parse import urlparse, urlencode
 from executor import execute
 from google.cloud import firestore
 
@@ -78,15 +79,20 @@ class YoutubeAPI:
         return obj
 
     async def get_playlist_info(self, playlist_id):
-        url = "/playlists?part=snippet"
-        url += "&id=" + playlist_id
-        return await self._request_one(url)
+        url = "/playlists"
+        params = {
+            "part": "snippet",
+            "id": playlist_id
+        }
+        return await self._request_one(url, params)
 
     async def list_channnelsection_playlist_ids(self, channel_id):
-        url = "/channelSections?part=contentDetails"
-        url += "&channelId=" + channel_id
-
-        async for item in self._request_many(url):
+        url = "/channelSections"
+        params = {
+            "part": "contentDetails",
+            "channelId": channel_id
+        }
+        async for item in self._request_many(url, params):
             details = item.get("contentDetails")
             if not details:
                 continue
@@ -96,10 +102,12 @@ class YoutubeAPI:
                 yield id
 
     async def list_channel_playlist_ids(self, channel_id):
-        url = "/playlists?part=snippet%2C+contentDetails"
-        url += "&channelId=" + channel_id
-
-        async for item in self._request_many(url):
+        url = "/playlists"
+        params = {
+            "part": "snippet,contentDetails",
+            "channelId": channel_id
+        }
+        async for item in self._request_many(url, params):
             yield item["id"]
 
     async def get_video_info(self, youtube_id):
@@ -112,18 +120,24 @@ class YoutubeAPI:
         return item
 
     async def list_playlist_items(self, playlist_id):
-        url = "/playlistItems?part=snippet"
-        url += "&playlistId=" + playlist_id
-
-        async for item in self._request_many(url):
+        url = "/playlistItems"
+        params = {
+            "part": "snippet",
+            "playlistId": playlist_id
+        }
+        async for item in self._request_many(url, params):
             yield item
 
     async def get_related_videos(self, youtube_id):
+        url = "/search"
+        params = {
+            "part": "snippet",
+            "type": "video",
+            "relatedToVideoId": youtube_id
+        }
         logging.info("getting related videos")
-        url = "/search?part=snippet&type=video"
-        url += "&relatedToVideoId=" + youtube_id
         result = dict()
-        async for video in self._request_many(url):
+        async for video in self._request_many(url, params):
             if video["id"]["videoId"] in result:
                 continue
 
@@ -131,9 +145,12 @@ class YoutubeAPI:
         return result.values()
 
     async def get_channel_info(self, channel_id):
-        url = "/channels?part=snippet%2CcontentDetails%2Cstatistics"
-        url += "&id=" + channel_id
-        return await self._request_one(url)
+        url = "/channels"
+        params = {
+            "part": "snippet,contentDetails,statistics",
+            "id": channel_id
+        }
+        return await self._request_one(url, params)
 
     def get_video_transcript(self, youtube_id):
         # url = "/captions?part=id,snippet&videoId=" + youtube_id
@@ -152,11 +169,11 @@ class YoutubeAPI:
 # ------- PRIVATE-------------------------------------------------------
 
 
-    async def _request_one(self, url):
-        async for item in self._request_many(url):
+    async def _request_one(self, url, params):
+        async for item in self._request_many(url, params):
             return item
 
-    async def _request_many(self, url):
+    async def _request_many(self, url, params):
 
         async def _get_with_cache(url):
             headers = {}
@@ -178,7 +195,8 @@ class YoutubeAPI:
             }))  # defer
             return response, False
 
-        url += "&key=" + self.yt_key
+        params["key"] = self.yt_key
+        url += "?" + urlencode(params)
         page_token = None
 
         while True:
