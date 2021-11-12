@@ -5,14 +5,14 @@ require("axios-debug-log");
 import { cacheAdapterEnhancer } from 'axios-extensions';
 
 function createAxios(baseURL) {
-        let myaxios =  axios.create({
-            baseURL: baseURL,
-            adapter: cacheAdapterEnhancer(axios.defaults.adapter)
-        })  
-        registerInterceptor(myaxios)
+  let myaxios = axios.create({
+    baseURL: baseURL,
+    adapter: cacheAdapterEnhancer(axios.defaults.adapter)
+  })
+  registerInterceptor(myaxios)
 
-        console.log("Axios created. baseURL: " + baseURL)
-        return myaxios
+  console.log("Axios created. baseURL: " + baseURL)
+  return myaxios
 }
 
 var sitemap = null
@@ -22,7 +22,7 @@ async function generateSitemap(baseURL) {
 
 
   function transform(obj, type) {
-    if (type == "video") 
+    if (type == "video")
       return {
         url: `/video/${obj.slug}/`,
         video: [
@@ -35,13 +35,13 @@ async function generateSitemap(baseURL) {
             content_loc:
               "https://videos.sadhguru.digital/" +
               encodeURIComponent(obj.filename),
-            player_loc: `https://www.youtube.com/watch?v=${obj.youtube_id}`,
+            player_loc: `https://www.sadhguru.digital/video/${this.video.slug}/`,
             duration: obj.duration_seconds,
           },
         ],
         lastmod: obj.modified_date,
         priority: 1.0,
-      }      
+      }
     else
       return {
         url: `/${type}/${obj.slug}/`,
@@ -54,8 +54,8 @@ async function generateSitemap(baseURL) {
       url: "/",
       changefreq: "daily",
     },
-  ]  
-  
+  ]
+
   async function download(url, type) {
     try {
       let response = await api.get(url)
@@ -68,7 +68,7 @@ async function generateSitemap(baseURL) {
 
     } catch (e) {
       console.error(e)
-    }    
+    }
   }
 
   await Promise.all([
@@ -93,4 +93,4 @@ async function getSitemap(baseURL) {
   return sitemap;
 }
 
-export { getSitemap, createAxios};
+export { getSitemap, createAxios };
