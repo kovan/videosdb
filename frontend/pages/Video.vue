@@ -98,60 +98,67 @@ b-container.m-0.p-0.mx-auto
       p(style='white-space: pre-line') {{ this.video.transcript }}
 </template>
 <script>
+import { handleAxiosError } from '~/utils/utils.client'
 
-
-import { handleAxiosError } from "~/utils/utils.client"
-
-import LazyHydrate from 'vue-lazy-hydration';
+import LazyHydrate from 'vue-lazy-hydration'
 
 export default {
   components: {
-    LazyHydrate
+    LazyHydrate,
   },
-  head () {
+  head() {
     return {
-      title: this.video.title + " - " + "Sadhguru wisdom",
+      title: this.video.title + ' - ' + 'Sadhguru wisdom',
       meta: [
         {
-          hid: "description",
-          name: "description",
-          content: this.video.description_trimmed
-        }
-      ]
+          hid: 'description',
+          name: 'description',
+          content: this.video.description_trimmed,
+        },
+      ],
     }
   },
-  data () {
+  data() {
     return {
-      video: {}
+      video: {},
     }
   },
   computed: {
     video_json: function () {
       let json = {
-        "@context": "https://schema.org",
-        "@type": "VideoObject",
-        "name": this.video.title,
-        "description": this.video.description_trimmed,
-        "thumbnailUrl": Object.values(this.video.thumbnails).map(thumb => thumb.url),
-        "uploadDate": this.video.yt_published_date,
-        "duration": this.video.duration,
-        "contentUrl": "https://videos.sadhguru.digital/" +
+        '@context': 'https://schema.org',
+        '@type': 'VideoObject',
+        name: this.video.snippet.title,
+        description: this.video.description_trimmed,
+        thumbnailUrl: Object.values(this.video.thumbnails).map(
+          (thumb) => thumb.url
+        ),
+        uploadDate: this.video.yt_published_date,
+        duration: this.video.duration,
+        contentUrl:
+          'https://videos.sadhguru.digital/' +
           encodeURIComponent(this.video.filename),
-        "embedUrl": `https://www.youtube.com/watch?v=${this.video.youtube_id}`,
+        embedUrl: `https://www.youtube.com/watch?v=${this.video.youtube_id}`,
       }
       return JSON.stringify(json)
-    }
+    },
   },
-  async asyncData ({ $axios, params, error }) {
-
-    try {
-      var url = '/videos/' + params.slug + "/"
-      let video = (await $axios.get(url)).data
-      return { video }
-    } catch (exception) {
-      handleAxiosError(exception, error)
-    }
-  }
+  methods: {},
+  async asyncData({ $fire, params, error }) {
+    const video_doc = await $fire.firestore
+      .collection('videos')
+      .doc('CR5HtTsUl5E')
+      .get()
+    let video = await video_doc.data()
+    return { video }
+    // try {
+    //   var url = '/videos/' + params.slug + '/'
+    //   let video = (await $axios.get(url)).data
+    //   return { video }
+    // } catch (exception) {
+    //   handleAxiosError(exception, error)
+    // }
+  },
 }
 </script>
 

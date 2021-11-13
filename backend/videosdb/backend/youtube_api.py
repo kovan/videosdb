@@ -23,14 +23,6 @@ def parse_youtube_id(string: str) -> str:
     return match.group(1)
 
 
-def _sentence_case(text):
-    punc_filter = re.compile(r'([.!?]\s*)')
-    split_with_punctuation = punc_filter.split(text)
-
-    final = ''.join([i.capitalize() for i in split_with_punctuation])
-    return final
-
-
 class Cache:
 
     def __init__(self):
@@ -154,22 +146,8 @@ class YoutubeAPI:
         }
         return await self._request_one(url, params)
 
-    def get_video_transcript(self, youtube_id):
-        # url = "/captions?part=id,snippet&videoId=" + youtube_id
-        # transcripts = self.transcript_fetcher.fetch(youtube_id)
-        # transcript = transcripts.find_transcript(
-        #     ("en", "en-US", "en-GB")).fetch()
-        transcripts = youtube_transcript_api.YouTubeTranscriptApi.get_transcript(
-            youtube_id, languages=("en", "en-US", "en-GB"))
-
-        result = ""
-        for d in transcripts:
-            result += d["text"] + "\n"
-        return _sentence_case(result.capitalize() + ".")
-
 
 # ------- PRIVATE-------------------------------------------------------
-
 
     async def _request_one(self, url, params):
         async for item in self._request_many(url, params):
@@ -184,7 +162,7 @@ class YoutubeAPI:
                 headers["If-None-Match"] = cached["content"]["etag"]
 
             response = await self.http.get(
-                self.root_url + url, timeout=10.0, headers=headers)
+                self.root_url + url, timeout=30.0, headers=headers)
 
             if response.status_code == 304:
                 logger.debug("Using cached response.")
@@ -212,7 +190,7 @@ class YoutubeAPI:
                 response, from_cache, content = await _get_with_cache(url)
             else:
                 response = await self.http.get(
-                    self.root_url + final_url, timeout=10.0)
+                    self.root_url + final_url, timeout=30.0)
 
             if response.status_code == 403:
                 raise self.QuotaExceededError(
@@ -293,3 +271,24 @@ class YoutubeDL:
             video = json.loads(video_json)
             videos.append(video)
         return videos
+
+
+def get_video_transcript(self, youtube_id):
+
+    def _sentence_case(text):
+        punc_filter = re.compile(r'([.!?]\s*)')
+        split_with_punctuation = punc_filter.split(text)
+
+        final = ''.join([i.capitalize() for i in split_with_punctuation])
+        return final
+    # url = "/captions?part=id,snippet&videoId=" + youtube_id
+    # transcripts = self.transcript_fetcher.fetch(youtube_id)
+    # transcript = transcripts.find_transcript(
+    #     ("en", "en-US", "en-GB")).fetch()
+    transcripts = youtube_transcript_api.YouTubeTranscriptApi.get_transcript(
+        youtube_id, languages=("en", "en-US", "en-GB"))
+
+    result = ""
+    for d in transcripts:
+        result += d["text"] + "\n"
+    return _sentence_case(result.capitalize() + ".")

@@ -63,12 +63,12 @@
 </template>
 
 <script >
-
-import { handleAxiosError } from "~/utils/utils.client"
-import LazyHydrate from 'vue-lazy-hydration';
+import { getFirestore, collection, getDocs } from 'firebase/firestore/lite'
+import { handleAxiosError } from '~/utils/utils.client'
+import LazyHydrate from 'vue-lazy-hydration'
 export default {
   components: {
-    LazyHydrate
+    LazyHydrate,
   },
   data: () => {
     return {
@@ -76,85 +76,85 @@ export default {
       videos: [],
       period_options: [
         {
-          text: "Last week",
-          value: "last_week"
+          text: 'Last week',
+          value: 'last_week',
         },
         {
-          text: "Last month",
-          value: "last_month"
+          text: 'Last month',
+          value: 'last_month',
         },
         {
-          text: "Last year",
-          value: "last_year"
+          text: 'Last year',
+          value: 'last_year',
         },
         {
-          text: "Always",
-          value: "always"
-        }
+          text: 'Always',
+          value: 'always',
+        },
       ],
-      period: "always",
+      period: 'always',
       ordering_options: [
         {
-          text: "Latest",
-          value: "-yt_published_date"
+          text: 'Latest',
+          value: '-yt_published_date',
         },
         {
-          text: "Most viewed",
-          value: "-view_count"
+          text: 'Most viewed',
+          value: '-view_count',
         },
         {
-          text: "Most liked",
-          value: "-like_count"
+          text: 'Most liked',
+          value: '-like_count',
         },
         {
-          text: "Most commented",
-          value: "-comment_count"
+          text: 'Most commented',
+          value: '-comment_count',
         },
         {
-          text: "Most favorited",
-          value: "-favorite_count"
-        }
+          text: 'Most favorited',
+          value: '-favorite_count',
+        },
       ],
-      ordering: "-yt_published_date"
+      ordering: '-yt_published_date',
     }
   },
   props: {
     current_page: () => {
-      return 1;
+      return 1
     },
     base_url: () => {
-      return "/";
+      return '/'
     },
     search: () => {
-      return "";
+      return ''
     },
     categories: () => {
-      return "";
+      return ''
     },
     tags: () => {
-      return "";
+      return ''
     },
   },
 
   watch: {
-    $route (to, from) {
+    $route(to, from) {
       this.current_page = this.$route.query.page || 1
       this.$fetch()
-    }
+    },
   },
   methods: {
-    linkGen (pageNum) {
+    linkGen(pageNum) {
       return {
         path: this.$route.path,
         query: {
-          page: pageNum
-        }
+          page: pageNum,
+        },
       }
     },
 
-    handleChange () {
+    handleChange() {
       this.$fetch()
-    }
+    },
 
     // getSrcSetAndSizes (video) {
     //   let srcset = ""
@@ -174,32 +174,28 @@ export default {
     //   return [srcset.slice(0, -2), sizes.slice(0, -2)]
     // }
   },
-  async fetch () {
-
-
-    const dummy_root = "http://example.com"  // otherwise URL doesn't work
+  async listVideos() {},
+  async fetch() {
+    const dummy_root = 'http://example.com' // otherwise URL doesn't work
     const url = new URL('/videos/', dummy_root)
-    if (this.ordering)
-      url.searchParams.append("ordering", this.ordering)
-    if (this.period)
-      url.searchParams.append("period", this.period)
+    if (this.ordering) url.searchParams.append('ordering', this.ordering)
+    if (this.period) url.searchParams.append('period', this.period)
     if (this.current_page > 1)
-      url.searchParams.append("page", this.current_page)
-    if (this.categories)
-      url.searchParams.append("categories", this.categories)
-    if (this.tags)
-      url.searchParams.append("tags", this.tags)
-    if (this.search)
-      url.searchParams.append("search", this.search)
+      url.searchParams.append('page', this.current_page)
+    if (this.categories) url.searchParams.append('categories', this.categories)
+    if (this.tags) url.searchParams.append('tags', this.tags)
+    if (this.search) url.searchParams.append('search', this.search)
 
     try {
-      let response = await this.$axios.get(url.href.replace(dummy_root, ""))
+      let response = await this.$axios.get(url.href.replace(dummy_root, ''))
       this.videos = response.data.results
-      this.page_count = response.data.count == 0 ? 0 : Math.floor(response.data.count / response.data.results.length)
+      this.page_count =
+        response.data.count == 0
+          ? 0
+          : Math.floor(response.data.count / response.data.results.length)
     } catch (exception) {
       handleAxiosError(exception, this.$nuxt.context.error)
     }
-
   },
 }
 </script>

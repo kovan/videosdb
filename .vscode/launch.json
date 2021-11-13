@@ -14,7 +14,7 @@
         "default"
       ],
       "env": {
-        "DEBUG": "1",
+        //"DEBUG": "1",
         "LOGLEVEL": "DEBUG",
         "YOUTUBE_API_URL": "http://127.0.0.1:2000/youtube/v3",
         "PYTHONDEVMODE": "1",

@@ -1,14 +1,14 @@
 import asyncio
 import logging
 import os
-
+import random
 from google.cloud import firestore
 import youtube_transcript_api
 from aiostream import stream
 from django.conf import settings
 from asyncio import create_task
 
-from .youtube_api import YoutubeAPI
+from .youtube_api import YoutubeAPI, get_video_transcript
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +35,11 @@ class DB:
 
 
 class TaskGatherer:
-    def __enter__(self):
+    async def __aenter__(self):
         pass
 
-    def __exit__(self, type, value, traceback):
-        asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
+    async def __aexit__(self, type, value, traceback):
+        await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
 
 
 class Downloader:
@@ -67,15 +67,16 @@ class Downloader:
         asyncio.get_running_loop().slow_callback_duration = 3
 
         try:
-            with TaskGatherer():
+            async with TaskGatherer():
                 video_ids = await self._sync_db_with_youtube()
-            with TaskGatherer():
+            random.shuffle(video_ids)
+            async with TaskGatherer():
                 await self._fill_related_videos(video_ids)
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
 
         video_ids = await self.db.list_video_ids()
-        with TaskGatherer():
+        async with TaskGatherer():
             await self._fill_transcripts(video_ids)
 
     async def _sync_db_with_youtube(self):
@@ -198,8 +199,7 @@ class Downloader:
             if video_data.get("transcript") or video_data.get("transcript_available") is not None:
                 continue
             try:
-                video_data["transcript"] = self.yt_api.get_video_transcript(
-                    video_id)
+                video_data["transcript"] = get_video_transcript(video_id)
                 video_data["transcript_available"] = True
                 logger.info(
                     "Transcription downloaded for video: " + str(video_id))

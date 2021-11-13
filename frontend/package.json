@@ -13,6 +13,7 @@
     "dev-debug": "node node_modules/.bin/nuxt"
   },
   "dependencies": {
+    "@nuxtjs/firebase": "^8.0.0",
     "@nuxtjs/google-analytics": "^2.4.0",
     "@nuxtjs/proxy": "^2.1.0",
     "@nuxtjs/router-extras": "^1.1.1",
@@ -25,6 +26,7 @@
     "bootstrap-vue": "^2",
     "cacheable-lookup": "^6.0.1",
     "esm": "^3.2.25",
+    "firebase": "^9.4.0",
     "nuxt": "^2.15",
     "nuxt-generate-cluster": "^2.7.0",
     "pug": "^3.0.0",

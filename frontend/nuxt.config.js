@@ -12,12 +12,12 @@ export default {
 
   privateRuntimeConfig: {
     baseURL: baseURL,
-    version: process.env.NUXT_ENV_CURRENT_GIT_SHA ,    
+    version: process.env.NUXT_ENV_CURRENT_GIT_SHA,
   },
 
   publicRuntimeConfig: {
     baseURL: process.env.API_BROWSER_URL || baseURL
-  },  
+  },
 
   generate: {
     routes: async () => {
@@ -46,12 +46,12 @@ export default {
   plugins: [
     {
       src: "~/plugins/axios.server.js"
-    },{
+    }, {
       src: "~/plugins/axios.client.js"
-    },{
+    }, {
       src: "~/plugins/vue-plugin-load-script.js",
       mode: "client",
-    },{
+    }, {
       src: "~/plugins/vue-youtube.js",
       mode: "client",
     },
@@ -65,10 +65,29 @@ export default {
     "@nuxtjs/sitemap",
     "bootstrap-vue/nuxt"],
 
-  modules: [
-    //"~/modules/dns-cache.js"
-  ],
-  
+  modules: ['@nuxtjs/firebase'],
+
+  firebase: {
+    config: {
+      apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
+      authDomain: "worpdress-279321.firebaseapp.com",
+      projectId: "worpdress-279321",
+      storageBucket: "worpdress-279321.appspot.com",
+      messagingSenderId: "149555456673",
+      appId: "1:149555456673:web:5bb83ccdf79e8e47b3dee0",
+      measurementId: "G-CPNNB5CBJM"
+    },
+    services: {
+      firestore: {
+
+        emulatorHost: process.env.NODE_ENV === 'development' ? "127.0.0.1" : undefined,
+        emulatorPort: process.env.NODE_ENV === 'development' ? 6001 : undefined
+      },
+      analytics: true
+    },
+    onFirebaseHosting: true,
+    terminateDatabasesAfterGenerate: true
+  },
 
   bootstrapVue: {
     bootstrapCSS: true,
@@ -141,7 +160,7 @@ export default {
   hooks: {
     generate: {
       done(generator, errors) {
-          console.log("DNS CACHE STATS: ", getStats())
+        console.log("DNS CACHE STATS: ", getStats())
       }
     }
 
