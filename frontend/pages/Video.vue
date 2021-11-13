@@ -3,19 +3,19 @@ b-container.m-0.p-0.mx-auto
   script(type='application/ld+json', v-html='this.video_json')
   b-card.m-0.p-0
     small
-      | Published: {{ new Date(this.video.yt_published_date).toLocaleDateString() }}.
-      | Duration: {{ new Date(this.video.duration_seconds * 1000).toISOString().substr(11, 8) }}
+      | Published: {{ new Date(this.video.snippet.publishedAt).toLocaleDateString() }}.
+      | Duration: {{ new Date(this.video.contentDetails.duration) }}
     .my-4
       h1 {{ this.video.title }}
       p(align='center')
         client-only
           LazyYoutube(
-            :src='`https://www.youtube.com/watch?v=${this.video.youtube_id}`'
+            :src='`https://www.youtube.com/watch?v=${this.video.id}`'
           )
 
-    .my-4(v-if='this.video.description_trimmed')
+    .my-4(v-if='this.description_trimmed')
       strong Description
-      p(style='white-space: pre-line') {{ this.video.description_trimmed }}
+      p(style='white-space: pre-line') {{ this.description_trimmed }}
 
     .my-4(v-if='this.video.categories && this.video.categories.length > 0')
       strong Categories
@@ -47,15 +47,15 @@ b-container.m-0.p-0.mx-auto
       p(align='center')
         | NOTE: to download the videos, right click on the download link and choose "Save as.."
 
-    .my-4(v-if='this.video.tags && this.video.tags.length > 0')
+    .my-4(v-if='this.video.snippet.tags && this.video.snippet.tags.length > 0')
       p.text-center
         NuxtLink.p-1(
-          :to='"/tag/" + tag.slug',
-          v-for='tag in this.video.tags',
-          :key='tag.id'
+          :to='"/tag/" + tag',
+          v-for='tag in this.video.snippet.tags',
+          :key='tag'
         )
           b-button.mt-2(size='sm', pill)
-            | {{ tag.name }}
+            | {{ tag }}
 
     .my-4(
       v-if='this.video.related_videos && this.video.related_videos.length > 0'
@@ -66,7 +66,7 @@ b-container.m-0.p-0.mx-auto
         .row
           .col-md-4(
             v-for='related in this.video.related_videos',
-            :key='related.youtube_id'
+            :key='related.id'
           )
             LazyHydrate(when-visible)
               .card.mb-4.shadow-sm.text-center
@@ -75,21 +75,21 @@ b-container.m-0.p-0.mx-auto
                     :src='related.thumbnails.medium.url',
                     height='180',
                     width='320',
-                    :id='related.youtube_id',
+                    :id='related._id',
                     :alt='related.title',
                     fluid
                   )
                   b-popover(
-                    :target='related.youtube_id',
+                    :target='related.id',
                     triggers='hover focus',
-                    :content='related.description_trimmed'
+                    :content='this.description_trimmed(related)'
                   )
                 .card-body
                   p.card-text
                     NuxtLink(:to='"/video/" + related.slug')
                       | {{ related.title }}
                   .d-flex.justify-content-between.align-items-center
-                    small.text-muted Published: {{ new Date(related.yt_published_date).toLocaleDateString() }}
+                    small.text-muted Published: {{ new Date(related.snippet.publishedAt).toLocaleDateString() }}
                     small.text-muted Duration: {{ new Date(related.duration_seconds * 1000).toISOString().substr(11, 8) }}
 
     .my-4(v-if='this.video.transcript')
@@ -113,7 +113,7 @@ export default {
         {
           hid: 'description',
           name: 'description',
-          content: this.video.description_trimmed,
+          content: 'description_trimmed',
         },
       ],
     }
@@ -124,22 +124,28 @@ export default {
     }
   },
   computed: {
+    description_trimmed: function () {
+      return 'asd fpjaskdfj asodfk aj' //video.snippet.description
+    },
     video_json: function () {
       let json = {
         '@context': 'https://schema.org',
         '@type': 'VideoObject',
         name: this.video.snippet.title,
-        description: this.video.description_trimmed,
-        thumbnailUrl: Object.values(this.video.thumbnails).map(
+        description: this.description_trimmed,
+        thumbnailUrl: Object.values(this.video.snippet.thumbnails).map(
           (thumb) => thumb.url
         ),
-        uploadDate: this.video.yt_published_date,
-        duration: this.video.duration,
-        contentUrl:
-          'https://videos.sadhguru.digital/' +
-          encodeURIComponent(this.video.filename),
-        embedUrl: `https://www.youtube.com/watch?v=${this.video.youtube_id}`,
+        uploadDate: this.video.snippet.publishedAt,
+        duration: this.video.contentDetails.duration,
+        embedUrl: `https://www.youtube.com/watch?v=${this.video.id}`,
       }
+      if ('filename' in this.video)
+        json.contentUrl =
+          'https://videos.sadhguru.digital/' +
+          encodeURIComponent(this.video.filename)
+      else json.contentUrl = this.$nuxt.$route.currentRoute
+
       return JSON.stringify(json)
     },
   },
