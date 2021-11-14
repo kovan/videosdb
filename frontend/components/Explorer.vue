@@ -177,20 +177,26 @@ export default {
   async fetch() {
     const PAGE_SIZE = 20
     try {
-      let query = await this.$fire.firestore
-        .collection('videos')
-        .limit(PAGE_SIZE)
+      let query = this.$fire.firestore.collection('videos').limit(PAGE_SIZE)
       if (this.ordering) query = query.orderBy(this.ordering, 'desc')
       //if (this.period) query = query.where('snippet.publishedAt')
+      // if (this.categories) url.searchParams.append('categories', this.categories)
       if (this.tag)
         query = query.where('snippet.tags', 'array-contains', this.tag)
       if (this.current_page > 1)
         query = query.startAfter(PAGE_SIZE * this.current_page)
 
-      const query_results = await query.get()
-      query_results.forEach((doc) => {
+      const meta_query = this.$fire.firestore.collection('meta').doc('meta')
+
+      let [results, meta_results] = await Promise.all([
+        query.get(),
+        meta_query.get(),
+      ])
+      results.forEach((doc) => {
         this.videos.push(doc.data())
       })
+      const video_count = meta_results.data().videoCount
+      this.page_count = Math.floor(PAGE_SIZE / video_count)
     } catch (exception) {
       console.error(exception)
       this.$nuxt.context.error({

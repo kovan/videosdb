@@ -89,8 +89,6 @@ export default {
   methods: {
     async randomVideo() {
       try {
-        // var url = '/random-video'
-        // let video = (await this.$axios.get(url)).data
         const meta_doc = await this.$fire.firestore
           .collection('meta')
           .doc('meta')
