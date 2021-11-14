@@ -22,7 +22,7 @@
               @change='handleChange'
             )
       .row
-        .col-md-4(v-for='video in this.videos', :key='video.youtube_id')
+        .col-md-4(v-for='video in this.videos', :key='video.id')
           LazyHydrate(when-visible)
             .card.mb-4.shadow-sm.text-center
               NuxtLink(:to='"/video/" + video.slug')
@@ -30,22 +30,22 @@
                   :src='video.thumbnails.medium.url',
                   height='180',
                   width='320',
-                  :id='video.youtube_id',
-                  :alt='video.title',
+                  :id='video.id',
+                  :alt='video.snippet.title',
                   fluid
                 )
                 b-popover(
-                  :target='video.youtube_id',
+                  :target='video.id',
                   triggers='hover focus',
                   :content='video.description_trimmed'
                 )
               .card-body
                 p.card-text
                   NuxtLink(:to='"/video/" + video.slug')
-                    | {{ video.title }}
+                    | {{ video.snippet.title }}
                 .d-flex.justify-content-between.align-items-center
-                  small.text-muted Published: {{ new Date(video.yt_published_date).toLocaleDateString() }}
-                  small.text-muted Duration: {{ new Date(video.duration_seconds * 1000).toISOString().substr(11, 8) }}
+                  small.text-muted Published: {{ new Date(video.snippet.publisheAt).toLocaleDateString() }}
+                  small.text-muted Duration: {{ new Date(video.videosdb.duration_seconds * 1000).toISOString().substr(11, 8) }}
       .overflow-auto(v-if='this.videos.length')
         LazyHydrate(when-visible)
           b-pagination-nav(

@@ -1,7 +1,10 @@
 import asyncio
 import logging
 import os
-import random
+import isodate
+import re
+import uuslug
+
 from google.cloud import firestore
 import youtube_transcript_api
 from aiostream import stream
@@ -69,7 +72,7 @@ class Downloader:
         try:
             async with TaskGatherer():
                 video_ids = await self._sync_db_with_youtube()
-            random.shuffle(video_ids)
+
             async with TaskGatherer():
                 await self._fill_related_videos(video_ids)
         except YoutubeAPI.QuotaExceededError as e:
@@ -82,6 +85,15 @@ class Downloader:
     async def _sync_db_with_youtube(self):
 
         async def _process_video(playlist_item):
+            def _description_trimmed(description):
+                if description:
+                    return
+                match = re.search(
+                    settings.TRUNCATE_DESCRIPTION_AFTER, description)
+                if match and match.start() != -1:
+                    return description[:match.start()]
+                return description
+
             video_id = playlist_item["snippet"]["resourceId"]["videoId"]
             if video_id in processed_videos:
                 return
@@ -99,6 +111,15 @@ class Downloader:
             video = await self.yt_api.get_video_info(video_id)
             if not video:
                 return
+
+            # custom attributes:
+            video["videosdb"] = {}
+            video["videosdb"]["slug"] = uuslug.slugify(
+                video["snippet"]["title"])
+            video["videosdb"]["description_trimmed"] = _description_trimmed(
+                video["snippet"]["description"])
+            video["videosdb"]["duration_seconds"] = isodate.parse_duration(
+                video["contentDetails"]["duration"]).total_seconds()
 
             create_task(self.db.set("videos", video_id, video))
 
@@ -127,6 +148,7 @@ class Downloader:
                 playlist["snippet"]["channelTitle"]
 
             if not exclude_playlist:
+                playlist["slug"] = uuslug.slugify(playlist["snippet"]["title"])
                 await self.db.set("playlists", playlist["id"], playlist)
 
             async for item in self.yt_api.list_playlist_items(playlist_id):

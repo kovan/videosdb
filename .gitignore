@@ -27,3 +27,6 @@ backend/ui-debug.log
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+backend/firebase-export-1636822598723S9SPsL/firestore_export/firestore_export.overall_export_metadata
+backend/firebase-export-1636822598723S9SPsL/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
+backend/firebase-export-1636822598723S9SPsL/firestore_export/all_namespaces/all_kinds/output-0

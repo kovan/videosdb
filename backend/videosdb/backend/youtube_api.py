@@ -273,7 +273,7 @@ class YoutubeDL:
         return videos
 
 
-def get_video_transcript(self, youtube_id):
+def get_video_transcript(youtube_id):
 
     def _sentence_case(text):
         punc_filter = re.compile(r'([.!?]\s*)')

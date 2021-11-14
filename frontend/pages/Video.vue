@@ -4,18 +4,18 @@ b-container.m-0.p-0.mx-auto
   b-card.m-0.p-0
     small
       | Published: {{ new Date(this.video.snippet.publishedAt).toLocaleDateString() }}.
-      | Duration: {{ new Date(this.video.contentDetails.duration) }}
+      | Duration: {{ new Date(this.video.videosdb.duration_seconds * 1000).toISOString().substr(11, 8) }} }}
     .my-4
-      h1 {{ this.video.title }}
+      h1 {{ this.video.snippet.title }}
       p(align='center')
         client-only
           LazyYoutube(
             :src='`https://www.youtube.com/watch?v=${this.video.id}`'
           )
 
-    .my-4(v-if='this.description_trimmed')
+    .my-4(v-if='this.video.videosdb.description_trimmed')
       strong Description
-      p(style='white-space: pre-line') {{ this.description_trimmed }}
+      p(style='white-space: pre-line') {{ this.video.videosdb.description_trimmed }}
 
     .my-4(v-if='this.video.categories && this.video.categories.length > 0')
       strong Categories
@@ -82,7 +82,7 @@ b-container.m-0.p-0.mx-auto
                   b-popover(
                     :target='related.id',
                     triggers='hover focus',
-                    :content='this.description_trimmed(related)'
+                    :content='this.video.videosdb.description_trimmed'
                   )
                 .card-body
                   p.card-text
@@ -90,7 +90,7 @@ b-container.m-0.p-0.mx-auto
                       | {{ related.title }}
                   .d-flex.justify-content-between.align-items-center
                     small.text-muted Published: {{ new Date(related.snippet.publishedAt).toLocaleDateString() }}
-                    small.text-muted Duration: {{ new Date(related.duration_seconds * 1000).toISOString().substr(11, 8) }}
+                    small.text-muted Duration: {{ new Date(related.videosdb.duration_seconds * 1000).toISOString().substr(11, 8) }}
 
     .my-4(v-if='this.video.transcript')
       p
@@ -113,7 +113,7 @@ export default {
         {
           hid: 'description',
           name: 'description',
-          content: 'description_trimmed',
+          content: this.video.videosdb.description_trimmed,
         },
       ],
     }
@@ -124,15 +124,12 @@ export default {
     }
   },
   computed: {
-    description_trimmed: function () {
-      return 'asd fpjaskdfj asodfk aj' //video.snippet.description
-    },
     video_json: function () {
       let json = {
         '@context': 'https://schema.org',
         '@type': 'VideoObject',
         name: this.video.snippet.title,
-        description: this.description_trimmed,
+        description: this.video.videosdb.description_trimmed,
         thumbnailUrl: Object.values(this.video.snippet.thumbnails).map(
           (thumb) => thumb.url
         ),
@@ -151,19 +148,23 @@ export default {
   },
   methods: {},
   async asyncData({ $fire, params, error }) {
-    const video_doc = await $fire.firestore
-      .collection('videos')
-      .doc('CR5HtTsUl5E')
-      .get()
-    let video = await video_doc.data()
-    return { video }
-    // try {
-    //   var url = '/videos/' + params.slug + '/'
-    //   let video = (await $axios.get(url)).data
-    //   return { video }
-    // } catch (exception) {
-    //   handleAxiosError(exception, error)
-    // }
+    try {
+      const query_results = await $fire.firestore
+        .collection('videos')
+        .where('videosdb.slug', '==', params.slug)
+        .get()
+
+      let video = query_results.docs[0].data()
+      return { video }
+
+      // try {
+      //   var url = '/videos/' + params.slug + '/'
+      //   let video = (await $axios.get(url)).data
+      //   return { video }
+    } catch (exception) {
+      console.log(exception)
+      error({ statusCode: null, message: exception.toString() })
+    }
   },
 }
 </script>
