@@ -38,12 +38,16 @@ class DB:
             video_ids.append(video_doc.get("id"))
         return video_ids
 
-    def update_video_counter(self, video_count):
+    async def update_video_counter(self, video_count):
         # "hack" to list documents fast an cheaply,
         # because Firestore doesn't have something like SELECT COUNT(*)
 
-        return self.db.collection("meta").document(
+        return await self.db.collection("meta").document(
             "meta").set({"videoCount": video_count}, merge=True)
+
+    async def update_last_updated(self):
+        return await self.db.collection("meta").document(
+            "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
 
 
 class TaskGatherer:
@@ -89,10 +93,10 @@ class Downloader:
 
         video_ids = await self.db.list_video_ids()
 
-        await self.db.update_video_counter(len(video_ids))
-
         async with TaskGatherer():
-            await self._fill_transcripts(video_ids)
+            create_task(self._fill_transcripts(video_ids))
+            create_task(self.db.update_video_counter(len(video_ids)))
+            create_task(self.db.update_last_updated())
 
     async def _sync_db_with_youtube(self):
 

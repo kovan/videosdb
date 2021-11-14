@@ -72,6 +72,7 @@ export default {
   data: () => {
     return {
       page_count: 1,
+      current_page: 1,
       videos: [],
       period_options: [
         {
@@ -118,9 +119,6 @@ export default {
     }
   },
   props: {
-    current_page: () => {
-      return 1
-    },
     base_url: () => {
       return '/'
     },
@@ -196,7 +194,7 @@ export default {
         this.videos.push(doc.data())
       })
       const video_count = meta_results.data().videoCount
-      this.page_count = Math.floor(PAGE_SIZE / video_count)
+      this.page_count = Math.floor(video_count / PAGE_SIZE) + 1
     } catch (exception) {
       console.error(exception)
       this.$nuxt.context.error({

@@ -2,6 +2,7 @@
 div
   b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle
     NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ this.$config.title }}
+    small.mr-auto.align-middle Last updated: {{ last_updated }}
     b-button.mx-1(
       squared,
       @click.default='randomVideo()',
@@ -84,8 +85,10 @@ export default {
 
       title: this.$config.title,
       subtitle: this.$config.subtitle,
+      last_updated: null,
     }
   },
+
   methods: {
     async randomVideo() {
       try {
@@ -127,12 +130,18 @@ export default {
   },
   async fetch() {
     try {
-      const query_results = await this.$fire.firestore
+      const query = this.$fire.firestore
         .collection('playlists')
         .orderBy('videosdb.lastUpdated', 'desc')
-        .get()
 
-      query_results.forEach((doc) => {
+      const meta_query = this.$fire.firestore.collection('meta').doc('meta')
+
+      let [results, meta_results] = await Promise.all([
+        query.get(),
+        meta_query.get(),
+      ])
+
+      results.forEach((doc) => {
         let category = {
           name: doc.data().snippet.title,
           slug: doc.data().videosdb.slug,
@@ -140,6 +149,8 @@ export default {
         }
         this.categories.push(category)
       })
+
+      this.last_updated = meta_results.data().lastUpdated
     } catch (exception) {
       console.error(exception)
       this.$nuxt.context.error({
