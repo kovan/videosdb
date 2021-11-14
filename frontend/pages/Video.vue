@@ -50,7 +50,7 @@ b-container.m-0.p-0.mx-auto
     .my-4(v-if='this.video.snippet.tags && this.video.snippet.tags.length > 0')
       p.text-center
         NuxtLink.p-1(
-          :to='"/tag/" + tag',
+          :to='"/tag/" + encodeURIComponent(tag)',
           v-for='tag in this.video.snippet.tags',
           :key='tag'
         )
@@ -162,7 +162,7 @@ export default {
       //   let video = (await $axios.get(url)).data
       //   return { video }
     } catch (exception) {
-      console.log(exception)
+      console.error(exception)
       error({ statusCode: null, message: exception.toString() })
     }
   },

@@ -16,7 +16,9 @@ export default {
   },
 
   publicRuntimeConfig: {
-    baseURL: process.env.API_BROWSER_URL || baseURL
+    baseURL: process.env.API_BROWSER_URL || baseURL,
+    title: "Sadhguru wisdom",
+    subtitle: "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more."
   },
 
   generate: {

@@ -1,8 +1,7 @@
 <template lang="pug">
 div
   b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle
-    NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') Sadhguru wisdom
-
+    NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ this.$config.title }}
     b-button.mx-1(
       squared,
       @click.default='randomVideo()',
@@ -28,8 +27,8 @@ div
     )
       span.navbar-toggler-icon
 
-  .p-1.px-2.mt-2.text-center(v-if='subtitle')
-    strong Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.
+  .p-1.px-2.mt-2.text-center
+    strong {{ this.$config.subtitle }}
 
   b-container
     .row
@@ -63,67 +62,82 @@ div
 
 <script>
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-import { handleAxiosError, getConfigForRequest } from "~/utils/utils.client"
-import LazyHydrate from 'vue-lazy-hydration';
+import { handleAxiosError, getConfigForRequest } from '~/utils/utils.client'
+import LazyHydrate from 'vue-lazy-hydration'
 export default {
   scrollToTop: true,
   components: {
     BIcon,
     BIconSearch,
     BIconShuffle,
-    LazyHydrate
+    LazyHydrate,
   },
-  data () {
-    const config = getConfigForRequest(this.$nuxt.context.req)
+  data() {
     return {
-      search_input: "",
+      search_input: '',
       sidebar_visible: false,
       categories: [],
 
-      title: config.title,
-      subtitle: config.subtitle,
+      title: this.$config.title,
+      subtitle: this.$config.subtitle,
     }
   },
   methods: {
-    async randomVideo () {
+    async randomVideo() {
       try {
-        var url = "/random-video"
+        var url = '/random-video'
         let video = (await this.$axios.get(url)).data
 
-        this.$router.push("/video/" + video.slug)
+        this.$router.push('/video/' + video.slug)
       } catch (exception) {
         console.log(exception)
         handleAxiosError(exception, this.$nuxt.context.error)
       }
     },
-    toggleSidebar () {
-
+    toggleSidebar() {
       this.sidebar_visible = !this.sidebar_visible
     },
-    hideSidebar (event) {
+    hideSidebar(event) {
       this.sidebar_visible = false
     },
-    search () {
-      this.$router.push(
-        {
-          path: "/search",
-          query: {
-            q: this.search_input
-          }
-        }
-      )
+    search() {
+      this.$router.push({
+        path: '/search',
+        query: {
+          q: this.search_input,
+        },
+      })
     },
   },
-  async fetch () {
-    const config = getConfigForRequest(this.$nuxt.context.req)
-    this.title = config.title
+  async fetch() {
     try {
-      this.categories = (await this.$axios.get(
-        '/categories/?ordering=-last_updated')).data
+      const query_results = await this.$fire.firestore
+        .collection('playlists')
+        //.orderBy("last_modified", "desc")
+        .get()
 
+      query_results.forEach((doc) => {
+        let category = {
+          name: doc.data().snippet.title,
+          use_count: 1,
+        }
+        this.categories.push(category)
+      })
     } catch (exception) {
-      handleAxiosError(exception, this.$nuxt.context.error)
+      console.error(exception)
+      this.$nuxt.context.error({
+        statusCode: null,
+        message: exception.toString(),
+      })
     }
+
+    // try {
+    //   this.categories = (
+    //     await this.$axios.get('/categories/?ordering=-last_updated')
+    //   ).data
+    // } catch (exception) {
+    //   handleAxiosError(exception, this.$nuxt.context.error)
+    // }
   },
 }
 </script>
