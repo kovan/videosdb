@@ -1,43 +1,32 @@
 <template lang="pug">
 b-container.p-0.m-0
-  h1.text-center Tag: {{ this.tag.name }}
+  h1.text-center Tag: {{ this.$route.params.slug }}
   Explorer(
     :current_page='this.$route.params.page || 1',
     :base_url='`/tag/${this.$route.params.slug}/`',
-    :tags='this.tag.id'
+    :tag='this.$route.params.slug'
   )
 </template>
 
 <script>
-import { handleAxiosError } from "~/utils/utils.client"
 export default {
-  head () {
+  head() {
     return {
-      title: this.tag.name + " - Sadhguru wisdom",
+      title: this.$route.params.slug + ' - Sadhguru wisdom',
       meta: [
         {
           hid: 'description',
           name: 'description',
-          content: "Tag: " + this.tag.name
-        }
+          content: 'Tag: ' + this.$route.params.slug,
+        },
       ],
     }
   },
   data: () => {
     return {
-      tag: {}
+      tag: {},
     }
   },
-
-  async asyncData ({ $axios, params, error }) {
-    let url = "/tags/" + params.slug + "/"
-    try {
-      let response = await $axios.get(url)
-      return { tag: response.data }
-    } catch (exception) {
-      handleAxiosError(exception, error)
-    }
-  }
 }
 </script>
 

@@ -4,7 +4,7 @@ b-container.m-0.p-0.mx-auto
   b-card.m-0.p-0
     small
       | Published: {{ new Date(this.video.snippet.publishedAt).toLocaleDateString() }}.
-      | Duration: {{ new Date(this.video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }} }}
+      | Duration: {{ new Date(this.video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
     .my-4
       h1 {{ this.video.snippet.title }}
       p(align='center')

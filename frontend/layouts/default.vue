@@ -61,8 +61,12 @@ div
 </template>
 
 <script>
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max)
+}
+
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-import { handleAxiosError, getConfigForRequest } from '~/utils/utils.client'
+import { handleAxiosError } from '~/utils/utils.client'
 import LazyHydrate from 'vue-lazy-hydration'
 export default {
   scrollToTop: true,
@@ -85,12 +89,26 @@ export default {
   methods: {
     async randomVideo() {
       try {
-        var url = '/random-video'
-        let video = (await this.$axios.get(url)).data
+        // var url = '/random-video'
+        // let video = (await this.$axios.get(url)).data
+        const meta_doc = await this.$fire.firestore
+          .collection('meta')
+          .doc('meta')
+          .get()
+        const video_count = meta_doc.data().videoCount
+        const random_index = getRandomInt(video_count)
+        const video_doc = await this.$fire.firestore
+          .collection('videos')
+          .orderBy('id')
+          .startAt(random_index)
+          .limit(1)
+          .get()
 
-        this.$router.push('/video/' + video.slug)
+        let video = video_doc.docs[0].data()
+
+        this.$router.push('/video/' + video.videosdb.slug)
       } catch (exception) {
-        console.log(exception)
+        console.error(exception)
         handleAxiosError(exception, this.$nuxt.context.error)
       }
     },

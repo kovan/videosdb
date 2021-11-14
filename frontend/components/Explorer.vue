@@ -25,9 +25,9 @@
         .col-md-4(v-for='video in this.videos', :key='video.id')
           LazyHydrate(when-visible)
             .card.mb-4.shadow-sm.text-center
-              NuxtLink(:to='"/video/" + video.slug')
+              NuxtLink(:to='"/video/" + video.videosdb.slug')
                 b-img-lazy.bd-placeholder-img.card-img-top(
-                  :src='video.thumbnails.medium.url',
+                  :src='video.snippet.thumbnails.medium.url',
                   height='180',
                   width='320',
                   :id='video.id',
@@ -41,7 +41,7 @@
                 )
               .card-body
                 p.card-text
-                  NuxtLink(:to='"/video/" + video.slug')
+                  NuxtLink(:to='"/video/" + video.videosdb.slug')
                     | {{ video.snippet.title }}
                 .d-flex.justify-content-between.align-items-center
                   small.text-muted Published: {{ new Date(video.snippet.publisheAt).toLocaleDateString() }}
@@ -63,7 +63,6 @@
 </template>
 
 <script >
-import { getFirestore, collection, getDocs } from 'firebase/firestore/lite'
 import { handleAxiosError } from '~/utils/utils.client'
 import LazyHydrate from 'vue-lazy-hydration'
 export default {
@@ -131,7 +130,7 @@ export default {
     categories: () => {
       return ''
     },
-    tags: () => {
+    tag: () => {
       return ''
     },
   },
@@ -177,27 +176,28 @@ export default {
   async listVideos() {},
   async fetch() {
     const PAGE_SIZE = 20
-    // try {
-    //   let query = await this.$fire.firestore
-    //     .collection('videos')
-    //     .limit(PAGE_SIZE)
-    //   if (this.ordering) query = query.orderBy(this.ordering, 'desc')
-    //   if (this.period) query = query.where('snippet.publishedAt')
-    //   if (this.tags) query = query.where('tags', 'array_contains', this.tags[0])
-    //   if (this.current_page > 1)
-    //     query = query.startAfter(PAGE_SIZE * this.current_page)
+    try {
+      let query = await this.$fire.firestore
+        .collection('videos')
+        .limit(PAGE_SIZE)
+      if (this.ordering) query = query.orderBy(this.ordering, 'desc')
+      //if (this.period) query = query.where('snippet.publishedAt')
+      if (this.tag)
+        query = query.where('snippet.tags', 'array-contains', this.tag)
+      if (this.current_page > 1)
+        query = query.startAfter(PAGE_SIZE * this.current_page)
 
-    //   const query_results = await query.get()
-    //   query_results.forEach((doc) => {
-    //     this.videos.push(doc.data())
-    //   })
-    // } catch (exception) {
-    //   console.error(exception)
-    //   this.$nuxt.context.error({
-    //     statusCode: null,
-    //     message: exception.toString(),
-    //   })
-    // }
+      const query_results = await query.get()
+      query_results.forEach((doc) => {
+        this.videos.push(doc.data())
+      })
+    } catch (exception) {
+      console.error(exception)
+      this.$nuxt.context.error({
+        statusCode: null,
+        message: exception.toString(),
+      })
+    }
 
     // const dummy_root = 'http://example.com' // otherwise URL doesn't work
     // const url = new URL('/videos/', dummy_root)

@@ -38,6 +38,13 @@ class DB:
             video_ids.append(video_doc.get("id"))
         return video_ids
 
+    def update_video_counter(self, video_count):
+        # "hack" to list documents fast an cheaply,
+        # because Firestore doesn't have something like SELECT COUNT(*)
+
+        return self.db.collection("meta").document(
+            "meta").set({"videoCount": video_count}, merge=True)
+
 
 class TaskGatherer:
     async def __aenter__(self):
@@ -74,20 +81,15 @@ class Downloader:
         try:
             async with TaskGatherer():
                 video_ids = await self._sync_db_with_youtube()
-            if "DEBUG" in os.environ:
-                return
-
-            async with TaskGatherer():
-                await self._fill_related_videos(video_ids)
+            if not "DEBUG" in os.environ:
+                async with TaskGatherer():
+                    await self._fill_related_videos(video_ids)
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
 
         video_ids = await self.db.list_video_ids()
 
-        # "hack" to list documents fast an cheaply,
-        # because Firestore doesn't have something like SELECT COUNT(*)
-        await self.db.db.collection("meta").document(
-            "video_count").set(len(video_ids))
+        await self.db.update_video_counter(len(video_ids))
 
         async with TaskGatherer():
             await self._fill_transcripts(video_ids)
@@ -107,7 +109,7 @@ class Downloader:
             video_id = playlist_item["snippet"]["resourceId"]["videoId"]
             if video_id in processed_videos:
                 return
-            if "DEBUG" in os.environ and len(processed_videos) > 10:
+            if "DEBUG" in os.environ and len(processed_videos) > 100:
                 return
 
             processed_videos.add(video_id)
@@ -122,14 +124,14 @@ class Downloader:
             if not video:
                 return
 
-            # custom attributes:
-            video["videosdb"] = {}
-            video["videosdb"]["slug"] = uuslug.slugify(
+            custom_attrs = dict()
+            custom_attrs["slug"] = uuslug.slugify(
                 video["snippet"]["title"])
-            video["videosdb"]["descriptionTrimmed"] = _description_trimmed(
+            custom_attrs["descriptionTrimmed"] = _description_trimmed(
                 video["snippet"]["description"])
-            video["videosdb"]["durationSeconds"] = isodate.parse_duration(
+            custom_attrs["durationSeconds"] = isodate.parse_duration(
                 video["contentDetails"]["duration"]).total_seconds()
+            video["videosdb"] = custom_attrs
 
             create_task(self.db.set("videos", video_id, video))
 
@@ -138,7 +140,7 @@ class Downloader:
         async def _process_playlist(playlist_id):
             if playlist_id in processed_playlists:
                 return
-            if "DEBUG" in os.environ and len(processed_playlists) > 10:
+            if "DEBUG" in os.environ and len(processed_playlists) > 20:
                 return
 
             processed_playlists.add(playlist_id)
@@ -180,12 +182,13 @@ class Downloader:
                 create_task(self.db.set(items_col, item["id"], item))
 
             # custom attributes:
-            playlist["videosdb"] = {}
-            playlist["videosdb"]["slug"] = uuslug.slugify(
+            custom_attrs = dict()
+            custom_attrs["slug"] = uuslug.slugify(
                 playlist["snippet"]["title"])
-            playlist["videosdb"]["playlistItemsCount"] = item_count
-            playlist["videosdb"]["lastUpdated"] = isodate.date_isoformat(
+            custom_attrs["playlistItemsCount"] = item_count
+            custom_attrs["lastUpdated"] = isodate.date_isoformat(
                 last_updated)
+            playlist["videosdb"] = custom_attrs
 
             create_task(self.db.set("playlists", playlist["id"], playlist))
 
