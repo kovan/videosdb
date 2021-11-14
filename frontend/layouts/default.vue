@@ -113,13 +113,14 @@ export default {
     try {
       const query_results = await this.$fire.firestore
         .collection('playlists')
-        //.orderBy("last_modified", "desc")
+        .orderBy('videosdb.lastUpdated', 'desc')
         .get()
 
       query_results.forEach((doc) => {
         let category = {
           name: doc.data().snippet.title,
-          use_count: 1,
+          slug: doc.data().videosdb.slug,
+          use_count: doc.data().videosdb.playlistItemsCount,
         }
         this.categories.push(category)
       })
@@ -130,14 +131,6 @@ export default {
         message: exception.toString(),
       })
     }
-
-    // try {
-    //   this.categories = (
-    //     await this.$axios.get('/categories/?ordering=-last_updated')
-    //   ).data
-    // } catch (exception) {
-    //   handleAxiosError(exception, this.$nuxt.context.error)
-    // }
   },
 }
 </script>

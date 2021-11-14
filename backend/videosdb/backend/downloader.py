@@ -1,3 +1,5 @@
+
+from datetime import date, datetime
 import asyncio
 import logging
 import os
@@ -72,6 +74,8 @@ class Downloader:
         try:
             async with TaskGatherer():
                 video_ids = await self._sync_db_with_youtube()
+            if "DEBUG" in os.environ:
+                return
 
             async with TaskGatherer():
                 await self._fill_related_videos(video_ids)
@@ -79,6 +83,12 @@ class Downloader:
             logger.exception(e)
 
         video_ids = await self.db.list_video_ids()
+
+        # "hack" to list documents fast an cheaply,
+        # because Firestore doesn't have something like SELECT COUNT(*)
+        await self.db.db.collection("meta").document(
+            "video_count").set(len(video_ids))
+
         async with TaskGatherer():
             await self._fill_transcripts(video_ids)
 
@@ -86,7 +96,7 @@ class Downloader:
 
         async def _process_video(playlist_item):
             def _description_trimmed(description):
-                if description:
+                if not description:
                     return
                 match = re.search(
                     settings.TRUNCATE_DESCRIPTION_AFTER, description)
@@ -116,9 +126,9 @@ class Downloader:
             video["videosdb"] = {}
             video["videosdb"]["slug"] = uuslug.slugify(
                 video["snippet"]["title"])
-            video["videosdb"]["description_trimmed"] = _description_trimmed(
+            video["videosdb"]["descriptionTrimmed"] = _description_trimmed(
                 video["snippet"]["description"])
-            video["videosdb"]["duration_seconds"] = isodate.parse_duration(
+            video["videosdb"]["durationSeconds"] = isodate.parse_duration(
                 video["contentDetails"]["duration"]).total_seconds()
 
             create_task(self.db.set("videos", video_id, video))
@@ -147,19 +157,37 @@ class Downloader:
             exclude_playlist = playlist["snippet"]["title"] == "Uploads from " + \
                 playlist["snippet"]["channelTitle"]
 
-            if not exclude_playlist:
-                playlist["slug"] = uuslug.slugify(playlist["snippet"]["title"])
-                await self.db.set("playlists", playlist["id"], playlist)
+            if exclude_playlist:
+                async for item in self.yt_api.list_playlist_items(playlist_id):
+                    create_task(_process_video(item))
+                return
 
+            await self.db.set("playlists", playlist["id"], playlist)
+
+            item_count = 0
+            last_updated = date(1, 1, 1)
             async for item in self.yt_api.list_playlist_items(playlist_id):
-                create_task(_process_video(item))
-                if exclude_playlist:
-                    continue
+                item_count += 1
+                item_date = isodate.parse_date(
+                    item["snippet"]["publishedAt"])
+
+                if item_date > last_updated:
+                    last_updated = item_date
 
                 items_col = self.db.db.collection("playlists").document(
                     playlist["id"]).collection("playlist_items")
 
                 create_task(self.db.set(items_col, item["id"], item))
+
+            # custom attributes:
+            playlist["videosdb"] = {}
+            playlist["videosdb"]["slug"] = uuslug.slugify(
+                playlist["snippet"]["title"])
+            playlist["videosdb"]["playlistItemsCount"] = item_count
+            playlist["videosdb"]["lastUpdated"] = isodate.date_isoformat(
+                last_updated)
+
+            create_task(self.db.set("playlists", playlist["id"], playlist))
 
         async def asyncgenerator(item):
             yield item

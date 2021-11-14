@@ -27,6 +27,7 @@
     "cacheable-lookup": "^6.0.1",
     "esm": "^3.2.25",
     "firebase": "^9.4.0",
+    "moment": "^2.29.1",
     "nuxt": "^2.15",
     "nuxt-generate-cluster": "^2.7.0",
     "pug": "^3.0.0",

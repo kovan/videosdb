@@ -37,7 +37,7 @@
                 b-popover(
                   :target='video.id',
                   triggers='hover focus',
-                  :content='video.description_trimmed'
+                  :content='video.videosdb.descriptionTrimmed'
                 )
               .card-body
                 p.card-text
@@ -45,7 +45,7 @@
                     | {{ video.snippet.title }}
                 .d-flex.justify-content-between.align-items-center
                   small.text-muted Published: {{ new Date(video.snippet.publisheAt).toLocaleDateString() }}
-                  small.text-muted Duration: {{ new Date(video.videosdb.duration_seconds * 1000).toISOString().substr(11, 8) }}
+                  small.text-muted Duration: {{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
       .overflow-auto(v-if='this.videos.length')
         LazyHydrate(when-visible)
           b-pagination-nav(
@@ -96,26 +96,26 @@ export default {
       ordering_options: [
         {
           text: 'Latest',
-          value: '-yt_published_date',
+          value: 'snippet.publishedAt',
         },
         {
           text: 'Most viewed',
-          value: '-view_count',
+          value: 'statistics.viewCount',
         },
         {
           text: 'Most liked',
-          value: '-like_count',
+          value: 'statistics.likeCount',
         },
         {
           text: 'Most commented',
-          value: '-comment_count',
+          value: 'statistics.commentCount',
         },
         {
           text: 'Most favorited',
-          value: '-favorite_count',
+          value: 'statistics.favoriteCount',
         },
       ],
-      ordering: '-yt_published_date',
+      ordering: 'snippet.publishedAt',
     }
   },
   props: {
@@ -176,26 +176,49 @@ export default {
   },
   async listVideos() {},
   async fetch() {
-    const dummy_root = 'http://example.com' // otherwise URL doesn't work
-    const url = new URL('/videos/', dummy_root)
-    if (this.ordering) url.searchParams.append('ordering', this.ordering)
-    if (this.period) url.searchParams.append('period', this.period)
-    if (this.current_page > 1)
-      url.searchParams.append('page', this.current_page)
-    if (this.categories) url.searchParams.append('categories', this.categories)
-    if (this.tags) url.searchParams.append('tags', this.tags)
-    if (this.search) url.searchParams.append('search', this.search)
+    const PAGE_SIZE = 20
+    // try {
+    //   let query = await this.$fire.firestore
+    //     .collection('videos')
+    //     .limit(PAGE_SIZE)
+    //   if (this.ordering) query = query.orderBy(this.ordering, 'desc')
+    //   if (this.period) query = query.where('snippet.publishedAt')
+    //   if (this.tags) query = query.where('tags', 'array_contains', this.tags[0])
+    //   if (this.current_page > 1)
+    //     query = query.startAfter(PAGE_SIZE * this.current_page)
 
-    try {
-      let response = await this.$axios.get(url.href.replace(dummy_root, ''))
-      this.videos = response.data.results
-      this.page_count =
-        response.data.count == 0
-          ? 0
-          : Math.floor(response.data.count / response.data.results.length)
-    } catch (exception) {
-      handleAxiosError(exception, this.$nuxt.context.error)
-    }
+    //   const query_results = await query.get()
+    //   query_results.forEach((doc) => {
+    //     this.videos.push(doc.data())
+    //   })
+    // } catch (exception) {
+    //   console.error(exception)
+    //   this.$nuxt.context.error({
+    //     statusCode: null,
+    //     message: exception.toString(),
+    //   })
+    // }
+
+    // const dummy_root = 'http://example.com' // otherwise URL doesn't work
+    // const url = new URL('/videos/', dummy_root)
+    // if (this.ordering) url.searchParams.append('ordering', this.ordering)
+    // if (this.period) url.searchParams.append('period', this.period)
+    // if (this.current_page > 1)
+    //   url.searchParams.append('page', this.current_page)
+    // if (this.categories) url.searchParams.append('categories', this.categories)
+    // if (this.tags) url.searchParams.append('tags', this.tags)
+    // if (this.search) url.searchParams.append('search', this.search)
+
+    // try {
+    //   let response = await this.$axios.get(url.href.replace(dummy_root, ''))
+    //   this.videos = response.data.results
+    //   this.page_count =
+    //     response.data.count == 0
+    //       ? 0
+    //       : Math.floor(response.data.count / response.data.results.length)
+    // } catch (exception) {
+    //   handleAxiosError(exception, this.$nuxt.context.error)
+    // }
   },
 }
 </script>

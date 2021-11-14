@@ -5,14 +5,14 @@ require("axios-debug-log");
 import { cacheAdapterEnhancer } from 'axios-extensions';
 
 function createAxios(baseURL) {
-        let myaxios =  axios.create({
-            baseURL: baseURL,
-            adapter: cacheAdapterEnhancer(axios.defaults.adapter)
-        })  
-        registerInterceptor(myaxios)
+  let myaxios = axios.create({
+    baseURL: baseURL,
+    adapter: cacheAdapterEnhancer(axios.defaults.adapter)
+  })
+  registerInterceptor(myaxios)
 
-        console.log("Axios created. baseURL: " + baseURL)
-        return myaxios
+  console.log("Axios created. baseURL: " + baseURL)
+  return myaxios
 }
 
 var sitemap = null
@@ -22,26 +22,26 @@ async function generateSitemap(baseURL) {
 
 
   function transform(obj, type) {
-    if (type == "video") 
+    if (type == "video")
       return {
         url: `/video/${obj.slug}/`,
         video: [
           {
-            thumbnail_loc: obj.thumbnails.medium.url,
-            title: obj.title,
-            description: obj.description_trimmed
-              ? obj.description_trimmed
-              : obj.title,
+            thumbnail_loc: obj.snippet.thumbnails.medium.url,
+            title: obj.snippet.title,
+            description: obj.videosdb.descriptionTrimmed
+              ? obj.videosdb.descriptionTrimmed
+              : obj.snippet.title,
             content_loc:
               "https://videos.sadhguru.digital/" +
-              encodeURIComponent(obj.filename),
-            player_loc: `https://www.youtube.com/watch?v=${obj.youtube_id}`,
-            duration: obj.duration_seconds,
+              encodeURIComponent(obj.videosdb.filename),
+            player_loc: `https://www.youtube.com/watch?v=${obj.id}`,
+            duration: obj.videosdb.durationSeconds,
           },
         ],
-        lastmod: obj.modified_date,
+        lastmod: obj.snippet.publishedAt,
         priority: 0.9,
-      }      
+      }
     else
       return {
         url: `/${type}/${obj.slug}/`,
@@ -53,8 +53,8 @@ async function generateSitemap(baseURL) {
       url: "/",
       changefreq: "daily",
     },
-  ]  
-  
+  ]
+
   async function download(url, type) {
     try {
       let response = await api.get(url)
@@ -67,7 +67,7 @@ async function generateSitemap(baseURL) {
 
     } catch (e) {
       console.error(e)
-    }    
+    }
   }
 
   await Promise.all([
@@ -92,4 +92,4 @@ async function getSitemap(baseURL) {
   return sitemap;
 }
 
-export { getSitemap, createAxios};
+export { getSitemap, createAxios };

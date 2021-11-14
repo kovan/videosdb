@@ -123,12 +123,9 @@ export default {
 
   build: {
     extend(config, ctx) {
-      if (ctx.isDev) {
+      if (ctx.isClient) {
         config.devtool = 'source-map';
-      } else {
-        if (ctx.isClient) {
-          config.optimization.splitChunks.maxSize = 250000;
-        }
+        config.optimization.splitChunks.maxSize = 250000;
       }
     },
     loaders: {
