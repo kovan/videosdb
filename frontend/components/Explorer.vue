@@ -44,8 +44,8 @@
                   NuxtLink(:to='"/video/" + video.videosdb.slug')
                     | {{ video.snippet.title }}
                 .d-flex.justify-content-between.align-items-center
-                  small.text-muted Published: {{ new Date(video.snippet.publisheAt).toLocaleDateString() }}
-                  small.text-muted Duration: {{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
+                  small.text-muted Published: <br/>{{ $moment(video.snippet.publisheAt).format("MMM Do YYYY") }}
+                  small.text-muted Duration: <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
       .overflow-auto(v-if='this.videos.length')
         LazyHydrate(when-visible)
           b-pagination-nav(

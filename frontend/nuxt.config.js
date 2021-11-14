@@ -65,9 +65,11 @@ export default {
     "@nuxtjs/google-analytics",
     "@nuxtjs/router-extras",
     "@nuxtjs/sitemap",
-    "bootstrap-vue/nuxt"],
+    "bootstrap-vue/nuxt",
+    '@nuxtjs/firebase',
+    '@nuxtjs/moment'],
 
-  modules: ['@nuxtjs/firebase'],
+  modules: [],
 
   firebase: {
     config: {

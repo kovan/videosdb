@@ -2,7 +2,7 @@
 div
   b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle
     NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ this.$config.title }}
-    small.mr-auto.align-middle Last updated: {{ last_updated }}
+    small.mr-auto.align-middle Last updated: {{ $moment(last_updated).format("MMMM Do YYYY, h:mm:ss a") }}
     b-button.mx-1(
       squared,
       @click.default='randomVideo()',
