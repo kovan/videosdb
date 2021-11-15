@@ -1,8 +1,8 @@
 <template lang="pug">
 div
-  b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle
-    NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ this.$config.title }}
-    small.mr-auto.align-middle Last updated: {{ $moment(last_updated).format("MMMM Do YYYY, h:mm:ss a") }}
+  b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle.justify-content-end
+    NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ this.$config.title }}&nbsp
+
     b-button.mx-1(
       squared,
       @click.default='randomVideo()',
@@ -30,7 +30,8 @@ div
 
   .p-1.px-2.mt-2.text-center
     strong {{ this.$config.subtitle }}
-
+    br
+    small.align-middle Last updated: {{ $moment(last_updated).format("MMM Do YYYY") }}
   b-container
     .row
       LazyHydrate(when-visible)
