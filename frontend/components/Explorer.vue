@@ -71,7 +71,7 @@ export default {
   },
   data: () => {
     return {
-      page_count: 1,
+      page_count: 0,
       current_page: 1,
       videos: [],
       period_options: [
@@ -131,6 +131,9 @@ export default {
     tag: () => {
       return ''
     },
+    initial_page: () => {
+      return 1
+    },
   },
 
   watch: {
@@ -138,6 +141,9 @@ export default {
       this.current_page = this.$route.query.page || 1
       this.$fetch()
     },
+  },
+  created() {
+    this.current_page = this.initial_page
   },
   methods: {
     linkGen(pageNum) {
@@ -171,16 +177,17 @@ export default {
     //   return [srcset.slice(0, -2), sizes.slice(0, -2)]
     // }
   },
-  async listVideos() {},
   async fetch() {
     const PAGE_SIZE = 20
     try {
-      let query = this.$fire.firestore.collection('videos').limit(PAGE_SIZE)
-      if (this.ordering) query = query.orderBy(this.ordering, 'desc')
+      let query = this.$fire.firestore
+        .collection('videos')
+        .limit(PAGE_SIZE)
+        .orderBy(this.ordering, 'desc')
       //if (this.period) query = query.where('snippet.publishedAt')
       // if (this.categories) url.searchParams.append('categories', this.categories)
-      if (this.tag)
-        query = query.where('snippet.tags', 'array-contains', this.tag)
+      //if (this.tag)
+      //query = query.where('snippet.tags', 'array-contains', this.tag)
       if (this.current_page > 1)
         query = query.startAfter(PAGE_SIZE * this.current_page)
 
@@ -190,6 +197,7 @@ export default {
         query.get(),
         meta_query.get(),
       ])
+      this.videos.length = 0
       results.forEach((doc) => {
         this.videos.push(doc.data())
       })
@@ -227,6 +235,3 @@ export default {
 }
 </script>
 
-
-<style scoped>
-</style>

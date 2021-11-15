@@ -156,11 +156,6 @@ export default {
 
       let video = query_results.docs[0].data()
       return { video }
-
-      // try {
-      //   var url = '/videos/' + params.slug + '/'
-      //   let video = (await $axios.get(url)).data
-      //   return { video }
     } catch (exception) {
       console.error(exception)
       error({ statusCode: null, message: exception.toString() })

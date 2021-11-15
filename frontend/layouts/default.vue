@@ -60,6 +60,8 @@ div
         a(href='https://isha.sadhguru.org/global/en/wisdom')
           |
           | https://isha.sadhguru.org/global/en/wisdom
+      p 
+        small This page is not associated with Sadhguru or Isha Foundation in any way.
 </template>
 
 <script>
@@ -148,6 +150,7 @@ export default {
           slug: doc.data().videosdb.slug,
           use_count: doc.data().videosdb.playlistItemsCount,
         }
+        this.categories.length = 0
         this.categories.push(category)
       })
 
