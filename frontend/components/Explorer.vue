@@ -48,30 +48,26 @@
                   small.text-muted Duration: <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
       .overflow-auto(v-if='this.videos.length')
         LazyHydrate(when-visible)
-          b-pagination-nav(
-            size='lg',
-            align='fill',
-            :base-url='base_url',
-            v-model='current_page',
-            :number-of-pages='page_count',
-            use-router,
-            first-number,
-            last-number,
-            pills,
-            :link-gen='linkGen'
+        div
+          div(v-for='(item, $index) in videos', :key='$index')
+          infinite-loading(
+            @infinite='infiniteHandler',
+            force-use-infinite-wrapper
           )
 </template>
 
 <script >
 import { handleAxiosError } from '~/utils/utils.client'
 import LazyHydrate from 'vue-lazy-hydration'
+import InfiniteLoading from 'vue-infinite-loading'
 export default {
   components: {
     LazyHydrate,
+    InfiniteLoading,
   },
   data: () => {
     return {
-      page_count: 0,
+      page_count: 1,
       current_page: 1,
       videos: [],
       period_options: [
@@ -143,7 +139,7 @@ export default {
     },
   },
   created() {
-    this.current_page = this.initial_page
+    this.current_page = this.$route.query.page || this.initial_page
   },
   methods: {
     linkGen(pageNum) {
@@ -154,7 +150,11 @@ export default {
         },
       }
     },
-
+    infiniteHandler($state) {
+      console.log('Page: ' + this.current_page)
+      this.$fetch()
+      $state.loaded()
+    },
     handleChange() {
       this.$fetch()
     },
@@ -184,25 +184,30 @@ export default {
         .collection('videos')
         .limit(PAGE_SIZE)
         .orderBy(this.ordering, 'desc')
+
       //if (this.period) query = query.where('snippet.publishedAt')
       // if (this.categories) url.searchParams.append('categories', this.categories)
       //if (this.tag)
       //query = query.where('snippet.tags', 'array-contains', this.tag)
-      if (this.current_page > 1)
-        query = query.startAfter(PAGE_SIZE * this.current_page)
 
+      //if (this.videos.length > 0) query = query.startAfter(this.videos[-1])
+
+      console.log('Page: ' + this.current_page)
       const meta_query = this.$fire.firestore.collection('meta').doc('meta')
 
       let [results, meta_results] = await Promise.all([
         query.get(),
         meta_query.get(),
       ])
+      console.log('LEN: ' + results.docs.length)
+      console.log(results)
       this.videos.length = 0
       results.forEach((doc) => {
         this.videos.push(doc.data())
       })
       const video_count = meta_results.data().videoCount
       this.page_count = Math.floor(video_count / PAGE_SIZE) + 1
+      console.log('Page count: ' + this.page_count)
     } catch (exception) {
       console.error(exception)
       this.$nuxt.context.error({

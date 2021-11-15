@@ -92,14 +92,12 @@ b-container.m-0.p-0.mx-auto
                     small.text-muted Published: {{ new Date(related.snippet.publishedAt).toLocaleDateString() }}
                     small.text-muted Duration: {{ new Date(related.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
 
-    .my-4(v-if='this.video.transcript')
+    .my-4(v-if='this.video.videosdb.transcript')
       p
         strong Transcription:
-      p(style='white-space: pre-line') {{ this.video.transcript }}
+      p(style='white-space: pre-line') {{ this.video.videosdb.transcript }}
 </template>
 <script>
-import { handleAxiosError } from '~/utils/utils.client'
-
 import LazyHydrate from 'vue-lazy-hydration'
 
 export default {

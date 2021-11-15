@@ -30,7 +30,7 @@ class DB:
 
         logger.debug("Writing item to db: " + str(id))
 
-        await item_ref.set(item)
+        return await item_ref.set(item)
 
     async def list_video_ids(self):
         video_ids = []
@@ -75,7 +75,6 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
-
     async def _check_for_new_videos(self):
 
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
@@ -86,21 +85,37 @@ class Downloader:
             async with TaskGatherer():
                 video_ids = await self._sync_db_with_youtube()
             if not "DEBUG" in os.environ:
-                async with TaskGatherer():
+                async with TaskGatherer():  # separate so that it uses remaining quota
                     await self._fill_related_videos(video_ids)
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
 
-        video_ids = await self.db.list_video_ids()
-
         async with TaskGatherer():
-            create_task(self._fill_transcripts(video_ids))
-            create_task(self.db.update_video_counter(len(video_ids)))
+            # create_task(self._fill_transcripts())
             create_task(self.db.update_last_updated())
 
     async def _sync_db_with_youtube(self):
 
         async def _process_video(playlist_item):
+            async def _download_transcript(video_id):
+                try:
+                    transcript = await asyncio.to_thread(
+                        get_video_transcript, video_id)
+                    logger.info(
+                        "Transcription downloaded for video: " + str(video_id))
+                    return transcript, "downloaded"
+                except youtube_transcript_api.TooManyRequests as e:
+                    logger.warn(e)
+                    return None, "pending"
+                except youtube_transcript_api.CouldNotRetrieveTranscript as e:
+                    if e.video_id.response.status_code == 429:
+                        logger.warn(e)
+                        return None, "pending"
+                    else:
+                        logger.info(
+                            "Transcription not available for video: " + str(video_id))
+                        return None, "unavailable"
+
             def _description_trimmed(description):
                 if not description:
                     return
@@ -124,7 +139,10 @@ class Downloader:
             if playlist_item["snippet"]["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
                 return
 
-            video = await self.yt_api.get_video_info(video_id)
+            video, (transcript, transcript_status) = await asyncio.gather(
+                self.yt_api.get_video_info(video_id),
+                _download_transcript(video_id)
+            )
             if not video:
                 return
 
@@ -135,16 +153,20 @@ class Downloader:
                 video["snippet"]["description"])
             custom_attrs["durationSeconds"] = isodate.parse_duration(
                 video["contentDetails"]["duration"]).total_seconds()
+            custom_attrs["transcript"] = transcript
+            custom_attrs["transcript_status"] = transcript_status
+
             video["videosdb"] = custom_attrs
 
-            create_task(self.db.set("videos", video_id, video))
+            create_task(self.db.db.collection("videos").document(
+                video_id).set(video, merge=True))
 
             logger.debug("Processed video: " + video_id)
 
         async def _process_playlist(playlist_id):
             if playlist_id in processed_playlists:
                 return
-            if "DEBUG" in os.environ and len(processed_playlists) > 20:
+            if "DEBUG" in os.environ and len(processed_playlists) > 10:
                 return
 
             processed_playlists.add(playlist_id)
@@ -243,31 +265,35 @@ class Downloader:
                 logger.info("Added new related videos to video %s" %
                             (video_id))
 
-    async def _fill_transcripts(self, video_ids):
-        logger.info("Filling transcripts...")
-        for video_id in video_ids:
-            video_data_ref = self.db.db.collection(
-                "persistent_video_datas").document(video_id)
+    # async def _fill_transcripts(self):
+    #     logger.info("Filling transcripts...")
+    #     videos_col = self.db.db.collection("videos")
+    #     query = videos_col.where(
+    #         "videosdb.transcript_status", "not-in", ["downloaded", "unavailable"]).order_by("videosdb.transcript_status")
+    #     res = await query.get()
 
-            video_data_doc = await video_data_ref.get()
-
-            video_data = video_data_doc.to_dict() if video_data_doc.exists else dict()
-
-            if video_data.get("transcript") or video_data.get("transcript_available") is not None:
-                continue
-            try:
-                video_data["transcript"] = get_video_transcript(video_id)
-                video_data["transcript_available"] = True
-                logger.info(
-                    "Transcription downloaded for video: " + str(video_id))
-            except youtube_transcript_api.TooManyRequests as e:
-                logger.warn(e)
-                # leave None so that it retries later
-                video_data["transcript_available"] = None
-                break
-            except youtube_transcript_api.CouldNotRetrieveTranscript as e:
-                logger.info(
-                    "Transcription not available for video: " + str(video_id))
-                video_data["transcript_available"] = False
-            finally:
-                create_task(video_data_ref.set(video_data, merge=True))
+    #     async for video_doc in query.stream():
+    #         video = video_doc.to_dict()
+    #         video_id = video["id"]
+    #         video
+    #         try:
+    #             video["videosdb"]["transcript"] = get_video_transcript(
+    #                 video_id)
+    #             video["videosdb"]["transcript_status"] = "downloaded"
+    #             logger.info(
+    #                 "Transcription downloaded for video: " + str(video_id))
+    #         except youtube_transcript_api.TooManyRequests as e:
+    #             logger.warn(e)
+    #             video["videosdb"]["transcript_status"] = "pending"
+    #             break
+    #         except youtube_transcript_api.CouldNotRetrieveTranscript as e:
+    #             if e.video_id.response.status_code == 429:
+    #                 video["videosdb"]["transcript_status"] = "pending"
+    #                 logger.warn(e)
+    #             else:
+    #                 logger.info(
+    #                     "Transcription not available for video: " + str(video_id))
+    #                 video["videosdb"]["transcript_status"] = "unavailable"
+    #         finally:
+    #             create_task(videos_col.document(
+    #                 video_id).set(video, merge=True))
