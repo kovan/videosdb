@@ -1,6 +1,6 @@
 <template lang="pug">
 b-container.p-0.m-0
-  h1.text-center Category: {{ this.category.name }}
+  h1.text-center Category: {{ this.category.snippet.title }}
   Explorer(
     :initial_page='this.$route.params.page || 1',
     :base_url='`/category/${this.$route.params.slug}`',
@@ -9,16 +9,15 @@ b-container.p-0.m-0
 </template>
 
 <script>
-import { handleAxiosError } from '~/utils/utils.client'
 export default {
   head() {
     return {
-      title: this.category.name + ' - ' + 'Sadhguru wisdom',
+      title: this.category.snippet.title + ' - ' + 'Sadhguru wisdom',
       meta: [
         {
           hid: 'description',
           name: 'description',
-          content: 'Category: ' + this.category.name,
+          content: 'Category: ' + this.category.snippet.title,
         },
       ],
     }
@@ -29,13 +28,18 @@ export default {
     }
   },
 
-  async asyncData({ $axios, params, error }) {
-    let url = '/categories/' + params.slug + '/'
+  async asyncData({ $fire, params, error }) {
     try {
-      let response = await $axios.get(url)
-      return { category: response.data }
+      const q_category = await $fire.firestore
+        .collection('playlists')
+        .where('videosdb.slug', '==', params.slug)
+        .get()
+
+      let category = q_category.docs[0].data()
+      return { category }
     } catch (exception) {
-      handleAxiosError(exception, error)
+      console.error(exception)
+      error({ statusCode: null, message: exception.toString() })
     }
   },
 }

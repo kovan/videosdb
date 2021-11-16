@@ -17,10 +17,15 @@ b-container.m-0.p-0.mx-auto
       strong Description
       p(style='white-space: pre-line') {{ this.video.videosdb.descriptionTrimmed }}
 
-    .my-4(v-if='this.video.playlists && this.video.playlists.length > 0')
+    .my-4(
+      v-if='this.video.videosdb.playlists && this.video.videosdb.playlists.length > 0'
+    )
       strong Categories
       ul
-        li(v-for='playlist in this.video.playlists', :key='playlist.id')
+        li(
+          v-for='playlist in this.video.videosdb.playlists',
+          :key='playlist.id'
+        )
           NuxtLink(:to='"/category/" + playlist.videosdb.slug')
             | {{ playlist.snippet.title }}
 
@@ -58,14 +63,14 @@ b-container.m-0.p-0.mx-auto
             | {{ tag }}
 
     .my-4(
-      v-if='this.video.related_videos && this.video.related_videos.length > 0'
+      v-if='this.video.videosdb.related_videos && this.video.videosdb.related_videos.length > 0'
     )
       p
         h2 Related videos:
       .album.py-1.bg-light
         .row
           .col-md-4(
-            v-for='related in this.video.related_videos',
+            v-for='related in this.video.videosdb.related_videos',
             :key='related.id'
           )
             LazyHydrate(when-visible)
@@ -75,14 +80,14 @@ b-container.m-0.p-0.mx-auto
                     :src='related.thumbnails.medium.url',
                     height='180',
                     width='320',
-                    :id='related._id',
-                    :alt='related.title',
+                    :id='related.id',
+                    :alt='related.snippet.title',
                     fluid
                   )
                   b-popover(
                     :target='related.id',
                     triggers='hover focus',
-                    :content='this.video.videosdb.descriptionTrimmed'
+                    :content='related.videosdb.descriptionTrimmed'
                   )
                 .card-body
                   p.card-text
@@ -106,7 +111,7 @@ export default {
   },
   head() {
     return {
-      title: this.video.title + ' - ' + 'Sadhguru wisdom',
+      title: this.video.snippet.title + ' - ' + 'Sadhguru wisdom',
       meta: [
         {
           hid: 'description',
@@ -153,15 +158,6 @@ export default {
         .get()
 
       let video = q_videos.docs[0].data()
-      const q_playlists = await $fire.firestore
-        .collection('videos')
-        .doc(video.id)
-        .collection('playlists')
-        .get()
-      video.playlists = []
-      q_playlists.forEach((playlist) => {
-        video.playlists.push(playlist.data())
-      })
       return { video }
     } catch (exception) {
       console.error(exception)

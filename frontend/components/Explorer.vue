@@ -121,7 +121,7 @@ export default {
     search: () => {
       return ''
     },
-    categories: () => {
+    category: () => {
       return ''
     },
     tag: () => {
@@ -184,7 +184,12 @@ export default {
         .collection('videos')
         .limit(PAGE_SIZE)
         .orderBy(this.ordering, 'desc')
-      if (this.categories) query = query.where()
+      if (this.category)
+        query = query.where(
+          'videosdb.playlists',
+          'array-contains',
+          this.category
+        )
 
       //if (this.period) query = query.where('snippet.publishedAt')
 

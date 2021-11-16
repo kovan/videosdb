@@ -75,7 +75,6 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
-
     class _Results():
         def __init__(self):
             self.lock = asyncio.Lock()
@@ -90,10 +89,10 @@ class Downloader:
         asyncio.get_running_loop().slow_callback_duration = 3
 
         try:
-            async with TaskGatherer():
-                results = await self._sync_db_with_youtube()
+            results = await self._sync_db_with_youtube()
             if not "DEBUG" in os.environ:
-                async with TaskGatherer():  # separate so that it uses remaining quota
+                async with TaskGatherer():
+                    # separate so that it uses remaining quota
                     await self._fill_related_videos(results.video_ids)
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
@@ -275,7 +274,7 @@ class Downloader:
         playlist_ids = stream.merge(
             self.yt_api.list_channnelsection_playlist_ids(channel_id),
             self.yt_api.list_channel_playlist_ids(channel_id),
-            # asyncgenerator(all_uploads_playlist_id),
+            asyncgenerator(all_uploads_playlist_id),
         )
 
         results = Downloader._Results()
