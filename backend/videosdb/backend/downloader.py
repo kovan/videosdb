@@ -75,6 +75,13 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
+
+    class _Results():
+        def __init__(self):
+            self.lock = asyncio.Lock()
+            self.video_ids = set()
+            self.playlist_ids = set()
+
     async def _check_for_new_videos(self):
 
         self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
@@ -83,10 +90,10 @@ class Downloader:
 
         try:
             async with TaskGatherer():
-                processed = await self._sync_db_with_youtube()
+                results = await self._sync_db_with_youtube()
             if not "DEBUG" in os.environ:
                 async with TaskGatherer():  # separate so that it uses remaining quota
-                    await self._fill_related_videos(processed["video_ids"])
+                    await self._fill_related_videos(results.video_ids)
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
 
@@ -94,7 +101,7 @@ class Downloader:
 
     async def _sync_db_with_youtube(self):
 
-        async def _process_video(processed, playlist_item, playlist=None):
+        async def _process_video(results, playlist_item, playlist=None):
 
             async def _create_video(playlist_item):
 
@@ -163,23 +170,33 @@ class Downloader:
 
                 logger.debug("Processed video: " + video_id)
 
-            if "DEBUG" in os.environ and len(processed["video_ids"]) > 100:
+            if "DEBUG" in os.environ and len(results.video_ids) > 100:
                 return
 
             video_id = playlist_item["snippet"]["resourceId"]["videoId"]
 
-            if video_id not in processed["video_ids"]:
+            async with results.lock:
+                if video_id in results.video_ids:
+                    created = True
+                else:
+                    created = False
+                    results.video_ids.add(video_id)
+
+            if not created:
                 await _create_video(playlist_item)
-                processed["video_ids"].add(video_id)
 
             if playlist:
                 await self.db.db.collection("videos").document(
                     video_id).collection("playlists").document(playlist["id"]).set(playlist)
 
-        async def _process_playlist(processed, playlist_id):
-            if playlist_id in processed["playlist_ids"]:
-                return
-            if "DEBUG" in os.environ and len(processed["playlist_ids"]) > 10:
+        async def _process_playlist(results, playlist_id):
+            async with results.lock:
+                if playlist_id in results.playlist_ids:
+                    return
+                else:
+                    results.playlist_ids.add(playlist_id)
+
+            if "DEBUG" in os.environ and len(results.playlist_ids) > 10:
                 return
 
             playlist = await self.yt_api.get_playlist_info(playlist_id)
@@ -198,7 +215,7 @@ class Downloader:
 
             if exclude_playlist:
                 async for item in self.yt_api.list_playlist_items(playlist_id):
-                    create_task(_process_video(processed, item))
+                    create_task(_process_video(results, item))
                 return
 
             await self.db.set("playlists", playlist["id"], playlist)
@@ -218,14 +235,13 @@ class Downloader:
                 if item_date > last_updated:
                     last_updated = item_date
 
-                create_task(_process_video(processed, item, playlist))
+                create_task(_process_video(results, item, playlist))
 
             playlist["videosdb"]["videoCount"] = item_count
             playlist["videosdb"]["lastUpdated"] = isodate.date_isoformat(
                 last_updated)
 
             create_task(self.db.set("playlists", playlist["id"], playlist))
-            processed["playlist_ids"].add(playlist_id)
 
         async def asyncgenerator(item):
             yield item
@@ -245,16 +261,13 @@ class Downloader:
             self.yt_api.list_channel_playlist_ids(channel_id)
         )
 
-        processed = {
-            "video_ids": set(),
-            "playlist_ids": set()
-        }
+        results = Downloader._Results()
 
         async with playlist_ids.stream() as streamer:
             async for id in streamer:
-                create_task(_process_playlist(processed, id))
+                create_task(_process_playlist(results, id))
 
-        return processed
+        return results
 
     async def _fill_related_videos(self, video_ids):
 
