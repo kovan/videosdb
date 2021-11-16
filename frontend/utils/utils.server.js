@@ -35,7 +35,7 @@ async function generateSitemap(baseURL) {
             content_loc:
               "https://videos.sadhguru.digital/" +
               encodeURIComponent(obj.filename),
-            player_loc: `https://www.sadhguru.digital/video/${this.video.slug}/`,
+            player_loc: `https://www.sadhguru.digital/video/${obj.slug}/`,
             duration: obj.duration_seconds,
           },
         ],
@@ -57,18 +57,13 @@ async function generateSitemap(baseURL) {
   ]
 
   async function download(url, type) {
-    try {
-      let response = await api.get(url)
-      let container = type == "category" ? response.data : response.data.results
-      container.forEach((item) => {
-        results.push(transform(item, type))
-      })
-      if (response.data.next)
-        await download(response.data.next, type)
-
-    } catch (e) {
-      console.error(e)
-    }
+    let response = await api.get(url)
+    let container = type == "category" ? response.data : response.data.results
+    container.forEach((item) => {
+      results.push(transform(item, type))
+    })
+    if (response.data.next)
+      await download(response.data.next, type)
   }
 
   await Promise.all([
