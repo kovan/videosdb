@@ -148,7 +148,7 @@ export default {
         let category = {
           name: doc.data().snippet.title,
           slug: doc.data().videosdb.slug,
-          use_count: doc.data().videosdb.playlistItemsCount,
+          use_count: doc.data().videosdb.videoCount,
         }
         this.categories.length = 0
         this.categories.push(category)
