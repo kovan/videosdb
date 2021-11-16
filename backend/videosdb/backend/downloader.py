@@ -110,6 +110,7 @@ class Downloader:
                     try:
                         transcript = await asyncio.to_thread(
                             get_video_transcript, video_id)
+
                         logger.info(
                             "Transcription downloaded for video: " + str(video_id))
                         return transcript, "downloaded"
@@ -118,13 +119,17 @@ class Downloader:
                         return None, "pending"
                     except youtube_transcript_api.CouldNotRetrieveTranscript as e:
                         # weird but that's how the lib works:
-                        if hasattr(e.video_id, "response") and e.video_id.response.status_code == 429:
+                        if (hasattr(e, "video_id")
+                            and hasattr(e.video_id, "response")
+                                and e.video_id.response.status_code == 429):
                             logger.warn(e)
                             return None, "pending"
                         else:
                             logger.info(
                                 "Transcription not available for video: " + str(video_id))
                             return None, "unavailable"
+                    except Exception as e:
+                        logger.error("MAMLALMALMALMALAM")
 
                 def _description_trimmed(description):
                     if not description:
@@ -241,7 +246,7 @@ class Downloader:
                 if item_date > last_updated:
                     last_updated = item_date
                 async with results.lock:
-                    results.videos_to_playlist_ids.get(
+                    results.videos_to_playlist_ids.setdefault(
                         video_id, list()).append(playlist)
                 task = create_task(_process_video(results, item))
                 tasks.append(task)
@@ -270,7 +275,7 @@ class Downloader:
         playlist_ids = stream.merge(
             self.yt_api.list_channnelsection_playlist_ids(channel_id),
             self.yt_api.list_channel_playlist_ids(channel_id),
-            asyncgenerator(all_uploads_playlist_id),
+            # asyncgenerator(all_uploads_playlist_id),
         )
 
         results = Downloader._Results()
@@ -285,9 +290,8 @@ class Downloader:
 
         async with results.lock:
             for video_id, playlists in results.videos_to_playlist_ids.items():
-                for playlist in playlists:
-                    create_task(self.db.db.collection("videos").document(
-                        video_id).update({"playlists": firestore.ArrayUnion([playlist])}))
+                create_task(self.db.db.collection("videos").document(
+                    video_id).set({"videosdb": {"playlists": playlists}}, merge=True))
 
         return results
 
