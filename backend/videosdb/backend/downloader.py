@@ -153,8 +153,9 @@ class Downloader:
                     if (not "transcript_status" in old_video
                             or old_video["transcript_status"] == "pending"):
                         transcript, new_status = await _download_transcript(video_id)
-                        custom_attrs["transcript"] = transcript
                         custom_attrs["transcript_status"] = new_status
+                        if transcript:
+                            custom_attrs["transcript"] = transcript
 
                 custom_attrs["slug"] = uuslug.slugify(
                     video["snippet"]["title"])
@@ -220,7 +221,7 @@ class Downloader:
 
             await self.db.set("playlists", playlist["id"], playlist)
 
-            # this goes before call to _process_video
+            # this goes before call to _process_video, so that slug is stored with the video:
             playlist["videosdb"] = dict()
             playlist["videosdb"]["slug"] = uuslug.slugify(
                 playlist["snippet"]["title"])
@@ -288,36 +289,3 @@ class Downloader:
 
                 logger.info("Added new related videos to video %s" %
                             (video_id))
-
-    # async def _fill_transcripts(self):
-    #     logger.info("Filling transcripts...")
-    #     videos_col = self.db.db.collection("videos")
-    #     query = videos_col.where(
-    #         "videosdb.transcript_status", "not-in", ["downloaded", "unavailable"]).order_by("videosdb.transcript_status")
-    #     res = await query.get()
-
-    #     async for video_doc in query.stream():
-    #         video = video_doc.to_dict()
-    #         video_id = video["id"]
-    #         video
-    #         try:
-    #             video["videosdb"]["transcript"] = get_video_transcript(
-    #                 video_id)
-    #             video["videosdb"]["transcript_status"] = "downloaded"
-    #             logger.info(
-    #                 "Transcription downloaded for video: " + str(video_id))
-    #         except youtube_transcript_api.TooManyRequests as e:
-    #             logger.warn(e)
-    #             video["videosdb"]["transcript_status"] = "pending"
-    #             break
-    #         except youtube_transcript_api.CouldNotRetrieveTranscript as e:
-    #             if e.video_id.response.status_code == 429:
-    #                 video["videosdb"]["transcript_status"] = "pending"
-    #                 logger.warn(e)
-    #             else:
-    #                 logger.info(
-    #                     "Transcription not available for video: " + str(video_id))
-    #                 video["videosdb"]["transcript_status"] = "unavailable"
-    #         finally:
-    #             create_task(videos_col.document(
-    #                 video_id).set(video, merge=True))
