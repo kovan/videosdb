@@ -18,8 +18,8 @@ WORKDIR /app
 RUN chown appuser:appuser .
 USER appuser
 
-RUN wget  http://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -O - | python3
-ENV PATH="/home/appuser/.poetry/bin:${PATH}"
+RUN wget  http://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -O - | python3
+ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 
 #RUN mkdir /app/.cache && chown appuser:appuser /app/.cache
