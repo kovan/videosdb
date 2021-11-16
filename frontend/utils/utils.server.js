@@ -24,7 +24,7 @@ async function generateSitemap(baseURL) {
   function transform(obj, type) {
     if (type == "video")
       return {
-        url: `/video/${obj.slug}/`,
+        url: `/video/${obj.slug}`,
         video: [
           {
             thumbnail_loc: obj.thumbnails.medium.url,
@@ -35,7 +35,7 @@ async function generateSitemap(baseURL) {
             content_loc:
               "https://videos.sadhguru.digital/" +
               encodeURIComponent(obj.filename),
-            player_loc: `https://www.sadhguru.digital/video/${obj.slug}/`,
+            player_loc: `https://www.sadhguru.digital/video/${obj.slug}`,
             duration: obj.duration_seconds,
           },
         ],

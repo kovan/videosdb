@@ -119,7 +119,7 @@ export default {
       link: [
         {
           rel: 'canonical',
-          href: `https://www.sadhguru.digital/video/${this.video.slug}/`,
+          href: `https://www.sadhguru.digital/video/${this.video.slug}`,
         },
       ],
     }
@@ -144,7 +144,7 @@ export default {
         contentUrl:
           'https://videos.sadhguru.digital/' +
           encodeURIComponent(this.video.filename),
-        embedUrl: `https://www.sadhguru.digital/video/${this.video.slug}/`,
+        embedUrl: `https://www.sadhguru.digital/video/${this.video.slug}`,
       }
       return JSON.stringify(json)
     },
