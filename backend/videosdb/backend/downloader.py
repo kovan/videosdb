@@ -245,6 +245,8 @@ class Downloader:
             create_task(self.db.set("playlists", playlist["id"], playlist))
 
         async def asyncgenerator(item):
+            if "DEBUG" in os.environ:
+                return
             yield item
 
         channel_id = settings.YOUTUBE_CHANNEL["id"]
@@ -257,9 +259,9 @@ class Downloader:
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
         playlist_ids = stream.merge(
-            asyncgenerator(all_uploads_playlist_id),
             self.yt_api.list_channnelsection_playlist_ids(channel_id),
-            self.yt_api.list_channel_playlist_ids(channel_id)
+            self.yt_api.list_channel_playlist_ids(channel_id),
+            asyncgenerator(all_uploads_playlist_id),
         )
 
         results = Downloader._Results()

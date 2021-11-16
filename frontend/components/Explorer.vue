@@ -184,9 +184,10 @@ export default {
         .collection('videos')
         .limit(PAGE_SIZE)
         .orderBy(this.ordering, 'desc')
+      if (this.categories) query = query.where()
 
       //if (this.period) query = query.where('snippet.publishedAt')
-      // if (this.categories) url.searchParams.append('categories', this.categories)
+
       //if (this.tag)
       //query = query.where('snippet.tags', 'array-contains', this.tag)
 

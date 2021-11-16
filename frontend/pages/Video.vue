@@ -17,12 +17,12 @@ b-container.m-0.p-0.mx-auto
       strong Description
       p(style='white-space: pre-line') {{ this.video.videosdb.descriptionTrimmed }}
 
-    .my-4(v-if='this.video.categories && this.video.categories.length > 0')
+    .my-4(v-if='this.video.playlists && this.video.playlists.length > 0')
       strong Categories
       ul
-        li(v-for='cat in this.video.categories', :key='cat.id')
-          NuxtLink(:to='"/category/" + cat.slug')
-            | {{ cat.name }}
+        li(v-for='playlist in this.video.playlists', :key='playlist.id')
+          NuxtLink(:to='"/category/" + playlist.videosdb.slug')
+            | {{ playlist.snippet.title }}
 
     .my-4(v-if='this.video.ipfs_hash')
       p(align='center')
@@ -147,12 +147,21 @@ export default {
   methods: {},
   async asyncData({ $fire, params, error }) {
     try {
-      const query_results = await $fire.firestore
+      const q_videos = await $fire.firestore
         .collection('videos')
         .where('videosdb.slug', '==', params.slug)
         .get()
 
-      let video = query_results.docs[0].data()
+      let video = q_videos.docs[0].data()
+      const q_playlists = await $fire.firestore
+        .collection('videos')
+        .doc(video.id)
+        .collection('playlists')
+        .get()
+      video.playlists = []
+      q_playlists.forEach((playlist) => {
+        video.playlists.push(playlist.data())
+      })
       return { video }
     } catch (exception) {
       console.error(exception)
