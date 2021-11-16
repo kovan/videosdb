@@ -143,14 +143,13 @@ export default {
         query.get(),
         meta_query.get(),
       ])
-
+      this.categories.length = 0
       results.forEach((doc) => {
         let category = {
           name: doc.data().snippet.title,
           slug: doc.data().videosdb.slug,
           use_count: doc.data().videosdb.videoCount,
         }
-        this.categories.length = 0
         this.categories.push(category)
       })
 

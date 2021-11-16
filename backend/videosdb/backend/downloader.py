@@ -81,6 +81,7 @@ class Downloader:
             self.lock = asyncio.Lock()
             self.video_ids = set()
             self.playlist_ids = set()
+            self.videos_to_playlist_ids = dict()
 
     async def _check_for_new_videos(self):
 
@@ -101,7 +102,7 @@ class Downloader:
 
     async def _sync_db_with_youtube(self):
 
-        async def _process_video(results, playlist_item, playlist=None):
+        async def _process_video(results, playlist_item):
 
             async def _create_video(playlist_item):
 
@@ -116,7 +117,8 @@ class Downloader:
                         logger.warn(e)
                         return None, "pending"
                     except youtube_transcript_api.CouldNotRetrieveTranscript as e:
-                        if e.video_id.response.status_code == 429:
+                        # weird but that's how the lib works:
+                        if hasattr(e.video_id, "response") and e.video_id.response.status_code == 429:
                             logger.warn(e)
                             return None, "pending"
                         else:
@@ -132,6 +134,8 @@ class Downloader:
                     if match and match.start() != -1:
                         return description[:match.start()]
                     return description
+
+                video_id = playlist_item["snippet"]["resourceId"]["videoId"]
 
                 # some playlists include videos from other channels
                 # for now exclude those videos
@@ -186,9 +190,7 @@ class Downloader:
             if not created:
                 await _create_video(playlist_item)
 
-            if playlist:
-                await self.db.db.collection("videos").document(
-                    video_id).collection("playlists").document(playlist["id"]).set(playlist)
+            return video_id
 
         async def _process_playlist(results, playlist_id):
             async with results.lock:
@@ -215,9 +217,10 @@ class Downloader:
                 playlist["snippet"]["channelTitle"]
 
             if exclude_playlist:
+                tasks = []
                 async for item in self.yt_api.list_playlist_items(playlist_id):
-                    create_task(_process_video(results, item))
-                return
+                    tasks.append(create_task(_process_video(results, item)))
+                return await asyncio.gather(*tasks)
 
             await self.db.set("playlists", playlist["id"], playlist)
 
@@ -228,21 +231,27 @@ class Downloader:
 
             item_count = 0
             last_updated = date(1, 1, 1)
+            tasks = []
             async for item in self.yt_api.list_playlist_items(playlist_id):
+                video_id = item["snippet"]["resourceId"]["videoId"]
                 item_count += 1
                 item_date = isodate.parse_date(
                     item["snippet"]["publishedAt"])
 
                 if item_date > last_updated:
                     last_updated = item_date
-
-                create_task(_process_video(results, item, playlist))
+                async with results.lock:
+                    results.videos_to_playlist_ids.get(
+                        video_id, list()).append(playlist)
+                task = create_task(_process_video(results, item))
+                tasks.append(task)
 
             playlist["videosdb"]["videoCount"] = item_count
             playlist["videosdb"]["lastUpdated"] = isodate.date_isoformat(
                 last_updated)
 
-            create_task(self.db.set("playlists", playlist["id"], playlist))
+            await self.db.set("playlists", playlist["id"], playlist)
+            return await asyncio.gather(*tasks)
 
         async def asyncgenerator(item):
             if "DEBUG" in os.environ:
@@ -266,9 +275,19 @@ class Downloader:
 
         results = Downloader._Results()
 
+        playlist_tasks = []
         async with playlist_ids.stream() as streamer:
             async for id in streamer:
-                create_task(_process_playlist(results, id))
+                playlist_tasks.append(create_task(
+                    _process_playlist(results, id)))
+
+        await asyncio.gather(*playlist_tasks)
+
+        async with results.lock:
+            for video_id, playlists in results.videos_to_playlist_ids.items():
+                for playlist in playlists:
+                    create_task(self.db.db.collection("videos").document(
+                        video_id).update({"playlists": firestore.ArrayUnion([playlist])}))
 
         return results
 
