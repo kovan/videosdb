@@ -1,6 +1,7 @@
 
 from datetime import date, datetime
 import asyncio
+import functools
 import logging
 import os
 import isodate
@@ -10,12 +11,22 @@ import uuslug
 from google.cloud import firestore
 import youtube_transcript_api
 from aiostream import stream
-from django.conf import settings
 from asyncio import create_task
 
 from .youtube_api import YoutubeAPI, get_video_transcript
 
 logger = logging.getLogger(__name__)
+
+YT_CHANNEL_NAME = os.environ.get("YT_CHANNEL_NAME", "Sadhguru")
+YT_CHANNEL_ID = os.environ.get("YT_CHANNEL_ID", "UCcYzLCs3zrQIBVHYA1sK2sw")
+
+
+async def asyncgenerator(item):
+    yield item
+
+
+async def awaiter(coroutine, *args):
+    await coroutine(*args)
 
 
 class DB:
@@ -49,13 +60,23 @@ class DB:
         return await self.db.collection("meta").document(
             "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
 
+    async def add_playlist_to_video(self, video_id, playlist, fut=None):
+        await self.db.collection("videos").document(video_id).update({
+            "playlists": firestore.ArrayUnion([playlist])
+        })
 
-class TaskGatherer:
+
+class TaskGatherer():
     async def __aenter__(self):
-        pass
+        self.tasks = dict()
+        self.lock = asyncio.Lock()
+        return self
+
+    def create_task(self, key, task):
+        self.tasks[key] = asyncio.create_task(task, name=str(key))
 
     async def __aexit__(self, type, value, traceback):
-        await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
+        await asyncio.gather(*self.tasks.values())
 
 
 class Downloader:
@@ -63,10 +84,10 @@ class Downloader:
     # PUBLIC: -------------------------------------------------------------
 
     def __init__(self):
-        logging.getLogger("asyncio").setLevel(logging.WARNING)
-        self.db = DB()
+        pass
 
     def check_for_new_videos(self):
+        logging.getLogger("asyncio").setLevel(logging.WARNING)
 
         logger.info("Sync start")
         asyncio.run(self._check_for_new_videos())
@@ -75,195 +96,31 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
-    class _Results():
-        def __init__(self):
-            self.lock = asyncio.Lock()
-            self.video_ids = set()
-            self.playlist_ids = set()
-            self.videos_to_playlist_ids = dict()
 
     async def _check_for_new_videos(self):
 
-        self.yt_api = await YoutubeAPI.create(settings.YOUTUBE_KEY)
+        self.api = await YoutubeAPI.create()
+        self.db = DB()
         # in seconds, for warnings, in prod this does nothing:
         asyncio.get_running_loop().slow_callback_duration = 3
 
         try:
             results = await self._sync_db_with_youtube()
             if not "DEBUG" in os.environ:
-                async with TaskGatherer():
-                    # separate so that it uses remaining quota
-                    await self._fill_related_videos(results.video_ids)
+                # separate so that it uses remaining quota
+                await self._fill_related_videos(results.video_ids)
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
 
         await self.db.update_last_updated()
 
+        # wait for pending tasks to finish:
+        await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
+
     async def _sync_db_with_youtube(self):
 
-        async def _process_video(results, playlist_item):
-
-            async def _create_video(playlist_item):
-
-                async def _download_transcript(video_id):
-                    try:
-                        transcript = await asyncio.to_thread(
-                            get_video_transcript, video_id)
-
-                        logger.info(
-                            "Transcription downloaded for video: " + str(video_id))
-                        return transcript, "downloaded"
-                    except youtube_transcript_api.TooManyRequests as e:
-                        logger.warn(e)
-                        return None, "pending"
-                    except youtube_transcript_api.CouldNotRetrieveTranscript as e:
-                        # weird but that's how the lib works:
-                        if (hasattr(e, "video_id")
-                            and hasattr(e.video_id, "response")
-                                and e.video_id.response.status_code == 429):
-                            logger.warn(e)
-                            return None, "pending"
-                        else:
-                            logger.info(
-                                "Transcription not available for video: " + str(video_id))
-                            return None, "unavailable"
-                    except Exception as e:
-                        logger.error("MAMLALMALMALMALAM")
-
-                def _description_trimmed(description):
-                    if not description:
-                        return
-                    match = re.search(
-                        settings.TRUNCATE_DESCRIPTION_AFTER, description)
-                    if match and match.start() != -1:
-                        return description[:match.start()]
-                    return description
-
-                video_id = playlist_item["snippet"]["resourceId"]["videoId"]
-
-                # some playlists include videos from other channels
-                # for now exclude those videos
-                # in the future maybe exclude whole playlist
-                if playlist_item["snippet"]["channelId"] != settings.YOUTUBE_CHANNEL["id"]:
-                    return
-
-                video, old_video_doc = await asyncio.gather(
-                    self.yt_api.get_video_info(video_id),
-                    self.db.db.collection("videos").document(video_id).get()
-                )
-                if not video:
-                    return
-
-                custom_attrs = dict()
-
-                if old_video_doc.exists:
-                    old_video = old_video_doc.to_dict()
-                    if (not "transcript_status" in old_video
-                            or old_video["transcript_status"] == "pending"):
-                        transcript, new_status = await _download_transcript(video_id)
-                        custom_attrs["transcript_status"] = new_status
-                        if transcript:
-                            custom_attrs["transcript"] = transcript
-
-                custom_attrs["slug"] = uuslug.slugify(
-                    video["snippet"]["title"])
-                custom_attrs["descriptionTrimmed"] = _description_trimmed(
-                    video["snippet"]["description"])
-                custom_attrs["durationSeconds"] = isodate.parse_duration(
-                    video["contentDetails"]["duration"]).total_seconds()
-
-                video["videosdb"] = custom_attrs
-
-                await self.db.db.collection("videos").document(
-                    video_id).set(video)
-
-                logger.debug("Processed video: " + video_id)
-
-            if "DEBUG" in os.environ and len(results.video_ids) > 100:
-                return
-
-            video_id = playlist_item["snippet"]["resourceId"]["videoId"]
-
-            async with results.lock:
-                if video_id in results.video_ids:
-                    created = True
-                else:
-                    created = False
-                    results.video_ids.add(video_id)
-
-            if not created:
-                await _create_video(playlist_item)
-
-            return video_id
-
-        async def _process_playlist(results, playlist_id):
-            async with results.lock:
-                if playlist_id in results.playlist_ids:
-                    return
-                else:
-                    results.playlist_ids.add(playlist_id)
-
-            if "DEBUG" in os.environ and len(results.playlist_ids) > 10:
-                return
-
-            playlist = await self.yt_api.get_playlist_info(playlist_id)
-            if playlist["snippet"]["channelTitle"] != settings.YOUTUBE_CHANNEL["name"]:
-                return
-
-            if playlist["snippet"]["title"] == "Liked videos" or \
-                    playlist["snippet"]["title"] == "Popular uploads":
-                return
-
-            logger.info("Found playlist: %s (ID: %s)" % (
-                        str(playlist["snippet"]["title"]), playlist["id"]))
-
-            exclude_playlist = playlist["snippet"]["title"] == "Uploads from " + \
-                playlist["snippet"]["channelTitle"]
-
-            if exclude_playlist:
-                tasks = []
-                async for item in self.yt_api.list_playlist_items(playlist_id):
-                    tasks.append(create_task(_process_video(results, item)))
-                return await asyncio.gather(*tasks)
-
-            await self.db.set("playlists", playlist["id"], playlist)
-
-            # this goes before call to _process_video, so that slug is stored with the video:
-            playlist["videosdb"] = dict()
-            playlist["videosdb"]["slug"] = uuslug.slugify(
-                playlist["snippet"]["title"])
-
-            item_count = 0
-            last_updated = date(1, 1, 1)
-            tasks = []
-            async for item in self.yt_api.list_playlist_items(playlist_id):
-                video_id = item["snippet"]["resourceId"]["videoId"]
-                item_count += 1
-                item_date = isodate.parse_date(
-                    item["snippet"]["publishedAt"])
-
-                if item_date > last_updated:
-                    last_updated = item_date
-                async with results.lock:
-                    results.videos_to_playlist_ids.setdefault(
-                        video_id, list()).append(playlist)
-                task = create_task(_process_video(results, item))
-                tasks.append(task)
-
-            playlist["videosdb"]["videoCount"] = item_count
-            playlist["videosdb"]["lastUpdated"] = isodate.date_isoformat(
-                last_updated)
-
-            await self.db.set("playlists", playlist["id"], playlist)
-            return await asyncio.gather(*tasks)
-
-        async def asyncgenerator(item):
-            if "DEBUG" in os.environ:
-                return
-            yield item
-
-        channel_id = settings.YOUTUBE_CHANNEL["id"]
-        channel_info = await self.yt_api.get_channel_info(
+        channel_id = YT_CHANNEL_ID
+        channel_info = await self.api.get_channel_info(
             channel_id)
 
         logger.info("Processing channel: " +
@@ -272,27 +129,15 @@ class Downloader:
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
         playlist_ids = stream.merge(
-            self.yt_api.list_channnelsection_playlist_ids(channel_id),
-            self.yt_api.list_channel_playlist_ids(channel_id),
-            asyncgenerator(all_uploads_playlist_id),
+            self.api.list_channnelsection_playlist_ids(channel_id),
+            self.api.list_channel_playlist_ids(channel_id),
+            # asyncgenerator(all_uploads_playlist_id),
         )
-
-        results = Downloader._Results()
-
-        playlist_tasks = []
-        async with playlist_ids.stream() as streamer:
-            async for id in streamer:
-                playlist_tasks.append(create_task(
-                    _process_playlist(results, id)))
-
-        await asyncio.gather(*playlist_tasks)
-
-        async with results.lock:
-            for video_id, playlists in results.videos_to_playlist_ids.items():
-                create_task(self.db.db.collection("videos").document(
-                    video_id).set({"videosdb": {"playlists": playlists}}, merge=True))
-
-        return results
+        async with _VideoProcessor(self.db, self.api) as video_processor:
+            async with _PlaylistProcessor(self.db, self.api, video_processor) as playlist_processor:
+                async with playlist_ids.stream() as streamer:
+                    async for id in streamer:
+                        await playlist_processor.process_playlist(id)
 
     async def _fill_related_videos(self, video_ids):
 
@@ -300,10 +145,10 @@ class Downloader:
         logger.info("Filling related videos info.")
 
         for video_id in video_ids:
-            for related in await self.yt_api.get_related_videos(video_id):
+            for related in await self.api.get_related_videos(video_id):
                 # for now skip videos from other channels:
                 if "snippet" in related and related["snippet"]["channelId"] \
-                        != settings.YOUTUBE_CHANNEL["id"]:
+                        != YT_CHANNEL_ID:
                     continue
 
                 collection = self.db.db.collection("videos").document(video_id)\
@@ -313,3 +158,176 @@ class Downloader:
 
                 logger.info("Added new related videos to video %s" %
                             (video_id))
+
+
+class _VideoProcessor(TaskGatherer):
+    def __init__(self, db, api):
+        self.db = db
+        self.api = api
+
+    @ staticmethod
+    async def _download_transcript(video_id):
+        try:
+            transcript = await asyncio.to_thread(
+                get_video_transcript, video_id)
+
+            logger.info(
+                "Transcription downloaded for video: " + str(video_id))
+            return transcript, "downloaded"
+        except youtube_transcript_api.TooManyRequests as e:
+            logger.warn(e)
+            return None, "pending"
+        except youtube_transcript_api.CouldNotRetrieveTranscript as e:
+            # weird but that's how the lib works:
+            if (hasattr(e, "video_id")
+                and hasattr(e.video_id, "response")
+                    and e.video_id.response.status_code == 429):
+                logger.warn(e)
+                return None, "pending"
+            else:
+                logger.info(
+                    "Transcription not available for video: " + str(video_id))
+                return None, "unavailable"
+        # except Exception as e:
+        #     logger.exception(e)
+
+    @ staticmethod
+    def _description_trimmed(description):
+        if not description:
+            return
+        match = re.search("#Sadhguru", description)
+        if match and match.start() != -1:
+            return description[:match.start()]
+        return description
+
+    async def _create_video(self, playlist_item):
+
+        video_id = playlist_item["snippet"]["resourceId"]["videoId"]
+
+        # some playlists include videos from other channels
+        # for now exclude those videos
+        # in the future maybe exclude whole playlist
+        if playlist_item["snippet"]["channelId"] != YT_CHANNEL_ID:
+            return
+
+        video, old_video_doc = await asyncio.gather(
+            self.api.get_video_info(video_id),
+            self.db.db.collection("videos").document(video_id).get()
+        )
+        if not video:
+            return
+
+        custom_attrs = dict()
+
+        if old_video_doc.exists:
+            old_video = old_video_doc.to_dict()
+            if (not "transcript_status" in old_video
+                    or old_video["transcript_status"] == "pending"):
+                transcript, new_status = await self._download_transcript(video_id)
+                custom_attrs["transcript_status"] = new_status
+                if transcript:
+                    custom_attrs["transcript"] = transcript
+
+        custom_attrs["slug"] = uuslug.slugify(
+            video["snippet"]["title"])
+        custom_attrs["descriptionTrimmed"] = self._description_trimmed(
+            video["snippet"]["description"])
+        custom_attrs["durationSeconds"] = isodate.parse_duration(
+            video["contentDetails"]["duration"]).total_seconds()
+
+        video["videosdb"] = custom_attrs
+
+        await self.db.db.collection("videos").document(
+            video_id).set(video)
+
+        logger.debug("Processed video: " + video_id)
+
+    async def _process_video(self, playlist_item, playlist):
+
+        video_id = playlist_item["snippet"]["resourceId"]["videoId"]
+        await self._create_video(playlist_item)
+        if playlist:
+            await self.db.add_playlist_to_video(video_id, playlist)
+
+    async def process_video(self, playlist_item, playlist=None):
+
+        if "DEBUG" in os.environ and len(self.tasks) > 100:
+            return
+
+        video_id = playlist_item["snippet"]["resourceId"]["videoId"]
+
+        async with self.lock:
+            def f(fut=None): self.create_task(
+                video_id, self.db.add_playlist_to_video(video_id, playlist))
+
+            task = self.tasks.get(video_id)
+            if not task:
+                self.create_task(video_id, self._process_video(
+                    playlist_item, playlist))
+            elif not task.done():
+                if playlist:
+                    task.add_done_callback(f)
+            else:
+                if playlist:
+                    f()
+
+
+class _PlaylistProcessor(TaskGatherer):
+    def __init__(self, db, api, video_processor):
+        self.db = db
+        self.api = api
+        self.video_processor = video_processor
+
+    async def _process_playlist(self, playlist_id):
+
+        playlist = await self.api.get_playlist_info(playlist_id)
+        if playlist["snippet"]["channelTitle"] != YT_CHANNEL_NAME:
+            return
+
+        if playlist["snippet"]["title"] == "Liked videos" or \
+                playlist["snippet"]["title"] == "Popular uploads":
+            return
+
+        logger.info("Found playlist: %s (ID: %s)" % (
+                    str(playlist["snippet"]["title"]), playlist["id"]))
+
+        exclude_playlist = playlist["snippet"]["title"] == "Uploads from " + \
+            playlist["snippet"]["channelTitle"]
+
+        if exclude_playlist:
+            async for item in self.api.list_playlist_items(playlist_id):
+                await self.video_processor.process_video(item)
+            return
+
+        # this goes before call to _process_video, so that slug is stored with the video:
+        playlist["videosdb"] = dict()
+        playlist["videosdb"]["slug"] = uuslug.slugify(
+            playlist["snippet"]["title"])
+
+        item_count = 0
+        last_updated = date(1, 1, 1)
+
+        async for item in self.api.list_playlist_items(playlist_id):
+            item_count += 1
+            item_date = isodate.parse_date(
+                item["snippet"]["publishedAt"])
+
+            if item_date > last_updated:
+                last_updated = item_date
+
+            await self.video_processor.process_video(item, playlist)
+
+        playlist["videosdb"]["videoCount"] = item_count
+        playlist["videosdb"]["lastUpdated"] = isodate.date_isoformat(
+            last_updated)
+
+        await self.db.set("playlists", playlist["id"], playlist)
+
+    async def process_playlist(self, playlist_id):
+        if playlist_id in self.tasks:
+            return
+
+        if "DEBUG" in os.environ and len(self.tasks) > 10:
+            return
+
+        self.create_task(playlist_id, self._process_playlist(playlist_id))

@@ -56,11 +56,13 @@ class YoutubeAPI:
             return "%s %s" % (self.status, json.dumps(self.json, indent=4, sort_keys=True))
 
     @classmethod
-    async def create(cls, yt_key):
+    async def create(cls, yt_key=None):
         obj = cls()
 
         obj.http = httpx.AsyncClient(http2=True)
         obj.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
+        if not yt_key:
+            yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
 
         obj.root_url = os.environ.get(
             "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
@@ -148,6 +150,7 @@ class YoutubeAPI:
 
 
 # ------- PRIVATE-------------------------------------------------------
+
 
     async def _request_one(self, url, params):
         async for item in self._request_many(url, params):
