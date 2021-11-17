@@ -25,10 +25,6 @@ async def asyncgenerator(item):
     yield item
 
 
-async def awaiter(coroutine, *args):
-    await coroutine(*args)
-
-
 class DB:
     def __init__(self):
         self.db = firestore.AsyncClient()
@@ -49,34 +45,34 @@ class DB:
             video_ids.append(video_doc.get("id"))
         return video_ids
 
-    async def update_video_counter(self, video_count):
-        # "hack" to list documents fast an cheaply,
-        # because Firestore doesn't have something like SELECT COUNT(*)
+    # async def update_video_counter(self, video_count):
+    #     # "hack" to list documents fast an cheaply,
+    #     # because Firestore doesn't have something like SELECT COUNT(*)
 
-        return await self.db.collection("meta").document(
-            "meta").set({"videoCount": video_count}, merge=True)
+    #     return await self.db.collection("meta").document(
+    #         "meta").set({"videoCount": video_count}, merge=True)
 
     async def update_last_updated(self):
         return await self.db.collection("meta").document(
             "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
 
-    async def add_playlist_to_video(self, video_id, playlist, fut=None):
-        await self.db.collection("videos").document(video_id).update({
-            "playlists": firestore.ArrayUnion([playlist])
-        })
+    # async def add_playlist_to_video(self, video_id, playlist, fut=None):
+    #     await self.db.collection("videos").document(video_id).update({
+    #         "videosdb.playlists": firestore.ArrayUnion([playlist])
+    #     })
 
 
 class TaskGatherer():
     async def __aenter__(self):
-        self.tasks = dict()
+        self.tasks = list()
         self.lock = asyncio.Lock()
         return self
 
-    def create_task(self, key, task):
-        self.tasks[key] = asyncio.create_task(task, name=str(key))
+    def create_task(self, task):
+        self.tasks.append(asyncio.create_task(task))
 
     async def __aexit__(self, type, value, traceback):
-        await asyncio.gather(*self.tasks.values())
+        await asyncio.gather(*self.tasks)
 
 
 class Downloader:
@@ -242,34 +238,39 @@ class _VideoProcessor(TaskGatherer):
 
         logger.debug("Processed video: " + video_id)
 
-    async def _process_video(self, playlist_item, playlist):
+    async def _process_video(self, playlist_item):
 
-        video_id = playlist_item["snippet"]["resourceId"]["videoId"]
         await self._create_video(playlist_item)
-        if playlist:
-            await self.db.add_playlist_to_video(video_id, playlist)
+        # if playlist:
+        #     await self.db.add_playlist_to_video(video_id, playlist)
 
-    async def process_video(self, playlist_item, playlist=None):
+    async def process_video(self, playlist_item):
 
         if "DEBUG" in os.environ and len(self.tasks) > 100:
             return
 
         video_id = playlist_item["snippet"]["resourceId"]["videoId"]
-
         async with self.lock:
-            def f(fut=None): self.create_task(
-                video_id, self.db.add_playlist_to_video(video_id, playlist))
+            if video_id in self.tasks:
+                return
 
-            task = self.tasks.get(video_id)
-            if not task:
-                self.create_task(video_id, self._process_video(
-                    playlist_item, playlist))
-            elif not task.done():
-                if playlist:
-                    task.add_done_callback(f)
-            else:
-                if playlist:
-                    f()
+        self.create_task(self._process_video(
+            playlist_item))
+
+        # async with self.lock:
+        #     def f(fut=None): self.create_task(
+        #         video_id, self.db.add_playlist_to_video(video_id, playlist))
+
+        #     task = self.tasks.get(video_id)
+        #     if not task:
+        #         self.create_task(video_id, self._process_video(
+        #             playlist_item, playlist))
+        #     elif not task.done():
+        #         if playlist:
+        #             task.add_done_callback(f)
+        #     else:
+        #         if playlist:
+        #             f()
 
 
 class _PlaylistProcessor(TaskGatherer):
@@ -315,7 +316,9 @@ class _PlaylistProcessor(TaskGatherer):
             if item_date > last_updated:
                 last_updated = item_date
 
-            await self.video_processor.process_video(item, playlist)
+            await self.video_processor.process_video(item)
+            self.create_task(self.db.db.collection("playlists").document(
+                playlist["id"]).collection("playlistItems").document(item["id"]).set(item))
 
         playlist["videosdb"]["videoCount"] = item_count
         playlist["videosdb"]["lastUpdated"] = isodate.date_isoformat(
@@ -330,4 +333,4 @@ class _PlaylistProcessor(TaskGatherer):
         if "DEBUG" in os.environ and len(self.tasks) > 10:
             return
 
-        self.create_task(playlist_id, self._process_playlist(playlist_id))
+        self.create_task(self._process_playlist(playlist_id))
