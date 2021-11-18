@@ -186,15 +186,13 @@ export default {
         .orderBy(this.ordering, 'desc')
       if (this.category) {
         console.debug(this.category)
-        query = this.$fire.firestore
-          .collectionGroup('playlistItems')
-          .where('videosdb.playlistId', '==', this.category.id)
+
+        query = query.where(
+          'videosdb.playlists',
+          'array-contains',
+          this.category
+        )
       }
-      // query = query.where(
-      //   'videosdb.playlists',
-      //   'array-contains',
-      //   this.category
-      // )
 
       //if (this.period) query = query.where('snippet.publishedAt')
 
