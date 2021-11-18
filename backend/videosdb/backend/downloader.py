@@ -44,20 +44,20 @@ class DB:
 
         return await item_ref.set(item)
 
-    async def list_video_ids(self):
-        video_ids = []
-        async for video_doc in self.db.collection("videos").stream():
-            video_ids.append(video_doc.get("id"))
-        return video_ids
+    # async def list_video_ids(self):
+    #     video_ids = []
+    #     async for video_doc in self.db.collection("videos").stream():
+    #         video_ids.append(video_doc.get("id"))
+    #     return video_ids
 
-    async def increase_video_counter(self, video_count):
+    # async def increase_video_counter(self, video_count):
 
-        # because Firestore doesn't have something like SELECT COUNT(*)
+    #     # because Firestore doesn't have something like SELECT COUNT(*)
 
-        await self.db.collection("meta").document(
-            "meta").update({
-                "videoCount": firestore.FieldValue.increment(1)
-            })
+    #     await self.db.collection("meta").document(
+    #         "meta").update({
+    #             "videoCount": firestore.FieldValue.increment(1)
+    #         })
 
     async def update_last_updated(self):
         return await self.db.collection("meta").document(
@@ -105,10 +105,7 @@ class Downloader:
         asyncio.get_running_loop().slow_callback_duration = 3
 
         try:
-            results = await self._sync_db_with_youtube()
-            if not "DEBUG" in os.environ:
-                # separate so that it uses remaining quota
-                await self._fill_related_videos(results.video_ids)
+            await self._sync_db_with_youtube()
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
 
@@ -133,8 +130,8 @@ class Downloader:
             self.api.list_channel_playlist_ids(channel_id),
         )
         if not "DEBUG" in os.environ:
-            playlist_ids = stream.merge(playlist_ids,
-                                        asyncgenerator(all_uploads_playlist_id))
+            playlist_ids = stream.merge(asyncgenerator(
+                all_uploads_playlist_id), playlist_ids)
 
         async with _VideoProcessor(self.db, self.api) as video_processor:
             async with _PlaylistProcessor(self.db, self.api, video_processor) as playlist_processor:
@@ -142,25 +139,9 @@ class Downloader:
                     async for id in streamer:
                         await playlist_processor.enqueue_playlist(id)
 
-    async def _fill_related_videos(self, video_ids):
-
-        # use remaining YT API daily quota to download a few related video lists:
-        logger.info("Filling related videos info.")
-
-        for video_id in video_ids:
-            for related in await self.api.get_related_videos(video_id):
-                # for now skip videos from other channels:
-                if "snippet" in related and related["snippet"]["channelId"] \
-                        != YT_CHANNEL_ID:
-                    continue
-
-                collection = self.db.db.collection("videos").document(video_id)\
-                    .collection("related_videos")
-                asyncio.create_task(self.db.set(
-                    collection, related["id"]["videoId"], related))
-
-                logger.info("Added new related videos to video %s" %
-                            (video_id))
+            if True or not "DEBUG" in os.environ:
+                # separate so that it uses remaining quota
+                await video_processor.fill_related_videos()
 
 
 class _VideoProcessor(TaskGatherer):
@@ -213,20 +194,19 @@ class _VideoProcessor(TaskGatherer):
             self.excluded_videos.add(video_id)
             return
 
-        video, old_video_doc = await asyncio.gather(
-            self.api.get_video_info(video_id),
-            self.db.db.collection("videos").document(video_id).get()
-        )
+        video = await self.api.get_video_info(video_id)
         if not video:
             self.excluded_videos.add(video_id)
             return
+
+        old_video_doc = await self.db.db.collection("videos").document(video_id).get()
 
         custom_attrs = dict()
 
         if old_video_doc.exists:
             old_video = old_video_doc.to_dict()
-            if (not "transcript_status" in old_video
-                    or old_video["transcript_status"] == "pending"):
+            if (not "transcript_status" in old_video["videosdb"]
+                    or old_video["videosdb"]["transcript_status"] == "pending"):
                 transcript, new_status = await self._download_transcript(video_id)
                 custom_attrs["transcript_status"] = new_status
                 if transcript:
@@ -272,6 +252,31 @@ class _VideoProcessor(TaskGatherer):
             else:
                 task.add_done_callback(lambda fut: asyncio.create_task(
                     self._add_playlist_callback(video_id, playlist)))
+
+    async def fill_related_videos(self):
+
+        # use remaining YT API daily quota to download a few related video lists:
+        logger.info("Filling related videos info.")
+
+        video_ids = [id
+                     for id in self.tasks.keys()
+                     if id not in self.excluded_videos]
+
+        async with TaskGatherer() as tg:
+            for video_id in video_ids:
+                for related in await self.api.get_related_videos(video_id):
+                    # for now skip videos from other channels:
+                    if "snippet" in related and related["snippet"]["channelId"] \
+                            != YT_CHANNEL_ID:
+                        continue
+
+                    collection = self.db.db.collection("videos").document(video_id)\
+                        .collection("related_videos")
+                    tg.create_task(related["id"]["videoId"], self.db.set(
+                        collection, related["id"]["videoId"], related))
+
+                    logger.info("Added new related videos to video %s" %
+                                (video_id))
 
 
 class _PlaylistProcessor(TaskGatherer):
