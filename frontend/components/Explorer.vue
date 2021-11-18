@@ -115,19 +115,19 @@ export default {
     }
   },
   props: {
-    base_url: () => {
+    base_url: function () {
       return '/'
     },
-    search: () => {
+    search: function () {
       return ''
     },
-    category: () => {
+    category: function () {
       return ''
     },
-    tag: () => {
+    tag: function () {
       return ''
     },
-    initial_page: () => {
+    initial_page: function () {
       return 1
     },
   },
@@ -184,12 +184,17 @@ export default {
         .collection('videos')
         .limit(PAGE_SIZE)
         .orderBy(this.ordering, 'desc')
-      if (this.category)
-        query = query.where(
-          'videosdb.playlists',
-          'array-contains',
-          this.category
-        )
+      if (this.category) {
+        console.debug(this.category)
+        query = this.$fire.firestore
+          .collectionGroup('playlistItems')
+          .where('videosdb.playlistId', '==', this.category.id)
+      }
+      // query = query.where(
+      //   'videosdb.playlists',
+      //   'array-contains',
+      //   this.category
+      // )
 
       //if (this.period) query = query.where('snippet.publishedAt')
 

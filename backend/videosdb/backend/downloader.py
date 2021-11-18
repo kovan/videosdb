@@ -29,14 +29,14 @@ async def asyncgenerator(item):
 class DB:
 
     @classmethod
-    async def create():
-        obj = DB()
+    async def create(cls):
+        obj = cls()
         obj.db = firestore.AsyncClient()
         # initialize meta table:
-        doc_ref = obj.db.collection("meta").document("meta")
-        doc = await doc_ref.get()
-        if not doc.exists or "videoCount" not in doc.to_dict():
-            await doc_ref.set({"videoCount": 0})
+        # doc_ref = obj.db.collection("meta").document("meta")
+        # doc = await doc_ref.get()
+        # if not doc.exists or "videoCount" not in doc.to_dict():
+        #     await doc_ref.set({"videoCount": 0})
 
         return obj
 
@@ -78,41 +78,37 @@ class DB:
 class TaskGatherer():
     async def __aenter__(self):
         self.tasks = dict()
-        self.queue = asyncio.Queue()
-        self.task = asyncio.create_task(self._loop())
+        self.lock = asyncio.Lock()
+        # self.queue = asyncio.Queue()
+        # self.task = asyncio.create_task(self._loop())
         return self
 
-    @ abstractmethod
-    async def _process_item(self, item):
-        pass
+    # @ abstractmethod
+    # async def _process_item(self, item):
+    #     pass
 
-    async def _loop(self):
-        while True:
-            # Get a "work item" out of the queue.
-            item = await self.queue.get()
+    # async def _loop(self):
+    #     while True:
+    #         # Get a "work item" out of the queue.
+    #         item = await self.queue.get()
 
-            if item:
-                await self._process_item(item)
+    #         if item:
+    #             await self._process_item(item)
 
-            # Notify the queue that the "work item" has been processed.
-            self.queue.task_done()
+    #         # Notify the queue that the "work item" has been processed.
+    #         self.queue.task_done()
 
-    # def create_task(self, key, coroutine):
-    #     task = asyncio.create_task(coroutine, name=str(key))
-    #     self.tasks[key] = task
-    #     return task
+    def create_task(self, key, coroutine):
+        self.tasks[key] = asyncio.create_task(coroutine, name=str(key))
 
     async def __aexit__(self, type, value, traceback):
-        await self.queue.join()
-        await asyncio.gather(self.task)
+        # await self.queue.join()
+        await asyncio.gather(*self.tasks.values())
 
 
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
-
-    def __init__(self):
-        pass
 
     def check_for_new_videos(self):
         logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -123,7 +119,6 @@ class Downloader:
 
 
 # PRIVATE: -------------------------------------------------------------------
-
 
     async def _check_for_new_videos(self):
 
@@ -159,8 +154,11 @@ class Downloader:
         playlist_ids = stream.merge(
             self.api.list_channnelsection_playlist_ids(channel_id),
             self.api.list_channel_playlist_ids(channel_id),
-            # asyncgenerator(all_uploads_playlist_id),
         )
+        if not "DEBUG" in os.environ:
+            playlist_ids = stream.merge(playlist_ids,
+                                        asyncgenerator(all_uploads_playlist_id))
+
         async with _VideoProcessor(self.db, self.api) as video_processor:
             async with _PlaylistProcessor(self.db, self.api, video_processor) as playlist_processor:
                 async with playlist_ids.stream() as streamer:
@@ -192,7 +190,7 @@ class _VideoProcessor(TaskGatherer):
     def __init__(self, db, api):
         self.db = db
         self.api = api
-        self.processed_videos = set()
+        self.excluded_videos = set()
 
     @ staticmethod
     async def _download_transcript(video_id):
@@ -237,6 +235,7 @@ class _VideoProcessor(TaskGatherer):
         # for now exclude those videos
         # in the future maybe exclude whole playlist
         if playlist_item["snippet"]["channelId"] != YT_CHANNEL_ID:
+            self.excluded_videos.add(video_id)
             return
 
         video, old_video_doc = await asyncio.gather(
@@ -244,6 +243,7 @@ class _VideoProcessor(TaskGatherer):
             self.db.db.collection("videos").document(video_id).get()
         )
         if not video:
+            self.excluded_videos.add(video_id)
             return
 
         custom_attrs = dict()
@@ -256,8 +256,6 @@ class _VideoProcessor(TaskGatherer):
                 custom_attrs["transcript_status"] = new_status
                 if transcript:
                     custom_attrs["transcript"] = transcript
-        else:
-            await self.db.increase_video_counter()
 
         custom_attrs["slug"] = uuslug.slugify(
             video["snippet"]["title"])
@@ -273,40 +271,44 @@ class _VideoProcessor(TaskGatherer):
 
         logger.info("Processed video: " + video_id)
 
-    async def _add_playlist(self, video_id, playlist):
+    async def _add_playlist_callback(self, video_id, playlist, fut=None):
+        if video_id in self.excluded_videos:
+            return
         await self.db.add_playlist_to_video(video_id, playlist)
 
     async def enqueue_video(self, playlist_item, playlist=None):
 
-        if "DEBUG" in os.environ and len(self.processed_videos) > 100:
+        if "DEBUG" in os.environ and len(self.tasks) > 100:
             return
 
-        self.queue.put_nowait((playlist_item, playlist))
-
-        # async with self.lock:
-        #     task = self.tasks.get(video_id)
-        #     if not task:
-        #         task = self.create_task(video_id, self._create_video(
-        #             playlist_item))
-
-        # if playlist:
-        #     if task.done():
-        #         self._callback(video_id, playlist)
-        #     else:
-        #         task.add_done_callback(
-        #             functools.partial(self._callback, video_id, playlist))
-
-    async def _process_item(self, item):
-        playlist_item, playlist = item
         video_id = playlist_item["snippet"]["resourceId"]["videoId"]
 
-        if playlist_item and video_id not in self.processed_videos:
-            await self._create_video(playlist_item)
+        async with self.lock:
+            task = self.tasks.get(video_id)
+            if not task:
+                self.create_task(video_id, self._create_video(
+                    playlist_item))
+                task = self.tasks[video_id]
 
         if playlist:
-            await self._add_playlist(video_id, playlist)
+            if task.done():
+                asyncio.create_task(
+                    self._add_playlist_callback(video_id, playlist))
+            else:
+                task.add_done_callback(lambda fut: asyncio.create_task(
+                    self._add_playlist_callback(video_id, playlist)))
 
-        self.processed_videos.add(video_id)
+    # async def _process_item(self, item):
+    #     playlist_item, playlist = item
+    #     video_id = playlist_item["snippet"]["resourceId"]["videoId"]
+
+    #     if playlist_item and video_id not in self.processed_videos:
+    #         await self._create_video(playlist_item)
+
+    #     if playlist:
+    #         await self._add_playlist(video_id, playlist)
+
+    #     self.processed_videos.add(video_id)
 
 
 class _PlaylistProcessor(TaskGatherer):
@@ -315,7 +317,7 @@ class _PlaylistProcessor(TaskGatherer):
         self.api = api
         self.video_processor = video_processor
 
-    async def _process_item(self, playlist_id):
+    async def _process_playlist(self, playlist_id):
 
         playlist = await self.api.get_playlist_info(playlist_id)
         if playlist["snippet"]["channelTitle"] != YT_CHANNEL_NAME:
@@ -369,4 +371,4 @@ class _PlaylistProcessor(TaskGatherer):
         if "DEBUG" in os.environ and len(self.tasks) > 10:
             return
 
-        self.queue.put_nowait(playlist_id)
+        self.create_task(playlist_id, self._process_playlist(playlist_id))
