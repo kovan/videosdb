@@ -32,12 +32,6 @@ class DB:
     async def create(cls):
         obj = cls()
         obj.db = firestore.AsyncClient()
-        # initialize meta table:
-        # doc_ref = obj.db.collection("meta").document("meta")
-        # doc = await doc_ref.get()
-        # if not doc.exists or "videoCount" not in doc.to_dict():
-        #     await doc_ref.set({"videoCount": 0})
-
         return obj
 
     async def set(self, collection, id, item):
