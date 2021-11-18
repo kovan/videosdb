@@ -79,24 +79,7 @@ class TaskGatherer():
     async def __aenter__(self):
         self.tasks = dict()
         self.lock = asyncio.Lock()
-        # self.queue = asyncio.Queue()
-        # self.task = asyncio.create_task(self._loop())
         return self
-
-    # @ abstractmethod
-    # async def _process_item(self, item):
-    #     pass
-
-    # async def _loop(self):
-    #     while True:
-    #         # Get a "work item" out of the queue.
-    #         item = await self.queue.get()
-
-    #         if item:
-    #             await self._process_item(item)
-
-    #         # Notify the queue that the "work item" has been processed.
-    #         self.queue.task_done()
 
     def create_task(self, key, coroutine):
         self.tasks[key] = asyncio.create_task(coroutine, name=str(key))
@@ -215,8 +198,6 @@ class _VideoProcessor(TaskGatherer):
                 logger.info(
                     "Transcription not available for video: " + str(video_id))
                 return None, "unavailable"
-        # except Exception as e:
-        #     logger.exception(e)
 
     @ staticmethod
     def _description_trimmed(description):
@@ -298,18 +279,6 @@ class _VideoProcessor(TaskGatherer):
                 task.add_done_callback(lambda fut: asyncio.create_task(
                     self._add_playlist_callback(video_id, playlist)))
 
-    # async def _process_item(self, item):
-    #     playlist_item, playlist = item
-    #     video_id = playlist_item["snippet"]["resourceId"]["videoId"]
-
-    #     if playlist_item and video_id not in self.processed_videos:
-    #         await self._create_video(playlist_item)
-
-    #     if playlist:
-    #         await self._add_playlist(video_id, playlist)
-
-    #     self.processed_videos.add(video_id)
-
 
 class _PlaylistProcessor(TaskGatherer):
     def __init__(self, db, api, video_processor):
@@ -349,11 +318,6 @@ class _PlaylistProcessor(TaskGatherer):
             if item_date > last_updated:
                 last_updated = item_date
             await self.video_processor.enqueue_video(item, playlist)
-
-            # item["videosdb"] = dict()
-            # item["videosdb"]["playlistId"] = playlist["id"]
-            # self.create_task(self.db.db.collection("playlists").document(
-            #     playlist["id"]).collection("playlistItems").document(item["id"]).set(item))
 
         playlist["videosdb"] = dict()
         playlist["videosdb"]["slug"] = uuslug.slugify(
