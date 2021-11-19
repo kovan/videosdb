@@ -47,6 +47,9 @@ export default {
 
   plugins: [
     {
+      src: "~/plugins/vue-infinite-scroll.js"
+    },
+    {
       src: "~/plugins/axios.server.js"
     }, {
       src: "~/plugins/axios.client.js"

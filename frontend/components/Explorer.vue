@@ -1,5 +1,5 @@
 <template lang="pug">
-.pt-2
+.pt-2(v-infinite-scroll='loadMore', infinite-scroll-disabled='scroll_busy')
   .album.py-1.bg-light
     .px-3
       .row
@@ -22,30 +22,30 @@
               @change='handleChange'
             )
       .row(v-if='this.videos.length')
-        .col-md-4(v-for='video in this.videos', :key='video.id')
+        .col-md-4(v-for='video in this.videos', :key='video.data().id')
           LazyHydrate(when-visible)
             .card.mb-4.shadow-sm.text-center
-              NuxtLink(:to='"/video/" + video.videosdb.slug')
+              NuxtLink(:to='"/video/" + video.data().videosdb.slug')
                 b-img-lazy.bd-placeholder-img.card-img-top(
-                  :src='video.snippet.thumbnails.medium.url',
+                  :src='video.data().snippet.thumbnails.medium.url',
                   height='180',
                   width='320',
-                  :id='video.id',
-                  :alt='video.snippet.title',
+                  :id='video.data().id',
+                  :alt='video.data().snippet.title',
                   fluid
                 )
                 b-popover(
-                  :target='video.id',
+                  :target='video.data().id',
                   triggers='hover focus',
-                  :content='video.videosdb.descriptionTrimmed'
+                  :content='video.data().videosdb.descriptionTrimmed'
                 )
               .card-body
                 p.card-text
-                  NuxtLink(:to='"/video/" + video.videosdb.slug')
-                    | {{ video.snippet.title }}
+                  NuxtLink(:to='"/video/" + video.data().videosdb.slug')
+                    | {{ video.data().snippet.title }}
                 .d-flex.justify-content-between.align-items-center
-                  small.text-muted Published: <br/>{{ $moment(video.snippet.publisheAt).format("MMM Do YYYY") }}
-                  small.text-muted Duration: <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
+                  small.text-muted Published: <br/>{{ $moment(video.data().snippet.publisheAt).format("MMM Do YYYY") }}
+                  small.text-muted Duration: <br/>{{ new Date(video.data().videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
 </template>
 
 <script >
@@ -59,6 +59,7 @@ export default {
     return {
       page_count: 1,
       current_page: 1,
+      scroll_busy: false,
       scroll_finished: false,
       videos: [],
       period_options: [
@@ -141,14 +142,21 @@ export default {
         },
       }
     },
-    infiniteHandler($state) {
-      console.log('Page: ' + this.current_page)
-      this.$fetch()
-      if (this.scroll_finished) $state.complete()
-      else $state.loaded()
+    // infiniteHandler($state) {
+    //   console.log('Page: ' + this.current_page)
+    //   this.$fetch()
+    //   if (this.scroll_finished) $state.complete()
+    //   else $state.loaded()
+    // },
+    async loadMore() {
+      this.scroll_busy = true
+      console.log('loading more')
+
+      await this.$fetch()
+      this.scroll_busy = false
     },
     handleChange() {
-      this.$fetch()
+      this.fetch()
     },
 
     // getSrcSetAndSizes (video) {
@@ -161,8 +169,8 @@ export default {
     //     standard: 640
     //   }
     //   for (const res in resolutions) {
-    //     if (video.thumbnails.hasOwnProperty(res)) {
-    //       srcset += `${video.thumbnails[res].url} ${resolutions[res]}w, `
+    //     if (video.data().thumbnails.hasOwnProperty(res)) {
+    //       srcset += `${video.data().thumbnails[res].url} ${resolutions[res]}w, `
     //       sizes += `(max-width: ${resolutions[res]}px) ${resolutions[res]}px, `
     //     }
     //   }
@@ -170,6 +178,7 @@ export default {
     // }
   },
   async fetch() {
+    console.log('fetch')
     const PAGE_SIZE = 20
     try {
       let query = this.$fire.firestore
@@ -188,7 +197,7 @@ export default {
       }
 
       if (this.videos.length > 0) {
-        query = query.startAt(this.videos[-1])
+        query = query.startAfter(this.videos.at(-1))
       }
 
       //if (this.period) query = query.where('snippet.publishedAt')
@@ -212,8 +221,9 @@ export default {
       console.log(results)
 
       results.forEach((doc) => {
-        this.videos.push(doc.data())
+        this.videos.push(doc)
       })
+      this.scroll_busy = false
       // const video_count = meta_results.data().videoCount
       // this.page_count = Math.floor(video_count / PAGE_SIZE) + 1
       // console.log('Page count: ' + this.page_count)

@@ -150,7 +150,7 @@ class Downloader:
                     async for id in streamer:
                         await playlist_processor.enqueue_playlist(id)
 
-            if True or not "DEBUG" in os.environ:
+            if not "DEBUG" in os.environ:
                 # separate so that it uses remaining quota
                 await video_processor.fill_related_videos()
 
