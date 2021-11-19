@@ -67,8 +67,7 @@ async function generateSitemap(baseURL) {
 
   await Promise.all([
     download(baseURL + "/videos/", "video"),
-    download(baseURL + "/categories/", "category"),
-    download(baseURL + "/tags/", "tag")
+    download(baseURL + "/categories/", "category")
   ])
 
   return results

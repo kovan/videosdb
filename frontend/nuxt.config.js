@@ -118,6 +118,7 @@ export default {
     cacheTime: 86400000 * 2, // 48h
     hostname: "https://www.sadhguru.digital",
     gzip: true,
+    lastmod: new Date().toISOString(),
     routes: async () => {
       return getSitemap(baseURL);
     },
