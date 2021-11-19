@@ -13,8 +13,6 @@ def dbg():
 
 def add_arguments(parser):
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
-    parser.add_argument("-d", "--download-one", dest="dl_video_id")
-    parser.add_argument("-a", "--download-all", action="store_true")
     parser.add_argument("-u", "--update-dnslink", action="store_true")
     parser.add_argument(
         "-f", "--download-and-register-in-ipfs", action="store_true")
@@ -27,16 +25,9 @@ def handle(*args, **options):
         downloader = Downloader()
         downloader.check_for_new_videos()
 
-    if options["download_all"]:
-        downloader = Downloader()
-        downloader.download_all()
-
-    if options["dl_video_id"]:
-        downloader = Downloader()
-        downloader.download_one(options["dl_video_id"])
-
     if options["download_and_register_in_ipfs"]:
-        videosdb.backend.ipfs.download_and_register_in_ipfs(
+        ipfs = videosdb.backend.ipfs.IPFS()
+        ipfs.download_and_register_folder(
             options["overwrite_hashes"])
 
     if options["update_dnslink"]:
