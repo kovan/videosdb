@@ -47,6 +47,9 @@ export default {
 
   plugins: [
     {
+      src: "~/plugins/luxon.js"
+    },
+    {
       src: "~/plugins/vue-infinite-scroll.js"
     },
     {
@@ -69,8 +72,7 @@ export default {
     "@nuxtjs/router-extras",
     "@nuxtjs/sitemap",
     "bootstrap-vue/nuxt",
-    '@nuxtjs/firebase',
-    '@nuxtjs/moment'],
+    '@nuxtjs/firebase'],
 
   modules: [],
 

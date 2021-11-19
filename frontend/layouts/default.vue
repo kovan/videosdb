@@ -31,7 +31,7 @@ div
   .p-1.px-2.mt-2.text-center
     strong {{ this.$config.subtitle }}
     br
-    small.align-middle Last updated: {{ $moment(last_updated).format("MMM Do YYYY") }}
+    small.align-middle Last updated: {{ $DateTime.fromISO(last_updated).toLocaleString() }}
   b-container
     .row
       LazyHydrate(when-visible)

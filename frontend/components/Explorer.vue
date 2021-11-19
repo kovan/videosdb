@@ -44,7 +44,7 @@
                   NuxtLink(:to='"/video/" + video.data().videosdb.slug')
                     | {{ video.data().snippet.title }}
                 .d-flex.justify-content-between.align-items-center
-                  small.text-muted Published: <br/>{{ $moment(video.data().snippet.publisheAt).format("MMM Do YYYY") }}
+                  small.text-muted Published: <br/>{{ $DateTime.fromISO(video.data().snippet.publishedAt).toLocaleString() }}
                   small.text-muted Duration: <br/>{{ new Date(video.data().videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
 </template>
 
