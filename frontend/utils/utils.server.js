@@ -24,7 +24,7 @@ async function generateSitemap(baseURL) {
   function transform(obj, type) {
     if (type == "video")
       return {
-        url: `/video/${obj.slug}/`,
+        url: `/video/${obj.slug}`,
         video: [
           {
             thumbnail_loc: obj.snippet.thumbnails.medium.url,
@@ -35,16 +35,16 @@ async function generateSitemap(baseURL) {
             content_loc:
               "https://videos.sadhguru.digital/" +
               encodeURIComponent(obj.videosdb.filename),
-            player_loc: `https://www.youtube.com/watch?v=${obj.id}`,
-            duration: obj.videosdb.durationSeconds,
+            player_loc: `https://www.sadhguru.digital/video/${obj.videosdb.slug}`,
+            duration: obj.videosdb.duration_seconds,
           },
         ],
-        lastmod: obj.snippet.publishedAt,
-        priority: 0.9,
+        priority: 1.0,
       }
     else
       return {
-        url: `/${type}/${obj.slug}/`,
+        url: `/${type}/${obj.videosdb.slug}/`,
+        priority: 0.1
       }
   }
 
@@ -56,18 +56,13 @@ async function generateSitemap(baseURL) {
   ]
 
   async function download(url, type) {
-    try {
-      let response = await api.get(url)
-      let container = type == "category" ? response.data : response.data.results
-      container.forEach((item) => {
-        results.push(transform(item, type))
-      })
-      if (response.data.next)
-        await download(response.data.next, type)
-
-    } catch (e) {
-      console.error(e)
-    }
+    let response = await api.get(url)
+    let container = type == "category" ? response.data : response.data.results
+    container.forEach((item) => {
+      results.push(transform(item, type))
+    })
+    if (response.data.next)
+      await download(response.data.next, type)
   }
 
   await Promise.all([

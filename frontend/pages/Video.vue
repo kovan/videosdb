@@ -118,6 +118,12 @@ export default {
           content: this.video.videosdb.descriptionTrimmed,
         },
       ],
+      link: [
+        {
+          rel: 'canonical',
+          href: `https://www.sadhguru.digital/video/${this.video.slug}`,
+        },
+      ],
     }
   },
   data() {
@@ -137,14 +143,13 @@ export default {
         ),
         uploadDate: this.video.snippet.publishedAt,
         duration: this.video.contentDetails.duration,
-        embedUrl: `https://www.youtube.com/watch?v=${this.video.id}`,
+        embedUrl: `https://www.sadhguru.digital/video/${this.video.slug}`,
       }
-      if ('filename' in this.video)
+      if ('filename' in this.video.videosdb)
         json.contentUrl =
           'https://videos.sadhguru.digital/' +
           encodeURIComponent(this.video.filename)
-      else json.contentUrl = this.$nuxt.$route.currentRoute
-
+      else json.contentUrl = json.embedUrl
       return JSON.stringify(json)
     },
   },
