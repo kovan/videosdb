@@ -280,6 +280,8 @@ class _VideoProcessor(_BaseProcessor):
             return
 
         video_id = playlist_item["snippet"]["resourceId"]["videoId"]
+        if video_id in self.tasks:
+            return
 
         self.create_task(video_id, self._create_video(playlist_item))
 
