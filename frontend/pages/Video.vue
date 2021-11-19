@@ -2,9 +2,6 @@
 b-container.m-0.p-0.mx-auto
   script(type='application/ld+json', v-html='this.video_json')
   b-card.m-0.p-0
-    small
-      | Published: {{ new Date(this.video.snippet.publishedAt).toLocaleDateString() }}.
-      | Duration: {{ new Date(this.video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
     .my-4
       h1 {{ this.video.snippet.title }}
       p(align='center')
@@ -12,7 +9,9 @@ b-container.m-0.p-0.mx-auto
           LazyYoutube(
             :src='`https://www.youtube.com/watch?v=${this.video.id}`'
           )
-
+      small
+        | Published: {{ new Date(this.video.snippet.publishedAt).toLocaleDateString() }}.
+        | Duration: {{ new Date(this.video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
     .my-4(v-if='this.video.videosdb.descriptionTrimmed')
       strong Description
       p(style='white-space: pre-line') {{ this.video.videosdb.descriptionTrimmed }}
