@@ -1,5 +1,5 @@
 <template lang="pug">
-.pt-2(v-infinite-scroll='loadMore', infinite-scroll-disabled='scroll_busy')
+.pt-2(v-infinite-scroll='loadMore', infinite-scroll-disabled='scroll_disabled')
   .album.py-1.bg-light
     .px-3
       .row
@@ -59,8 +59,7 @@ export default {
     return {
       page_count: 1,
       current_page: 1,
-      scroll_busy: false,
-      scroll_finished: false,
+      scroll_disabled: false,
       videos: [],
       period_options: [
         {
@@ -149,11 +148,9 @@ export default {
     //   else $state.loaded()
     // },
     async loadMore() {
-      this.scroll_busy = true
       console.log('loading more')
 
       await this.$fetch()
-      this.scroll_busy = false
     },
     handleChange() {
       this.fetch()
@@ -215,15 +212,14 @@ export default {
         // meta_query.get(),
       ])
 
-      this.scroll_finished = results.docs.length < PAGE_SIZE
-
       console.log('LEN: ' + results.docs.length)
       console.log(results)
 
       results.forEach((doc) => {
         this.videos.push(doc)
       })
-      this.scroll_busy = false
+
+      this.scroll_disabled = results.docs.length < PAGE_SIZE
       // const video_count = meta_results.data().videoCount
       // this.page_count = Math.floor(video_count / PAGE_SIZE) + 1
       // console.log('Page count: ' + this.page_count)
