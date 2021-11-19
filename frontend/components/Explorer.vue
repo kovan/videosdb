@@ -199,18 +199,10 @@ export default {
 
       //if (this.period) query = query.where('snippet.publishedAt')
 
-      //if (this.tag)
-      //query = query.where('snippet.tags', 'array-contains', this.tag)
+      if (this.tag)
+        query = query.where('snippet.tags', 'array-contains', this.tag)
 
-      //if (this.videos.length > 0) query = query.startAfter(this.videos[-1])
-
-      // console.log('Page: ' + this.current_page)
-      // const meta_query = this.$fire.firestore.collection('meta').doc('meta')
-
-      let [results] = await Promise.all([
-        query.get(),
-        // meta_query.get(),
-      ])
+      let [results] = await Promise.all([query.get()])
 
       console.log('LEN: ' + results.docs.length)
       console.log(results)
@@ -220,9 +212,6 @@ export default {
       })
 
       this.scroll_disabled = results.docs.length < PAGE_SIZE
-      // const video_count = meta_results.data().videoCount
-      // this.page_count = Math.floor(video_count / PAGE_SIZE) + 1
-      // console.log('Page count: ' + this.page_count)
     } catch (exception) {
       console.error(exception)
       this.$nuxt.context.error({

@@ -81,17 +81,21 @@ class DB:
 
 
 class TaskGatherer():
-    async def __aenter__(self):
+    def __init__(self):
         self.tasks = dict()
-        self.lock = asyncio.Lock()
+
+    async def __aenter__(self):
         return self
 
     def create_task(self, key, coroutine):
-        self.tasks[key] = asyncio.create_task(coroutine, name=str(key))
+        return self.tasks.setdefault(
+            key, asyncio.create_task(coroutine, name=str(key)))
+
+    async def gather(self):
+        return await asyncio.gather(*self.tasks.values())
 
     async def __aexit__(self, type, value, traceback):
-        # await self.queue.join()
-        await asyncio.gather(*self.tasks.values())
+        return await self.gather()
 
 
 class Downloader:
@@ -144,24 +148,55 @@ class Downloader:
             playlist_ids = stream.merge(asyncgenerator(
                 all_uploads_playlist_id), playlist_ids)
 
-        async with _VideoProcessor(self.db, self.api) as video_processor:
-            async with _PlaylistProcessor(self.db, self.api, video_processor) as playlist_processor:
-                async with playlist_ids.stream() as streamer:
-                    async for id in streamer:
-                        await playlist_processor.enqueue_playlist(id)
+        global_video_ids = {
+            "processed": set(),
+            "valid": set()
+        }
 
-            if not "DEBUG" in os.environ:
-                # separate so that it uses remaining quota
-                await video_processor.fill_related_videos()
+        async with playlist_ids.stream() as streamer:
+            async with _PlaylistProcessor(
+                    self.db, self.api, global_video_ids) as pp:
+                async for id in streamer:
+                    await pp.enqueue_playlist(id)
+
+        if not "DEBUG" in os.environ:
+            # separate so that it uses remaining quota
+            await self._fill_related_videos(global_video_ids["valid"])
+
+    async def _fill_related_videos(self, video_ids):
+
+        # use remaining YT API daily quota to download a few related video lists:
+        logger.info("Filling related videos info.")
+
+        async with TaskGatherer() as tg:
+            for video_id in video_ids:
+                for related in await self.api.get_related_videos(video_id):
+                    # for now skip videos from other channels:
+                    if "snippet" in related and related["snippet"]["channelId"] \
+                            != YT_CHANNEL_ID:
+                        continue
+
+                    collection = self.db.db.collection("videos").document(video_id)\
+                        .collection("related_videos")
+                    tg.create_task(related["id"]["videoId"], self.db.set(
+                        collection, related["id"]["videoId"], related))
+
+                    logger.info("Added new related videos to video %s" %
+                                (video_id))
 
 
-class _VideoProcessor(TaskGatherer):
+class _BaseProcessor(TaskGatherer):
     def __init__(self, db, api):
         self.db = db
         self.api = api
-        self.excluded_videos = set()
+        super().__init__()
 
-    @ staticmethod
+
+class _VideoProcessor(_BaseProcessor):
+    def __init__(self, db, api):
+        super().__init__(db, api)
+
+    @staticmethod
     async def _download_transcript(video_id):
         try:
             transcript = await asyncio.to_thread(
@@ -202,12 +237,10 @@ class _VideoProcessor(TaskGatherer):
         # for now exclude those videos
         # in the future maybe exclude whole playlist
         if playlist_item["snippet"]["channelId"] != YT_CHANNEL_ID:
-            self.excluded_videos.add(video_id)
             return
 
         video = await self.api.get_video_info(video_id)
         if not video:
-            self.excluded_videos.add(video_id)
             return
 
         old_video_doc = await self.db.db.collection("videos").document(video_id).get()
@@ -239,64 +272,22 @@ class _VideoProcessor(TaskGatherer):
 
         logger.info("Processed video: " + video_id)
 
-    async def _add_playlist_callback(self, video_id, playlist, fut=None):
-        if video_id in self.excluded_videos:
-            return
-        await self.db.add_playlist_to_video(video_id, playlist)
+        return video
 
-    async def enqueue_video(self, playlist_item, playlist=None):
+    async def enqueue_video(self, playlist_item):
 
         if "DEBUG" in os.environ and len(self.tasks) > 100:
             return
 
         video_id = playlist_item["snippet"]["resourceId"]["videoId"]
 
-        async with self.lock:
-            task = self.tasks.get(video_id)
-            if not task:
-                self.create_task(video_id, self._create_video(
-                    playlist_item))
-                task = self.tasks[video_id]
-
-        if playlist:
-            if task.done():
-                asyncio.create_task(
-                    self._add_playlist_callback(video_id, playlist))
-            else:
-                task.add_done_callback(lambda fut: asyncio.create_task(
-                    self._add_playlist_callback(video_id, playlist)))
-
-    async def fill_related_videos(self):
-
-        # use remaining YT API daily quota to download a few related video lists:
-        logger.info("Filling related videos info.")
-
-        video_ids = [id
-                     for id in self.tasks.keys()
-                     if id not in self.excluded_videos]
-
-        async with TaskGatherer() as tg:
-            for video_id in video_ids:
-                for related in await self.api.get_related_videos(video_id):
-                    # for now skip videos from other channels:
-                    if "snippet" in related and related["snippet"]["channelId"] \
-                            != YT_CHANNEL_ID:
-                        continue
-
-                    collection = self.db.db.collection("videos").document(video_id)\
-                        .collection("related_videos")
-                    tg.create_task(related["id"]["videoId"], self.db.set(
-                        collection, related["id"]["videoId"], related))
-
-                    logger.info("Added new related videos to video %s" %
-                                (video_id))
+        self.create_task(video_id, self._create_video(playlist_item))
 
 
-class _PlaylistProcessor(TaskGatherer):
-    def __init__(self, db, api, video_processor):
-        self.db = db
-        self.api = api
-        self.video_processor = video_processor
+class _PlaylistProcessor(_BaseProcessor):
+    def __init__(self, db, api, global_video_ids):
+        self.global_video_ids = global_video_ids
+        super().__init__(db, api)
 
     async def _process_playlist(self, playlist_id):
 
@@ -311,28 +302,44 @@ class _PlaylistProcessor(TaskGatherer):
         logger.info("Found playlist: %s (ID: %s)" % (
                     str(playlist["snippet"]["title"]), playlist["id"]))
 
+        video_processor = _VideoProcessor(self.db, self.api)
+        async for item in self.api.list_playlist_items(playlist_id):
+            video_id = item["snippet"]["resourceId"]["videoId"]
+            if video_id in self.global_video_ids["processed"]:
+                continue
+
+            await video_processor.enqueue_video(item)
+            self.global_video_ids["processed"].add(video_id)
+
         exclude_playlist = playlist["snippet"]["title"] == "Uploads from " + \
             playlist["snippet"]["channelTitle"]
 
         if exclude_playlist:
-            async for item in self.api.list_playlist_items(playlist_id):
-                await self.video_processor.enqueue_video(item)
+            await video_processor.gather()
             return
 
-        item_count = 0
-        last_updated = date(1, 1, 1)
         playlist["videosdb"] = dict()
         playlist["videosdb"]["slug"] = uuslug.slugify(
             playlist["snippet"]["title"])
 
-        async for item in self.api.list_playlist_items(playlist_id):
+        item_count = 0
+        last_updated = date(1, 1, 1)
+
+        for video in await video_processor.gather():
+            if not video:
+                continue
+
+            self.global_video_ids["valid"].add(video["id"])
+
+            asyncio.create_task(
+                self.db.add_playlist_to_video(video["id"], playlist))
+
             item_count += 1
             item_date = isodate.parse_date(
                 item["snippet"]["publishedAt"])
 
             if item_date > last_updated:
                 last_updated = item_date
-            await self.video_processor.enqueue_video(item, playlist)
 
         playlist["videosdb"]["videoCount"] = item_count
         playlist["videosdb"]["lastUpdated"] = isodate.date_isoformat(
