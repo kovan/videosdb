@@ -99,16 +99,14 @@ export default {
           .collection('meta')
           .doc('meta')
           .get()
-        const video_count = meta_doc.data().videoCount
-        const random_index = getRandomInt(video_count)
+        const video_ids = meta_doc.data().videoIds
+
+        let video_id = video_ids[Math.floor(Math.random() * video_ids.length)]
         const video_doc = await this.$fire.firestore
           .collection('videos')
-          .orderBy('id')
-          .startAt(random_index)
-          .limit(1)
+          .doc(video_id)
           .get()
-
-        let video = video_doc.docs[0].data()
+        let video = video_doc.data()
 
         this.$router.push('/video/' + video.videosdb.slug)
       } catch (exception) {

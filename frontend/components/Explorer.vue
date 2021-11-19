@@ -21,7 +21,7 @@
               :options='period_options',
               @change='handleChange'
             )
-      .row
+      .row(v-if='this.videos.length')
         .col-md-4(v-for='video in this.videos', :key='video.id')
           LazyHydrate(when-visible)
             .card.mb-4.shadow-sm.text-center
@@ -46,29 +46,20 @@
                 .d-flex.justify-content-between.align-items-center
                   small.text-muted Published: <br/>{{ $moment(video.snippet.publisheAt).format("MMM Do YYYY") }}
                   small.text-muted Duration: <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
-      .overflow-auto(v-if='this.videos.length')
-        LazyHydrate(when-visible)
-        div
-          div(v-for='(item, $index) in videos', :key='$index')
-          infinite-loading(
-            @infinite='infiniteHandler',
-            force-use-infinite-wrapper
-          )
 </template>
 
 <script >
-import { handleAxiosError } from '~/utils/utils.client'
 import LazyHydrate from 'vue-lazy-hydration'
-import InfiniteLoading from 'vue-infinite-loading'
+
 export default {
   components: {
     LazyHydrate,
-    InfiniteLoading,
   },
   data: () => {
     return {
       page_count: 1,
       current_page: 1,
+      scroll_finished: false,
       videos: [],
       period_options: [
         {
@@ -153,7 +144,8 @@ export default {
     infiniteHandler($state) {
       console.log('Page: ' + this.current_page)
       this.$fetch()
-      $state.loaded()
+      if (this.scroll_finished) $state.complete()
+      else $state.loaded()
     },
     handleChange() {
       this.$fetch()
@@ -184,6 +176,7 @@ export default {
         .collection('videos')
         .limit(PAGE_SIZE)
         .orderBy(this.ordering, 'desc')
+
       if (this.category) {
         console.debug(this.category)
 
@@ -194,6 +187,10 @@ export default {
         )
       }
 
+      if (this.videos.length > 0) {
+        query = query.startAt(this.videos[-1])
+      }
+
       //if (this.period) query = query.where('snippet.publishedAt')
 
       //if (this.tag)
@@ -201,22 +198,25 @@ export default {
 
       //if (this.videos.length > 0) query = query.startAfter(this.videos[-1])
 
-      console.log('Page: ' + this.current_page)
-      const meta_query = this.$fire.firestore.collection('meta').doc('meta')
+      // console.log('Page: ' + this.current_page)
+      // const meta_query = this.$fire.firestore.collection('meta').doc('meta')
 
-      let [results, meta_results] = await Promise.all([
+      let [results] = await Promise.all([
         query.get(),
-        meta_query.get(),
+        // meta_query.get(),
       ])
+
+      this.scroll_finished = results.docs.length < PAGE_SIZE
+
       console.log('LEN: ' + results.docs.length)
       console.log(results)
-      this.videos.length = 0
+
       results.forEach((doc) => {
         this.videos.push(doc.data())
       })
-      const video_count = meta_results.data().videoCount
-      this.page_count = Math.floor(video_count / PAGE_SIZE) + 1
-      console.log('Page count: ' + this.page_count)
+      // const video_count = meta_results.data().videoCount
+      // this.page_count = Math.floor(video_count / PAGE_SIZE) + 1
+      // console.log('Page count: ' + this.page_count)
     } catch (exception) {
       console.error(exception)
       this.$nuxt.context.error({

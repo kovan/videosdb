@@ -75,7 +75,7 @@ b-container.m-0.p-0.mx-auto
           )
             LazyHydrate(when-visible)
               .card.mb-4.shadow-sm.text-center
-                NuxtLink(:to='"/video/" + related.slug')
+                NuxtLink(:to='"/video/" + related.videosdb.slug')
                   b-img-lazy.bd-placeholder-img.card-img-top(
                     :src='related.thumbnails.medium.url',
                     height='180',
@@ -158,6 +158,7 @@ export default {
         .get()
 
       let video = q_videos.docs[0].data()
+      console.debug(video.id)
       return { video }
     } catch (exception) {
       console.error(exception)

@@ -32,6 +32,12 @@ class DB:
     async def create(cls):
         obj = cls()
         obj.db = firestore.AsyncClient()
+
+        # initialize meta table:
+        doc_ref = obj.db.collection("meta").document("meta")
+        doc = await doc_ref.get()
+        if not doc.exists or "videoIds" not in doc.to_dict():
+            await doc_ref.set({"videoIds": list()})
         return obj
 
     async def set(self, collection, id, item):
@@ -44,20 +50,25 @@ class DB:
 
         return await item_ref.set(item)
 
-    # async def list_video_ids(self):
-    #     video_ids = []
-    #     async for video_doc in self.db.collection("videos").stream():
-    #         video_ids.append(video_doc.get("id"))
-    #     return video_ids
+    async def add_video_id_to_video_index(self, video_id):
+        await self.db.collection("meta").document("meta").update({
+            "videoIds": firestore.ArrayUnion([video_id])
+        })
 
-    # async def increase_video_counter(self, video_count):
+        # async def list_video_ids(self):
+        #     video_ids = []
+        #     async for video_doc in self.db.collection("videos").stream():
+        #         video_ids.append(video_doc.get("id"))
+        #     return video_ids
 
-    #     # because Firestore doesn't have something like SELECT COUNT(*)
+        # async def increase_video_counter(self, video_count):
 
-    #     await self.db.collection("meta").document(
-    #         "meta").update({
-    #             "videoCount": firestore.FieldValue.increment(1)
-    #         })
+        #     # because Firestore doesn't have something like SELECT COUNT(*)
+
+        #     await self.db.collection("meta").document(
+        #         "meta").update({
+        #             "videoCount": firestore.FieldValue.increment(1)
+        #         })
 
     async def update_last_updated(self):
         return await self.db.collection("meta").document(
@@ -224,6 +235,8 @@ class _VideoProcessor(TaskGatherer):
         await self.db.db.collection("videos").document(
             video_id).set(video)
 
+        await self.db.add_video_id_to_video_index(video_id)
+
         logger.info("Processed video: " + video_id)
 
     async def _add_playlist_callback(self, video_id, playlist, fut=None):
@@ -308,6 +321,9 @@ class _PlaylistProcessor(TaskGatherer):
 
         item_count = 0
         last_updated = date(1, 1, 1)
+        playlist["videosdb"] = dict()
+        playlist["videosdb"]["slug"] = uuslug.slugify(
+            playlist["snippet"]["title"])
 
         async for item in self.api.list_playlist_items(playlist_id):
             item_count += 1
@@ -318,9 +334,6 @@ class _PlaylistProcessor(TaskGatherer):
                 last_updated = item_date
             await self.video_processor.enqueue_video(item, playlist)
 
-        playlist["videosdb"] = dict()
-        playlist["videosdb"]["slug"] = uuslug.slugify(
-            playlist["snippet"]["title"])
         playlist["videosdb"]["videoCount"] = item_count
         playlist["videosdb"]["lastUpdated"] = isodate.date_isoformat(
             last_updated)
