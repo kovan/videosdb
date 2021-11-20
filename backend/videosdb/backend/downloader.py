@@ -266,6 +266,8 @@ class _VideoProcessor(_BaseProcessor):
         video["videosdb"] = custom_attrs
         video["snippet"]["publishedAt"] = isodate.parse_datetime(
             video["snippet"]["publishedAt"])
+        for stat, value in video["statistics"].items():
+            video["statistics"][stat] = int(value)
 
         await self.db.db.collection("videos").document(
             video_id).set(video)

@@ -44,7 +44,7 @@
                   NuxtLink(:to='"/video/" + video.data().videosdb.slug')
                     | {{ video.data().snippet.title }}
                 .d-flex.justify-content-between.align-items-center
-                  small.text-muted Published: <br/>{{ format(video.data().snippet.publishedAt) }}
+                  small.text-muted Published: <br/>{{ video.data().snippet.publishedAt.toDate().toLocaleDateString() }}
                   small.text-muted Duration: <br/>{{ new Date(video.data().videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
 </template>
 
@@ -134,6 +134,7 @@ export default {
   },
   methods: {
     format(iso_date) {
+      debugger
       return parseISO(iso_date).toLocaleDateString()
     },
     linkGen(pageNum) {
@@ -156,6 +157,8 @@ export default {
       await this.$fetch(true)
     },
     handleChange() {
+      this.query_cursor = null
+      this.videos = []
       this.$fetch()
     },
 
@@ -181,10 +184,7 @@ export default {
     console.log('fetch')
     const PAGE_SIZE = 20
     try {
-      let query = this.$fire.firestore
-        .collection('videos')
-        .limit(PAGE_SIZE)
-        .orderBy(this.ordering, 'desc')
+      let query = this.$fire.firestore.collection('videos').limit(PAGE_SIZE)
 
       if (this.category) {
         console.debug(this.category)
@@ -200,11 +200,15 @@ export default {
         query = query.startAfter(this.query_cursor)
       }
 
-      if (this.start_date)
+      if (this.start_date) {
+        query = query.orderBy('snippet.publishedAt', 'desc')
         query = query.where('snippet.publishedAt', '>', this.start_date)
+      }
 
       if (this.tag)
         query = query.where('snippet.tags', 'array-contains', this.tag)
+
+      if (this.ordering) query = query.orderBy(this.ordering, 'desc')
 
       let [results] = await Promise.all([query.get()])
 
