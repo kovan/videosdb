@@ -44,13 +44,13 @@
                   NuxtLink(:to='"/video/" + video.data().videosdb.slug')
                     | {{ video.data().snippet.title }}
                 .d-flex.justify-content-between.align-items-center
-                  small.text-muted Published: <br/>{{ $DateTime.fromISO(video.data().snippet.publishedAt).toLocaleString() }}
+                  small.text-muted Published: <br/>{{ format(video.data().snippet.publishedAt) }}
                   small.text-muted Duration: <br/>{{ new Date(video.data().videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
 </template>
 
 <script >
 import LazyHydrate from 'vue-lazy-hydration'
-
+import { format, parseISO } from 'date-fns'
 export default {
   components: {
     LazyHydrate,
@@ -133,6 +133,9 @@ export default {
     this.current_page = this.$route.query.page || this.initial_page
   },
   methods: {
+    format(iso_date) {
+      return parseISO(iso_date).toLocaleDateString()
+    },
     linkGen(pageNum) {
       return {
         path: this.$route.path,

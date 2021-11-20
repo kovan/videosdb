@@ -31,7 +31,7 @@ div
   .p-1.px-2.mt-2.text-center
     strong {{ this.$config.subtitle }}
     br
-    small.align-middle Last updated: {{ $DateTime.fromISO(last_updated).toLocaleString() }}
+    small.align-middle Last updated: {{ format(last_updated) }}
   b-container
     .row
       LazyHydrate(when-visible)
@@ -68,7 +68,7 @@ div
 function getRandomInt(max) {
   return Math.floor(Math.random() * max)
 }
-
+import { format, parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
 import { handleAxiosError } from '~/utils/utils.client'
 import LazyHydrate from 'vue-lazy-hydration'
@@ -93,6 +93,9 @@ export default {
   },
 
   methods: {
+    format(iso_date) {
+      return parseISO(iso_date).toLocaleDateString()
+    },
     async randomVideo() {
       try {
         const meta_doc = await this.$fire.firestore

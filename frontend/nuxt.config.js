@@ -47,9 +47,6 @@ export default {
 
   plugins: [
     {
-      src: "~/plugins/luxon.js"
-    },
-    {
       src: "~/plugins/vue-infinite-scroll.js"
     },
     {
