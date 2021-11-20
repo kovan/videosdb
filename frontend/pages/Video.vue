@@ -10,7 +10,7 @@ b-container.m-0.p-0.mx-auto
             :src='`https://www.youtube.com/watch?v=${this.video.id}`'
           )
       small
-        | Published: {{ new Date(this.video.snippet.publishedAt).toLocaleDateString() }}.
+        | Published: {{ this.video.snippet.publishedAt.toDate().toLocaleDateString() }}.
         | Duration: {{ new Date(this.video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
     .my-4(v-if='this.video.videosdb.descriptionTrimmed')
       strong Description
@@ -28,17 +28,17 @@ b-container.m-0.p-0.mx-auto
           NuxtLink(:to='"/category/" + playlist.videosdb.slug')
             | {{ playlist.snippet.title }}
 
-    .my-4(v-if='this.video.ipfs_hash')
+    .my-4(v-if='this.video.videosdb.ipfs_hash')
       p(align='center')
         b-link(
-          :href='"https://videos.sadhguru.digital/" + encodeURIComponent(this.video.filename)',
+          :href='"https://videos.sadhguru.digital/" + encodeURIComponent(this.video.videosdb.filename)',
           download
         )
           b-button
             | View / Download
       p(align='center') 
         b-link(
-          :href='"ipns://videos.sadhguru.digital/" + encodeURIComponent(this.video.filename)'
+          :href='"ipns://videos.sadhguru.digital/" + encodeURIComponent(this.video.videosdb.filename)'
         )
           b-button
             | View / Download - with &nbsp;
@@ -93,7 +93,7 @@ b-container.m-0.p-0.mx-auto
                     NuxtLink(:to='"/video/" + related.slug')
                       | {{ related.title }}
                   .d-flex.justify-content-between.align-items-center
-                    small.text-muted Published: {{ new Date(related.snippet.publishedAt).toLocaleDateString() }}
+                    small.text-muted Published: {{ related.snippet.publishedAt.toDate().toDateString() }}
                     small.text-muted Duration: {{ new Date(related.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
 
     .my-4(v-if='this.video.videosdb.transcript')
