@@ -152,7 +152,6 @@ export default {
     //   else $state.loaded()
     // },
     async loadMore() {
-      console.log('loading more')
       this.query_cursor = this.videos.at(-1)
       await this.$fetch(true)
     },
@@ -181,23 +180,16 @@ export default {
     // }
   },
   async fetch() {
-    console.log('fetch')
     const PAGE_SIZE = 20
     try {
       let query = this.$fire.firestore.collection('videos').limit(PAGE_SIZE)
 
       if (this.category) {
-        console.debug(this.category)
-
         query = query.where(
           'videosdb.playlists',
           'array-contains',
           this.category
         )
-      }
-
-      if (this.query_cursor) {
-        query = query.startAfter(this.query_cursor)
       }
 
       if (this.start_date) {
@@ -209,11 +201,11 @@ export default {
         query = query.where('snippet.tags', 'array-contains', this.tag)
 
       if (this.ordering) query = query.orderBy(this.ordering, 'desc')
+      if (this.query_cursor) {
+        query = query.startAfter(this.query_cursor)
+      }
 
       let [results] = await Promise.all([query.get()])
-
-      console.log('LEN: ' + results.docs.length)
-      console.log(results)
 
       results.forEach((doc) => {
         this.videos.push(doc)
