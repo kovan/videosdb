@@ -17,7 +17,7 @@
             | Period:
             b-form-select(
               text='Period',
-              v-model='period',
+              v-model='start_date',
               :options='period_options',
               @change='handleChange'
             )
@@ -50,36 +50,35 @@
 
 <script >
 import LazyHydrate from 'vue-lazy-hydration'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, sub } from 'date-fns'
 export default {
   components: {
     LazyHydrate,
   },
   data: () => {
     return {
-      page_count: 1,
-      current_page: 1,
+      query_cursor: null,
       scroll_disabled: false,
       videos: [],
       period_options: [
         {
           text: 'Last week',
-          value: 'last_week',
+          value: sub(new Date(), { weeks: 1 }),
         },
         {
           text: 'Last month',
-          value: 'last_month',
+          value: sub(new Date(), { months: 1 }),
         },
         {
           text: 'Last year',
-          value: 'last_year',
+          value: sub(new Date(), { years: 1 }),
         },
         {
           text: 'Always',
-          value: 'always',
+          value: null,
         },
       ],
-      period: 'always',
+      start_date: null,
       ordering_options: [
         {
           text: 'Latest',
@@ -124,10 +123,11 @@ export default {
   },
 
   watch: {
-    $route(to, from) {
-      this.current_page = this.$route.query.page || 1
-      this.$fetch()
-    },
+    '$route.query': '$fetch',
+    // $route(to, from) {
+    //   this.current_page = this.$route.query.page || 1
+    //   this.$fetch()
+    // },
   },
   created() {
     this.current_page = this.$route.query.page || this.initial_page
@@ -152,11 +152,11 @@ export default {
     // },
     async loadMore() {
       console.log('loading more')
-
-      await this.$fetch()
+      this.query_cursor = this.videos.at(-1)
+      await this.$fetch(true)
     },
     handleChange() {
-      this.fetch()
+      this.$fetch()
     },
 
     // getSrcSetAndSizes (video) {
@@ -196,11 +196,12 @@ export default {
         )
       }
 
-      if (this.videos.length > 0) {
-        query = query.startAfter(this.videos.at(-1))
+      if (this.query_cursor) {
+        query = query.startAfter(this.query_cursor)
       }
 
-      //if (this.period) query = query.where('snippet.publishedAt')
+      if (this.start_date)
+        query = query.where('snippet.publishedAt', '>', this.start_date)
 
       if (this.tag)
         query = query.where('snippet.tags', 'array-contains', this.tag)

@@ -52,7 +52,7 @@ div
                 | ({{ category.use_count }} videos)
 
       main.col-md-12.col-lg-12.ml-sm-auto.px-md-4.pt-4(role='main')
-        nuxt
+        nuxt (keep-alive)
 
   footer.text-muted.text-center
     .my-3

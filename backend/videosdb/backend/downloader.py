@@ -264,6 +264,8 @@ class _VideoProcessor(_BaseProcessor):
             video["contentDetails"]["duration"]).total_seconds()
 
         video["videosdb"] = custom_attrs
+        video["snippet"]["publishedAt"] = isodate.parse_datetime(
+            video["snippet"]["publishedAt"])
 
         await self.db.db.collection("videos").document(
             video_id).set(video)
@@ -324,8 +326,8 @@ class _PlaylistProcessor(_BaseProcessor):
         playlist["videosdb"]["slug"] = uuslug.slugify(
             playlist["snippet"]["title"])
 
-        item_count = 0
-        last_updated = date(1, 1, 1)
+        video_count = 0
+        last_updated = None
 
         for video in await video_processor.gather():
             if not video:
@@ -336,14 +338,12 @@ class _PlaylistProcessor(_BaseProcessor):
             asyncio.create_task(
                 self.db.add_playlist_to_video(video["id"], playlist))
 
-            item_count += 1
-            item_date = isodate.parse_date(
-                item["snippet"]["publishedAt"])
+            video_count += 1
+            video_date = video["snippet"]["publishedAt"]
+            if not last_updated or video_date > last_updated:
+                last_updated = video_date
 
-            if item_date > last_updated:
-                last_updated = item_date
-
-        playlist["videosdb"]["videoCount"] = item_count
+        playlist["videosdb"]["videoCount"] = video_count
         playlist["videosdb"]["lastUpdated"] = isodate.date_isoformat(
             last_updated)
 
