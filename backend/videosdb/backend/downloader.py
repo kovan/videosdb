@@ -346,8 +346,7 @@ class _PlaylistProcessor(_BaseProcessor):
                 last_updated = video_date
 
         playlist["videosdb"]["videoCount"] = video_count
-        playlist["videosdb"]["lastUpdated"] = isodate.date_isoformat(
-            last_updated)
+        playlist["videosdb"]["lastUpdated"] = last_updated
 
         await self.db.set("playlists", playlist["id"], playlist)
 

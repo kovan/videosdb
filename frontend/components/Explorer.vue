@@ -200,7 +200,9 @@ export default {
       if (this.tag)
         query = query.where('snippet.tags', 'array-contains', this.tag)
 
-      if (this.ordering) query = query.orderBy(this.ordering, 'desc')
+      if (this.ordering && !this.start_date)
+        query = query.orderBy(this.ordering, 'desc')
+
       if (this.query_cursor) {
         query = query.startAfter(this.query_cursor)
       }

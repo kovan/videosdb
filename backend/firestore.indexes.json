@@ -1,4 +1,145 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "videos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "videosdb.playlists",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "snippet.publishedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "videos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "videosdb.playlists",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "statistics.viewCount",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "videos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "videosdb.playlists",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "statistics.likeCount",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "videos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "videosdb.playlists",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "statistics.favoriteCount",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "videos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "videosdb.playlists",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "statistics.commentCount",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "videos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "snippet.tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "snippet.publishedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "videos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "snippet.tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "statistics.viewCount",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "videos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "snippet.tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "statistics.likeCount",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "videos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "snippet.tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "statistics.favoriteCount",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "videos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "snippet.tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "statistics.commentCount",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }
