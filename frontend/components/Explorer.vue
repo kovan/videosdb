@@ -22,30 +22,30 @@
               @change='handleChange'
             )
       .row(v-if='this.videos.length')
-        .col-md-4(v-for='video in this.videos', :key='video.data().id')
+        .col-md-4(v-for='video in this.videos', :key='video.id')
           LazyHydrate(when-visible)
             .card.mb-4.shadow-sm.text-center
-              NuxtLink(:to='"/video/" + video.data().videosdb.slug')
+              NuxtLink(:to='"/video/" + video.videosdb.slug')
                 b-img-lazy.bd-placeholder-img.card-img-top(
-                  :src='video.data().snippet.thumbnails.medium.url',
+                  :src='video.snippet.thumbnails.medium.url',
                   height='180',
                   width='320',
-                  :id='video.data().id',
-                  :alt='video.data().snippet.title',
+                  :id='video.id',
+                  :alt='video.snippet.title',
                   fluid
                 )
                 b-popover(
-                  :target='video.data().id',
+                  :target='video.id',
                   triggers='hover focus',
-                  :content='video.data().videosdb.descriptionTrimmed'
+                  :content='video.videosdb.descriptionTrimmed'
                 )
               .card-body
                 p.card-text
-                  NuxtLink(:to='"/video/" + video.data().videosdb.slug')
-                    | {{ video.data().snippet.title }}
+                  NuxtLink(:to='"/video/" + video.videosdb.slug')
+                    | {{ video.snippet.title }}
                 .d-flex.justify-content-between.align-items-center
-                  small.text-muted Published: <br/>{{ video.data().snippet.publishedAt.toDate().toLocaleDateString() }}
-                  small.text-muted Duration: <br/>{{ new Date(video.data().videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
+                  small.text-muted Published: <br/>{{ video.snippet.publishedAt.toDate().toLocaleDateString() }}
+                  small.text-muted Duration: <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
 </template>
 
 <script >
@@ -152,7 +152,6 @@ export default {
     //   else $state.loaded()
     // },
     async loadMore() {
-      this.query_cursor = this.videos.at(-1)
       await this.$fetch(true)
     },
     handleChange() {
@@ -171,8 +170,8 @@ export default {
     //     standard: 640
     //   }
     //   for (const res in resolutions) {
-    //     if (video.data().thumbnails.hasOwnProperty(res)) {
-    //       srcset += `${video.data().thumbnails[res].url} ${resolutions[res]}w, `
+    //     if (video.thumbnails.hasOwnProperty(res)) {
+    //       srcset += `${video.thumbnails[res].url} ${resolutions[res]}w, `
     //       sizes += `(max-width: ${resolutions[res]}px) ${resolutions[res]}px, `
     //     }
     //   }
@@ -182,7 +181,7 @@ export default {
   async fetch() {
     const PAGE_SIZE = 20
     try {
-      let query = this.$fire.firestore.collection('videos').limit(PAGE_SIZE)
+      let query = this.$db.collection('videos').limit(PAGE_SIZE)
 
       if (this.category) {
         query = query.where(
@@ -208,9 +207,9 @@ export default {
       }
 
       let [results] = await Promise.all([query.get()])
-
+      //this.query_cursor = results.docs.at(-1)
       results.forEach((doc) => {
-        this.videos.push(doc)
+        this.videos.push(doc.data())
       })
 
       this.scroll_disabled = results.docs.length < PAGE_SIZE

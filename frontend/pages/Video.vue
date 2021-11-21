@@ -154,9 +154,9 @@ export default {
     },
   },
   methods: {},
-  async asyncData({ $fire, params, error }) {
+  async asyncData({ $db, params, error }) {
     try {
-      const q_videos = await $fire.firestore
+      const q_videos = await $db
         .collection('videos')
         .where('videosdb.slug', '==', params.slug)
         .get()

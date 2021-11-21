@@ -28,9 +28,9 @@ export default {
     }
   },
 
-  async asyncData({ $fire, params, error }) {
+  async asyncData({ $db, params, error }) {
     try {
-      const q_category = await $fire.firestore
+      const q_category = await $db
         .collection('playlists')
         .where('videosdb.slug', '==', params.slug)
         .get()

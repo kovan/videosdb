@@ -10,31 +10,17 @@ export default {
   target: "static",
   telemetry: false,
 
-  privateRuntimeConfig: {
-    baseURL: baseURL,
-    version: process.env.NUXT_ENV_CURRENT_GIT_SHA,
-  },
-
   publicRuntimeConfig: {
-    baseURL: process.env.API_BROWSER_URL || baseURL,
     title: "Sadhguru wisdom",
-    subtitle: "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more."
+    subtitle: "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
+    firebase: {
+      apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
+      authDomain: "worpdress-279321.firebaseapp.com",
+      projectId: "worpdress-279321",
+    }
   },
 
   generate: {
-    routes: async () => {
-      if (process.env.DEBUG) {
-        return [
-          "/video/sadhguru-about-dismantling-global-hindutva-conference/",
-        ];
-      }
-      try {
-        let sitemap = await getSitemap(baseURL);
-        return sitemap.map((route) => route.url);
-      } catch (e) {
-        console.error(e);
-      }
-    },
     concurrency: 100,
     fallback: true,
     crawler: false,
@@ -45,21 +31,19 @@ export default {
 
   //css: ["~/assets/scss/custom.scss"],
 
-  plugins: [
-    {
-      src: "~/plugins/vue-infinite-scroll.js"
-    },
-    {
-      src: "~/plugins/axios.server.js"
-    }, {
-      src: "~/plugins/axios.client.js"
-    }, {
-      src: "~/plugins/vue-plugin-load-script.js",
-      mode: "client",
-    }, {
-      src: "~/plugins/vue-youtube.js",
-      mode: "client",
-    },
+  plugins: [{
+    src: "~/plugins/myplugin.js"
+  },
+  {
+    src: "~/plugins/vue-infinite-scroll.js",
+    mode: "client"
+  }, {
+    src: "~/plugins/vue-plugin-load-script.js",
+    mode: "client",
+  }, {
+    src: "~/plugins/vue-youtube.js",
+    mode: "client",
+  },
   ],
 
   components: true,
@@ -67,9 +51,10 @@ export default {
   buildModules: [
     "@nuxtjs/google-analytics",
     "@nuxtjs/router-extras",
-    "@nuxtjs/sitemap",
     "bootstrap-vue/nuxt",
-    '@nuxtjs/firebase'],
+    //'@nuxtjs/firebase',
+    "@nuxtjs/sitemap",
+    "~/modules/mymodule.js"],
 
   modules: [],
 
@@ -120,10 +105,7 @@ export default {
     cacheTime: 86400000 * 2, // 48h
     hostname: "https://www.sadhguru.digital",
     gzip: true,
-    lastmod: new Date().toISOString(),
-    routes: async () => {
-      return getSitemap(baseURL);
-    },
+
   },
 
   build: {
@@ -162,12 +144,6 @@ export default {
   serverMiddleware: [],
 
   hooks: {
-    generate: {
-      done(generator, errors) {
-        console.log("DNS CACHE STATS: ", getStats())
-      }
-    }
-
   },
 
   head: {

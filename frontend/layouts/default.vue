@@ -98,14 +98,11 @@ export default {
     },
     async randomVideo() {
       try {
-        const meta_doc = await this.$fire.firestore
-          .collection('meta')
-          .doc('meta')
-          .get()
+        const meta_doc = await this.$db.collection('meta').doc('meta').get()
         const video_ids = meta_doc.data().videoIds
 
         let video_id = video_ids[Math.floor(Math.random() * video_ids.length)]
-        const video_doc = await this.$fire.firestore
+        const video_doc = await this.$db
           .collection('videos')
           .doc(video_id)
           .get()
@@ -134,11 +131,11 @@ export default {
   },
   async fetch() {
     try {
-      const query = this.$fire.firestore
+      const query = this.$db
         .collection('playlists')
         .orderBy('videosdb.lastUpdated', 'desc')
 
-      const meta_query = this.$fire.firestore.collection('meta').doc('meta')
+      const meta_query = this.$db.collection('meta').doc('meta')
 
       let [results, meta_results] = await Promise.all([
         query.get(),

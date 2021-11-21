@@ -41,7 +41,7 @@
     {
       "name": "yarn generate",
       "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
+      "runtimeExecutable": "yarn",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -51,7 +51,8 @@
       "type": "node",
       "envFile": "${workspaceFolder}/frontend/.env",
       "env": {
-        "DEBUG": "1"
+        "DEBUG": "1",
+        "NODE_ENV": "development"
       },
       "cwd": "${workspaceFolder}/frontend",
       "outputCapture": "std",
