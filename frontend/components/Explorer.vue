@@ -44,13 +44,14 @@
                   NuxtLink(:to='"/video/" + video.videosdb.slug')
                     | {{ video.snippet.title }}
                 .d-flex.justify-content-between.align-items-center
-                  small.text-muted Published: <br/>{{ video.snippet.publishedAt.toDate().toLocaleDateString() }}
+                  small.text-muted Published: <br/>{{ formatDate(video.snippet.publishedAt) }}
                   small.text-muted Duration: <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
 </template>
 
 <script >
 import LazyHydrate from 'vue-lazy-hydration'
-import { format, parseISO, sub } from 'date-fns'
+import { parseISO, sub } from 'date-fns'
+import { formatDate } from '~/utils/utils'
 export default {
   components: {
     LazyHydrate,
@@ -133,10 +134,10 @@ export default {
     this.current_page = this.$route.query.page || this.initial_page
   },
   methods: {
-    format(iso_date) {
-      debugger
-      return parseISO(iso_date).toLocaleDateString()
+    formatDate: function (date) {
+      return formatDate(date)
     },
+
     linkGen(pageNum) {
       return {
         path: this.$route.path,
@@ -180,46 +181,35 @@ export default {
   },
   async fetch() {
     const PAGE_SIZE = 20
-    try {
-      let query = this.$db.collection('videos').limit(PAGE_SIZE)
 
-      if (this.category) {
-        query = query.where(
-          'videosdb.playlists',
-          'array-contains',
-          this.category
-        )
-      }
+    let query = this.$db.collection('videos').limit(PAGE_SIZE)
 
-      if (this.start_date) {
-        query = query.orderBy('snippet.publishedAt', 'desc')
-        query = query.where('snippet.publishedAt', '>', this.start_date)
-      }
-
-      if (this.tag)
-        query = query.where('snippet.tags', 'array-contains', this.tag)
-
-      if (this.ordering && !this.start_date)
-        query = query.orderBy(this.ordering, 'desc')
-
-      if (this.query_cursor) {
-        query = query.startAfter(this.query_cursor)
-      }
-
-      let [results] = await Promise.all([query.get()])
-      //this.query_cursor = results.docs.at(-1)
-      results.forEach((doc) => {
-        this.videos.push(doc.data())
-      })
-
-      this.scroll_disabled = results.docs.length < PAGE_SIZE
-    } catch (exception) {
-      console.error(exception)
-      this.$nuxt.context.error({
-        statusCode: null,
-        message: exception.toString(),
-      })
+    if (this.category) {
+      query = query.where('videosdb.playlists', 'array-contains', this.category)
     }
+
+    if (this.start_date) {
+      query = query.orderBy('snippet.publishedAt', 'desc')
+      query = query.where('snippet.publishedAt', '>', this.start_date)
+    }
+
+    if (this.tag)
+      query = query.where('snippet.tags', 'array-contains', this.tag)
+
+    if (this.ordering && !this.start_date)
+      query = query.orderBy(this.ordering, 'desc')
+
+    if (this.query_cursor) {
+      query = query.startAfter(this.query_cursor)
+    }
+
+    let [results] = await Promise.all([query.get()])
+    //this.query_cursor = results.docs.at(-1)
+    results.forEach((doc) => {
+      this.videos.push(doc.data())
+    })
+
+    this.scroll_disabled = results.docs.length < PAGE_SIZE
 
     // const dummy_root = 'http://example.com' // otherwise URL doesn't work
     // const url = new URL('/videos/', dummy_root)

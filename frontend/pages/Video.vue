@@ -10,7 +10,7 @@ b-container.m-0.p-0.mx-auto
             :src='`https://www.youtube.com/watch?v=${this.video.id}`'
           )
       small
-        | Published: {{ this.video.snippet.publishedAt.toDate().toLocaleDateString() }}.
+        | Published: {{ formatDate(this.video.snippet.publishedAt) }}.
         | Duration: {{ new Date(this.video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
     .my-4(v-if='this.video.videosdb.descriptionTrimmed')
       strong Description
@@ -93,7 +93,7 @@ b-container.m-0.p-0.mx-auto
                     NuxtLink(:to='"/video/" + related.slug')
                       | {{ related.title }}
                   .d-flex.justify-content-between.align-items-center
-                    small.text-muted Published: {{ related.snippet.publishedAt.toDate().toDateString() }}
+                    small.text-muted Published: {{ formatDate(related.snippet.publishedAt) }}
                     small.text-muted Duration: {{ new Date(related.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
 
     .my-4(v-if='this.video.videosdb.transcript')
@@ -103,6 +103,8 @@ b-container.m-0.p-0.mx-auto
 </template>
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
+import { format, parseISO } from 'date-fns'
+import { formatDate } from '~/utils/utils'
 
 export default {
   components: {
@@ -153,20 +155,19 @@ export default {
       return JSON.stringify(json)
     },
   },
-  methods: {},
+  methods: {
+    formatDate: function (date) {
+      return formatDate(date)
+    },
+  },
   async asyncData({ $db, params, error }) {
-    try {
-      const q_videos = await $db
-        .collection('videos')
-        .where('videosdb.slug', '==', params.slug)
-        .get()
+    const q_videos = await $db
+      .collection('videos')
+      .where('videosdb.slug', '==', params.slug)
+      .get()
 
-      let video = q_videos.docs[0].data()
-      return { video }
-    } catch (exception) {
-      console.error(exception)
-      error({ statusCode: null, message: exception.toString() })
-    }
+    let video = q_videos.docs[0].data()
+    return { video }
   },
 }
 </script>

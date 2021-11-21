@@ -1,4 +1,4 @@
-import { createDb } from "../utils/utils.server"
+import { createDb } from "../utils/utils"
 
 
 
@@ -98,10 +98,10 @@ export default function (moduleOptions) {
         }
     })
 
-    // this.nuxt.hook('sitemap:generate:before', async (nuxt, sitemapOptions) => {
-    //     sitemapOptions.routes = async () => {
-    //         return getSitemap(nuxt);
-    //     }
-    // })
+    this.nuxt.hook('sitemap:generate:before', async (nuxt, sitemapOptions) => {
+        sitemapOptions.routes = async () => {
+            return getSitemap(nuxt);
+        }
+    })
 
 }

@@ -1,4 +1,4 @@
-import { createDb } from "~/utils/utils.server"
+import { createDb } from "~/utils/utils"
 
 
 

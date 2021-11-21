@@ -1,4 +1,4 @@
-import { getSitemap } from "./utils/utils.server";
+import { getSitemap } from "./utils/utils";
 import { getStats } from 'axios-cached-dns-resolve'
 
 const os = require("os");
