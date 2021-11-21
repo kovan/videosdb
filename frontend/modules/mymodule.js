@@ -11,7 +11,7 @@ async function generateSitemap(firestore) {
     function transform(obj, type) {
         if (type == "videos")
             return {
-                url: `/video/${obj.slug}`,
+                url: `/video/${obj.videosdb.slug}`,
                 video: [
                     {
                         thumbnail_loc: obj.snippet.thumbnails.medium.url,

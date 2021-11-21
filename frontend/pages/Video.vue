@@ -162,7 +162,6 @@ export default {
         .get()
 
       let video = q_videos.docs[0].data()
-      console.debug(video.id)
       return { video }
     } catch (exception) {
       console.error(exception)
