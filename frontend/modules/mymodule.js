@@ -1,22 +1,27 @@
-const firebase = require("firebase");
-// Required for side-effects
-require("firebase/firestore");
+import firebase from 'firebase/app';
+import firestore from 'firebase/firestore';
 
 function createDb(config) {
-
-
-    const firebaseApp = firebase.initializeApp({
-        apiKey: config.apiKey,
-        authDomain: config.authDomain,
-        projectId: config.projectId
-    });
-
-    let db = firebase.firestore()
+    let db = null;
+    try {
+        db = firebase.firestore()
+    } catch (e) {
+        if (e.name == "FirebaseError") {
+            const firebaseApp = firebase.initializeApp({
+                apiKey: config.apiKey,
+                authDomain: config.authDomain,
+                projectId: config.projectId
+            });
+            db = firebase.firestore()
+        } else
+            throw e
+    }
     if (process.env.DEBUG) {
         db.useEmulator("127.0.0.1", 6001);
     }
     return db;
 }
+
 
 
 var sitemap = null
