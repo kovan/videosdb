@@ -58,15 +58,15 @@ function formatDate(date) {
 }
 
 async function getWithCache(query) {
-    console.debug("Trying cache")
     let snap = null
     try {
         snap = await query.get({ source: "cache" });
     } catch (e) {
         // not in cache
+        if (e.code != "unavailable")
+            throw e
     }
     if (!snap || snap.empty) {
-        console.debug("fetching from server")
         // cache didn't have anything, so try a fetch from server instead
         snap = await query.get();
     }
