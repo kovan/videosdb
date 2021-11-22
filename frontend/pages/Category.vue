@@ -29,18 +29,15 @@ export default {
     }
   },
 
-  async asyncData({ $db, params, error }) {
-    try {
-      const q_category = await getWithCache(
-        $db.collection('playlists').where('videosdb.slug', '==', params.slug)
-      )
+  async asyncData({ $db, params, payload, error }) {
+    if (payload) return { category: payload }
 
-      let category = q_category.docs[0].data()
-      return { category }
-    } catch (exception) {
-      console.error(exception)
-      error({ statusCode: null, message: exception.toString() })
-    }
+    const q_category = await getWithCache(
+      $db.collection('playlists').where('videosdb.slug', '==', params.slug)
+    )
+
+    let category = q_category.docs[0].data()
+    return { category }
   },
 }
 </script>

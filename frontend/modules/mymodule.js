@@ -1,38 +1,42 @@
 import { createDb, getWithCache } from "../utils/utils"
 
+const NodeCache = require("node-cache");
+
+var cache = null
+var db = null
+
+async function getSitemap(dbOptions) {
+    if (!cache)
+        await generateCache(dbOptions)
+
+    function transformCategory(obj) {
+        return {
+            url: `/category/${obj.videosdb.slug}/`,
+            priority: 0.1
+        }
+    }
+    function transformVideo(obj) {
+
+        return {
+            url: `/video/${obj.videosdb.slug}`,
+            video: [
+                {
+                    thumbnail_loc: obj.snippet.thumbnails.medium.url,
+                    title: obj.snippet.title,
+                    description: obj.videosdb.descriptionTrimmed
+                        ? obj.videosdb.descriptionTrimmed
+                        : obj.snippet.title,
+                    content_loc:
+                        "https://videos.sadhguru.digital/" +
+                        encodeURIComponent(obj.videosdb.filename),
+                    player_loc: `https://www.sadhguru.digital/video/${obj.videosdb.slug}`,
+                    duration: obj.videosdb.duration_seconds,
+                },
+            ],
+            priority: 1.0,
+        }
 
 
-
-var sitemap = null
-
-async function generateSitemap(firestore) {
-
-
-    function transform(obj, type) {
-        if (type == "videos")
-            return {
-                url: `/video/${obj.videosdb.slug}`,
-                video: [
-                    {
-                        thumbnail_loc: obj.snippet.thumbnails.medium.url,
-                        title: obj.snippet.title,
-                        description: obj.videosdb.descriptionTrimmed
-                            ? obj.videosdb.descriptionTrimmed
-                            : obj.snippet.title,
-                        content_loc:
-                            "https://videos.sadhguru.digital/" +
-                            encodeURIComponent(obj.videosdb.filename),
-                        player_loc: `https://www.sadhguru.digital/video/${obj.videosdb.slug}`,
-                        duration: obj.videosdb.duration_seconds,
-                    },
-                ],
-                priority: 1.0,
-            }
-        else
-            return {
-                url: `/category/${obj.videosdb.slug}/`,
-                priority: 0.1
-            }
     }
 
     var sitemap = [
@@ -41,60 +45,72 @@ async function generateSitemap(firestore) {
             changefreq: "daily",
         },
     ]
-    const PAGE_SIZE = 20
 
-    async function download(firestore, type, startAfter = null) {
-        let query = firestore.collection(type).limit(PAGE_SIZE)
-        if (startAfter)
-            query = query.startAfter(startAfter)
-        let results = await getWithCache(query)
-        results.forEach((item) => {
-            sitemap.push(transform(item.data(), type))
-        })
-        if (results.docs.length == PAGE_SIZE)
-            await download(firestore, type, results.docs.at(-1))
-    }
-
-    await Promise.all([
-        download(firestore, "videos"),
-        download(firestore, "playlists")
-    ])
+    cache.keys().forEach((key) => {
+        item = cache.get(key)
+        if (key.indexOf("/category/" != -1))
+            sitemap.push(transformCategory(item))
+        if (key.indexOf("/video/" != -1))
+            sitemap.push(transformVideo(item))
+    })
 
     return sitemap
 }
 
+async function generateCache(dbOptions) {
+    if (!db)
+        db = createDb(dbOptions)
 
+    cache = new NodeCache({ stdTTL: 0, checkperiod: 0 });
 
-async function getSitemap(firestore) {
-    if (sitemap) {
-        return sitemap;
+    const PAGE_SIZE = 20
+    let typeMap = {
+        videos: "video",
+        playlists: "category"
+
     }
 
-    sitemap = generateSitemap(firestore);
-    return sitemap;
+    async function download(db, type, startAfter = null) {
+        let query = db.collection(type).limit(PAGE_SIZE)
+        if (startAfter)
+            query = query.startAfter(startAfter)
+        let q_results = await query.get()
+        q_results.forEach((item) => {
+            cache.set(`/${typeMap[type]}/${item.data().videosdb.slug}`, item.data())
+        })
+        if (q_results.docs.length == PAGE_SIZE)
+            await download(db, type, q_results.docs.at(-1))
+    }
+
+    await Promise.all([
+        download(db, "videos"),
+        download(db, "playlists")
+    ])
 }
 
+async function generateRoutes(dbOptions) {
+    if (!cache)
+        await generateCache(dbOptions)
+    if (!db)
+        db = await createDb(dbOptions)
 
+    let routes = []
+    cache.keys().forEach((key) => {
+        let route = {
+            route: key,
+            payload: cache.get(key)
+        }
+        routes.push(route)
+    })
+    return routes
+}
 
 export default function (moduleOptions) {
     this.nuxt.hook('generate:before', async (generator, generateOptions) => {
-
-        generator.$db = createDb(generator.options.publicRuntimeConfig.firebase)
-
-        generateOptions.routes = async () => {
-            // if (process.env.DEBUG) {
-            //     return [
-            //         "/video/sadhguru-about-dismantling-global-hindutva-conference/",
-            //     ];
-            // }
-            try {
-                let sitemap = await getSitemap(generator.$db);
-                return sitemap.map((route) => route.url);
-            } catch (e) {
-                console.error(e);
-            }
-        }
+        //generator.$db = createDb(generator.options.publicRuntimeConfig.firebase)
+        generateOptions.routes = await generateRoutes(generator.options.publicRuntimeConfig.firebase)
     })
+
 
     this.nuxt.hook('sitemap:generate:before', async (nuxt, sitemapOptions) => {
         sitemapOptions.routes = async () => {

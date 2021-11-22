@@ -60,6 +60,8 @@ export default {
   data: () => {
     return {
       query_cursor: null,
+      from_ssr: false,
+      current_page: 1,
       scroll_disabled: false,
       videos: [],
       period_options: [
@@ -183,7 +185,7 @@ export default {
   async fetch() {
     const PAGE_SIZE = 20
 
-    let query = this.$db.collection('videos').limit(PAGE_SIZE)
+    let query = this.$db.collection('videos')
 
     if (this.category) {
       query = query.where('videosdb.playlists', 'array-contains', this.category)
@@ -200,12 +202,24 @@ export default {
     if (this.ordering && !this.start_date)
       query = query.orderBy(this.ordering, 'desc')
 
+    if (this.from_ssr) {
+      query = query.limit(PAGE_SIZE * 2)
+    } else {
+      query = query.limit(PAGE_SIZE)
+    }
+
     if (this.query_cursor) {
       query = query.startAfter(this.query_cursor)
     }
 
     let results = await getWithCache(query)
-    //this.query_cursor = results.docs.at(-1)
+
+    // only when not in SSR because Nuxt cant serialize the resulting object
+    if (!process.server) this.query_cursor = results.docs.at(-1)
+    else this.from_ssr = true
+
+    this.current_page += 1
+
     results.forEach((doc) => {
       this.videos.push(doc.data())
     })

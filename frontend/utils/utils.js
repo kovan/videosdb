@@ -1,4 +1,6 @@
 import firebase from 'firebase/app';
+
+import 'firebase/firestore/memory';
 import { firestore } from 'firebase/firestore';
 import { parseISO } from 'date-fns'
 
@@ -16,39 +18,41 @@ function createDb(config) {
 
     }
     db = app.firestore();
-    try {
-        db.enablePersistence()
-        db.settings({
-            cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
-            synchronizeTabs: true,
-            merge: true
-        })
-            .catch((err) => {
-                if (err.code == 'failed-precondition') {
-                    console.error("Multiple tabs open, persistence can only be enabled in one tab at a a time.")
-                } else if (err.code == 'unimplemented') {
-                    console.error("The current browser does not support all of the features required to enable persistence")
-                }
-            });
-        if (process.env.DEBUG) {
-            console.info("USING FIREBASE EMULATOR")
-            db.useEmulator("127.0.0.1", 6001);
-        }
-    } catch (e) {
-        if (e.name != "FirebaseError")
-            throw e
-        else
-            console.debug(e)
+
+    // try {
+    // db.enablePersistence()
+    // db.settings({
+    //     cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+    //     synchronizeTabs: true,
+    //     merge: true
+    // })
+    //     .catch((err) => {
+    //         if (err.code == 'failed-precondition') {
+    //             console.error("Multiple tabs open, persistence can only be enabled in one tab at a a time.")
+    //         } else if (err.code == 'unimplemented') {
+    //             console.error("The current browser does not support all of the features required to enable persistence")
+    //         }
+    //     });
+
+    if (process.env.NODE_ENV === 'development') {
+        console.info("USING FIREBASE EMULATOR")
+        db.useEmulator("127.0.0.1", 6001);
     }
+    // } catch (e) {
+    //     if (e.name != "FirebaseError")
+    //         throw e
+    //     else
+    //         console.debug(e)
+    // }
     return db;
 }
 
 function formatDate(date) {
 
+    if (typeof date == "string")
+        return parseISO(date).toLocaleDateString()
     if (date instanceof Date)
         return date.toLocaleDateString()
-    if (date instanceof String)
-        return parseISO(date).toLocaleDateString()
     if (date instanceof firebase.firestore.Timestamp)
         return date.toDate().toLocaleDateString()
     if (date instanceof Object)
@@ -58,19 +62,20 @@ function formatDate(date) {
 }
 
 async function getWithCache(query) {
-    let snap = null
-    try {
-        snap = await query.get({ source: "cache" });
-    } catch (e) {
-        // not in cache
-        if (e.code != "unavailable")
-            throw e
-    }
-    if (!snap || snap.empty) {
-        // cache didn't have anything, so try a fetch from server instead
-        snap = await query.get();
-    }
-    return snap
+    return await query.get();
+    // let snap = null
+    // try {
+    //     snap = await query.get({ source: "cache" });
+    // } catch (e) {
+    //     // not in cache
+    //     if (e.code != "unavailable")
+    //         throw e
+    // }
+    // if (!snap || snap.empty) {
+    //     // cache didn't have anything, so try a fetch from server instead
+    //     snap = await query.get();
+    // }
+    // return snap
 }
 
 export { createDb, formatDate, getWithCache }

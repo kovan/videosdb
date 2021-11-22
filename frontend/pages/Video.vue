@@ -133,7 +133,7 @@ export default {
       video: {},
     }
   },
-  computed: {
+  methods: {
     video_json: function () {
       let json = {
         '@context': 'https://schema.org',
@@ -154,13 +154,13 @@ export default {
       else json.contentUrl = json.embedUrl
       return JSON.stringify(json)
     },
-  },
-  methods: {
     formatDate: function (date) {
       return formatDate(date)
     },
   },
-  async asyncData({ $db, params, error }) {
+  async asyncData({ $db, params, payload, error }) {
+    if (payload) return { video: payload }
+
     const q_videos = await getWithCache(
       $db.collection('videos').where('videosdb.slug', '==', params.slug)
     )

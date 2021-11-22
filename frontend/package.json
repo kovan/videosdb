@@ -26,6 +26,7 @@
     "cacheable-lookup": "^6.0.1",
     "date-fns": "^2.26.0",
     "firebase": "8",
+    "node-cache": "^5.1.2",
     "nuxt": "^2.15",
     "pug": "^3.0.0",
     "pug-plain-loader": "^1.1.0",
