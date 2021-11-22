@@ -19,8 +19,22 @@ function createDb(config) {
     }
     db = app.firestore();
     try {
-        if (process.env.DEBUG)
+        db.enablePersistence()
+        db.settings({
+            cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+            merge: true
+        })
+            .catch((err) => {
+                if (err.code == 'failed-precondition') {
+                    console.error("Multiple tabs open, persistence can only be enabled in one tab at a a time.")
+                } else if (err.code == 'unimplemented') {
+                    console.error("The current browser does not support all of the features required to enable persistence")
+                }
+            });
+        if (process.env.DEBUG) {
+            console.info("USING FIREBASE EMULATOR")
             db.useEmulator("127.0.0.1", 6001);
+        }
     } catch (e) {
         if (e.name != "FirebaseError")
             throw e
@@ -30,9 +44,6 @@ function createDb(config) {
 
 function formatDate(date) {
 
-    console.log(typeof date)
-    console.log(date)
-    console.log(JSON.stringify(date))
     if (date instanceof Date)
         return date.toLocaleDateString()
     if (date instanceof String)
@@ -40,8 +51,18 @@ function formatDate(date) {
     if (date instanceof firebase.firestore.Timestamp)
         return date.toDate().toLocaleDateString()
     if (date instanceof Object)
-        return new Timestamp(date.seconds, date.nanoseconds).toDate().toLocaleDateString()
-    throw TypeError
+        return new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate().toLocaleDateString()
+
+    throw TypeError()
+}
+
+async function getWithCache(query) {
+    let snap = await query.get({ source: "cache" });
+    if (snap.empty) {
+        // cache didn't have anything, so try a fetch from server instead
+        snap = await query.get();
+    }
+    return snap
 }
 
 export { createDb, formatDate }

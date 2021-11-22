@@ -100,7 +100,7 @@ export default function (moduleOptions) {
 
     this.nuxt.hook('sitemap:generate:before', async (nuxt, sitemapOptions) => {
         sitemapOptions.routes = async () => {
-            return getSitemap(nuxt);
+            return getSitemap(nuxt.options.firebase);
         }
     })
 

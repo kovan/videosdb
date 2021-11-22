@@ -30,6 +30,9 @@ export default {
   },
 
   //css: ["~/assets/scss/custom.scss"],
+  // render: {
+  //   resourceHints: false
+  // },
 
   plugins: [{
     src: "~/plugins/myplugin.js"
