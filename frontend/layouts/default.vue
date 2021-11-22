@@ -70,7 +70,7 @@ function getRandomInt(max) {
 }
 import { format, parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-import { handleAxiosError } from '~/utils/utils.client'
+import { formatDate, getWithCache } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
 export default {
   scrollToTop: true,
@@ -97,22 +97,18 @@ export default {
       return parseISO(iso_date).toLocaleDateString()
     },
     async randomVideo() {
-      try {
-        const meta_doc = await this.$db.collection('meta').doc('meta').get()
-        const video_ids = meta_doc.data().videoIds
+      const meta_doc = await getWithCache(
+        this.$db.collection('meta').doc('meta')
+      )
+      const video_ids = meta_doc.data().videoIds
 
-        let video_id = video_ids[Math.floor(Math.random() * video_ids.length)]
-        const video_doc = await this.$db
-          .collection('videos')
-          .doc(video_id)
-          .get()
-        let video = video_doc.data()
+      let video_id = video_ids[Math.floor(Math.random() * video_ids.length)]
+      const video_doc = await getWithCache(
+        this.$db.collection('videos').doc(video_id)
+      )
+      let video = video_doc.data()
 
-        this.$router.push('/video/' + video.videosdb.slug)
-      } catch (exception) {
-        console.error(exception)
-        handleAxiosError(exception, this.$nuxt.context.error)
-      }
+      this.$router.push('/video/' + video.videosdb.slug)
     },
     toggleSidebar() {
       this.sidebar_visible = !this.sidebar_visible
@@ -137,8 +133,8 @@ export default {
     const meta_query = this.$db.collection('meta').doc('meta')
 
     let [results, meta_results] = await Promise.all([
-      query.get(),
-      meta_query.get(),
+      getWithCache(query),
+      getWithCache(meta_query),
     ])
     this.categories.length = 0
     results.forEach((doc) => {

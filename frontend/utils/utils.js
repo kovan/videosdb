@@ -1,7 +1,5 @@
 import firebase from 'firebase/app';
 import { firestore } from 'firebase/firestore';
-
-
 import { parseISO } from 'date-fns'
 
 function createDb(config) {
@@ -22,6 +20,7 @@ function createDb(config) {
         db.enablePersistence()
         db.settings({
             cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+            synchronizeTabs: true,
             merge: true
         })
             .catch((err) => {
@@ -38,6 +37,8 @@ function createDb(config) {
     } catch (e) {
         if (e.name != "FirebaseError")
             throw e
+        else
+            console.debug(e)
     }
     return db;
 }
@@ -57,13 +58,20 @@ function formatDate(date) {
 }
 
 async function getWithCache(query) {
-    let snap = await query.get({ source: "cache" });
-    if (snap.empty) {
+    console.debug("Trying cache")
+    let snap = null
+    try {
+        snap = await query.get({ source: "cache" });
+    } catch (e) {
+        // not in cache
+    }
+    if (!snap || snap.empty) {
+        console.debug("fetching from server")
         // cache didn't have anything, so try a fetch from server instead
         snap = await query.get();
     }
     return snap
 }
 
-export { createDb, formatDate }
+export { createDb, formatDate, getWithCache }
 

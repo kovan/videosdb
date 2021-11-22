@@ -112,6 +112,7 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
+
     async def _check_for_new_videos(self):
 
         self.api = await YoutubeAPI.create()
@@ -314,8 +315,8 @@ class _PlaylistProcessor(_BaseProcessor):
             if video_id in self.global_video_ids["processed"]:
                 continue
 
-            await video_processor.enqueue_video(item)
             self.global_video_ids["processed"].add(video_id)
+            await video_processor.enqueue_video(item)
 
         exclude_playlist = playlist["snippet"]["title"] == "Uploads from " + \
             playlist["snippet"]["channelTitle"]

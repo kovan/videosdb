@@ -104,7 +104,7 @@ b-container.m-0.p-0.mx-auto
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
 import { format, parseISO } from 'date-fns'
-import { formatDate } from '~/utils/utils'
+import { formatDate, getWithCache } from '~/utils/utils'
 
 export default {
   components: {
@@ -161,10 +161,9 @@ export default {
     },
   },
   async asyncData({ $db, params, error }) {
-    const q_videos = await $db
-      .collection('videos')
-      .where('videosdb.slug', '==', params.slug)
-      .get()
+    const q_videos = await getWithCache(
+      $db.collection('videos').where('videosdb.slug', '==', params.slug)
+    )
 
     let video = q_videos.docs[0].data()
     return { video }

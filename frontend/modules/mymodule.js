@@ -1,4 +1,4 @@
-import { createDb } from "../utils/utils"
+import { createDb, getWithCache } from "../utils/utils"
 
 
 
@@ -44,12 +44,10 @@ async function generateSitemap(firestore) {
     const PAGE_SIZE = 20
 
     async function download(firestore, type, startAfter = null) {
-        //let response = await api.get(url)
-        //let container = type == "category" ? response.data : response.data.results
         let query = firestore.collection(type).limit(PAGE_SIZE)
         if (startAfter)
             query = query.startAfter(startAfter)
-        let results = await query.get()
+        let results = await getWithCache(query)
         results.forEach((item) => {
             sitemap.push(transform(item.data(), type))
         })
