@@ -73,6 +73,7 @@ import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
 import { formatDate, getWithCache } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
 export default {
+  fetchKey: 'site-sidebar',
   scrollToTop: true,
   components: {
     BIcon,
