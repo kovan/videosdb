@@ -13,7 +13,7 @@
               @change='handleChange'
             )
         .col
-          .container.p-1.pb-3
+          .container.p-1.pb-3(v-if='ordering == "snippet.publishedAt"')
             | Period:
             b-form-select(
               text='Period',
