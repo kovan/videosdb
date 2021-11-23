@@ -62,7 +62,7 @@ class YoutubeAPI:
         obj.http = httpx.AsyncClient(http2=True)
         obj.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
         if not yt_key:
-            yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
+            obj.yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
 
         obj.root_url = os.environ.get(
             "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")

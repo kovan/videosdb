@@ -96,14 +96,14 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 # For Google CLoud App Engine:
 # Use django-environ to parse the connection string
-DATABASES = {
-    "default":
-        env.db_url(
-            "DATABASE_URL",
-            default="psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@localhost:5431/postgres"
-        ),
+# DATABASES = {
+#     "default":
+#         env.db_url(
+#             "DATABASE_URL",
+#             default="psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@localhost:5431/postgres"
+#         ),
 
-}
+# }
 #DATABASES["default"]["CONN_MAX_AGE"] = None
 
 # if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
@@ -130,17 +130,17 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'my_cache_table',
-        'TIMEOUT': 7776000,  # 3 months in seconds
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+#         'LOCATION': 'my_cache_table',
+#         'TIMEOUT': 7776000,  # 3 months in seconds
 
-        "OPTIONS": {
-            'MAX_ENTRIES': 2147483647,  # max int32
-        }
-    }
-}
+#         "OPTIONS": {
+#             'MAX_ENTRIES': 2147483647,  # max int32
+#         }
+#     }
+# }
 
 #
 # CACHES = {
