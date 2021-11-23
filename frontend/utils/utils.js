@@ -34,16 +34,18 @@ function createDb(config) {
     //         }
     //     });
 
-    if (process.env.NODE_ENV === 'development') {
-        console.info("USING FIREBASE EMULATOR")
-        db.useEmulator("127.0.0.1", 6001);
+    try {
+        if (process.env.NODE_ENV === 'development') {
+            console.info("USING FIREBASE EMULATOR")
+            db.useEmulator("127.0.0.1", 6001);
+
+        }
+    } catch (e) {
+        if (e.name != "FirebaseError")
+            throw e
+        else
+            console.debug(e)
     }
-    // } catch (e) {
-    //     if (e.name != "FirebaseError")
-    //         throw e
-    //     else
-    //         console.debug(e)
-    // }
     return db;
 }
 

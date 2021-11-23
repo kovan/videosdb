@@ -1,4 +1,9 @@
-import { createDb, getWithCache } from "../utils/utils"
+process.on('unhandledRejection', (error) => {
+    console.trace(error);
+});
+
+import { createDb } from "../utils/utils"
+
 
 const NodeCache = require("node-cache");
 
@@ -11,7 +16,7 @@ async function getSitemap(dbOptions) {
 
     function transformCategory(obj) {
         return {
-            url: `/category/${obj.videosdb.slug}/`,
+            url: `/category/${obj.videosdb.slug}`,
             priority: 0.1
         }
     }
@@ -30,13 +35,11 @@ async function getSitemap(dbOptions) {
                         "https://videos.sadhguru.digital/" +
                         encodeURIComponent(obj.videosdb.filename),
                     player_loc: `https://www.sadhguru.digital/video/${obj.videosdb.slug}`,
-                    duration: obj.videosdb.duration_seconds,
+                    duration: obj.videosdb.durationSeconds,
                 },
             ],
             priority: 1.0,
         }
-
-
     }
 
     var sitemap = [
@@ -47,10 +50,11 @@ async function getSitemap(dbOptions) {
     ]
 
     cache.keys().forEach((key) => {
-        item = cache.get(key)
-        if (key.indexOf("/category/" != -1))
+
+        let item = cache.get(key)
+        if (key.indexOf("/category/") != -1)
             sitemap.push(transformCategory(item))
-        if (key.indexOf("/video/" != -1))
+        if (key.indexOf("/video/") != -1)
             sitemap.push(transformVideo(item))
     })
 
@@ -60,7 +64,7 @@ async function getSitemap(dbOptions) {
 async function generateCache(dbOptions) {
     if (!db)
         db = createDb(dbOptions)
-
+    console.debug("initializing cache")
     cache = new NodeCache({ stdTTL: 0, checkperiod: 0 });
 
     const PAGE_SIZE = 20
@@ -75,6 +79,7 @@ async function generateCache(dbOptions) {
         if (startAfter)
             query = query.startAfter(startAfter)
         let q_results = await query.get()
+
         q_results.forEach((item) => {
             cache.set(`/${typeMap[type]}/${item.data().videosdb.slug}`, item.data())
         })
@@ -91,9 +96,11 @@ async function generateCache(dbOptions) {
 async function generateRoutes(dbOptions) {
     if (!cache)
         await generateCache(dbOptions)
-    if (!db)
-        db = await createDb(dbOptions)
-
+    if (process.env.DEBUG) {
+        return [
+            "/video/sadhguru-about-dismantling-global-hindutva-conference",
+        ];
+    }
     let routes = []
     cache.keys().forEach((key) => {
         let route = {
@@ -112,10 +119,14 @@ export default function (moduleOptions) {
     })
 
 
-    this.nuxt.hook('sitemap:generate:before', async (nuxt, sitemapOptions) => {
-        sitemapOptions.routes = async () => {
-            return getSitemap(nuxt.options.firebase);
-        }
-    })
+    // this.nuxt.hook('sitemap:generate:before', async (nuxt, sitemapOptions) => {
+
+    //     sitemapOptions.routes = async () => {
+    //         return getSitemap(nuxt.options.firebase);
+    //     }
+
+    // })
 
 }
+
+export { getSitemap }

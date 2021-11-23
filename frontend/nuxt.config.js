@@ -1,3 +1,14 @@
+import { getSitemap } from "./modules/mymodule.js"
+
+const FIREBASE_SETTINGS = {
+  apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
+  authDomain: "worpdress-279321.firebaseapp.com",
+  projectId: "worpdress-279321",
+  storageBucket: "worpdress-279321.appspot.com",
+  messagingSenderId: "149555456673",
+  appId: "1:149555456673:web:5bb83ccdf79e8e47b3dee0",
+  measurementId: "G-CPNNB5CBJM"
+}
 
 export default {
   ssr: true,
@@ -7,15 +18,11 @@ export default {
   publicRuntimeConfig: {
     title: "Sadhguru wisdom",
     subtitle: "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
-    firebase: {
-      apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
-      authDomain: "worpdress-279321.firebaseapp.com",
-      projectId: "worpdress-279321",
-    }
+    firebase: FIREBASE_SETTINGS
   },
 
   generate: {
-    concurrency: 100,
+    concurrency: 200,
     fallback: true,
     crawler: false,
     devtools: true,
@@ -24,9 +31,9 @@ export default {
   },
 
   //css: ["~/assets/scss/custom.scss"],
-  // render: {
-  //   resourceHints: false
-  // },
+  render: {
+    resourceHints: false
+  },
 
   plugins: [{
     src: "~/plugins/myplugin.js"
@@ -55,28 +62,6 @@ export default {
 
   modules: [],
 
-  firebase: {
-    config: {
-      apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
-      authDomain: "worpdress-279321.firebaseapp.com",
-      projectId: "worpdress-279321",
-      storageBucket: "worpdress-279321.appspot.com",
-      messagingSenderId: "149555456673",
-      appId: "1:149555456673:web:5bb83ccdf79e8e47b3dee0",
-      measurementId: "G-CPNNB5CBJM"
-    },
-    services: {
-      firestore: {
-
-        emulatorHost: process.env.NODE_ENV === 'development' ? "127.0.0.1" : undefined,
-        emulatorPort: process.env.NODE_ENV === 'development' ? 6001 : undefined
-      },
-      analytics: true
-    },
-    onFirebaseHosting: true,
-    terminateDatabasesAfterGenerate: true
-  },
-
   bootstrapVue: {
     bootstrapCSS: true,
     bootstrapVueCSS: true,
@@ -102,7 +87,9 @@ export default {
     cacheTime: 86400000 * 2, // 48h
     hostname: "https://www.sadhguru.digital",
     gzip: true,
-
+    routes: async () => {
+      return getSitemap(FIREBASE_SETTINGS)
+    }
   },
 
   build: {
