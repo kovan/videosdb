@@ -32,7 +32,8 @@ export default {
 
   //css: ["~/assets/scss/custom.scss"],
   render: {
-    resourceHints: false
+    resourceHints: false,
+    asyncScripts: true
   },
 
   plugins: [{
