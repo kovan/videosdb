@@ -21,7 +21,7 @@
               :options='period_options',
               @change='handleChange'
             )
-      .row(v-if='this.videos.length')
+      .row(v-if='Object.keys(this.videos).length')
         .col-md-4(v-for='video in this.videos', :key='video.id')
           LazyHydrate(when-visible)
             .card.mb-4.shadow-sm.text-center
@@ -63,7 +63,7 @@ export default {
       from_ssr: false,
       current_page: 1,
       scroll_disabled: false,
-      videos: [],
+      videos: {},
       period_options: [
         {
           text: 'Last week',
@@ -141,26 +141,16 @@ export default {
       return formatDate(date)
     },
 
-    linkGen(pageNum) {
-      return {
-        path: this.$route.path,
-        query: {
-          page: pageNum,
-        },
-      }
-    },
-    // infiniteHandler($state) {
-    //   console.log('Page: ' + this.current_page)
-    //   this.$fetch()
-    //   if (this.scroll_finished) $state.complete()
-    //   else $state.loaded()
-    // },
     async loadMore() {
       await this.$fetch()
     },
     handleChange() {
       this.query_cursor = null
-      this.videos = []
+      for (var key in this.videos) {
+        // this check can be safely omitted in modern JS engines
+        // if (obj.hasOwnProperty(key))
+        delete this.videos[key]
+      }
       this.$fetch()
     },
 
@@ -184,68 +174,49 @@ export default {
   },
   async fetch() {
     const PAGE_SIZE = 20
+    try {
+      let query = this.$db.collection('videos')
+      if (this.ordering) query = query.orderBy(this.ordering, 'desc')
+      if (this.category) {
+        query = query.where(
+          'videosdb.playlists',
+          'array-contains',
+          this.category
+        )
+      }
 
-    let query = this.$db.collection('videos')
+      if (this.start_date) {
+        query = query.where('snippet.publishedAt', '>', this.start_date)
+      }
 
-    if (this.category) {
-      query = query.where('videosdb.playlists', 'array-contains', this.category)
+      if (this.tag)
+        query = query.where('snippet.tags', 'array-contains', this.tag)
+
+      if (this.from_ssr) {
+        query = query.limit(PAGE_SIZE * 2)
+        this.from_ssr = false
+      } else {
+        query = query.limit(PAGE_SIZE)
+      }
+
+      if (this.query_cursor) {
+        query = query.startAfter(this.query_cursor)
+      }
+
+      let results = await getWithCache(query)
+
+      //  Nuxt cant serialize the resulting objects
+      if (process.server) this.from_ssr = true
+      else this.query_cursor = results.docs.at(-1)
+
+      results.forEach((doc) => {
+        this.$set(this.videos, doc.data().id, doc.data())
+      })
+
+      this.scroll_disabled = results.docs.length < PAGE_SIZE
+    } catch (e) {
+      console.log(e)
     }
-
-    if (this.start_date) {
-      query = query.orderBy('snippet.publishedAt', 'desc')
-      query = query.where('snippet.publishedAt', '>', this.start_date)
-    }
-
-    if (this.tag)
-      query = query.where('snippet.tags', 'array-contains', this.tag)
-
-    if (this.ordering && !this.start_date)
-      query = query.orderBy(this.ordering, 'desc')
-
-    if (this.from_ssr) {
-      query = query.limit(PAGE_SIZE * 2)
-    } else {
-      query = query.limit(PAGE_SIZE)
-    }
-
-    if (this.query_cursor) {
-      query = query.startAfter(this.query_cursor)
-    }
-
-    let results = await getWithCache(query)
-
-    // only when not in SSR because Nuxt cant serialize the resulting object
-    if (!process.server) this.query_cursor = results.docs.at(-1)
-    else this.from_ssr = true
-
-    this.current_page += 1
-
-    results.forEach((doc) => {
-      this.videos.push(doc.data())
-    })
-
-    this.scroll_disabled = results.docs.length < PAGE_SIZE
-
-    // const dummy_root = 'http://example.com' // otherwise URL doesn't work
-    // const url = new URL('/videos/', dummy_root)
-    // if (this.ordering) url.searchParams.append('ordering', this.ordering)
-    // if (this.period) url.searchParams.append('period', this.period)
-    // if (this.current_page > 1)
-    //   url.searchParams.append('page', this.current_page)
-    // if (this.categories) url.searchParams.append('categories', this.categories)
-    // if (this.tags) url.searchParams.append('tags', this.tags)
-    // if (this.search) url.searchParams.append('search', this.search)
-
-    // try {
-    //   let response = await this.$axios.get(url.href.replace(dummy_root, ''))
-    //   this.videos = response.data.results
-    //   this.page_count =
-    //     response.data.count == 0
-    //       ? 0
-    //       : Math.floor(response.data.count / response.data.results.length)
-    // } catch (exception) {
-    //   handleAxiosError(exception, this.$nuxt.context.error)
-    // }
   },
 }
 </script>

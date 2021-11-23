@@ -103,7 +103,7 @@ async function generateCache(dbOptions) {
 }
 
 async function generateRoutes(dbOptions) {
-    await generateCache()
+    await generateCache(dbOptions)
 
     if (process.env.DEBUG) {
         return [

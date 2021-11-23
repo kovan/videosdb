@@ -125,7 +125,7 @@ export default {
       })
     },
   },
-  async fetch({ params, payload }) {
+  async fetch() {
     const query = this.$db
       .collection('playlists')
       .orderBy('videosdb.lastUpdated', 'desc')
