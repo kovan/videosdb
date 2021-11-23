@@ -88,7 +88,7 @@ export default {
     hostname: "https://www.sadhguru.digital",
     gzip: true,
     routes: async () => {
-      return getSitemap(FIREBASE_SETTINGS)
+      return await getSitemap(FIREBASE_SETTINGS)
     }
   },
 

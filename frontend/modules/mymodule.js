@@ -1,18 +1,17 @@
 process.on('unhandledRejection', (error) => {
     console.trace(error);
 });
-
+var AsyncLock = require('async-lock');
 import { createDb } from "../utils/utils"
 
-
+var lock = new AsyncLock();
 const NodeCache = require("node-cache");
 
 var cache = null
 var db = null
 
 async function getSitemap(dbOptions) {
-    if (!cache)
-        await generateCache(dbOptions)
+    await generateCache(dbOptions)
 
     function transformCategory(obj) {
         return {
@@ -61,41 +60,51 @@ async function getSitemap(dbOptions) {
     return sitemap
 }
 
+
+
 async function generateCache(dbOptions) {
-    if (!db)
-        db = createDb(dbOptions)
-    console.debug("initializing cache")
-    cache = new NodeCache({ stdTTL: 0, checkperiod: 0 });
+    await lock.acquire("cache", async function (done) {
+        if (cache) {
+            done()
+            return
+        }
+        if (!db)
+            db = createDb(dbOptions)
+        console.debug("initializing cache")
+        cache = new NodeCache({ stdTTL: 0, checkperiod: 0 });
 
-    const PAGE_SIZE = 20
-    let typeMap = {
-        videos: "video",
-        playlists: "category"
+        const PAGE_SIZE = 20
+        let typeMap = {
+            videos: "video",
+            playlists: "category"
 
-    }
+        }
 
-    async function download(db, type, startAfter = null) {
-        let query = db.collection(type).limit(PAGE_SIZE)
-        if (startAfter)
-            query = query.startAfter(startAfter)
-        let q_results = await query.get()
+        async function download(db, type, startAfter = null) {
+            let query = db.collection(type).limit(PAGE_SIZE)
+            if (startAfter)
+                query = query.startAfter(startAfter)
+            let q_results = await query.get()
 
-        q_results.forEach((item) => {
-            cache.set(`/${typeMap[type]}/${item.data().videosdb.slug}`, item.data())
-        })
-        if (q_results.docs.length == PAGE_SIZE)
-            await download(db, type, q_results.docs.at(-1))
-    }
+            q_results.forEach((item) => {
+                cache.set(`/${typeMap[type]}/${item.data().videosdb.slug}`, item.data())
+            })
+            if (q_results.docs.length == PAGE_SIZE)
+                await download(db, type, q_results.docs.at(-1))
+        }
 
-    await Promise.all([
-        download(db, "videos"),
-        download(db, "playlists")
-    ])
+        await Promise.all([
+            download(db, "videos"),
+            download(db, "playlists")
+        ])
+
+        done()
+    })
 }
 
 async function generateRoutes(dbOptions) {
-    if (!cache)
-        await generateCache(dbOptions)
+    await generateCache()
+
     if (process.env.DEBUG) {
         return [
             "/video/sadhguru-about-dismantling-global-hindutva-conference",
@@ -122,7 +131,7 @@ export default function (moduleOptions) {
     // this.nuxt.hook('sitemap:generate:before', async (nuxt, sitemapOptions) => {
 
     //     sitemapOptions.routes = async () => {
-    //         return getSitemap(nuxt.options.firebase);
+    //         return getSitemap(nuxt.options.publicRuntimeConfig.firebase);
     //     }
 
     // })
