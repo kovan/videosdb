@@ -22,14 +22,13 @@ export default {
   },
 
   generate: {
-    cache: true,
     concurrency: 200,
     fallback: "index.html",
     crawler: false,
     devtools: true,
     interval: 100, // in milliseconds
     manifest: false,
-    exclude: /$\/tag\/.*/
+    exclude: [/^\/tag/]
   },
 
   //css: ["~/assets/scss/custom.scss"],
