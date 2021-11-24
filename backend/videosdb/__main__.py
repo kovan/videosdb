@@ -1,11 +1,11 @@
 import os
 import sys
 import argparse
+import logging.config
+from .ipfs import IPFS
 
-import videosdb.ipfs
-
-from videosdb.downloader import Downloader
-
+from .downloader import Downloader
+from .settings import LOGGING
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 os.environ.setdefault('GOOGLE_APPLICATION_CREDENTIALS',
@@ -19,6 +19,7 @@ def dbg():
 
 
 def main():
+    logging.config.dictConfig(LOGGING)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
@@ -33,12 +34,12 @@ def main():
         downloader.check_for_new_videos()
 
     if options.download_and_register_in_ipfs:
-        ipfs = videosdb.backend.ipfs.IPFS()
+        ipfs = IPFS()
         ipfs.download_and_register_folder(
             options["overwrite_hashes"])
 
     if options.update_dnslink:
-        ipfs = videosdb.backend.ipfs.IPFS()
+        ipfs = IPFS()
         ipfs.update_dnslink(force=True)
 
 
