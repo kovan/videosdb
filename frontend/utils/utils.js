@@ -1,6 +1,6 @@
 import firebase from 'firebase/app';
 
-import 'firebase/firestore/memory';
+//import 'firebase/firestore/memory';
 import { firestore } from 'firebase/firestore';
 import { parseISO } from 'date-fns'
 
