@@ -4,7 +4,7 @@ import shutil
 import sys
 import tempfile
 import ipfshttpclient
-from django.conf import settings
+import videosdb.settings as settings
 import socket
 
 from videosdb.youtube_api import YoutubeDL, parse_youtube_id
