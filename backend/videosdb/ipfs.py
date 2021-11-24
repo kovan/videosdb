@@ -7,7 +7,7 @@ import ipfshttpclient
 from django.conf import settings
 import socket
 
-from videosdb.backend.youtube_api import YoutubeDL, parse_youtube_id
+from videosdb.youtube_api import YoutubeDL, parse_youtube_id
 #from videosdb.models import Video
 from google.cloud import firestore
 
@@ -15,8 +15,6 @@ from google.cloud import firestore
 class DNS:
     def __init__(self, dns_zone):
         self.dns_zone = dns_zone
-        path = os.path.dirname(sys.modules[__name__].__file__)
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = path + "/creds.json"
 
     def _update_record(self, record_name, record_type, ttl, new_value):
         from google.cloud import dns
