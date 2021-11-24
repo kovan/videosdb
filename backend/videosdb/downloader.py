@@ -7,7 +7,7 @@ import logging
 import os
 import isodate
 import re
-import uuslug
+from slugify import slugify
 
 from google.cloud import firestore
 import youtube_transcript_api
@@ -257,7 +257,7 @@ class _VideoProcessor(_BaseProcessor):
                 if transcript:
                     custom_attrs["transcript"] = transcript
 
-        custom_attrs["slug"] = uuslug.slugify(
+        custom_attrs["slug"] = slugify(
             video["snippet"]["title"])
         custom_attrs["descriptionTrimmed"] = self._description_trimmed(
             video["snippet"]["description"])
@@ -326,7 +326,7 @@ class _PlaylistProcessor(_BaseProcessor):
             return
 
         playlist["videosdb"] = dict()
-        playlist["videosdb"]["slug"] = uuslug.slugify(
+        playlist["videosdb"]["slug"] = slugify(
             playlist["snippet"]["title"])
 
         video_count = 0
@@ -337,9 +337,13 @@ class _PlaylistProcessor(_BaseProcessor):
                 continue
 
             self.global_video_ids["valid"].add(video["id"])
-
+            playlist_trimmed = {
+                "id": playlist["id"],
+                "slug": playlist["videosdb"]["slug"],
+                "title": playlist["snippet"]["title"]
+            }
             asyncio.create_task(
-                self.db.add_playlist_to_video(video["id"], playlist))
+                self.db.add_playlist_to_video(video["id"], playlist_trimmed))
 
             video_count += 1
             video_date = video["snippet"]["publishedAt"]

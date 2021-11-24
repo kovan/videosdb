@@ -6,15 +6,13 @@ steps:
       - run
       - --rm
       - -e
-      - DATABASE_URL=$_DATABASE_URL
-      - -e
       - LOGLEVEL=$_LOGLEVEL
       - gcr.io/worpdress-279321/backend
       - poetry
       - run
       - python
       - -O
-      - manage.py
+      - -m
       - videosdb
       - --check-for-new-videos
 
@@ -24,10 +22,6 @@ steps:
       - run
       - --name
       - generate
-      - -e
-      - API_URL=$_API_URL
-      - -e
-      - API_BROWSER_URL=$_API_BROWSER_URL
       - gcr.io/worpdress-279321/frontend
       - yarn
       - generate

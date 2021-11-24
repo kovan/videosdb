@@ -25,8 +25,8 @@ b-container.m-0.p-0.mx-auto
           v-for='playlist in this.video.videosdb.playlists',
           :key='playlist.id'
         )
-          NuxtLink(:to='"/category/" + playlist.videosdb.slug')
-            | {{ playlist.snippet.title }}
+          NuxtLink(:to='"/category/" + playlist.slug')
+            | {{ playlist.title }}
 
     .my-4(v-if='this.video.videosdb.ipfs_hash')
       p(align='center')
