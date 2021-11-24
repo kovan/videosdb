@@ -55,21 +55,6 @@ class DB:
             "videoIds": firestore.ArrayUnion([video_id])
         })
 
-        # async def list_video_ids(self):
-        #     video_ids = []
-        #     async for video_doc in self.db.collection("videos").stream():
-        #         video_ids.append(video_doc.get("id"))
-        #     return video_ids
-
-        # async def increase_video_counter(self, video_count):
-
-        #     # because Firestore doesn't have something like SELECT COUNT(*)
-
-        #     await self.db.collection("meta").document(
-        #         "meta").update({
-        #             "videoCount": firestore.FieldValue.increment(1)
-        #         })
-
     async def update_last_updated(self):
         return await self.db.collection("meta").document(
             "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
@@ -98,6 +83,10 @@ class TaskGatherer():
         return await self.gather()
 
 
+async def gather_all_tasks():
+    await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
+
+
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
@@ -112,6 +101,7 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
+
     async def _check_for_new_videos(self):
 
         self.api = await YoutubeAPI.create()
@@ -121,13 +111,12 @@ class Downloader:
 
         try:
             await self._sync_db_with_youtube()
-            await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
+        finally:
+            await gather_all_tasks()
 
         await self.db.update_last_updated()
-
-        # wait for pending tasks to finish:
 
     async def _sync_db_with_youtube(self):
 
@@ -159,6 +148,7 @@ class Downloader:
                 async for id in streamer:
                     await pp.enqueue_playlist(id)
 
+        await gather_all_tasks()
         if not "DEBUG" in os.environ:
             # separate so that it uses remaining quota
             await self._fill_related_videos(global_video_ids["valid"])
