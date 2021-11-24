@@ -127,27 +127,31 @@ export default {
     },
   },
   async fetch() {
-    const query = this.$db
-      .collection('playlists')
-      .orderBy('videosdb.lastUpdated', 'desc')
+    try {
+      const query = this.$db
+        .collection('playlists')
+        .orderBy('videosdb.lastUpdated', 'desc')
 
-    const meta_query = this.$db.collection('meta').doc('meta')
+      const meta_query = this.$db.collection('meta').doc('meta')
 
-    let [results, meta_results] = await Promise.all([
-      getWithCache(query),
-      getWithCache(meta_query),
-    ])
-    this.categories.length = 0
-    results.forEach((doc) => {
-      let category = {
-        name: doc.data().snippet.title,
-        slug: doc.data().videosdb.slug,
-        use_count: doc.data().videosdb.videoCount,
-      }
-      this.categories.push(category)
-    })
+      let [results, meta_results] = await Promise.all([
+        getWithCache(query),
+        getWithCache(meta_query),
+      ])
 
-    this.last_updated = meta_results.data().lastUpdated
+      results.forEach((doc) => {
+        let category = {
+          name: doc.data().snippet.title,
+          slug: doc.data().videosdb.slug,
+          use_count: doc.data().videosdb.videoCount,
+        }
+        this.categories.push(category)
+      })
+
+      this.last_updated = meta_results.data().lastUpdated
+    } catch (e) {
+      console.trace(e)
+    }
   },
 }
 </script>

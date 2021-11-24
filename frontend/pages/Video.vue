@@ -21,12 +21,9 @@ b-container.m-0.p-0.mx-auto
     )
       strong Categories
       ul
-        li(
-          v-for='playlist in this.video.videosdb.playlists',
-          :key='playlist.id'
-        )
-          NuxtLink(:to='"/category/" + playlist.slug')
-            | {{ playlist.title }}
+        li(v-for='category in this.video.categories', :key='category.id')
+          NuxtLink(:to='"/category/" + category.videosdb.slug')
+            | {{ category.snippet.title }}
 
     .my-4(v-if='this.video.videosdb.ipfs_hash')
       p(align='center')
@@ -159,13 +156,26 @@ export default {
     },
   },
   async asyncData({ $db, params, payload, error }) {
-    if (payload) return { video: payload }
+    let video = null
+    if (payload) video = payload
+    else {
+      const q = await getWithCache(
+        $db.collection('videos').where('videosdb.slug', '==', params.slug)
+      )
 
-    const q_videos = await getWithCache(
-      $db.collection('videos').where('videosdb.slug', '==', params.slug)
-    )
+      video = q.docs[0].data()
+    }
 
-    let video = q_videos.docs[0].data()
+    if ('playlists' in video.videosdb && video.videosdb.playlists.length) {
+      const results = await getWithCache(
+        $db.collection('playlists').where('id', 'in', video.videosdb.playlists)
+      )
+      let categories = []
+      results.forEach((doc) => {
+        categories.push(doc.data())
+      })
+      video.categories = categories
+    }
     return { video }
   },
 }

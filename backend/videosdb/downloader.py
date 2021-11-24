@@ -336,13 +336,9 @@ class _PlaylistProcessor(_BaseProcessor):
                 continue
 
             self.global_video_ids["valid"].add(video["id"])
-            playlist_trimmed = {
-                "id": playlist["id"],
-                "slug": playlist["videosdb"]["slug"],
-                "title": playlist["snippet"]["title"]
-            }
+
             asyncio.create_task(
-                self.db.add_playlist_to_video(video["id"], playlist_trimmed))
+                self.db.add_playlist_to_video(video["id"], playlist["id"]))
 
             video_count += 1
             video_date = video["snippet"]["publishedAt"]

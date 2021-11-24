@@ -1,6 +1,7 @@
 import pytest
 import os
-from videosdb.backend.downloader import Downloader
+from videosdb.downloader import Downloader
+from google.cloud import firestore
 
 
 # @pytest.fixture
@@ -19,6 +20,19 @@ def setup_module(module):
     os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "worpdress-279321")
 
 
-def test_downloader():
-    downloader = Downloader()
-    downloader.check_for_new_videos()
+@pytest.fixture
+def db():
+    yield firestore.AsyncClient()
+
+# def test_downloader():
+#     downloader = Downloader()
+#     downloader.check_for_new_videos()
+
+
+def test_not_array_too_large_to_be_used_in_query(db):
+    query = db.collection('videos')
+    query = query.where(
+        'videosdb.playlists',
+        'array-contains',
+        this.category
+    )

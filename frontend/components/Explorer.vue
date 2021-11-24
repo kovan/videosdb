@@ -145,6 +145,8 @@ export default {
       await this.$fetch()
     },
     handleChange() {
+      if (this.ordering != 'snippet.publishedAt') this.start_date = null
+
       this.query_cursor = null
       for (var key in this.videos) {
         // this check can be safely omitted in modern JS engines
@@ -177,11 +179,12 @@ export default {
     try {
       let query = this.$db.collection('videos')
       if (this.ordering) query = query.orderBy(this.ordering, 'desc')
+
       if (this.category) {
         query = query.where(
           'videosdb.playlists',
           'array-contains',
-          this.category
+          this.category['id']
         )
       }
 
