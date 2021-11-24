@@ -112,7 +112,6 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
-
     async def _check_for_new_videos(self):
 
         self.api = await YoutubeAPI.create()
@@ -122,13 +121,13 @@ class Downloader:
 
         try:
             await self._sync_db_with_youtube()
+            await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
 
         await self.db.update_last_updated()
 
         # wait for pending tasks to finish:
-        await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
 
     async def _sync_db_with_youtube(self):
 
