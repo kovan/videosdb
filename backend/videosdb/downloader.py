@@ -8,6 +8,7 @@ import os
 import isodate
 import re
 from slugify import slugify
+import concurrent.futures
 
 from google.cloud import firestore
 import youtube_transcript_api
@@ -24,6 +25,14 @@ YT_CHANNEL_ID = os.environ.get("YT_CHANNEL_ID", "UCcYzLCs3zrQIBVHYA1sK2sw")
 
 async def asyncgenerator(item):
     yield item
+
+
+async def my_to_thread(*args):
+    loop = asyncio.get_running_loop()
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as pool:
+        result = await loop.run_in_executor(pool, *args)
+        return result
 
 
 class DB:
@@ -111,10 +120,9 @@ class Downloader:
 
         try:
             await self._sync_db_with_youtube()
+            await gather_all_tasks()
         except YoutubeAPI.QuotaExceededError as e:
             logger.exception(e)
-        finally:
-            await gather_all_tasks()
 
         await self.db.update_last_updated()
 
@@ -189,7 +197,7 @@ class _VideoProcessor(_BaseProcessor):
     @staticmethod
     async def _download_transcript(video_id):
         try:
-            transcript = await asyncio.to_thread(
+            transcript = await my_to_thread(
                 get_video_transcript, video_id)
 
             logger.info(
@@ -237,14 +245,13 @@ class _VideoProcessor(_BaseProcessor):
 
         custom_attrs = dict()
 
-        if old_video_doc.exists:
-            old_video = old_video_doc.to_dict()
-            if (not "transcript_status" in old_video["videosdb"]
-                    or old_video["videosdb"]["transcript_status"] == "pending"):
-                transcript, new_status = await self._download_transcript(video_id)
-                custom_attrs["transcript_status"] = new_status
-                if transcript:
-                    custom_attrs["transcript"] = transcript
+        if (not old_video_doc.exists or
+            not "transcript_status" in old_video_doc.to_dict()["videosdb"] or
+                old_video_doc.to_dict()["videosdb"]["transcript_status"] == "pending"):
+            transcript, new_status = await self._download_transcript(video_id)
+            custom_attrs["transcript_status"] = new_status
+            if transcript:
+                custom_attrs["transcript"] = transcript
 
         custom_attrs["slug"] = slugify(
             video["snippet"]["title"])
@@ -260,7 +267,7 @@ class _VideoProcessor(_BaseProcessor):
             video["statistics"][stat] = int(value)
 
         await self.db.db.collection("videos").document(
-            video_id).set(video)
+            video_id).set(video, merge=True)
 
         await self.db.add_video_id_to_video_index(video_id)
 
