@@ -8,18 +8,18 @@
       "name": "Backend run check",
       "type": "python",
       "request": "launch",
-      "program": "videosdb",
+      "module": "videosdb",
       "pythonArgs": [
         "-W",
-        "default",
-        "-m"
+        "default"
       ],
       "env": {
         "DEBUG": "1",
         "LOGLEVEL": "DEBUG",
         "YOUTUBE_API_URL": "http://127.0.0.1:2000/youtube/v3",
         "PYTHONDEVMODE": "1",
-        "FIRESTORE_EMULATOR_HOST": "localhost:6001"
+        "FIRESTORE_EMULATOR_HOST": "localhost:6001",
+        "YOUTUBE_API_KEY": "AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs"
       },
       "args": [
         "-c",
