@@ -1,6 +1,6 @@
 import pytest
 import os
-from videosdb.backend.youtube_api import YoutubeAPI
+from videosdb.youtube_api import YoutubeAPI
 
 YOUTUBE_KEY_TESTING = "AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs"
 

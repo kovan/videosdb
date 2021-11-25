@@ -13,8 +13,7 @@
         "**/.next": true
     },
     "python.testing.pytestArgs": [
-        "backend",
-        "--ignore=tests"
+        "backend"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,

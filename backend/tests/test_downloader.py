@@ -2,10 +2,11 @@ import pytest
 import os
 from videosdb.downloader import Downloader
 from google.cloud import firestore
-
+from videosdb.youtube_api import YoutubeAPI
 
 # @pytest.fixture
 # async def api():
+
 
 def setup_module(module):
 
@@ -24,15 +25,29 @@ def setup_module(module):
 def db():
     yield firestore.AsyncClient()
 
+
+@pytest.fixture
+async def api():
+    yield await YoutubeAPI.create()
+
+
 # def test_downloader():
 #     downloader = Downloader()
 #     downloader.check_for_new_videos()
 
 
-def test_not_array_too_large_to_be_used_in_query(db):
-    query = db.collection('videos')
-    query = query.where(
-        'videosdb.playlists',
-        'array-contains',
-        this.category
-    )
+# def test_not_array_too_large_to_be_used_in_query(db):
+#     query = db.collection('videos')
+#     query = query.where(
+#         'videosdb.playlists',
+#         'array-contains',
+#         this.category
+#     )
+
+
+def test_video_in_two_playlists(api, db):
+    v1 = {}
+    p1 = [v1]
+    p2 = [v1]
+    assert v1 in p1
+    assert v1 in p2
