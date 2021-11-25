@@ -6,11 +6,22 @@ services:
 
     environment:
       - IPFS_HOST=ipfs
-      - DATABASE_URL=psql://postgres:TBSV96364xXi2JeWZiVibnbGczFNg@db.sadhguru.digital:5432/postgres
       - PYTHONWARNINGS=ignore
     build:
       context: ./backend
-    entrypoint: ["nice", "-n", "20", "poetry", "run", "python", "-O", "manage.py", "videosdb","--download-and-register-in-ipfs"]
+    entrypoint:
+      [
+        "nice",
+        "-n",
+        "20",
+        "poetry",
+        "run",
+        "python",
+        "-O",
+        "-m",
+        "videosdb",
+        "--download-and-register-in-ipfs"
+      ]
     volumes:
       - logs:/app/logs
       - /mnt/videos:/mnt/videos
@@ -26,7 +37,7 @@ services:
     ports:
       - 18080:18080
       - 5001:5001
-      - 14001:14001      
+      - 14001:14001
     volumes:
       - /mnt/videos:/mnt/videos
       - /mnt/ipfs-repo:/mnt/ipfs-repo
@@ -49,5 +60,5 @@ services:
       - ipfs
 
 volumes:
-  nginx_secrets:
-  logs:
+  nginx_secrets: null
+  logs: null

@@ -5,6 +5,7 @@ SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt update
 RUN apt install -y python3-virtualenv
+RUN apt install -y rustc
 
 RUN apt clean
 
@@ -31,8 +32,8 @@ ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
 RUN poetry install --no-dev
 COPY --chown=appuser:appuser . .
 
-EXPOSE $PORT
 
 
-CMD ["/bin/bash", "-c",  "poetry run gunicorn --bind 0.0.0.0:$PORT --threads=3  --timeout 300 --log-level=info --log-file=- project.wsgi"]
-#CMD ["/app/utils/entrypoint.sh"]
+
+CMD ["/bin/bash", "-c",  "poetry run python -O -m videosdb -c"]
+
