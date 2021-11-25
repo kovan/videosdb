@@ -1,18 +1,18 @@
 
-FROM python:3.10-bullseye
+FROM ubuntu:21.10
 RUN echo 'root:toor' | chpasswd
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt update
-RUN apt install -y python3-virtualenv
+RUN apt install -y python3.9-venv
 RUN apt install -y rustc
+RUN apt install -y wget
 
 RUN apt clean
 
-RUN pip install certifi
-COPY utils/install_certificates.py /tmp
-RUN python /tmp/install_certificates.py
-
+#RUN pip install certifi
+#COPY utils/install_certificates.py /tmp
+# RUN python /tmp/install_certificates.py
 
 RUN useradd -m appuser
 WORKDIR /app
@@ -23,13 +23,10 @@ RUN wget  http://raw.githubusercontent.com/python-poetry/poetry/master/install-p
 ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 
-#RUN mkdir /app/.cache && chown appuser:appuser /app/.cache
-#RUN mkdir /app/logs && chown appuser:appuser /app/logs
-
-#VOLUME /app/.cache
-#VOLUME /app/logs
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
-RUN poetry install --no-dev
+RUN /home/appuser/.local/bin/poetry install --no-dev
+
+
 COPY --chown=appuser:appuser . .
 
 
