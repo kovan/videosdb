@@ -54,7 +54,8 @@
       },
       "cwd": "${workspaceFolder}/frontend",
       "outputCapture": "std",
-      "justMyCode": false
+      "justMyCode": false,
+      "console": "integratedTerminal"
     },
     {
       "name": "yarn dev",
@@ -70,7 +71,8 @@
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
       "outputCapture": "std",
-      "justMyCode": false
+      "justMyCode": false,
+      "console": "integratedTerminal"
     },
     {
       "name": "yarn build",
@@ -86,7 +88,8 @@
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
       "outputCapture": "std",
-      "justMyCode": false
+      "justMyCode": false,
+      "console": "integratedTerminal"
     },
     {
       "name": "yarn start",
@@ -102,7 +105,8 @@
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
       "outputCapture": "std",
-      "justMyCode": false
+      "justMyCode": false,
+      "console": "integratedTerminal"
     },
     {
       "type": "node",

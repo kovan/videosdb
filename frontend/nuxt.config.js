@@ -14,7 +14,7 @@ const FIREBASE_SETTINGS = {
 
 export default defineNuxtConfig({
   ssr: true,
-  target: "static",
+  target: "client",
   telemetry: false,
 
   publicRuntimeConfig: {

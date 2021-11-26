@@ -66,22 +66,5 @@ function formatDate(date) {
     throw TypeError()
 }
 
-async function getWithCache(query) {
-    return await getDocs(query)
-    // let snap = null
-    // try {
-    //     snap = await query.get({ source: "cache" });
-    // } catch (e) {
-    //     // not in cache
-    //     if (e.code != "unavailable")
-    //         throw e
-    // }
-    // if (!snap || snap.empty) {
-    //     // cache didn't have anything, so try a fetch from server instead
-    //     snap = await query.get();
-    // }
-    // return snap
-}
-
-export { createDb, formatDate, getWithCache }
+export { createDb, formatDate }
 

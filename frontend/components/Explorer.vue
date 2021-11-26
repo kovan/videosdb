@@ -58,9 +58,10 @@ import {
   orderBy,
   limit,
   startAfter,
+  getDocs,
 } from 'firebase/firestore/lite'
 
-import { formatDate, getWithCache } from '~/utils/utils'
+import { formatDate } from '~/utils/utils'
 
 export default {
   components: {
@@ -211,7 +212,7 @@ export default {
       q = query(q, startAfter(this.q_cursor))
     }
 
-    let results = await getWithCache(q)
+    let results = await getDocs(q)
 
     //  Nuxt cant serialize the resulting objects
     if (process.server) this.from_ssr = true
