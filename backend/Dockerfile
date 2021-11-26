@@ -12,9 +12,11 @@ RUN apt install -y git-core
 RUN apt install -y wget
 RUN apt install -y libssl-dev
 RUN apt install -y libffi-dev 
-
-
+RUN apt install -y aria2
 RUN apt clean
+
+# workaround for QEMU bug: https://github.com/rust-lang/cargo/issues/8719
+#RUN --security=insecure mkdir -p /root/.cargo && chmod 777 /root/.cargo && mount -t tmpfs none /root/.cargo && pip3 install --no-cache-dir cryptography
 
 #RUN pip install certifi
 #COPY utils/install_certificates.py /tmp
@@ -26,7 +28,7 @@ RUN chown appuser:appuser .
 USER appuser
 
 RUN wget  http://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -O - > install-poetry.py
-RUN  python3 install-poetry.py
+RUN  python3 install-poetry.py; cat /app/*.log
 ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 
@@ -39,5 +41,5 @@ COPY --chown=appuser:appuser . .
 
 
 
-CMD ["/bin/bash", "-c",  "poetry run python -O -m videosdb -c"]
+CMD ["/bin/bash", "-c",  "poetry run python -O -m videosdb"]
 

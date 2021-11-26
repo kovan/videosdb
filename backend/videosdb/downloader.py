@@ -64,6 +64,15 @@ class DB:
             "videoIds": firestore.ArrayUnion([video_id])
         })
 
+    async def regenerate_video_index(self):
+        ids = []
+        async for video in self.db.collection("videos").stream():
+            ids.append(video.to_dict()["id"])
+
+        await self.db.collection("meta").document("meta").update({
+            "videoIds": ids
+        })
+
     async def update_last_updated(self):
         return await self.db.collection("meta").document(
             "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
@@ -72,6 +81,14 @@ class DB:
         await self.db.collection("videos").document(video_id).update({
             "videosdb.playlists": firestore.ArrayUnion([playlist])
         })
+
+    async def ensure_all_videos_belong_to_channel(self):
+        async for video in self.db.collection("videos").stream():
+            video_obj = video.to_dict()
+            if video_obj["snippet"]["channelId"] != YT_CHANNEL_ID:
+                print("Channel mismatch, expected %s, found %s" %
+                      (YT_CHANNEL_ID, video_obj["snippet"]["channelId"]))
+                await self.db.collection("videos").document(video_obj["id"]).delete()
 
 
 class TaskGatherer():
@@ -109,7 +126,6 @@ class Downloader:
 
 
 # PRIVATE: -------------------------------------------------------------------
-
 
     async def _check_for_new_videos(self):
 
@@ -194,7 +210,7 @@ class _VideoProcessor(_BaseProcessor):
     def __init__(self, db, api):
         super().__init__(db, api)
 
-    @staticmethod
+    @ staticmethod
     async def _download_transcript(video_id):
         try:
             transcript = await my_to_thread(
@@ -266,6 +282,7 @@ class _VideoProcessor(_BaseProcessor):
         for stat, value in video["statistics"].items():
             video["statistics"][stat] = int(value)
 
+        assert video["snippet"]["channelId"] == YT_CHANNEL_ID
         await self.db.db.collection("videos").document(
             video_id).set(video, merge=True)
 
