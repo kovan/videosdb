@@ -9,7 +9,7 @@ b-container.p-0.m-0
 </template>
 
 <script>
-import { collection, getDocs } from 'firebase/firestore/lite'
+import { collection, getDocs, query, where } from 'firebase/firestore/lite'
 
 export default {
   head() {
@@ -34,7 +34,10 @@ export default {
     if (payload) return { category: payload }
 
     const q_category = await getDocs(
-      collection($db, 'playlists').where('videosdb.slug', '==', params.slug)
+      query(
+        collection($db, 'playlists'),
+        where('videosdb.slug', '==', params.slug)
+      )
     )
 
     let category = q_category.docs[0].data()

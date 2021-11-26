@@ -172,7 +172,10 @@ export default {
 
     if ('playlists' in video.videosdb && video.videosdb.playlists.length) {
       const results = await getDocs(
-        collection($db, 'playlists').where('id', 'in', video.videosdb.playlists)
+        query(
+          collection($db, 'playlists'),
+          where('id', 'in', video.videosdb.playlists)
+        )
       )
       let categories = []
       results.forEach((doc) => {
