@@ -1,4 +1,6 @@
 import { getSitemap } from "./modules/mymodule.js"
+import { defineNuxtConfig } from '@nuxt/bridge'
+
 
 const FIREBASE_SETTINGS = {
   apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
@@ -10,7 +12,7 @@ const FIREBASE_SETTINGS = {
   measurementId: "G-CPNNB5CBJM"
 }
 
-export default {
+export default defineNuxtConfig({
   ssr: true,
   target: "static",
   telemetry: false,
@@ -123,35 +125,4 @@ export default {
       },
     },
   },
-  server: {},
-
-  env: {},
-
-  serverMiddleware: [],
-
-  hooks: {
-  },
-
-  head: {
-    htmlAttrs: {
-      lang: "en",
-    },
-    title: "Sadhguru wisdom",
-    meta: [
-      { charset: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { "http-equiv": "content-language", content: "en" },
-      {
-        hid: "description",
-        name: "description",
-        content:
-          "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
-      },
-    ],
-    link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
-  },
-
-  googleAnalytics: {
-    id: "UA-171658328-1",
-  },
-};
+})

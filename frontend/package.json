@@ -3,13 +3,13 @@
   "version": "1.0.1",
   "private": true,
   "scripts": {
-    "dev": "nuxt",
-    "buildx": "nuxt build",
-    "start": "nuxt start",
-    "build": "nuxt build",
-    "generate": "node --experimental-specifier-resolution=node node_modules/.bin/nuxt generate",
+    "dev": "nuxi dev",
+    "buildx": "nuxi build",
+    "start": "node .output/server/index.mjs",
+    "build": "nuxi generate",
+    "generate": "node --experimental-specifier-resolution=node node_modules/.bin/nuxi generate",
     "test": "jest",
-    "dev-debug": "node node_modules/.bin/nuxt"
+    "dev-debug": "node node_modules/.bin/nuxi"
   },
   "dependencies": {
     "@nuxtjs/firebase": "^8.0.0",
@@ -26,9 +26,9 @@
     "bootstrap-vue": "^2",
     "cacheable-lookup": "^6.0.1",
     "date-fns": "^2.26.0",
-    "firebase": "8",
+    "firebase": "^9.5.0",
     "node-cache": "^5.1.2",
-    "nuxt": "^2.15",
+    "nuxt-edge": "latest",
     "pug": "^3.0.0",
     "pug-plain-loader": "^1.1.0",
     "vue-infinite-scroll": "^2.0.2",
@@ -37,6 +37,7 @@
     "vue-plugin-load-script": "^1.3.2"
   },
   "devDependencies": {
+    "@nuxt/bridge": "npm:@nuxt/bridge-edge",
     "eslint-config-prettier": "^6.12.0",
     "eslint-plugin-prettier": "^3.1.4",
     "prettier": "^2.1.2"

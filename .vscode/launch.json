@@ -59,7 +59,7 @@
     {
       "name": "yarn dev",
       "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
+      "runtimeExecutable": "yarn",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -75,7 +75,7 @@
     {
       "name": "yarn build",
       "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
+      "runtimeExecutable": "yarn",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -91,7 +91,7 @@
     {
       "name": "yarn start",
       "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
+      "runtimeExecutable": "yarn",
       "skipFiles": [
         "<node_internals>/**"
       ],

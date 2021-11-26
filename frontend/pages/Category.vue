@@ -10,6 +10,8 @@ b-container.p-0.m-0
 
 <script>
 import { getWithCache } from '~/utils/utils'
+import { collection } from 'firebase/firestore/lite'
+
 export default {
   head() {
     return {
@@ -33,7 +35,7 @@ export default {
     if (payload) return { category: payload }
 
     const q_category = await getWithCache(
-      $db.collection('playlists').where('videosdb.slug', '==', params.slug)
+      collection($db, 'playlists').where('videosdb.slug', '==', params.slug)
     )
 
     let category = q_category.docs[0].data()

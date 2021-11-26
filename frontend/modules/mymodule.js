@@ -1,6 +1,8 @@
 process.on('unhandledRejection', (error) => {
     console.trace(error);
 });
+
+import { collection } from 'firebase/firestore/lite'
 var AsyncLock = require('async-lock');
 import { createDb } from "../utils/utils"
 
@@ -81,7 +83,7 @@ async function generateCache(dbOptions) {
         }
 
         async function download(db, type, startAfter = null) {
-            let query = db.collection(type).limit(PAGE_SIZE)
+            let query = collection(db, type).limit(PAGE_SIZE)
             if (startAfter)
                 query = query.startAfter(startAfter)
             let q_results = await query.get()

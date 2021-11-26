@@ -102,6 +102,7 @@ b-container.m-0.p-0.mx-auto
 import LazyHydrate from 'vue-lazy-hydration'
 import { format, parseISO } from 'date-fns'
 import { formatDate, getWithCache } from '~/utils/utils'
+import { collection } from 'firebase/firestore/lite'
 
 export default {
   components: {
@@ -160,7 +161,7 @@ export default {
     if (payload) video = payload
     else {
       const q = await getWithCache(
-        $db.collection('videos').where('videosdb.slug', '==', params.slug)
+        collection($db, 'videos').where('videosdb.slug', '==', params.slug)
       )
 
       video = q.docs[0].data()
@@ -168,7 +169,7 @@ export default {
 
     if ('playlists' in video.videosdb && video.videosdb.playlists.length) {
       const results = await getWithCache(
-        $db.collection('playlists').where('id', 'in', video.videosdb.playlists)
+        collection($db, 'playlists').where('id', 'in', video.videosdb.playlists)
       )
       let categories = []
       results.forEach((doc) => {

@@ -1,23 +1,26 @@
-import firebase from 'firebase/app';
+import { initializeApp } from 'firebase/app'
 
-//import 'firebase/firestore/memory';
-import { firestore } from 'firebase/firestore';
+import { getDocs, getFirestore, connectFirestoreEmulator } from 'firebase/firestore/lite'
+
+// //import 'firebase/firestore/memory';
+// import { firestore } from 'firebase/firestore';
 import { parseISO } from 'date-fns'
 
 function createDb(config) {
     let db = null
     let app = null
-    if (firebase.apps.length == 0) {
-        app = firebase.initializeApp({
-            apiKey: config.apiKey,
-            authDomain: config.authDomain,
-            projectId: config.projectId
-        });
-    } else {
-        app = firebase.apps[0]
 
-    }
-    db = app.firestore();
+    //if (firebase.apps.length == 0) {
+    app = initializeApp({
+        apiKey: config.apiKey,
+        authDomain: config.authDomain,
+        projectId: config.projectId
+    });
+    // } else {
+    //     app = firebase.apps[0]
+
+    // }
+    db = getFirestore(app);
 
     // try {
     // db.enablePersistence()
@@ -37,7 +40,7 @@ function createDb(config) {
     try {
         if (process.env.NODE_ENV === 'development') {
             console.info("USING FIREBASE EMULATOR")
-            db.useEmulator("127.0.0.1", 6001);
+            connectFirestoreEmulator(db, "127.0.0.1", 6001)
 
         }
     } catch (e) {
@@ -64,7 +67,7 @@ function formatDate(date) {
 }
 
 async function getWithCache(query) {
-    return await query.get();
+    return await getDocs(query)
     // let snap = null
     // try {
     //     snap = await query.get({ source: "cache" });
