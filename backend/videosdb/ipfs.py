@@ -6,8 +6,6 @@ import tempfile
 import ipfshttpclient
 import videosdb.settings as settings
 import socket
-from executor import execute
-from __main__ import dbg
 
 from videosdb.youtube_api import YoutubeDL, parse_youtube_id
 #from videosdb.models import Video
@@ -188,4 +186,3 @@ class IPFS:
 
     def _list_amule_shares(self):
         result = execute('amulecmd -P amule -c "show shared"')
-        dbg()
