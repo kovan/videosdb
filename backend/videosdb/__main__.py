@@ -36,7 +36,7 @@ def main():
     if options.download_and_register_in_ipfs:
         ipfs = IPFS()
         ipfs.download_and_register_folder(
-            options["overwrite_hashes"])
+            options.overwrite_hashes)
 
     if options.update_dnslink:
         ipfs = IPFS()

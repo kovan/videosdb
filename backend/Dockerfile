@@ -12,6 +12,7 @@ RUN apt install -y git-core
 RUN apt install -y wget
 RUN apt install -y libssl-dev
 RUN apt install -y libffi-dev 
+RUN apt install -y aria2
 RUN apt clean
 
 # workaround for QEMU bug: https://github.com/rust-lang/cargo/issues/8719
@@ -27,7 +28,7 @@ RUN chown appuser:appuser .
 USER appuser
 
 RUN wget  http://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -O - > install-poetry.py
-RUN  python3 install-poetry.py; cat /app/*.log
+RUN  python3 install-poetry.py
 ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 

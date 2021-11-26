@@ -131,7 +131,7 @@ class YoutubeAPI:
             "type": "video",
             "relatedToVideoId": youtube_id
         }
-        logging.info("getting related videos")
+        logger.info("getting related videos")
         result = dict()
         async for video in self._request_many(url, params):
             if video["id"]["videoId"] in result:
@@ -226,11 +226,15 @@ class YoutubeDL:
     def download_video(self, _id, asynchronous=False):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
         cmd = self.BASE_CMD + \
+            "--external-downloader=aria2c --external-downloader-args '--min-split-size=1M --max-connection-per-server=16 --max-concurrent-downloads=16 --split=16' " +\
             "--output '%s' %s" % (filename_format,
                                   "http://www.youtube.com/watch?v=" + _id)
-        logging.info(cmd)
+        logger.info(cmd)
         try:
-            execute(cmd, asynchronous=asynchronous, silent=True)
+            # import ipdb
+            # ipdb.set_trace()
+
+            execute(cmd, asynchronous=asynchronous, silent=False)
         except executor.ExternalCommandFailed as e:
             raise self.UnavailableError(repr(e))
         files = os.listdir(".")
