@@ -11,6 +11,7 @@ from videosdb.youtube_api import YoutubeDL, parse_youtube_id
 #from videosdb.models import Video
 from google.cloud import firestore
 
+logger = logging.getLogger(__name__)
 
 class DNS:
     def __init__(self, dns_zone):
@@ -125,13 +126,13 @@ class IPFS:
         #     {'Size': 0, 'Hash': '', 'Name': 'Software', 'Type': 0}
         # ]
         # videos = Video.objects.all().order_by("?")
-        video_ids = db.collection("meta").document("meta").get()["videoIds"]
+        video_ids = db.collection("meta").document("meta").get().to_dict()["videoIds"]
 
         for video_id in video_ids:
             video_ref = db.collection("videos").document(video_id)
 
             if not video_id in files_in_disk:
-                logging.debug("Downloading " + video_id)
+                logger.debug("Downloading " + video_id)
                 with tempfile.TemporaryDirectory() as tmpdir:
                     os.chdir(tmpdir)
                     try:
@@ -147,7 +148,7 @@ class IPFS:
                     try:
                         shutil.move(filename, videos_dir)
                     except OSError as e:
-                        logging.exception(e)
+                        logger.exception(e)
                         continue
 
             file = files_in_disk.get(video_id)
@@ -157,7 +158,7 @@ class IPFS:
             if video_id in files_in_ipfs:
                 file = files_in_ipfs[video_id]
 
-                logging.debug("Already in IPFS:  " + str(file))
+                logger.debug("Already in IPFS:  " + str(file))
                 video_ref.set({
                     "videosdb": {
                         "filename": file["Name"],
@@ -169,8 +170,8 @@ class IPFS:
             # adding to IPFS:
             video_doc = video_ref.get()
             video = video_doc.to_dict()
-            logging.debug("Adding to IPFS: ID:%s, title: %s, Filename: %s, Hash: %s" %
-                          (video_id, video["snippet"]["title"], video["videosdb"]["filename"], video["videosdb"]["ipfs_hash"]))
+            logger.debug("Adding to IPFS: ID:%s, title: %s, Filename: %s, Hash: %s" %
+                          (video_id, video["snippet"]["title"], video["videosdb"].get("filename",""), video["videosdb"].get("ipfs_hash", "")))
             ipfs_hash = self.add_file(videos_dir + "/" +
                                       video["videosdb"]["filename"],
                                       wrap_with_directory=True,
