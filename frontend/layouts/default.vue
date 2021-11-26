@@ -65,15 +65,15 @@ div
 </template>
 
 <script>
+import { collection, query, orderBy } from 'firebase/firestore/lite'
+import { format, parseISO } from 'date-fns'
+import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
+import LazyHydrate from 'vue-lazy-hydration'
+import { formatDate, getWithCache } from '~/utils/utils'
+
 function getRandomInt(max) {
   return Math.floor(Math.random() * max)
 }
-import { format, parseISO } from 'date-fns'
-import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-import { formatDate, getWithCache } from '~/utils/utils'
-import LazyHydrate from 'vue-lazy-hydration'
-import { collection, query, orderBy } from 'firebase/firestore/lite'
-
 export default {
   fetchKey: 'site-sidebar',
   scrollToTop: true,
@@ -130,16 +130,16 @@ export default {
   },
   async fetch() {
     try {
-      const query = query(
+      const q = query(
         collection(this.$db, 'playlists'),
         orderBy('videosdb.lastUpdated', 'desc')
       )
 
-      const meta_query = collection(this.$db, 'meta').doc('meta')
+      const meta_q = collection(this.$db, 'meta').doc('meta')
 
       let [results, meta_results] = await Promise.all([
-        getWithCache(query),
-        getWithCache(meta_query),
+        getWithCache(q),
+        getWithCache(meta_q),
       ])
 
       results.forEach((doc) => {

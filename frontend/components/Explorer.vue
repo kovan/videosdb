@@ -51,7 +51,6 @@
 <script >
 import LazyHydrate from 'vue-lazy-hydration'
 import { parseISO, sub } from 'date-fns'
-import { formatDate, getWithCache } from '~/utils/utils'
 import {
   collection,
   query,
@@ -60,6 +59,8 @@ import {
   limit,
   startAfter,
 } from 'firebase/firestore/lite'
+
+import { formatDate, getWithCache } from '~/utils/utils'
 
 export default {
   components: {
