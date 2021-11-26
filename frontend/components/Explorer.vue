@@ -54,7 +54,7 @@ import { parseISO, sub } from 'date-fns'
 import { formatDate, getWithCache } from '~/utils/utils'
 import {
   collection,
-  q,
+  query,
   where,
   orderBy,
   limit,
@@ -140,9 +140,6 @@ export default {
     //   this.current_page = this.$route.q.page || 1
     //   this.$fetch()
     // },
-  },
-  created() {
-    this.current_page = this.$route.q.page || this.initial_page
   },
   methods: {
     formatDate: function (date) {

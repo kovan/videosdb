@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 
-import { getDocs, getFirestore, connectFirestoreEmulator } from 'firebase/firestore/lite'
+import { getDocs, getFirestore, connectFirestoreEmulator, Timestamp } from 'firebase/firestore/lite'
 
 // //import 'firebase/firestore/memory';
 // import { firestore } from 'firebase/firestore';
@@ -58,10 +58,10 @@ function formatDate(date) {
         return parseISO(date).toLocaleDateString()
     if (date instanceof Date)
         return date.toLocaleDateString()
-    if (date instanceof firebase.firestore.Timestamp)
+    if (date instanceof Timestamp)
         return date.toDate().toLocaleDateString()
     if (date instanceof Object)
-        return new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate().toLocaleDateString()
+        return new Timestamp(date.seconds, date.nanoseconds).toDate().toLocaleDateString()
 
     throw TypeError()
 }
