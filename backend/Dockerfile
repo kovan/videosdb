@@ -12,6 +12,7 @@ RUN apt install -y git-core
 RUN apt install -y wget
 RUN apt install -y libssl-dev
 RUN apt install -y libffi-dev 
+RUN apt install -y aria2
 RUN apt clean
 
 # workaround for QEMU bug: https://github.com/rust-lang/cargo/issues/8719
