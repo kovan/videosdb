@@ -28,7 +28,7 @@ RUN chown appuser:appuser .
 USER appuser
 
 RUN wget  http://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -O - > install-poetry.py
-RUN  python3 install-poetry.py; cat /app/*.log
+RUN  python3 install-poetry.py
 ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 
