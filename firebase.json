@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "frontend/dist",
+    "public": "frontend/.output/public",
     "trailingSlash": false,
     "ignore": [
       "firebase.json",
@@ -9,9 +9,14 @@
     ],
     "rewrites": [
       {
-        "source": "/**",
+        "source": "/tag/*",
         "destination": "/index.html",
         "type": 301
+      },
+      {
+        "source": "**",
+        "destination": "/404.html",
+        "type": 404
       }
     ]
   },
