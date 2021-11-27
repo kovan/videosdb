@@ -22,6 +22,9 @@ export default defineNuxtConfig({
     subtitle: "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
     firebase: FIREBASE_SETTINGS
   },
+  googleAnalytics: {
+    id: 'UA-171658328-1',
+  },
 
   generate: {
     concurrency: 200,
