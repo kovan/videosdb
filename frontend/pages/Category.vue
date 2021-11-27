@@ -9,7 +9,8 @@ b-container.p-0.m-0
 </template>
 
 <script>
-import { getWithCache } from '~/utils/utils'
+import { collection, getDocs, query, where } from 'firebase/firestore/lite'
+
 export default {
   head() {
     return {
@@ -32,8 +33,11 @@ export default {
   async asyncData({ $db, params, payload, error }) {
     if (payload) return { category: payload }
 
-    const q_category = await getWithCache(
-      $db.collection('playlists').where('videosdb.slug', '==', params.slug)
+    const q_category = await getDocs(
+      query(
+        collection($db, 'playlists'),
+        where('videosdb.slug', '==', params.slug)
+      )
     )
 
     let category = q_category.docs[0].data()

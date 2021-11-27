@@ -48,18 +48,16 @@
       ],
       "type": "node",
       "envFile": "${workspaceFolder}/frontend/.env",
-      "env": {
-        "DEBUG": "1",
-        "NODE_ENV": "development"
-      },
+      "env": {},
       "cwd": "${workspaceFolder}/frontend",
       "outputCapture": "std",
-      "justMyCode": false
+      "justMyCode": false,
+      "console": "integratedTerminal"
     },
     {
       "name": "yarn dev",
       "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
+      "runtimeExecutable": "yarn",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -70,12 +68,13 @@
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
       "outputCapture": "std",
-      "justMyCode": false
+      "justMyCode": false,
+      "console": "integratedTerminal"
     },
     {
       "name": "yarn build",
       "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
+      "runtimeExecutable": "yarn",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -86,12 +85,13 @@
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
       "outputCapture": "std",
-      "justMyCode": false
+      "justMyCode": false,
+      "console": "integratedTerminal"
     },
     {
       "name": "yarn start",
       "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/nuxt",
+      "runtimeExecutable": "yarn",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -102,7 +102,8 @@
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
       "outputCapture": "std",
-      "justMyCode": false
+      "justMyCode": false,
+      "console": "integratedTerminal"
     },
     {
       "type": "node",

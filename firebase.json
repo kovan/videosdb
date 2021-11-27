@@ -9,15 +9,20 @@
     ],
     "rewrites": [
       {
-        "source": "/**",
+        "source": "/tag/*",
         "destination": "/index.html",
         "type": 301
+      },
+      {
+        "source": "**",
+        "destination": "/404.html",
+        "type": 404
       }
     ]
   },
   "emulators": {
     "hosting": {
-      "port": 3000
+      "port": 3001
     },
     "ui": {
       "enabled": true,
@@ -25,9 +30,6 @@
     },
     "firestore": {
       "port": 6001
-    },
-    "functions": {
-      "port": 6002
     }
   },
   "firestore": {

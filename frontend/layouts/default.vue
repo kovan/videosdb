@@ -65,13 +65,22 @@ div
 </template>
 
 <script>
+import {
+  collection,
+  query,
+  orderBy,
+  getDoc,
+  getDocs,
+  doc,
+} from 'firebase/firestore/lite'
+import { format, parseISO } from 'date-fns'
+import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
+import LazyHydrate from 'vue-lazy-hydration'
+import { formatDate } from '~/utils/utils'
+
 function getRandomInt(max) {
   return Math.floor(Math.random() * max)
 }
-import { format, parseISO } from 'date-fns'
-import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-import { formatDate, getWithCache } from '~/utils/utils'
-import LazyHydrate from 'vue-lazy-hydration'
 export default {
   fetchKey: 'site-sidebar',
   scrollToTop: true,
@@ -98,15 +107,11 @@ export default {
       return parseISO(iso_date).toLocaleDateString()
     },
     async randomVideo() {
-      const meta_doc = await getWithCache(
-        this.$db.collection('meta').doc('meta')
-      )
+      const meta_doc = await getDoc(doc(this.$db, 'meta', 'meta'))
       const video_ids = meta_doc.data().videoIds
 
       let video_id = video_ids[Math.floor(Math.random() * video_ids.length)]
-      const video_doc = await getWithCache(
-        this.$db.collection('videos').doc(video_id)
-      )
+      const video_doc = await getDoc(doc(this.$db, 'videos', video_id))
       let video = video_doc.data()
 
       this.$router.push('/video/' + video.videosdb.slug)
@@ -128,15 +133,16 @@ export default {
   },
   async fetch() {
     try {
-      const query = this.$db
-        .collection('playlists')
-        .orderBy('videosdb.lastUpdated', 'desc')
+      const q = query(
+        collection(this.$db, 'playlists'),
+        orderBy('videosdb.lastUpdated', 'desc')
+      )
 
-      const meta_query = this.$db.collection('meta').doc('meta')
+      const meta_q = doc(this.$db, 'meta', 'meta')
 
       let [results, meta_results] = await Promise.all([
-        getWithCache(query),
-        getWithCache(meta_query),
+        getDocs(q),
+        getDoc(meta_q),
       ])
 
       results.forEach((doc) => {
