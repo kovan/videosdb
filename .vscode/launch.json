@@ -48,10 +48,7 @@
       ],
       "type": "node",
       "envFile": "${workspaceFolder}/frontend/.env",
-      "env": {
-        "DEBUG": "1",
-        "NODE_ENV": "development"
-      },
+      "env": {},
       "cwd": "${workspaceFolder}/frontend",
       "outputCapture": "std",
       "justMyCode": false,

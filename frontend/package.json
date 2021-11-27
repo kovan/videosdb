@@ -7,12 +7,10 @@
     "buildx": "nuxi build",
     "start": "node .output/server/index.mjs",
     "build": "nuxi generate",
-    "generate": "node --experimental-specifier-resolution=node node_modules/.bin/nuxi generate",
-    "test": "jest",
-    "dev-debug": "node node_modules/.bin/nuxi"
+    "generate": "nuxi generate",
+    "test": "jest"
   },
   "dependencies": {
-    "@nuxtjs/firebase": "^8.0.0",
     "@nuxtjs/google-analytics": "^2.4.0",
     "@nuxtjs/proxy": "^2.1.0",
     "@nuxtjs/router-extras": "^1.1.1",
