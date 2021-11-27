@@ -17,6 +17,10 @@ export default defineNuxtConfig({
   target: "static",
   telemetry: false,
 
+  bridge: {
+    nitro: false,
+  },
+
   publicRuntimeConfig: {
     title: "Sadhguru wisdom",
     subtitle: "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
@@ -28,7 +32,7 @@ export default defineNuxtConfig({
 
   generate: {
     concurrency: 200,
-    fallback: "index.html",
+    fallback: true,
     crawler: false,
     devtools: true,
     interval: 100, // in milliseconds

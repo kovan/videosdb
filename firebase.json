@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "frontend/.output/public",
+    "public": "frontend/dist",
     "trailingSlash": false,
     "ignore": [
       "firebase.json",
@@ -22,7 +22,7 @@
   },
   "emulators": {
     "hosting": {
-      "port": 3000
+      "port": 3001
     },
     "ui": {
       "enabled": true,
