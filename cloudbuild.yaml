@@ -22,6 +22,8 @@ steps:
       - run
       - --name
       - generate
+      - -e
+      - DONT_USE_EMULATOR=1
       - gcr.io/worpdress-279321/frontend
       - yarn
       - generate
