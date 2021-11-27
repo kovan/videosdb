@@ -16,6 +16,18 @@ steps:
       - videosdb
       - --check-for-new-videos
 
+  - id: build
+    name: docker
+    args:
+      - run
+      - --name
+      - build
+      - -e
+      - DONT_USE_EMULATOR=1
+      - gcr.io/worpdress-279321/frontend
+      - yarn
+      - build
+
   - id: generate
     name: docker
     args:
@@ -27,7 +39,6 @@ steps:
       - gcr.io/worpdress-279321/frontend
       - yarn
       - generate
-
   - id: copy
     name: docker
     args:
