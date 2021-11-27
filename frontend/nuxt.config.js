@@ -1,5 +1,4 @@
 import { getSitemap } from "./modules/mymodule.js"
-import { defineNuxtConfig } from '@nuxt/bridge'
 
 
 const FIREBASE_SETTINGS = {
@@ -12,14 +11,10 @@ const FIREBASE_SETTINGS = {
   measurementId: "G-CPNNB5CBJM"
 }
 
-export default defineNuxtConfig({
+export default {
   ssr: true,
   target: "static",
   telemetry: false,
-
-  bridge: {
-    nitro: false,
-  },
 
   publicRuntimeConfig: {
     title: "Sadhguru wisdom",
@@ -132,4 +127,4 @@ export default defineNuxtConfig({
       },
     },
   },
-})
+}

@@ -9,7 +9,7 @@
     ],
     "rewrites": [
       {
-        "source": "/tag/*",
+        "source": "/tag/**",
         "destination": "/index.html",
         "type": 301
       },

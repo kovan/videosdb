@@ -38,7 +38,7 @@ function createDb(config) {
     //     });
 
     try {
-        if (!("DONT_USE_EMULATOR" in process.env)) {
+        if ("USE_EMULATOR" in process.env) {
             console.info("USING FIREBASE EMULATOR")
             connectFirestoreEmulator(db, "127.0.0.1", 6001)
 

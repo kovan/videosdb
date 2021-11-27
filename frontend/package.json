@@ -16,17 +16,13 @@
     "@nuxtjs/router-extras": "^1.1.1",
     "@nuxtjs/sitemap": "^2.4.0",
     "async-lock": "^1.3.0",
-    "axios": "^0.24.0",
-    "axios-cached-dns-resolve": "^3.0.4",
-    "axios-debug-log": "^0.8.4",
-    "axios-extensions": "^3.1.3",
     "bootstrap": "^4.6.0",
     "bootstrap-vue": "^2",
     "cacheable-lookup": "^6.0.1",
     "date-fns": "^2.26.0",
     "firebase": "^9.5.0",
     "node-cache": "^5.1.2",
-    "nuxt-edge": "latest",
+    "nuxt": "^2.15.8",
     "pug": "^3.0.0",
     "pug-plain-loader": "^1.1.0",
     "vue-infinite-scroll": "^2.0.2",
@@ -35,7 +31,6 @@
     "vue-plugin-load-script": "^1.3.2"
   },
   "devDependencies": {
-    "@nuxt/bridge": "npm:@nuxt/bridge-edge",
     "eslint-config-prettier": "^6.12.0",
     "eslint-plugin-prettier": "^3.1.4",
     "prettier": "^2.1.2"

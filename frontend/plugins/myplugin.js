@@ -1,15 +1,12 @@
-import { defineNuxtPlugin } from '#app'
 import { createDb } from "~/utils/utils"
-
 
 
 var db = null
 
-export default defineNuxtPlugin(nuxtApp => {
+export default function ({ app, $config }, inject) {
     if (!db) {
-        db = createDb(nuxtApp.$config.firebase)
+        db = createDb(app.$config.firebase)
     }
-    nuxtApp.provide('db', db)
-    // now available on `nuxtApp.$injected`
-})
 
+    inject("db", db)
+}
