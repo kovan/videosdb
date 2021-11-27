@@ -7,7 +7,7 @@
     "buildx": "nuxi build",
     "start": "node .output/server/index.mjs",
     "build": "nuxi generate",
-    "generate": "nuxi generate",
+    "generate": "nuxt generate",
     "test": "jest"
   },
   "dependencies": {
