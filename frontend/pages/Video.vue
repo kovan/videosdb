@@ -4,15 +4,14 @@ b-container.m-0.p-0.mx-auto
   b-card.m-0.p-0
     .my-4
       h1 {{ this.video.snippet.title }}
-      small
-        | Published: {{ formatDate(this.video.snippet.publishedAt) }}.
-        | Duration: {{ new Date(this.video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
       p(align='center')
         client-only
           LazyYoutube(
             :src='`https://www.youtube.com/watch?v=${this.video.id}`'
           )
-
+      small
+        | Published: {{ formatDate(this.video.snippet.publishedAt) }}.
+        | Duration: {{ new Date(this.video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
     .my-4(v-if='this.video.videosdb.descriptionTrimmed')
       strong Description
       p(style='white-space: pre-line') {{ this.video.videosdb.descriptionTrimmed }}
@@ -102,8 +101,7 @@ b-container.m-0.p-0.mx-auto
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
 import { format, parseISO } from 'date-fns'
-import { formatDate } from '~/utils/utils'
-import { collection, query, getDocs, where } from 'firebase/firestore/lite'
+import { formatDate, getWithCache } from '~/utils/utils'
 
 export default {
   components: {
@@ -161,22 +159,16 @@ export default {
     let video = null
     if (payload) video = payload
     else {
-      const q = await getDocs(
-        query(
-          collection($db, 'videos'),
-          where('videosdb.slug', '==', params.slug)
-        )
+      const q = await getWithCache(
+        $db.collection('videos').where('videosdb.slug', '==', params.slug)
       )
 
       video = q.docs[0].data()
     }
 
     if ('playlists' in video.videosdb && video.videosdb.playlists.length) {
-      const results = await getDocs(
-        query(
-          collection($db, 'playlists'),
-          where('id', 'in', video.videosdb.playlists)
-        )
+      const results = await getWithCache(
+        $db.collection('playlists').where('id', 'in', video.videosdb.playlists)
       )
       let categories = []
       results.forEach((doc) => {

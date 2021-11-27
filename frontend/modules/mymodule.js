@@ -1,9 +1,6 @@
 process.on('unhandledRejection', (error) => {
     console.trace(error);
 });
-
-import { collection, query, getDocs, limit, startAfter } from 'firebase/firestore/lite'
-
 var AsyncLock = require('async-lock');
 import { createDb } from "../utils/utils"
 
@@ -83,11 +80,11 @@ async function generateCache(dbOptions) {
 
         }
 
-        async function download(db, type, startAfterDoc = null) {
-            let q = query(collection(db, type), limit(PAGE_SIZE))
-            if (startAfterDoc)
-                q = query(q, startAfter(startAfterDoc))
-            let q_results = await getDocs(q)
+        async function download(db, type, startAfter = null) {
+            let query = db.collection(type).limit(PAGE_SIZE)
+            if (startAfter)
+                query = query.startAfter(startAfter)
+            let q_results = await query.get()
 
             q_results.forEach((item) => {
                 cache.set(`/${typeMap[type]}/${item.data().videosdb.slug}`, item.data())

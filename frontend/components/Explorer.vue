@@ -51,17 +51,7 @@
 <script >
 import LazyHydrate from 'vue-lazy-hydration'
 import { parseISO, sub } from 'date-fns'
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  limit,
-  startAfter,
-  getDocs,
-} from 'firebase/firestore/lite'
-
-import { formatDate } from '~/utils/utils'
+import { formatDate, getWithCache } from '~/utils/utils'
 
 export default {
   components: {
@@ -69,7 +59,7 @@ export default {
   },
   data: () => {
     return {
-      q_cursor: null,
+      query_cursor: null,
       from_ssr: false,
       current_page: 1,
       scroll_disabled: false,
@@ -137,11 +127,14 @@ export default {
   },
 
   watch: {
-    '$route.q': '$fetch',
+    '$route.query': '$fetch',
     // $route(to, from) {
-    //   this.current_page = this.$route.q.page || 1
+    //   this.current_page = this.$route.query.page || 1
     //   this.$fetch()
     // },
+  },
+  created() {
+    this.current_page = this.$route.query.page || this.initial_page
   },
   methods: {
     formatDate: function (date) {
@@ -154,7 +147,7 @@ export default {
     handleChange() {
       if (this.ordering != 'snippet.publishedAt') this.start_date = null
 
-      this.q_cursor = null
+      this.query_cursor = null
       for (var key in this.videos) {
         // this check can be safely omitted in modern JS engines
         // if (obj.hasOwnProperty(key))
@@ -183,49 +176,50 @@ export default {
   },
   async fetch() {
     const PAGE_SIZE = 20
-    // try {
-    let q = collection(this.$db, 'videos')
-    if (this.ordering) q = query(q, orderBy(this.ordering, 'desc'))
+    try {
+      let query = this.$db.collection('videos')
+      if (this.ordering) query = query.orderBy(this.ordering, 'desc')
 
-    if (this.category) {
-      q = query(
-        q,
-        where('videosdb.playlists', 'array-contains', this.category['id'])
-      )
+      if (this.category) {
+        query = query.where(
+          'videosdb.playlists',
+          'array-contains',
+          this.category['id']
+        )
+      }
+
+      if (this.start_date) {
+        query = query.where('snippet.publishedAt', '>', this.start_date)
+      }
+
+      if (this.tag)
+        query = query.where('snippet.tags', 'array-contains', this.tag)
+
+      if (this.from_ssr) {
+        query = query.limit(PAGE_SIZE * 2)
+        this.from_ssr = false
+      } else {
+        query = query.limit(PAGE_SIZE)
+      }
+
+      if (this.query_cursor) {
+        query = query.startAfter(this.query_cursor)
+      }
+
+      let results = await getWithCache(query)
+
+      //  Nuxt cant serialize the resulting objects
+      if (process.server) this.from_ssr = true
+      else this.query_cursor = results.docs.at(-1)
+
+      results.forEach((doc) => {
+        this.$set(this.videos, doc.data().id, doc.data())
+      })
+
+      this.scroll_disabled = results.docs.length < PAGE_SIZE
+    } catch (e) {
+      console.log(e)
     }
-
-    if (this.start_date) {
-      q = query(q, where('snippet.publishedAt', '>', this.start_date))
-    }
-
-    if (this.tag)
-      q = query(q, where('snippet.tags', 'array-contains', this.tag))
-
-    if (this.from_ssr) {
-      q = query(q, limit(PAGE_SIZE * 2))
-      this.from_ssr = false
-    } else {
-      q = query(q, limit(PAGE_SIZE))
-    }
-
-    if (this.q_cursor) {
-      q = query(q, startAfter(this.q_cursor))
-    }
-
-    let results = await getDocs(q)
-
-    //  Nuxt cant serialize the resulting objects
-    if (process.server) this.from_ssr = true
-    else this.q_cursor = results.docs.at(-1)
-
-    results.forEach((doc) => {
-      this.$set(this.videos, doc.data().id, doc.data())
-    })
-
-    this.scroll_disabled = results.docs.length < PAGE_SIZE
-    // } catch (e) {
-    //   console.log(e)
-    // }
   },
 }
 </script>

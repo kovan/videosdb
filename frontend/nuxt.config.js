@@ -1,6 +1,5 @@
 import { getSitemap } from "./modules/mymodule.js"
 
-
 const FIREBASE_SETTINGS = {
   apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
   authDomain: "worpdress-279321.firebaseapp.com",
@@ -21,13 +20,10 @@ export default {
     subtitle: "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
     firebase: FIREBASE_SETTINGS
   },
-  googleAnalytics: {
-    id: 'UA-171658328-1',
-  },
 
   generate: {
     concurrency: 200,
-    fallback: true,
+    fallback: "index.html",
     crawler: false,
     devtools: true,
     interval: 100, // in milliseconds
@@ -127,4 +123,35 @@ export default {
       },
     },
   },
-}
+  server: {},
+
+  env: {},
+
+  serverMiddleware: [],
+
+  hooks: {
+  },
+
+  head: {
+    htmlAttrs: {
+      lang: "en",
+    },
+    title: "Sadhguru wisdom",
+    meta: [
+      { charset: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { "http-equiv": "content-language", content: "en" },
+      {
+        hid: "description",
+        name: "description",
+        content:
+          "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
+      },
+    ],
+    link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
+  },
+
+  googleAnalytics: {
+    id: "UA-171658328-1",
+  },
+};
