@@ -2,7 +2,6 @@
 b-container.p-0.m-0
   h1.text-center Tag: {{ this.$route.params.slug }}
   Explorer(
-    :initial_page='this.$route.params.page || 1',
     :base_url='`/tag/${this.$route.params.slug}`',
     :tag='this.$route.params.slug'
   )

@@ -54,6 +54,7 @@ import { parseISO, sub } from 'date-fns'
 import { formatDate, getWithCache } from '~/utils/utils'
 
 export default {
+  name: 'Explorer',
   components: {
     LazyHydrate,
   },
@@ -121,28 +122,25 @@ export default {
     tag: function () {
       return ''
     },
-    initial_page: function () {
-      return 1
-    },
   },
 
-  watch: {
-    '$route.query': '$fetch',
-    // $route(to, from) {
-    //   this.current_page = this.$route.query.page || 1
-    //   this.$fetch()
-    // },
-  },
-  created() {
-    this.current_page = this.$route.query.page || this.initial_page
-  },
+  // watch: {
+  //   '$route.query': '$fetch',
+  //   // $route(to, from) {
+  //   //   this.current_page = this.$route.query.page || 1
+  //   //   this.$fetch()
+  //   // },
+  // },
+  // created() {
+  //   this.current_page = this.$route.query.page || this.initial_page
+  // },
   methods: {
     formatDate: function (date) {
       return formatDate(date)
     },
 
     async loadMore() {
-      await this.$fetch()
+      await this.doQuery()
     },
     handleChange() {
       if (this.ordering != 'snippet.publishedAt') this.start_date = null
@@ -153,7 +151,7 @@ export default {
         // if (obj.hasOwnProperty(key))
         delete this.videos[key]
       }
-      this.$fetch()
+      this.doQuery()
     },
 
     // getSrcSetAndSizes (video) {
@@ -173,53 +171,57 @@ export default {
     //   }
     //   return [srcset.slice(0, -2), sizes.slice(0, -2)]
     // }
+    async doQuery() {
+      const PAGE_SIZE = 20
+      try {
+        let query = this.$db.collection('videos')
+        if (this.ordering) query = query.orderBy(this.ordering, 'desc')
+
+        if (this.category) {
+          query = query.where(
+            'videosdb.playlists',
+            'array-contains',
+            this.category['id']
+          )
+        }
+
+        if (this.start_date) {
+          query = query.where('snippet.publishedAt', '>', this.start_date)
+        }
+
+        if (this.tag)
+          query = query.where('snippet.tags', 'array-contains', this.tag)
+
+        if (this.from_ssr) {
+          query = query.limit(PAGE_SIZE * 2)
+          this.from_ssr = false
+        } else {
+          query = query.limit(PAGE_SIZE)
+        }
+
+        if (this.query_cursor) {
+          query = query.startAfter(this.query_cursor)
+        }
+
+        let results = await getWithCache(query)
+
+        //  Nuxt cant serialize the resulting objects
+        if (process.server) this.from_ssr = true
+        else this.query_cursor = results.docs.at(-1)
+
+        results.forEach((doc) => {
+          this.$set(this.videos, doc.data().id, doc.data())
+        })
+
+        this.scroll_disabled = results.docs.length < PAGE_SIZE
+      } catch (e) {
+        console.log(e)
+      }
+    },
   },
+
   async fetch() {
-    const PAGE_SIZE = 20
-    try {
-      let query = this.$db.collection('videos')
-      if (this.ordering) query = query.orderBy(this.ordering, 'desc')
-
-      if (this.category) {
-        query = query.where(
-          'videosdb.playlists',
-          'array-contains',
-          this.category['id']
-        )
-      }
-
-      if (this.start_date) {
-        query = query.where('snippet.publishedAt', '>', this.start_date)
-      }
-
-      if (this.tag)
-        query = query.where('snippet.tags', 'array-contains', this.tag)
-
-      if (this.from_ssr) {
-        query = query.limit(PAGE_SIZE * 2)
-        this.from_ssr = false
-      } else {
-        query = query.limit(PAGE_SIZE)
-      }
-
-      if (this.query_cursor) {
-        query = query.startAfter(this.query_cursor)
-      }
-
-      let results = await getWithCache(query)
-
-      //  Nuxt cant serialize the resulting objects
-      if (process.server) this.from_ssr = true
-      else this.query_cursor = results.docs.at(-1)
-
-      results.forEach((doc) => {
-        this.$set(this.videos, doc.data().id, doc.data())
-      })
-
-      this.scroll_disabled = results.docs.length < PAGE_SIZE
-    } catch (e) {
-      console.log(e)
-    }
+    this.doQuery()
   },
 }
 </script>

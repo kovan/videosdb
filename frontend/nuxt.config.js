@@ -49,9 +49,15 @@ export default {
   }, {
     src: "~/plugins/vue-youtube.js",
     mode: "client",
-  },
+  }, {
+    src: "~/plugins/vue-keep-scroll.js",
+    mode: "client",
+  }
   ],
 
+  router: {
+    prefetchLinks: false
+  },
   components: true,
 
   buildModules: [

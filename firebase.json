@@ -22,7 +22,7 @@
   },
   "emulators": {
     "hosting": {
-      "port": 3000
+      "port": 3001
     },
     "ui": {
       "enabled": true,

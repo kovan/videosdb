@@ -1,10 +1,15 @@
 <template lang="pug">
 b-container.p-0.m-0
-  Explorer(:initial_page='this.$route.params.page || 1', base_url='/')
+  keep-alive
+    Explorer
 </template>
 
 <script>
+import Explorer from '~/components/Explorer.vue'
 export default {
+  components: {
+    Explorer,
+  },
   head: {
     title: 'Sadhguru wisdom',
     meta: [

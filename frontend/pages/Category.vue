@@ -2,7 +2,6 @@
 b-container.p-0.m-0
   h1.text-center Category: {{ this.category.snippet.title }}
   Explorer(
-    :initial_page='this.$route.params.page || 1',
     :base_url='`/category/${this.$route.params.slug}`',
     :category='this.category'
   )
