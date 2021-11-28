@@ -4,21 +4,14 @@
     .px-3
       .row
         .col
-          .container.p-1.pb-3
+          .container.p-2.text-right.align-middle
             | Order by:
+        .col
+          .container.p-1.pb-3 
             b-form-select(
               text='Order by',
               v-model='ordering',
               :options='ordering_options',
-              @change='handleChange'
-            )
-        .col
-          .container.p-1.pb-3(v-if='ordering == "snippet.publishedAt"')
-            | Period:
-            b-form-select(
-              text='Period',
-              v-model='start_date',
-              :options='period_options',
               @change='handleChange'
             )
       .row(v-if='Object.keys(this.videos).length')
@@ -65,25 +58,25 @@ export default {
       current_page: 1,
       scroll_disabled: false,
       videos: {},
-      period_options: [
-        {
-          text: 'Last week',
-          value: sub(new Date(), { weeks: 1 }),
-        },
-        {
-          text: 'Last month',
-          value: sub(new Date(), { months: 1 }),
-        },
-        {
-          text: 'Last year',
-          value: sub(new Date(), { years: 1 }),
-        },
-        {
-          text: 'Always',
-          value: null,
-        },
-      ],
-      start_date: null,
+      // period_options: [
+      //   {
+      //     text: 'Last week',
+      //     value: sub(new Date(), { weeks: 1 }),
+      //   },
+      //   {
+      //     text: 'Last month',
+      //     value: sub(new Date(), { months: 1 }),
+      //   },
+      //   {
+      //     text: 'Last year',
+      //     value: sub(new Date(), { years: 1 }),
+      //   },
+      //   {
+      //     text: 'Always',
+      //     value: null,
+      //   },
+      // ],
+      // start_date: null,
       ordering_options: [
         {
           text: 'Latest',
@@ -143,7 +136,7 @@ export default {
       await this.doQuery()
     },
     handleChange() {
-      if (this.ordering != 'snippet.publishedAt') this.start_date = null
+      // if (this.ordering != 'snippet.publishedAt') this.start_date = null
 
       this.query_cursor = null
       for (var key in this.videos) {
@@ -185,9 +178,9 @@ export default {
           )
         }
 
-        if (this.start_date) {
-          query = query.where('snippet.publishedAt', '>', this.start_date)
-        }
+        // if (this.start_date) {
+        //   query = query.where('snippet.publishedAt', '>', this.start_date)
+        // }
 
         if (this.tag)
           query = query.where('snippet.tags', 'array-contains', this.tag)

@@ -23,7 +23,7 @@ export default {
 
   generate: {
     concurrency: 200,
-    fallback: "index.html",
+    fallback: true,
     crawler: false,
     devtools: true,
     interval: 100, // in milliseconds
