@@ -13,32 +13,39 @@ var db = null
 async function getSitemap(dbOptions) {
     await generateCache(dbOptions)
 
-    function transformCategory(obj) {
+    function transformCategory(cat) {
         return {
-            url: `/category/${obj.videosdb.slug}`,
+            url: `/category/${cat.videosdb.slug}`,
             priority: 0.1
         }
     }
-    function transformVideo(obj) {
-
-        return {
-            url: `/video/${obj.videosdb.slug}`,
+    function transformVideo(video) {
+        let json = {
+            url: `/video/${video.videosdb.slug}`,
             video: [
                 {
-                    thumbnail_loc: obj.snippet.thumbnails.medium.url,
-                    title: obj.snippet.title,
-                    description: obj.videosdb.descriptionTrimmed
-                        ? obj.videosdb.descriptionTrimmed
-                        : obj.snippet.title,
-                    content_loc:
-                        "https://videos.sadhguru.digital/" +
-                        encodeURIComponent(obj.videosdb.filename),
-                    player_loc: `https://www.sadhguru.digital/video/${obj.videosdb.slug}`,
-                    duration: obj.videosdb.durationSeconds,
+                    thumbnail_loc: video.snippet.thumbnails.medium.url,
+                    title: video.snippet.title,
+                    description: video.videosdb.descriptionTrimmed
+                        ? video.videosdb.descriptionTrimmed
+                        : video.snippet.title,
+                    duration: video.videosdb.durationSeconds,
                 },
             ],
             priority: 1.0,
         }
+        let url = null
+        if ('filename' in video.videosdb) {
+            url =
+                'https://videos.sadhguru.digital/' +
+                encodeURIComponent(video.videosdb.filename)
+        } else {
+            url = `https://www.sadhguru.digital/video/${video.videosdb.slug}`
+        }
+        json.content_loc = url
+        json.player_loc = url
+
+        return json
     }
 
     var sitemap = [

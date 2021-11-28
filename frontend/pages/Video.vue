@@ -136,19 +136,26 @@ export default {
         '@context': 'https://schema.org',
         '@type': 'VideoObject',
         name: this.video.snippet.title,
-        description: this.video.videosdb.descriptionTrimmed,
+        description: this.video.videosdb.descriptionTrimmed
+          ? this.video.videosdb.descriptionTrimmed
+          : this.video.snippet.title,
         thumbnailUrl: Object.values(this.video.snippet.thumbnails).map(
           (thumb) => thumb.url
         ),
         uploadDate: this.video.snippet.publishedAt,
         duration: this.video.contentDetails.duration,
-        embedUrl: `https://www.sadhguru.digital/video/${this.video.slug}`,
       }
-      if ('filename' in this.video.videosdb)
-        json.contentUrl =
+      let url = null
+      if ('filename' in this.video.videosdb) {
+        url =
           'https://videos.sadhguru.digital/' +
-          encodeURIComponent(this.video.filename)
-      else json.contentUrl = json.embedUrl
+          encodeURIComponent(this.video.videosdb.filename)
+      } else {
+        url = `https://www.sadhguru.digital/video/${this.video.videosdb.slug}`
+      }
+      json.contentUrl = url
+      json.embedUrl = url
+
       return JSON.stringify(json)
     },
     formatDate: function (date) {
