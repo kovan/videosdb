@@ -214,7 +214,7 @@ export default {
   },
 
   async fetch() {
-    this.doQuery()
+    await this.doQuery()
   },
 }
 </script>

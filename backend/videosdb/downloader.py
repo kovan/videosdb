@@ -127,6 +127,7 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
+
     async def _check_for_new_videos(self):
 
         self.api = await YoutubeAPI.create()
@@ -340,7 +341,7 @@ class _PlaylistProcessor(_BaseProcessor):
 
         playlist["videosdb"] = dict()
         playlist["videosdb"]["slug"] = slugify(
-            playlist["snippet"]["title"])
+            playlist["snippet"]["title"])  # this has to be set before call to add_playlist_to_video
 
         video_count = 0
         last_updated = None
@@ -362,7 +363,7 @@ class _PlaylistProcessor(_BaseProcessor):
         playlist["videosdb"]["videoCount"] = video_count
         playlist["videosdb"]["lastUpdated"] = last_updated
 
-        await self.db.set("playlists", playlist["id"], playlist)
+        await self.db.db.collection("playlists").document(playlist["id"]).set(playlist, merge=True)
 
     async def enqueue_playlist(self, playlist_id):
         if playlist_id in self.tasks:
