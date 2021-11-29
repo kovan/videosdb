@@ -27,14 +27,6 @@ async def asyncgenerator(item):
     yield item
 
 
-async def my_to_thread(*args):
-    loop = asyncio.get_running_loop()
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as pool:
-        result = await loop.run_in_executor(pool, *args)
-        return result
-
-
 class DB:
 
     @classmethod
@@ -210,11 +202,16 @@ class _BaseProcessor(TaskGatherer):
 class _VideoProcessor(_BaseProcessor):
     def __init__(self, db, api):
         super().__init__(db, api)
+        self.threadpool = concurrent.futures.ThreadPoolExecutor(
+            max_workers=100)
 
-    @ staticmethod
-    async def _download_transcript(video_id):
+    async def _to_thread(self, *args):
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(self.threadpool, *args)
+
+    async def _download_transcript(self, video_id):
         try:
-            transcript = await my_to_thread(
+            transcript = await self._to_thread(
                 get_video_transcript, video_id)
 
             logger.info(
@@ -258,6 +255,9 @@ class _VideoProcessor(_BaseProcessor):
         if not video:
             return
 
+        if video["snippet"]["channelId"] != YT_CHANNEL_ID:
+            return
+
         old_video_doc = await self.db.db.collection("videos").document(video_id).get()
 
         custom_attrs = dict()
@@ -283,7 +283,6 @@ class _VideoProcessor(_BaseProcessor):
         for stat, value in video["statistics"].items():
             video["statistics"][stat] = int(value)
 
-        assert video["snippet"]["channelId"] == YT_CHANNEL_ID
         await self.db.db.collection("videos").document(
             video_id).set(video, merge=True)
 
