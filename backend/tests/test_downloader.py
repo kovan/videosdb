@@ -1,4 +1,5 @@
 import pytest
+import logging
 import os
 from videosdb.downloader import Downloader
 from google.cloud import firestore
@@ -9,7 +10,7 @@ from videosdb.youtube_api import YoutubeAPI
 
 
 def setup_module(module):
-
+    logging.getLogger("videosdb.downloader").setLevel(logging.DEBUG)
     os.environ.setdefault(
         "YOUTUBE_API_URL", "http://127.0.0.1:2000/youtube/v3")
     os.environ.setdefault(
@@ -24,6 +25,11 @@ def setup_module(module):
 @pytest.fixture
 def db():
     yield firestore.AsyncClient()
+
+
+@pytest.fixture
+def downloader():
+    yield Downloader()
 
 
 @pytest.fixture
@@ -43,11 +49,12 @@ async def api():
 #         'array-contains',
 #         this.category
 #     )
-
-
-def test_video_in_two_playlists(api, db):
-    v1 = {}
-    p1 = [v1]
-    p2 = [v1]
-    assert v1 in p1
-    assert v1 in p2
+@pytest.mark.asyncio
+async def test_download(db, downloader):
+    await downloader.check_for_new_videos_async()
+    async for pl in db.collection("playlists").stream():
+        pl = pl.to_dict()
+        assert pl["id"]
+        assert pl["videosdb"]["lastUpdated"]
+        assert pl["videosdb"]["slug"]
+        assert pl["videosdb"]["videoCount"]

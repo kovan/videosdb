@@ -110,8 +110,6 @@ class Downloader:
     # PUBLIC: -------------------------------------------------------------
 
     def check_for_new_videos(self):
-        logging.getLogger("asyncio").setLevel(logging.WARNING)
-
         logger.info("Sync start")
         asyncio.run(self._check_for_new_videos())
         logger.info("Sync finished")
@@ -120,8 +118,8 @@ class Downloader:
 # PRIVATE: -------------------------------------------------------------------
 
 
-    async def _check_for_new_videos(self):
-
+    async def check_for_new_videos_async(self):
+        logging.getLogger("asyncio").setLevel(logging.WARNING)
         self.api = await YoutubeAPI.create()
         self.db = await DB.create()
         # in seconds, for warnings, in prod this does nothing:
@@ -146,13 +144,17 @@ class Downloader:
 
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
-        playlist_ids = stream.merge(
-            self.api.list_channnelsection_playlist_ids(channel_id),
-            self.api.list_channel_playlist_ids(channel_id),
-        )
-        if not "DEBUG" in os.environ:
-            playlist_ids = stream.merge(asyncgenerator(
-                all_uploads_playlist_id), playlist_ids)
+        if "DEBUG" in os.environ:
+            playlist_ids = stream.iterate(
+                self.api.list_channnelsection_playlist_ids(channel_id)
+            )
+
+        else:
+            playlist_ids = stream.merge(
+                self.api.list_channnelsection_playlist_ids(channel_id),
+                self.api.list_channel_playlist_ids(channel_id),
+                asyncgenerator(all_uploads_playlist_id)
+            )
 
         global_video_ids = {
             "processed": set(),
@@ -294,8 +296,8 @@ class _VideoProcessor(_BaseProcessor):
 
     async def enqueue_video(self, playlist_item):
 
-        if "DEBUG" in os.environ and len(self.tasks) > 100:
-            return
+        # if "DEBUG" in os.environ and len(self.tasks) > 100:
+        #     return
 
         video_id = playlist_item["snippet"]["resourceId"]["videoId"]
         if video_id in self.tasks:
@@ -368,7 +370,7 @@ class _PlaylistProcessor(_BaseProcessor):
         if playlist_id in self.tasks:
             return
 
-        if "DEBUG" in os.environ and len(self.tasks) > 10:
-            return
+        # if "DEBUG" in os.environ and len(self.tasks) > 10:
+        #     return
 
         self.create_task(playlist_id, self._process_playlist(playlist_id))
