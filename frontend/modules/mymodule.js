@@ -42,8 +42,8 @@ async function getSitemap(dbOptions) {
         } else {
             url = `https://www.sadhguru.digital/video/${video.videosdb.slug}`
         }
-        json.content_loc = url
-        json.player_loc = url
+        json.video[0].content_loc = url
+        json.video[0].player_loc = url
 
         return json
     }
