@@ -1,4 +1,5 @@
 
+import trio
 from abc import abstractmethod
 from datetime import date, datetime
 import asyncio
@@ -112,7 +113,6 @@ class Downloader:
 
 # PRIVATE: -------------------------------------------------------------------
 
-
     async def check_for_new_videos_async(self):
         logging.getLogger("asyncio").setLevel(logging.WARNING)
         self.api = await YoutubeAPI.create()
@@ -130,6 +130,25 @@ class Downloader:
 
     async def _sync_db_with_youtube(self):
 
+        playlist_ids = await self._get_all_playlists()
+
+        global_video_ids = {
+            "processed": dict(),
+            "valid": dict()
+        }
+
+        async with playlist_ids.stream() as streamer:
+            async with _PlaylistProcessor(
+                    self.db, self.api, global_video_ids) as pp:
+                async for id in streamer:
+                    await pp.enqueue_playlist(id)
+
+        await gather_all_tasks()
+        if not "DEBUG" in os.environ:
+            # separate so that it uses remaining quota
+            await self._fill_related_videos(global_video_ids["valid"])
+
+    async def _get_all_playlists(self):
         channel_id = YT_CHANNEL_ID
         channel_info = await self.api.get_channel_info(
             channel_id)
@@ -151,21 +170,7 @@ class Downloader:
                 asyncgenerator(all_uploads_playlist_id)
             )
 
-        global_video_ids = {
-            "processed": dict(),
-            "valid": dict()
-        }
-
-        async with playlist_ids.stream() as streamer:
-            async with _PlaylistProcessor(
-                    self.db, self.api, global_video_ids) as pp:
-                async for id in streamer:
-                    await pp.enqueue_playlist(id)
-
-        await gather_all_tasks()
-        if not "DEBUG" in os.environ:
-            # separate so that it uses remaining quota
-            await self._fill_related_videos(global_video_ids["valid"])
+        return playlist_ids
 
     async def _fill_related_videos(self, video_ids):
 
