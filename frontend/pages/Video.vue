@@ -130,7 +130,7 @@ export default {
       video: {},
     }
   },
-  methods: {
+  computed: {
     video_json: function () {
       let json = {
         '@context': 'https://schema.org',
@@ -156,8 +156,11 @@ export default {
       json.contentUrl = url
       json.embedUrl = url
 
-      return JSON.stringify(json)
+      let string = JSON.stringify(json)
+      return string
     },
+  },
+  methods: {
     formatDate: function (date) {
       return formatDate(date)
     },
