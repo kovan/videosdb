@@ -1,7 +1,8 @@
 import pytest
 import logging
+import asyncio
 import os
-from videosdb.downloader import Downloader
+from videosdb.downloader import Downloader, gather_all_tasks
 from google.cloud import firestore
 from videosdb.youtube_api import YoutubeAPI
 
@@ -15,7 +16,7 @@ def setup_module(module):
         "YOUTUBE_API_URL", "http://127.0.0.1:2000/youtube/v3")
     os.environ.setdefault(
         "YOUTUBE_API_KEY", "AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs")
-    os.environ.setdefault("DEBUG", "1")
+    # os.environ.setdefault("DEBUG", "1")
     os.environ.setdefault("LOGLEVEL", "DEBUG")
     os.environ.setdefault("PYTHONDEVMODE", "1")
     os.environ.setdefault("FIRESTORE_EMULATOR_HOST", "localhost:6001")
@@ -51,7 +52,13 @@ async def api():
 #     )
 @pytest.mark.asyncio
 async def test_download(db, downloader):
+
+    async for pl in db.collection("playlists").stream():
+        asyncio.create_task(pl.reference.delete())
+    await gather_all_tasks()
+
     await downloader.check_for_new_videos_async()
+
     async for pl in db.collection("playlists").stream():
         pl = pl.to_dict()
         assert pl["id"]

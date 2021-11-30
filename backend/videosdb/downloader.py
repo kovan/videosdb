@@ -27,6 +27,10 @@ async def asyncgenerator(item):
     yield item
 
 
+async def gather_all_tasks():
+    await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
+
+
 class DB:
 
     @classmethod
@@ -40,16 +44,6 @@ class DB:
         if not doc.exists or "videoIds" not in doc.to_dict():
             await doc_ref.set({"videoIds": list()})
         return obj
-
-    async def set(self, collection, id, item):
-        if type(collection) == str:
-            collection = self.db.collection(collection)
-
-        item_ref = collection.document(id)
-
-        logger.debug("Writing item to db: " + str(id))
-
-        return await item_ref.set(item)
 
     async def add_video_id_to_video_index(self, video_id):
         await self.db.collection("meta").document("meta").update({
@@ -86,23 +80,24 @@ class DB:
 class TaskGatherer():
     def __init__(self):
         self.tasks = dict()
+        self.unnamed_tasks = []
 
     async def __aenter__(self):
         return self
 
-    def create_task(self, key, coroutine):
-        return self.tasks.setdefault(
-            key, asyncio.create_task(coroutine, name=str(key)))
+    def create_task(self, coroutine, key=None):
+        if key:
+            return self.tasks.setdefault(
+                key, asyncio.create_task(coroutine, name=str(key)))
+        else:
+            return self.unnamed_tasks.append(
+                asyncio.create_task(coroutine))
 
     async def gather(self):
-        return await asyncio.gather(*self.tasks.values())
+        return await asyncio.gather(*self.tasks.values(), *self.unnamed_tasks)
 
     async def __aexit__(self, type, value, traceback):
         return await self.gather()
-
-
-async def gather_all_tasks():
-    await asyncio.gather(*asyncio.all_tasks() - {asyncio.current_task()})
 
 
 class Downloader:
@@ -157,8 +152,8 @@ class Downloader:
             )
 
         global_video_ids = {
-            "processed": set(),
-            "valid": set()
+            "processed": dict(),
+            "valid": dict()
         }
 
         async with playlist_ids.stream() as streamer:
@@ -185,10 +180,10 @@ class Downloader:
                             != YT_CHANNEL_ID:
                         continue
 
-                    collection = self.db.db.collection("videos").document(video_id)\
-                        .collection("related_videos")
-                    tg.create_task(related["id"]["videoId"], self.db.set(
-                        collection, related["id"]["videoId"], related))
+                    task = self.db.db.collection("videos").document(video_id)\
+                        .collection("related_videos").document(related["id"]["videoId"])\
+                        .set(related)
+                    tg.create_task(task)
 
                     logger.info("Added new related videos to video %s" %
                                 (video_id))
@@ -303,7 +298,7 @@ class _VideoProcessor(_BaseProcessor):
         if video_id in self.tasks:
             return
 
-        self.create_task(video_id, self._create_video(playlist_item))
+        self.create_task(self._create_video(playlist_item), video_id)
 
 
 class _PlaylistProcessor(_BaseProcessor):
@@ -325,13 +320,13 @@ class _PlaylistProcessor(_BaseProcessor):
                     str(playlist["snippet"]["title"]), playlist["id"]))
 
         video_processor = _VideoProcessor(self.db, self.api)
+        playlist_items = []
         async for item in self.api.list_playlist_items(playlist_id):
+            playlist_items.append(item)
             video_id = item["snippet"]["resourceId"]["videoId"]
-            if video_id in self.global_video_ids["processed"]:
-                continue
-
-            self.global_video_ids["processed"].add(video_id)
-            await video_processor.enqueue_video(item)
+            if video_id not in self.global_video_ids["processed"]:
+                self.global_video_ids["processed"][video_id] = item
+                await video_processor.enqueue_video(item)
 
         exclude_playlist = playlist["snippet"]["title"] == "Uploads from " + \
             playlist["snippet"]["channelTitle"]
@@ -344,17 +339,25 @@ class _PlaylistProcessor(_BaseProcessor):
         playlist["videosdb"]["slug"] = slugify(
             playlist["snippet"]["title"])  # this has to be set before call to add_playlist_to_video
 
-        video_count = 0
-        last_updated = None
-
         for video in await video_processor.gather():
             if not video:
                 continue
 
-            self.global_video_ids["valid"].add(video["id"])
+            self.global_video_ids["valid"][video["id"]] = video
 
-            asyncio.create_task(
-                self.db.add_playlist_to_video(video["id"], playlist["id"]))
+        video_count = 0
+        last_updated = None
+
+        for item in playlist_items:
+            video_id = item["snippet"]["resourceId"]["videoId"]
+
+            video = self.global_video_ids["valid"].get(video_id)
+            if not video:
+                continue
+
+            self.create_task(
+                self.db.add_playlist_to_video(video["id"], playlist["id"])
+            )
 
             video_count += 1
             video_date = video["snippet"]["publishedAt"]
@@ -364,7 +367,7 @@ class _PlaylistProcessor(_BaseProcessor):
         playlist["videosdb"]["videoCount"] = video_count
         playlist["videosdb"]["lastUpdated"] = last_updated
 
-        await self.db.db.collection("playlists").document(playlist["id"]).set(playlist, merge=True)
+        await self.db.db.collection("playlists").document(playlist["id"]).set(playlist)
 
     async def enqueue_playlist(self, playlist_id):
         if playlist_id in self.tasks:
@@ -373,4 +376,4 @@ class _PlaylistProcessor(_BaseProcessor):
         # if "DEBUG" in os.environ and len(self.tasks) > 10:
         #     return
 
-        self.create_task(playlist_id, self._process_playlist(playlist_id))
+        self.create_task(self._process_playlist(playlist_id), playlist_id)
