@@ -89,7 +89,7 @@ class Downloader:
         self.db = await DB.create()
 
         try:
-            # await self._start()
+            await self._start()
 
             if not "DEBUG" in os.environ:
                 # separate so that it uses remaining quota
@@ -244,19 +244,6 @@ class Downloader:
         return video
 
     async def _fill_related_videos(self):
-        async def _get_related(video_id):
-            for related in await self.api.get_related_videos(video_id):
-                # for now skip videos from other channels:
-                if "snippet" in related and related["snippet"]["channelId"] \
-                        != YT_CHANNEL_ID:
-                    continue
-
-                await self.db.db.collection("videos").document(video_id)\
-                    .collection("related_videos").document(related["id"]["videoId"])\
-                    .set(related)
-
-                logger.info("Added new related videos to video %s" %
-                            (video_id))
 
         # use remaining YT API daily quota to download a few related video lists:
         logger.info("Filling related videos info.")
@@ -264,7 +251,19 @@ class Downloader:
         async with anyio.create_task_group() as tg:
             meta_doc = await self.db.db.collection("meta").document("meta").get()
             for video_id in meta_doc.to_dict()["videoIds"]:
-                tg.start_soon(_get_related, video_id)
+                for related in await self.api.get_related_videos(video_id):
+                    # for now skip videos from other channels:
+                    if "snippet" in related and related["snippet"]["channelId"] \
+                            != YT_CHANNEL_ID:
+                        continue
+
+                    set_coroutine = self.db.db.collection("videos").document(video_id)\
+                        .collection("related_videos").document(related["id"]["videoId"])\
+                        .set
+                    tg.start_soon(set_coroutine, related)
+
+                    logger.info("Added new related videos to video %s" %
+                                (video_id))
 
     async def _download_transcript(self, video_id):
         try:
