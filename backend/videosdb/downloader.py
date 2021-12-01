@@ -125,25 +125,27 @@ class Downloader:
 
         else:
             playlist_ids = stream.merge(
+                asyncgenerator(all_uploads_playlist_id),
                 self.api.list_channnelsection_playlist_ids(channel_id),
-                self.api.list_channel_playlist_ids(channel_id),
-                asyncgenerator(all_uploads_playlist_id)
+                self.api.list_channel_playlist_ids(channel_id)
             )
 
-        async with aclosing(playlist_ids.stream()) as aiter:
-            async for playlist_id in aiter:
-                await playlist_sender.send(playlist_id)
+        with playlist_sender:
+            async with aclosing(playlist_ids.stream()) as aiter:
+                async for playlist_id in aiter:
+                    await playlist_sender.send(playlist_id)
 
     async def _playlist_processor(self, playlist_receiver, video_sender):
         processed_playlist_ids = set()
-        async with anyio.create_task_group() as nursery:
-            async for playlist_id in playlist_receiver:
-                if playlist_id in processed_playlist_ids:
-                    continue
-                nursery.start_soon(
-                    self._process_playlist, playlist_id, video_sender)
+        with video_sender:
+            async with anyio.create_task_group() as nursery:
+                async for playlist_id in playlist_receiver:
+                    if playlist_id in processed_playlist_ids:
+                        continue
+                    nursery.start_soon(
+                        self._process_playlist, playlist_id, video_sender)
 
-                processed_playlist_ids.add(playlist_id)
+                    processed_playlist_ids.add(playlist_id)
 
     async def _video_processor(self, video_receiver):
         processed_video_ids = set()
@@ -247,7 +249,7 @@ class Downloader:
         logger.info("Filling related videos info.")
 
         async with anyio.create_task_group() as tg:
-            meta_doc = await self.db.collection("meta").document("meta").get()
+            meta_doc = await self.db.db.collection("meta").document("meta").get()
             for video_id in meta_doc.to_dict()["videoIds"]:
                 for related in await self.api.get_related_videos(video_id):
                     # for now skip videos from other channels:
@@ -255,10 +257,10 @@ class Downloader:
                             != YT_CHANNEL_ID:
                         continue
 
-                    coroutine = self.db.db.collection("videos").document(video_id)\
+                    set_coroutine = self.db.db.collection("videos").document(video_id)\
                         .collection("related_videos").document(related["id"]["videoId"])\
-                        .set(related)
-                    tg.start_soon(coroutine)
+                        .set
+                    tg.start_soon(set_coroutine, related)
 
                     logger.info("Added new related videos to video %s" %
                                 (video_id))
