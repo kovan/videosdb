@@ -131,8 +131,8 @@ class Downloader:
             )
 
         with playlist_sender:
-            async with aclosing(playlist_ids.stream()) as aiter:
-                async for playlist_id in aiter:
+            async with playlist_ids.stream() as streamer:
+                async for playlist_id in streamer:
                     await playlist_sender.send(playlist_id)
 
     async def _playlist_processor(self, playlist_receiver, video_sender):
