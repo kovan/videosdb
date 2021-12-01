@@ -174,7 +174,6 @@ class Downloader:
 
     #     return playlist_ids
 
-
     async def _fill_related_videos(self, video_ids):
 
         # use remaining YT API daily quota to download a few related video lists:
@@ -213,6 +212,7 @@ class Downloader:
     # async def _to_thread(self, *args):
     #     loop = asyncio.get_running_loop()
     #     return await loop.run_in_executor(self.threadpool, *args)
+
 
     async def _download_transcript(self, video_id):
         try:
@@ -341,7 +341,6 @@ class Downloader:
 
 # class DownloaderTrio(Downloader):
 
-
     async def check_for_new_videos_async(self):
         self.api = await YoutubeAPI.create()
         self.db = await DB.create()
@@ -394,9 +393,10 @@ class Downloader:
             async for playlist_id in playlist_receiver:
                 if playlist_id in processed_playlist_ids:
                     continue
-                result = await self._process_playlist(playlist_id, video_sender)
-                if result:
-                    processed_playlist_ids.add(playlist_id)
+                nursery.start_soon(
+                    self._process_playlist, playlist_id, video_sender)
+
+                processed_playlist_ids.add(playlist_id)
 
     async def _video_processor(self, video_receiver):
         processed_video_ids = set()
@@ -427,7 +427,7 @@ class Downloader:
             await video_sender.send((video_id, playlist_id))
 
         if playlist:
-            await self._create_playlist(playlist_id, items)
+            await self._create_playlist(playlist, items)
 
     async def _create_playlist(self, playlist, items):
         video_count = 0
