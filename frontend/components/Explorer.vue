@@ -153,7 +153,7 @@ export default {
       await this.doQuery()
       this.loading = false
     },
-    handleChange() {
+    async handleChange() {
       // if (this.ordering != 'snippet.publishedAt') this.start_date = null
 
       this.query_cursor = null
