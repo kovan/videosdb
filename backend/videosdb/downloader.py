@@ -427,7 +427,7 @@ class Downloader:
             await video_sender.send((video_id, playlist_id))
 
         if playlist:
-            self._create_playlist(playlist_id, items)
+            await self._create_playlist(playlist_id, items)
 
     async def _create_playlist(self, playlist, items):
         video_count = 0
