@@ -43,11 +43,6 @@ class DB:
             await doc_ref.set({"videoIds": list()})
         return obj
 
-    async def add_video_id_to_video_index(self, video_id):
-        await self.db.collection("meta").document("meta").update({
-            "videoIds": firestore.ArrayUnion([video_id])
-        })
-
     async def regenerate_video_index(self):
         ids = []
         async for video in self.db.collection("videos").stream():
@@ -73,6 +68,14 @@ class DB:
                 print("Channel mismatch, expected %s, found %s" %
                       (YT_CHANNEL_ID, video_obj["snippet"]["channelId"]))
                 await self.db.collection("videos").document(video_obj["id"]).delete()
+
+    async def write_video(self, video):
+
+        await self.db.collection("videos").document(
+            video["id"]).set(video, merge=True,)
+        await self.db.collection("meta").document("meta").update({
+            "videoIds": firestore.ArrayUnion([video["id"]])
+        })
 
 
 class Downloader:
@@ -157,7 +160,8 @@ class Downloader:
                         processed_video_ids.add(video_id)
 
                 if playlist_id and video_id in processed_video_ids:
-                    await self.db.add_playlist_to_video(video_id, playlist_id)
+                    nursery.start_soon(self.db.add_playlist_to_video,
+                                       video_id, playlist_id)
 
     async def _process_playlist(self, playlist_id, video_sender):
         playlist = await self.api.get_playlist_info(playlist_id)
@@ -234,10 +238,7 @@ class Downloader:
         for stat, value in video["statistics"].items():
             video["statistics"][stat] = int(value)
 
-        await self.db.db.collection("videos").document(
-            video_id).set(video, merge=True)
-
-        await self.db.add_video_id_to_video_index(video_id)
+        await self.db.write_video(video)
 
         logger.info("Processed video: " + video_id)
 
