@@ -162,7 +162,9 @@ export default {
         // if (obj.hasOwnProperty(key))
         delete this.videos[key]
       }
-      this.doQuery()
+      this.loading = true
+      await this.doQuery()
+      this.loading = false
     },
 
     // getSrcSetAndSizes (video) {
