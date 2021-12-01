@@ -167,19 +167,13 @@ class Downloader:
 
                 if playlist_id:
                     coro = self.db.add_playlist_to_video(video_id, playlist_id)
-                    try:
-                        stream = video_streams[video_id]
-                        if stream:
-                            await stream.send(coro)
-                    except anyio.BrokenResourceError:
-                        # Receiver closed the stream for some reason.
-                        # Usually the downloaded video was invalid, so no further
-                        # operations can be done with it:
-                        video_streams[video_id] = None
+
+                    stream = video_streams[video_id]
+                    if stream:
+                        await stream.send(coro)
 
             for stream in video_streams.values():
-                if stream:
-                    stream.close()
+                stream.close()
 
     async def _process_video(self, task_receiver):
         # async with aclosing(task_receiver) as aiter:
