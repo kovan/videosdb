@@ -55,6 +55,9 @@ class YoutubeAPI:
         def __str__(self):
             return "%s %s" % (self.status, json.dumps(self.json, indent=4, sort_keys=True))
 
+    async def aclose(self):
+        return await self.http.aclose()
+
     @classmethod
     async def create(cls, yt_key=None):
         obj = cls()
@@ -150,7 +153,6 @@ class YoutubeAPI:
 
 
 # ------- PRIVATE-------------------------------------------------------
-
 
     async def _request_one(self, url, params):
         async for item in self._request_many(url, params):
