@@ -151,24 +151,44 @@ class Downloader:
                     processed_playlist_ids.add(playlist_id)
 
     async def _video_processor(self, video_receiver):
-        processed_video_ids = set()
+        # One stream per video, because when a video is found in a new playlist,
+        # the video has to already exist in the DB for the playlist to be added.
+        # This way, DB operations on a video are always in sequential order.
+        video_streams = dict()
         async with anyio.create_task_group() as nursery:
             async for video_id, playlist_id in video_receiver:
-                if video_id not in processed_video_ids:
-                    result = await self._create_video(video_id)
-                    if result:
-                        processed_video_ids.add(video_id)
+                if video_id not in video_streams:
+                    snd_stream, rcv_stream = anyio.create_memory_object_stream()
+                    nursery.start_soon(self._process_video, rcv_stream)
+                    video_streams[video_id] = snd_stream
+                    coro = self._create_video(video_id)
+                    await video_streams[video_id].send(coro)
 
-                if playlist_id and video_id in processed_video_ids:
-                    nursery.start_soon(self.db.add_playlist_to_video,
-                                       video_id, playlist_id)
+                if playlist_id:
+                    coro = self.db.add_playlist_to_video(video_id, playlist_id)
+                    try:
+                        stream = video_streams[video_id]
+                        if stream:
+                            await stream.send(coro)
+                    except anyio.BrokenResourceError:
+                        # Receiver closed the stream for some reason.
+                        # Usually the downloaded video was invalid, so no further
+                        # operations can be done with it:
+                        video_streams[video_id] = None
+
+    async def _process_video(self, task_receiver):
+        async with aclosing(task_receiver) as aiter:
+            async for task in aiter:
+                result = await task
+                if not result:
+                    break
 
     async def _process_playlist(self, playlist_id, video_sender):
         playlist = await self.api.get_playlist_info(playlist_id)
         if playlist["snippet"]["channelTitle"] != YT_CHANNEL_NAME:
             return
 
-        playlist = playlist if playlist["snippet"]["title"] != "Uploads from " + \
+        playlist = playlist if playlist["snippet"]["title"] != "Uploads from " +\
             playlist["snippet"]["channelTitle"] else None
 
         items = []
