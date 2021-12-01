@@ -57,7 +57,7 @@ class DB:
             "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
 
     async def add_playlist_to_video(self, video_id, playlist):
-        await self.db.collection("videos").document(video_id).update({
+        return await self.db.collection("videos").document(video_id).update({
             "videosdb.playlists": firestore.ArrayUnion([playlist])
         })
 
@@ -97,10 +97,11 @@ class Downloader:
             if not "DEBUG" in os.environ:
                 # separate so that it uses remaining quota
                 await self._fill_related_videos()
+            await self.db.update_last_updated()
         except YoutubeAPI.QuotaExceededError as e:
-            logger.exception(e)
-
-        await self.db.update_last_updated()
+            logger.error(e)
+        finally:
+            await self.api.aclose()
 
     async def _start(self):
         video_sender, video_receiver = anyio.create_memory_object_stream()
@@ -166,22 +167,21 @@ class Downloader:
 
                 if playlist_id:
                     coro = self.db.add_playlist_to_video(video_id, playlist_id)
-                    try:
-                        stream = video_streams[video_id]
-                        if stream:
-                            await stream.send(coro)
-                    except anyio.BrokenResourceError:
-                        # Receiver closed the stream for some reason.
-                        # Usually the downloaded video was invalid, so no further
-                        # operations can be done with it:
-                        video_streams[video_id] = None
+                    await video_streams[video_id].send(coro)
+
+            for stream in video_streams.values():
+                stream.close()
 
     async def _process_video(self, task_receiver):
-        async with aclosing(task_receiver) as aiter:
-            async for task in aiter:
+        # async with aclosing(task_receiver) as aiter:
+        breaking = False
+        async for task in task_receiver:
+            if breaking:
+                task.close()  # to prevent Python warning of unawaited coroutine
+            else:
                 result = await task
                 if not result:
-                    break
+                    breaking = True
 
     async def _process_playlist(self, playlist_id, video_sender):
         playlist = await self.api.get_playlist_info(playlist_id)
@@ -220,6 +220,7 @@ class Downloader:
         playlist["videosdb"]["lastUpdated"] = last_updated
 
         await self.db.db.collection("playlists").document(playlist["id"]).set(playlist)
+        logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     async def _create_video(self, video_id):
 
@@ -260,7 +261,7 @@ class Downloader:
 
         await self.db.write_video(video)
 
-        logger.info("Processed video: " + video_id)
+        logger.info("Created video: " + video["snippet"]["title"])
 
         return video
 
