@@ -234,7 +234,7 @@ class YoutubeDL:
             # import ipdb
             # ipdb.set_trace()
 
-            execute(cmd, asynchronous=asynchronous, silent=False)
+            execute(cmd, asynchronous=asynchronous, silent=True)
         except executor.ExternalCommandFailed as e:
             raise self.UnavailableError(repr(e))
         files = os.listdir(".")
