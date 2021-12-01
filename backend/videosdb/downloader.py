@@ -177,7 +177,7 @@ class Downloader:
         breaking = False
         async for task in task_receiver:
             if breaking:
-                task.close()  # to prevent Python warning
+                task.close()  # to prevent Python warning of unawaited coroutine
             else:
                 result = await task
                 if not result:
