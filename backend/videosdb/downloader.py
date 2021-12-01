@@ -167,10 +167,7 @@ class Downloader:
 
                 if playlist_id:
                     coro = self.db.add_playlist_to_video(video_id, playlist_id)
-
-                    stream = video_streams[video_id]
-                    if stream:
-                        await stream.send(coro)
+                    await video_streams[video_id].send(coro)
 
             for stream in video_streams.values():
                 stream.close()
