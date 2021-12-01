@@ -12,8 +12,8 @@ async def api():
     yield await YoutubeAPI.create(YOUTUBE_KEY_TESTING)
 
 
-@pytest.mark.asyncio
-async def test_list_playlist_items(api):
-    items = api.list_playlist_items("UUcYzLCs3zrQIBVHYA1sK2sw")
-    async for item in items:
-        assert item is not None
+# @pytest.mark.asyncio
+# async def test_list_playlist_items(api):
+#     items = api.list_playlist_items("UUcYzLCs3zrQIBVHYA1sK2sw")
+#     async for item in items:
+#         assert item is not None
