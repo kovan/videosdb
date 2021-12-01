@@ -1,15 +1,17 @@
 
-import trio
+
+from async_generator import aclosing
+import anyio
 from abc import abstractmethod
 from datetime import date, datetime
 import asyncio
-import functools
+
 import logging
 import os
 import isodate
 import re
 from slugify import slugify
-import concurrent.futures
+
 
 from google.cloud import firestore
 import youtube_transcript_api
@@ -78,27 +80,27 @@ class DB:
                 await self.db.collection("videos").document(video_obj["id"]).delete()
 
 
-class TaskGatherer():
-    def __init__(self):
-        self.tasks = dict()
-        self.unnamed_tasks = []
+# class TaskGatherer():
+#     def __init__(self):
+#         self.tasks = dict()
+#         self.unnamed_tasks = []
 
-    async def __aenter__(self):
-        return self
+#     async def __aenter__(self):
+#         return self
 
-    def create_task(self, coroutine, key=None):
-        if key:
-            return self.tasks.setdefault(
-                key, asyncio.create_task(coroutine, name=str(key)))
-        else:
-            return self.unnamed_tasks.append(
-                asyncio.create_task(coroutine))
+#     def create_task(self, coroutine, key=None):
+#         if key:
+#             return self.tasks.setdefault(
+#                 key, asyncio.create_task(coroutine, name=str(key)))
+#         else:
+#             return self.unnamed_tasks.append(
+#                 asyncio.create_task(coroutine))
 
-    async def gather(self):
-        return await asyncio.gather(*self.tasks.values(), *self.unnamed_tasks)
+#     async def gather(self):
+#         return await asyncio.gather(*self.tasks.values(), *self.unnamed_tasks)
 
-    async def __aexit__(self, type, value, traceback):
-        return await self.gather()
+#     async def __aexit__(self, type, value, traceback):
+#         return await self.gather()
 
 
 class Downloader:
@@ -107,70 +109,71 @@ class Downloader:
 
     def check_for_new_videos(self):
         logger.info("Sync start")
-        asyncio.run(self._check_for_new_videos())
+        anyio.run(self.check_for_new_videos_async)
         logger.info("Sync finished")
 
 
 # PRIVATE: -------------------------------------------------------------------
 
-    async def check_for_new_videos_async(self):
-        logging.getLogger("asyncio").setLevel(logging.WARNING)
-        self.api = await YoutubeAPI.create()
-        self.db = await DB.create()
-        # in seconds, for warnings, in prod this does nothing:
-        asyncio.get_running_loop().slow_callback_duration = 3
+    # async def check_for_new_videos_async(self):
+    #     logging.getLogger("asyncio").setLevel(logging.WARNING)
+    #     self.api = await YoutubeAPI.create()
+    #     self.db = await DB.create()
+    #     # in seconds, for warnings, in prod this does nothing:
+    #     asyncio.get_running_loop().slow_callback_duration = 3
 
-        try:
-            await self._sync_db_with_youtube()
-            await gather_all_tasks()
-        except YoutubeAPI.QuotaExceededError as e:
-            logger.exception(e)
+    #     try:
+    #         await self._sync_db_with_youtube()
+    #         await gather_all_tasks()
+    #     except YoutubeAPI.QuotaExceededError as e:
+    #         logger.exception(e)
 
-        await self.db.update_last_updated()
+    #     await self.db.update_last_updated()
 
-    async def _sync_db_with_youtube(self):
+    # async def _sync_db_with_youtube(self):
 
-        playlist_ids = await self._get_all_playlists()
+    #     playlist_ids = await self._get_all_playlists()
 
-        global_video_ids = {
-            "processed": dict(),
-            "valid": dict()
-        }
+    #     global_video_ids = {
+    #         "processed": dict(),
+    #         "valid": dict()
+    #     }
 
-        async with playlist_ids.stream() as streamer:
-            async with _PlaylistProcessor(
-                    self.db, self.api, global_video_ids) as pp:
-                async for id in streamer:
-                    await pp.enqueue_playlist(id)
+    #     async with playlist_ids.stream() as streamer:
+    #         async with _PlaylistProcessor(
+    #                 self.db, self.api, global_video_ids) as pp:
+    #             async for id in streamer:
+    #                 await pp.enqueue_playlist(id)
 
-        await gather_all_tasks()
-        if not "DEBUG" in os.environ:
-            # separate so that it uses remaining quota
-            await self._fill_related_videos(global_video_ids["valid"])
+    #     await gather_all_tasks()
+    #     if not "DEBUG" in os.environ:
+    #         # separate so that it uses remaining quota
+    #         await self._fill_related_videos(global_video_ids["valid"])
 
-    async def _get_all_playlists(self):
-        channel_id = YT_CHANNEL_ID
-        channel_info = await self.api.get_channel_info(
-            channel_id)
+    # async def _get_all_playlists(self):
+    #     channel_id = YT_CHANNEL_ID
+    #     channel_info = await self.api.get_channel_info(
+    #         channel_id)
 
-        logger.info("Processing channel: " +
-                    str(channel_info["snippet"]["title"]))
+    #     logger.info("Processing channel: " +
+    #                 str(channel_info["snippet"]["title"]))
 
-        all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
+    #     all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
-        if "DEBUG" in os.environ:
-            playlist_ids = stream.iterate(
-                self.api.list_channnelsection_playlist_ids(channel_id)
-            )
+    #     if "DEBUG" in os.environ:
+    #         playlist_ids = stream.iterate(
+    #             self.api.list_channnelsection_playlist_ids(channel_id)
+    #         )
 
-        else:
-            playlist_ids = stream.merge(
-                self.api.list_channnelsection_playlist_ids(channel_id),
-                self.api.list_channel_playlist_ids(channel_id),
-                asyncgenerator(all_uploads_playlist_id)
-            )
+    #     else:
+    #         playlist_ids = stream.merge(
+    #             self.api.list_channnelsection_playlist_ids(channel_id),
+    #             self.api.list_channel_playlist_ids(channel_id),
+    #             asyncgenerator(all_uploads_playlist_id)
+    #         )
 
-        return playlist_ids
+    #     return playlist_ids
+
 
     async def _fill_related_videos(self, video_ids):
 
@@ -194,26 +197,26 @@ class Downloader:
                                 (video_id))
 
 
-class _BaseProcessor(TaskGatherer):
-    def __init__(self, db, api):
-        self.db = db
-        self.api = api
-        super().__init__()
+# class _BaseProcessor(TaskGatherer):
+#     def __init__(self, db, api):
+#         self.db = db
+#         self.api = api
+#         super().__init__()
 
 
-class _VideoProcessor(_BaseProcessor):
-    def __init__(self, db, api):
-        super().__init__(db, api)
-        self.threadpool = concurrent.futures.ThreadPoolExecutor(
-            max_workers=100)
+# class _VideoProcessor(_BaseProcessor):
+#     def __init__(self, db, api):
+#         super().__init__(db, api)
+#         self.threadpool = concurrent.futures.ThreadPoolExecutor(
+#             max_workers=100)
 
-    async def _to_thread(self, *args):
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(self.threadpool, *args)
+    # async def _to_thread(self, *args):
+    #     loop = asyncio.get_running_loop()
+    #     return await loop.run_in_executor(self.threadpool, *args)
 
     async def _download_transcript(self, video_id):
         try:
-            transcript = await self._to_thread(
+            transcript = await anyio.to_thread.run_sync(
                 get_video_transcript, video_id)
 
             logger.info(
@@ -243,19 +246,216 @@ class _VideoProcessor(_BaseProcessor):
             return description[:match.start()]
         return description
 
-    async def _create_video(self, playlist_item):
+    # async def enqueue_video(self, playlist_item):
 
-        video_id = playlist_item["snippet"]["resourceId"]["videoId"]
+    #     # if "DEBUG" in os.environ and len(self.tasks) > 100:
+    #     #     return
 
-        # some playlists include videos from other channels
-        # for now exclude those videos
-        # in the future maybe exclude whole playlist
-        if playlist_item["snippet"]["channelId"] != YT_CHANNEL_ID:
+    #     video_id = playlist_item["snippet"]["resourceId"]["videoId"]
+    #     if video_id in self.tasks:
+    #         return
+
+    #     self.create_task(self._create_video(playlist_item), video_id)
+
+
+# class _PlaylistProcessor(_BaseProcessor):
+#     def __init__(self, db, api, global_video_ids):
+#         self.global_video_ids = global_video_ids
+#         super().__init__(db, api)
+
+#     async def _process_playlist(self, playlist_id):
+
+#         playlist = await self.api.get_playlist_info(playlist_id)
+#         if playlist["snippet"]["channelTitle"] != YT_CHANNEL_NAME:
+#             return
+
+#         if playlist["snippet"]["title"] == "Liked videos" or \
+#                 playlist["snippet"]["title"] == "Popular uploads":
+#             return
+
+#         logger.info("Found playlist: %s (ID: %s)" % (
+#                     str(playlist["snippet"]["title"]), playlist["id"]))
+
+#         video_processor = _VideoProcessor(self.db, self.api)
+#         playlist_items = []
+#         async for item in self.api.list_playlist_items(playlist_id):
+#             if item["snippet"]["channelId"] != YT_CHANNEL_ID:
+#                 continue
+
+#             playlist_items.append(item)
+#             video_id = item["snippet"]["resourceId"]["videoId"]
+#             if video_id not in self.global_video_ids["processed"]:
+#                 self.global_video_ids["processed"][video_id] = item
+#                 await video_processor.enqueue_video(video_id)
+
+#         exclude_playlist = playlist["snippet"]["title"] == "Uploads from " + \
+#             playlist["snippet"]["channelTitle"]
+
+#         if exclude_playlist:
+#             await video_processor.gather()
+#             return
+
+#         playlist["videosdb"] = dict()
+#         playlist["videosdb"]["slug"] = slugify(
+#             playlist["snippet"]["title"])  # this has to be set before call to add_playlist_to_video
+
+#         for video in await video_processor.gather():
+#             if not video:
+#                 continue
+
+#             self.global_video_ids["valid"][video["id"]] = video
+
+#         video_count = 0
+#         last_updated = None
+
+#         for item in playlist_items:
+#             video_id = item["snippet"]["resourceId"]["videoId"]
+
+#             video = self.global_video_ids["valid"].get(video_id)
+#             if not video:
+#                 continue
+
+#             self.create_task(
+#                 self.db.add_playlist_to_video(video["id"], playlist["id"])
+#             )
+
+#             video_count += 1
+#             video_date = video["snippet"]["publishedAt"]
+#             if not last_updated or video_date > last_updated:
+#                 last_updated = video_date
+
+#         playlist["videosdb"]["videoCount"] = video_count
+#         playlist["videosdb"]["lastUpdated"] = last_updated
+
+#         await self.db.db.collection("playlists").document(playlist["id"]).set(playlist)
+
+#     async def enqueue_playlist(self, playlist_id):
+#         if playlist_id in self.tasks:
+#             return
+
+#         # if "DEBUG" in os.environ and len(self.tasks) > 10:
+#         #     return
+
+#         self.create_task(self._process_playlist(playlist_id), playlist_id)
+
+
+# class DownloaderTrio(Downloader):
+
+
+    async def check_for_new_videos_async(self):
+        self.api = await YoutubeAPI.create()
+        self.db = await DB.create()
+
+        try:
+            await self._start()
+        except YoutubeAPI.QuotaExceededError as e:
+            logger.exception(e)
+
+        await self.db.update_last_updated()
+
+    async def _start(self):
+        video_sender, video_receiver = anyio.create_memory_object_stream()
+        playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
+        async with anyio.create_task_group() as nursery:
+            nursery.start_soon(self._playlist_retriever, playlist_sender)
+            nursery.start_soon(self._playlist_processor,
+                               playlist_receiver, video_sender)
+            nursery.start_soon(self._video_processor, video_receiver)
+
+    async def _playlist_retriever(self, playlist_sender):
+        channel_id = YT_CHANNEL_ID
+        channel_info = await self.api.get_channel_info(
+            channel_id)
+
+        logger.info("Processing channel: " +
+                    str(channel_info["snippet"]["title"]))
+
+        all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
+
+        if "DEBUG" in os.environ:
+            playlist_ids = stream.iterate(
+                self.api.list_channnelsection_playlist_ids(channel_id)
+            )
+
+        else:
+            playlist_ids = stream.merge(
+                self.api.list_channnelsection_playlist_ids(channel_id),
+                self.api.list_channel_playlist_ids(channel_id),
+                asyncgenerator(all_uploads_playlist_id)
+            )
+
+        async with aclosing(playlist_ids.stream()) as aiter:
+            async for playlist_id in aiter:
+                await playlist_sender.send(playlist_id)
+
+    async def _playlist_processor(self, playlist_receiver, video_sender):
+        processed_playlist_ids = set()
+        async with anyio.create_task_group() as nursery:
+            async for playlist_id in playlist_receiver:
+                if playlist_id in processed_playlist_ids:
+                    continue
+                result = await self._process_playlist(playlist_id, video_sender)
+                if result:
+                    processed_playlist_ids.add(playlist_id)
+
+    async def _video_processor(self, video_receiver):
+        processed_video_ids = set()
+        async with anyio.create_task_group() as nursery:
+            async for video_id, playlist_id in video_receiver:
+                if video_id not in processed_video_ids:
+                    result = await self._create_video(video_id)
+                    if result:
+                        processed_video_ids.add(video_id)
+
+                if playlist_id and video_id in processed_video_ids:
+                    await self.db.add_playlist_to_video(video_id, playlist_id)
+
+    async def _process_playlist(self, playlist_id, video_sender):
+        playlist = await self.api.get_playlist_info(playlist_id)
+        if playlist["snippet"]["channelTitle"] != YT_CHANNEL_NAME:
             return
+
+        playlist = playlist if playlist["snippet"]["title"] != "Uploads from " + \
+            playlist["snippet"]["channelTitle"] else None
+
+        items = []
+        async for item in self.api.list_playlist_items(playlist_id):
+            if item["snippet"]["channelId"] != YT_CHANNEL_ID:
+                continue
+            video_id = item["snippet"]["resourceId"]["videoId"]
+            items.append(item)
+            await video_sender.send((video_id, playlist_id))
+
+        if playlist:
+            self._create_playlist(playlist_id, items)
+
+    async def _create_playlist(self, playlist, items):
+        video_count = 0
+        last_updated = None
+
+        for item in items:
+            video_count += 1
+            video_date = isodate.parse_datetime(
+                item["snippet"]["publishedAt"])
+            if not last_updated or video_date > last_updated:
+                last_updated = video_date
+
+        playlist["videosdb"] = dict()
+        playlist["videosdb"]["slug"] = slugify(
+            playlist["snippet"]["title"])
+        playlist["videosdb"]["videoCount"] = video_count
+        playlist["videosdb"]["lastUpdated"] = last_updated
+
+        await self.db.db.collection("playlists").document(playlist["id"]).set(playlist)
+
+    async def _create_video(self, video_id):
 
         video = await self.api.get_video_info(video_id)
         if not video:
             return
+        # some playlists include videos from other channels
+        # for now exclude those videos
+        # in the future maybe exclude whole playlist
 
         if video["snippet"]["channelId"] != YT_CHANNEL_ID:
             return
@@ -293,92 +493,3 @@ class _VideoProcessor(_BaseProcessor):
         logger.info("Processed video: " + video_id)
 
         return video
-
-    async def enqueue_video(self, playlist_item):
-
-        # if "DEBUG" in os.environ and len(self.tasks) > 100:
-        #     return
-
-        video_id = playlist_item["snippet"]["resourceId"]["videoId"]
-        if video_id in self.tasks:
-            return
-
-        self.create_task(self._create_video(playlist_item), video_id)
-
-
-class _PlaylistProcessor(_BaseProcessor):
-    def __init__(self, db, api, global_video_ids):
-        self.global_video_ids = global_video_ids
-        super().__init__(db, api)
-
-    async def _process_playlist(self, playlist_id):
-
-        playlist = await self.api.get_playlist_info(playlist_id)
-        if playlist["snippet"]["channelTitle"] != YT_CHANNEL_NAME:
-            return
-
-        if playlist["snippet"]["title"] == "Liked videos" or \
-                playlist["snippet"]["title"] == "Popular uploads":
-            return
-
-        logger.info("Found playlist: %s (ID: %s)" % (
-                    str(playlist["snippet"]["title"]), playlist["id"]))
-
-        video_processor = _VideoProcessor(self.db, self.api)
-        playlist_items = []
-        async for item in self.api.list_playlist_items(playlist_id):
-            playlist_items.append(item)
-            video_id = item["snippet"]["resourceId"]["videoId"]
-            if video_id not in self.global_video_ids["processed"]:
-                self.global_video_ids["processed"][video_id] = item
-                await video_processor.enqueue_video(item)
-
-        exclude_playlist = playlist["snippet"]["title"] == "Uploads from " + \
-            playlist["snippet"]["channelTitle"]
-
-        if exclude_playlist:
-            await video_processor.gather()
-            return
-
-        playlist["videosdb"] = dict()
-        playlist["videosdb"]["slug"] = slugify(
-            playlist["snippet"]["title"])  # this has to be set before call to add_playlist_to_video
-
-        for video in await video_processor.gather():
-            if not video:
-                continue
-
-            self.global_video_ids["valid"][video["id"]] = video
-
-        video_count = 0
-        last_updated = None
-
-        for item in playlist_items:
-            video_id = item["snippet"]["resourceId"]["videoId"]
-
-            video = self.global_video_ids["valid"].get(video_id)
-            if not video:
-                continue
-
-            self.create_task(
-                self.db.add_playlist_to_video(video["id"], playlist["id"])
-            )
-
-            video_count += 1
-            video_date = video["snippet"]["publishedAt"]
-            if not last_updated or video_date > last_updated:
-                last_updated = video_date
-
-        playlist["videosdb"]["videoCount"] = video_count
-        playlist["videosdb"]["lastUpdated"] = last_updated
-
-        await self.db.db.collection("playlists").document(playlist["id"]).set(playlist)
-
-    async def enqueue_playlist(self, playlist_id):
-        if playlist_id in self.tasks:
-            return
-
-        # if "DEBUG" in os.environ and len(self.tasks) > 10:
-        #     return
-
-        self.create_task(self._process_playlist(playlist_id), playlist_id)
