@@ -240,6 +240,8 @@ export default {
 </script>
 
 <style scoped>
+/* All this is for the loading circle: */
+
 .sk-fading-circle {
   margin: 100px auto;
   width: 80px;
