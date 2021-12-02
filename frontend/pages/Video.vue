@@ -16,15 +16,6 @@ b-container.m-0.p-0.mx-auto
       strong Description
       p(style='white-space: pre-line') {{ this.video.videosdb.descriptionTrimmed }}
 
-    .my-4(
-      v-if='this.video.videosdb.playlists && this.video.videosdb.playlists.length > 0'
-    )
-      strong Categories
-      ul
-        li(v-for='category in this.video.categories', :key='category.id')
-          NuxtLink(:to='"/category/" + category.videosdb.slug')
-            | {{ category.snippet.title }}
-
     .my-4(v-if='this.video.videosdb.ipfs_hash')
       p(align='center')
         b-link(
@@ -46,7 +37,16 @@ b-container.m-0.p-0.mx-auto
             )
 
       p(align='center')
-        | NOTE: to download the videos, right click on the download link and choose "Save as.."
+        small NOTE: to download the videos, right click on the download link and choose "Save as.."
+
+    .my-4(
+      v-if='this.video.videosdb.playlists && this.video.videosdb.playlists.length > 0'
+    )
+      strong Categories
+      ul
+        li(v-for='category in this.video.categories', :key='category.id')
+          NuxtLink(:to='"/category/" + category.videosdb.slug')
+            | {{ category.snippet.title }}
 
     .my-4(v-if='this.video.snippet.tags && this.video.snippet.tags.length > 0')
       p.text-center
@@ -73,7 +73,7 @@ b-container.m-0.p-0.mx-auto
               .card.mb-4.shadow-sm.text-center
                 NuxtLink(:to='"/video/" + related.videosdb.slug')
                   b-img-lazy.bd-placeholder-img.card-img-top(
-                    :src='related.thumbnails.medium.url',
+                    :src='related.snippet.thumbnails.medium.url',
                     height='180',
                     width='320',
                     :id='related.id',
@@ -187,6 +187,23 @@ export default {
       })
       video.categories = categories
     }
+
+    if (
+      'related_videos' in video.videosdb &&
+      video.videosdb.related_videos.length
+    ) {
+      const results = await getWithCache(
+        $db
+          .collection('videos')
+          .where('id', 'in', video.videosdb.related_videos)
+      )
+      let related_videos = []
+      results.forEach((doc) => {
+        related_videos.push(doc.data())
+      })
+      video.videosdb.related_videos = related_videos
+    }
+
     return { video }
   },
 }

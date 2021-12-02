@@ -236,28 +236,16 @@ class Downloader:
 
         old_video_doc = await self.db.db.collection("videos").document(video_id).get()
 
-        custom_attrs = dict()
+        self._prepare_video_for_db(video)
 
+        # download transcript:
         if (not old_video_doc.exists or
             not "transcript_status" in old_video_doc.to_dict()["videosdb"] or
                 old_video_doc.to_dict()["videosdb"]["transcript_status"] == "pending"):
             transcript, new_status = await self._download_transcript(video_id)
-            custom_attrs["transcript_status"] = new_status
+            video["videosdb"]["transcript_status"] = new_status
             if transcript:
-                custom_attrs["transcript"] = transcript
-
-        custom_attrs["slug"] = slugify(
-            video["snippet"]["title"])
-        custom_attrs["descriptionTrimmed"] = self._description_trimmed(
-            video["snippet"]["description"])
-        custom_attrs["durationSeconds"] = isodate.parse_duration(
-            video["contentDetails"]["duration"]).total_seconds()
-
-        video["videosdb"] = custom_attrs
-        video["snippet"]["publishedAt"] = isodate.parse_datetime(
-            video["snippet"]["publishedAt"])
-        for stat, value in video["statistics"].items():
-            video["statistics"][stat] = int(value)
+                video["videosdb"]["transcript"] = transcript
 
         await self.db.write_video(video)
 
@@ -279,10 +267,9 @@ class Downloader:
                             != YT_CHANNEL_ID:
                         continue
 
-                    set_coroutine = self.db.db.collection("videos").document(video_id)\
-                        .collection("related_videos").document(related["id"]["videoId"])\
-                        .set
-                    tg.start_soon(set_coroutine, related)
+                    await self.db.db.collection("videos").document(video_id).update({
+                        "videosdb.related_videos": firestore.ArrayUnion([related["id"]["videoId"]])
+                    })
 
                     logger.info("Added new related videos to video %s" %
                                 (video_id))
@@ -318,3 +305,19 @@ class Downloader:
         if match and match.start() != -1:
             return description[:match.start()]
         return description
+
+    @staticmethod
+    def _prepare_video_for_db(video):
+        custom_attrs = dict()
+        custom_attrs["slug"] = slugify(
+            video["snippet"]["title"])
+        custom_attrs["descriptionTrimmed"] = Downloader._description_trimmed(
+            video["snippet"]["description"])
+        custom_attrs["durationSeconds"] = isodate.parse_duration(
+            video["contentDetails"]["duration"]).total_seconds()
+
+        video["videosdb"] = custom_attrs
+        video["snippet"]["publishedAt"] = isodate.parse_datetime(
+            video["snippet"]["publishedAt"])
+        for stat, value in video["statistics"].items():
+            video["statistics"][stat] = int(value)

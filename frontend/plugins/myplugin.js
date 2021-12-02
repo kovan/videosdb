@@ -9,4 +9,6 @@ export default function ({ app, $config, $db }, inject) {
     }
 
     inject("db", db)
+    inject("mylog", console.log)
+    inject("mydebugger", function () { debugger })
 }
