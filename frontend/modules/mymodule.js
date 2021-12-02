@@ -2,13 +2,13 @@ process.on('unhandledRejection', (error) => {
     console.trace(error);
 });
 var AsyncLock = require('async-lock');
-import { createDb } from "../utils/utils"
+import { getDb } from "../utils/utils"
 
 var lock = new AsyncLock();
 const NodeCache = require("node-cache");
 
 var cache = null
-var db = null
+
 
 async function getSitemap(dbOptions) {
     await generateCache(dbOptions)
@@ -75,8 +75,7 @@ async function generateCache(dbOptions) {
             done()
             return
         }
-        if (!db)
-            db = createDb(dbOptions)
+        let db = getDb(dbOptions)
         console.debug("initializing cache")
         cache = new NodeCache({ stdTTL: 0, checkperiod: 0 });
 
@@ -131,7 +130,7 @@ async function generateRoutes(dbOptions) {
 
 export default function (moduleOptions) {
     this.nuxt.hook('generate:before', async (generator, generateOptions) => {
-        //generator.$db = createDb(generator.options.publicRuntimeConfig.firebase)
+
         generateOptions.routes = await generateRoutes(generator.options.publicRuntimeConfig.firebase)
     })
 

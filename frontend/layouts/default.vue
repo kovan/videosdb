@@ -70,8 +70,9 @@ function getRandomInt(max) {
 }
 import { format, parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-import { formatDate, getWithCache } from '~/utils/utils'
+import { formatDate, getVuexData, getWithCache } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
+
 export default {
   fetchKey: 'site-sidebar',
   scrollToTop: true,
@@ -124,6 +125,14 @@ export default {
     },
   },
   async fetch() {
+    if (
+      typeof this.$store.state.categories == 'undefined' ||
+      typeof this.$store.state.meta_data.lastUpdated == 'undefined'
+    ) {
+      let vuex_data = await getVuexData(this.$db)
+      this.$store.commit('setInitial', vuex_data)
+    }
+
     this.categories = this.$store.state.categories
     this.last_updated = this.$store.state.meta_data.lastUpdated
   },

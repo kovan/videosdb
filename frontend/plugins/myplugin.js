@@ -1,11 +1,11 @@
-import { createDb } from "~/utils/utils"
+import { getDb } from "~/utils/utils"
 
 
 var db = null
 
-export default function ({ app, $config }, inject) {
-    if (!db) {
-        db = createDb(app.$config.firebase)
+export default function ({ app, $config, $db }, inject) {
+    if (!$db) {
+        db = getDb(app.$config.firebase)
     }
 
     inject("db", db)

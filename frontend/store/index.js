@@ -1,4 +1,4 @@
-import { createDb } from "../utils/utils"
+import { getDb } from "../utils/utils"
 export const state = () => ({
 })
 

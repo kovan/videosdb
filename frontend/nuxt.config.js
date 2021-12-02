@@ -139,7 +139,8 @@ export default {
   hooks: {
     generate: {
       async route({ setPayload }) {
-        let vuex_data = await getVuexData(FIREBASE_SETTINGS)
+        let db = getDb(FIREBASE_SETTINGS)
+        let vuex_data = await getVuexData(db)
         setPayload({ vuex_data })
       }
     }

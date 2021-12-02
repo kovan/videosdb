@@ -6,9 +6,8 @@ import { parseISO } from 'date-fns'
 var db = null
 var vuex_data = null
 
-async function getVuexData(dbOptions) {
-    if (!db)
-        db = createDb(dbOptions)
+async function getVuexData(db) {
+
     if (!vuex_data) {
         const query = db
             .collection('playlists')
@@ -39,8 +38,10 @@ async function getVuexData(dbOptions) {
     return vuex_data
 }
 
-function createDb(config) {
-    let db = null
+function getDb(config) {
+    if (db)
+        return db
+
     let app = null
     if (firebase.apps.length == 0) {
         app = firebase.initializeApp({
@@ -53,6 +54,7 @@ function createDb(config) {
 
     }
     db = app.firestore();
+
 
     // try {
     // db.enablePersistence()
@@ -115,5 +117,5 @@ async function getWithCache(query) {
     // return snap
 }
 
-export { createDb, formatDate, getWithCache, getVuexData }
+export { getDb, formatDate, getWithCache, getVuexData }
 
