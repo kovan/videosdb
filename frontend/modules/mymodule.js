@@ -30,6 +30,7 @@ async function getSitemap(dbOptions) {
                         ? video.videosdb.descriptionTrimmed
                         : video.snippet.title,
                     duration: video.videosdb.durationSeconds,
+                    publication_date: video.snippet.publishedAt
                 },
             ],
             priority: 1.0,

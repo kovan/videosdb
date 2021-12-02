@@ -100,8 +100,8 @@ b-container.m-0.p-0.mx-auto
 </template>
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
-import { format, parseISO } from 'date-fns'
 import { formatDate, getWithCache } from '~/utils/utils'
+import { formatISO } from 'date-fns'
 
 export default {
   components: {
@@ -120,7 +120,7 @@ export default {
       link: [
         {
           rel: 'canonical',
-          href: `https://www.sadhguru.digital/video/${this.video.slug}`,
+          href: `https://www.sadhguru.digital/video/${this.video.videosdb.slug}`,
         },
       ],
     }
@@ -142,7 +142,10 @@ export default {
         thumbnailUrl: Object.values(this.video.snippet.thumbnails).map(
           (thumb) => thumb.url
         ),
-        uploadDate: this.video.snippet.publishedAt,
+        uploadDate:
+          typeof this.video.snippet.publishedAt == 'object'
+            ? formatISO(this.video.snippet.publishedAt.toDate())
+            : this.video.snippet.publishedAt,
         duration: this.video.contentDetails.duration,
       }
       let url = null

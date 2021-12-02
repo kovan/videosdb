@@ -1,5 +1,5 @@
 import { getSitemap } from "./modules/mymodule.js"
-import { getVuexData } from "./utils/utils"
+import { getVuexData, getDb } from "./utils/utils"
 
 const FIREBASE_SETTINGS = {
   apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
