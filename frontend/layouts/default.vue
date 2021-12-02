@@ -98,10 +98,7 @@ export default {
       return parseISO(iso_date).toLocaleDateString()
     },
     async randomVideo() {
-      const meta_doc = await getWithCache(
-        this.$db.collection('meta').doc('meta')
-      )
-      const video_ids = meta_doc.data().videoIds
+      const video_ids = this.$store.state.meta_data.videoIds
 
       let video_id = video_ids[Math.floor(Math.random() * video_ids.length)]
       const video_doc = await getWithCache(
@@ -127,31 +124,8 @@ export default {
     },
   },
   async fetch() {
-    try {
-      const query = this.$db
-        .collection('playlists')
-        .orderBy('videosdb.lastUpdated', 'desc')
-
-      const meta_query = this.$db.collection('meta').doc('meta')
-
-      let [results, meta_results] = await Promise.all([
-        getWithCache(query),
-        getWithCache(meta_query),
-      ])
-
-      results.forEach((doc) => {
-        let category = {
-          name: doc.data().snippet.title,
-          slug: doc.data().videosdb.slug,
-          use_count: doc.data().videosdb.videoCount,
-        }
-        this.categories.push(category)
-      })
-
-      this.last_updated = meta_results.data().lastUpdated
-    } catch (e) {
-      console.trace(e)
-    }
+    this.categories = this.$store.state.categories
+    this.last_updated = this.$store.state.meta_data.lastUpdated
   },
 }
 </script>
