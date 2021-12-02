@@ -64,6 +64,9 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
+      "env": {
+        "DEBUG": "1",
+      },
       "args": [
         "dev"
       ],

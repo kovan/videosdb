@@ -112,19 +112,20 @@ async function generateCache(dbOptions) {
 async function generateRoutes(dbOptions) {
     await generateCache(dbOptions)
 
-    if (process.env.DEBUG) {
-        return [
-            "/video/sadhguru-about-dismantling-global-hindutva-conference",
-        ];
-    }
+
     let routes = []
     cache.keys().forEach((key) => {
         let route = {
             route: key,
-            payload: cache.get(key)
+            payload: {
+                obj: cache.get(key)
+            }
         }
         routes.push(route)
     })
+    if (process.env.DEBUG)
+        routes = [routes[0]]
+
     return routes
 }
 

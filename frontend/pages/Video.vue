@@ -165,14 +165,15 @@ export default {
       return formatDate(date)
     },
   },
-  async asyncData({ $db, params, payload, error }) {
+  async asyncData({ $db, params, payload, error, store }) {
     let video = null
-    if (payload) video = payload
-    else {
+    if (payload) {
+      video = payload.obj
+      store.commit('setInitial', payload.vuex_data)
+    } else {
       const q = await getWithCache(
         $db.collection('videos').where('videosdb.slug', '==', params.slug)
       )
-
       video = q.docs[0].data()
     }
 
