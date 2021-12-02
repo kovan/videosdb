@@ -1,4 +1,5 @@
 
+import signal
 
 from async_generator import aclosing
 import anyio
@@ -103,14 +104,27 @@ class Downloader:
         finally:
             await self.api.aclose()
 
+    @staticmethod
+    async def _print_stats_thread(streams):
+        with anyio.open_signal_receiver(signal.SIGHUP) as signals:
+            async for signum in signals:
+                if signum != signal.SIGHUP:
+                    continue
+                print("stats: ")
+                for stream in streams:
+                    print(stream.statistics())
+
     async def _start(self):
         video_sender, video_receiver = anyio.create_memory_object_stream()
         playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
+
         async with anyio.create_task_group() as nursery:
-            nursery.start_soon(self._playlist_retriever, playlist_sender)
+            nursery.start_soon(self._video_processor, video_receiver)
             nursery.start_soon(self._playlist_processor,
                                playlist_receiver, video_sender)
-            nursery.start_soon(self._video_processor, video_receiver)
+            nursery.start_soon(self._playlist_retriever, playlist_sender)
+            nursery.start_soon(self._print_stats_thread, [
+                               video_receiver, video_sender, playlist_sender, playlist_receiver])
 
     async def _playlist_retriever(self, playlist_sender):
         channel_id = YT_CHANNEL_ID
