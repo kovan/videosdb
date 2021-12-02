@@ -2,13 +2,13 @@ process.on('unhandledRejection', (error) => {
     console.trace(error);
 });
 var AsyncLock = require('async-lock');
-import { createDb } from "../utils/utils"
+import { getDb } from "../utils/utils"
 
 var lock = new AsyncLock();
 const NodeCache = require("node-cache");
 
 var cache = null
-var db = null
+
 
 async function getSitemap(dbOptions) {
     await generateCache(dbOptions)
@@ -30,6 +30,7 @@ async function getSitemap(dbOptions) {
                         ? video.videosdb.descriptionTrimmed
                         : video.snippet.title,
                     duration: video.videosdb.durationSeconds,
+                    publication_date: video.snippet.publishedAt
                 },
             ],
             priority: 1.0,
@@ -75,8 +76,7 @@ async function generateCache(dbOptions) {
             done()
             return
         }
-        if (!db)
-            db = createDb(dbOptions)
+        let db = getDb(dbOptions)
         console.debug("initializing cache")
         cache = new NodeCache({ stdTTL: 0, checkperiod: 0 });
 
@@ -112,25 +112,26 @@ async function generateCache(dbOptions) {
 async function generateRoutes(dbOptions) {
     await generateCache(dbOptions)
 
-    if (process.env.DEBUG) {
-        return [
-            "/video/sadhguru-about-dismantling-global-hindutva-conference",
-        ];
-    }
+
     let routes = []
     cache.keys().forEach((key) => {
         let route = {
             route: key,
-            payload: cache.get(key)
+            payload: {
+                obj: cache.get(key)
+            }
         }
         routes.push(route)
     })
+    if (process.env.DEBUG)
+        routes = [routes[0]]
+
     return routes
 }
 
 export default function (moduleOptions) {
     this.nuxt.hook('generate:before', async (generator, generateOptions) => {
-        //generator.$db = createDb(generator.options.publicRuntimeConfig.firebase)
+
         generateOptions.routes = await generateRoutes(generator.options.publicRuntimeConfig.firebase)
     })
 

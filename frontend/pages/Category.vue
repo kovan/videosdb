@@ -28,8 +28,11 @@ export default {
     }
   },
 
-  async asyncData({ $db, params, payload, error }) {
-    if (payload) return { category: payload }
+  async asyncData({ $db, params, payload, store, error }) {
+    if (payload) {
+      store.commit('setInitial', payload.vuex_data)
+      return { category: payload.obj }
+    }
 
     const q_category = await getWithCache(
       $db.collection('playlists').where('videosdb.slug', '==', params.slug)

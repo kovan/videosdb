@@ -64,12 +64,16 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
+      "env": {
+        "DEBUG": "1",
+      },
       "args": [
         "dev"
       ],
       "type": "node",
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
+      "console": "integratedTerminal",
       "outputCapture": "std",
       "justMyCode": false
     },
@@ -86,6 +90,7 @@
       "type": "node",
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
+      "console": "integratedTerminal",
       "outputCapture": "std",
       "justMyCode": false
     },
@@ -102,6 +107,7 @@
       "type": "node",
       "envFile": "${workspaceFolder}/frontend/.env",
       "cwd": "${workspaceFolder}/frontend",
+      "console": "integratedTerminal",
       "outputCapture": "std",
       "justMyCode": false
     },
@@ -109,6 +115,7 @@
       "type": "node",
       "request": "attach",
       "name": "Attach Program",
+      "console": "integratedTerminal",
       "skipFiles": [
         "<node_internals>/**"
       ],

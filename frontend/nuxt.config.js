@@ -1,4 +1,5 @@
 import { getSitemap } from "./modules/mymodule.js"
+import { getVuexData, getDb } from "./utils/utils"
 
 const FIREBASE_SETTINGS = {
   apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
@@ -136,6 +137,13 @@ export default {
   serverMiddleware: [],
 
   hooks: {
+    generate: {
+      async route({ setPayload }) {
+        let db = getDb(FIREBASE_SETTINGS)
+        let vuex_data = await getVuexData(db)
+        setPayload({ vuex_data })
+      }
+    }
   },
 
   head: {

@@ -1,4 +1,5 @@
 
+import signal
 
 from async_generator import aclosing
 import anyio
@@ -103,14 +104,27 @@ class Downloader:
         finally:
             await self.api.aclose()
 
+    @staticmethod
+    async def _print_stats_thread(streams):
+        with anyio.open_signal_receiver(signal.SIGHUP) as signals:
+            async for signum in signals:
+                if signum != signal.SIGHUP:
+                    continue
+                print("stats: ")
+                for stream in streams:
+                    print(stream.statistics())
+
     async def _start(self):
         video_sender, video_receiver = anyio.create_memory_object_stream()
         playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
+
         async with anyio.create_task_group() as nursery:
-            nursery.start_soon(self._playlist_retriever, playlist_sender)
+            nursery.start_soon(self._video_processor, video_receiver)
             nursery.start_soon(self._playlist_processor,
                                playlist_receiver, video_sender)
-            nursery.start_soon(self._video_processor, video_receiver)
+            nursery.start_soon(self._playlist_retriever, playlist_sender)
+            nursery.start_soon(self._print_stats_thread, [
+                               video_receiver, video_sender, playlist_sender, playlist_receiver])
 
     async def _playlist_retriever(self, playlist_sender):
         channel_id = YT_CHANNEL_ID
@@ -236,28 +250,16 @@ class Downloader:
 
         old_video_doc = await self.db.db.collection("videos").document(video_id).get()
 
-        custom_attrs = dict()
+        self._prepare_video_for_db(video)
 
+        # download transcript:
         if (not old_video_doc.exists or
             not "transcript_status" in old_video_doc.to_dict()["videosdb"] or
                 old_video_doc.to_dict()["videosdb"]["transcript_status"] == "pending"):
             transcript, new_status = await self._download_transcript(video_id)
-            custom_attrs["transcript_status"] = new_status
+            video["videosdb"]["transcript_status"] = new_status
             if transcript:
-                custom_attrs["transcript"] = transcript
-
-        custom_attrs["slug"] = slugify(
-            video["snippet"]["title"])
-        custom_attrs["descriptionTrimmed"] = self._description_trimmed(
-            video["snippet"]["description"])
-        custom_attrs["durationSeconds"] = isodate.parse_duration(
-            video["contentDetails"]["duration"]).total_seconds()
-
-        video["videosdb"] = custom_attrs
-        video["snippet"]["publishedAt"] = isodate.parse_datetime(
-            video["snippet"]["publishedAt"])
-        for stat, value in video["statistics"].items():
-            video["statistics"][stat] = int(value)
+                video["videosdb"]["transcript"] = transcript
 
         await self.db.write_video(video)
 
@@ -279,10 +281,9 @@ class Downloader:
                             != YT_CHANNEL_ID:
                         continue
 
-                    set_coroutine = self.db.db.collection("videos").document(video_id)\
-                        .collection("related_videos").document(related["id"]["videoId"])\
-                        .set
-                    tg.start_soon(set_coroutine, related)
+                    await self.db.db.collection("videos").document(video_id).update({
+                        "videosdb.related_videos": firestore.ArrayUnion([related["id"]["videoId"]])
+                    })
 
                     logger.info("Added new related videos to video %s" %
                                 (video_id))
@@ -318,3 +319,19 @@ class Downloader:
         if match and match.start() != -1:
             return description[:match.start()]
         return description
+
+    @staticmethod
+    def _prepare_video_for_db(video):
+        custom_attrs = dict()
+        custom_attrs["slug"] = slugify(
+            video["snippet"]["title"])
+        custom_attrs["descriptionTrimmed"] = Downloader._description_trimmed(
+            video["snippet"]["description"])
+        custom_attrs["durationSeconds"] = isodate.parse_duration(
+            video["contentDetails"]["duration"]).total_seconds()
+
+        video["videosdb"] = custom_attrs
+        video["snippet"]["publishedAt"] = isodate.parse_datetime(
+            video["snippet"]["publishedAt"])
+        for stat, value in video["statistics"].items():
+            video["statistics"][stat] = int(value)

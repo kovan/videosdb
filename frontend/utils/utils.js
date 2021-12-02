@@ -3,9 +3,45 @@ import firebase from 'firebase/app';
 //import 'firebase/firestore/memory';
 import { firestore } from 'firebase/firestore';
 import { parseISO } from 'date-fns'
+var db = null
+var vuex_data = null
 
-function createDb(config) {
-    let db = null
+async function getVuexData(db) {
+
+    if (!vuex_data) {
+        const query = db
+            .collection('playlists')
+            .orderBy('videosdb.lastUpdated', 'desc')
+
+        const meta_query = db.collection('meta').doc('meta')
+
+        let [results, meta_results] = await Promise.all([
+            query.get(),
+            meta_query.get(),
+        ])
+        let categories = []
+        results.forEach((doc) => {
+            let category = {
+                name: doc.data().snippet.title,
+                slug: doc.data().videosdb.slug,
+                use_count: doc.data().videosdb.videoCount,
+            }
+            categories.push(category)
+        })
+
+        let meta_data = meta_results.data()
+        vuex_data = {
+            categories,
+            meta_data
+        }
+    }
+    return vuex_data
+}
+
+function getDb(config) {
+    if (db)
+        return db
+
     let app = null
     if (firebase.apps.length == 0) {
         app = firebase.initializeApp({
@@ -18,6 +54,7 @@ function createDb(config) {
 
     }
     db = app.firestore();
+
 
     // try {
     // db.enablePersistence()
@@ -41,10 +78,10 @@ function createDb(config) {
 
         }
     } catch (e) {
-        if (e.name != "FirebaseError")
-            throw e
-        else
+        if (e.name == "FirebaseError" && e.code == "failed-precondition")
             console.debug(e)
+        else
+            throw e
     }
     return db;
 }
@@ -80,5 +117,5 @@ async function getWithCache(query) {
     // return snap
 }
 
-export { createDb, formatDate, getWithCache }
+export { getDb, formatDate, getWithCache, getVuexData }
 

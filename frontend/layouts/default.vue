@@ -70,8 +70,9 @@ function getRandomInt(max) {
 }
 import { format, parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-import { formatDate, getWithCache } from '~/utils/utils'
+import { formatDate, getVuexData, getWithCache } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
+
 export default {
   fetchKey: 'site-sidebar',
   scrollToTop: true,
@@ -98,10 +99,7 @@ export default {
       return parseISO(iso_date).toLocaleDateString()
     },
     async randomVideo() {
-      const meta_doc = await getWithCache(
-        this.$db.collection('meta').doc('meta')
-      )
-      const video_ids = meta_doc.data().videoIds
+      const video_ids = this.$store.state.meta_data.videoIds
 
       let video_id = video_ids[Math.floor(Math.random() * video_ids.length)]
       const video_doc = await getWithCache(
@@ -127,31 +125,16 @@ export default {
     },
   },
   async fetch() {
-    try {
-      const query = this.$db
-        .collection('playlists')
-        .orderBy('videosdb.lastUpdated', 'desc')
-
-      const meta_query = this.$db.collection('meta').doc('meta')
-
-      let [results, meta_results] = await Promise.all([
-        getWithCache(query),
-        getWithCache(meta_query),
-      ])
-
-      results.forEach((doc) => {
-        let category = {
-          name: doc.data().snippet.title,
-          slug: doc.data().videosdb.slug,
-          use_count: doc.data().videosdb.videoCount,
-        }
-        this.categories.push(category)
-      })
-
-      this.last_updated = meta_results.data().lastUpdated
-    } catch (e) {
-      console.trace(e)
+    if (
+      typeof this.$store.state.categories == 'undefined' ||
+      typeof this.$store.state.meta_data.lastUpdated == 'undefined'
+    ) {
+      let vuex_data = await getVuexData(this.$db)
+      this.$store.commit('setInitial', vuex_data)
     }
+
+    this.categories = this.$store.state.categories
+    this.last_updated = this.$store.state.meta_data.lastUpdated
   },
 }
 </script>
