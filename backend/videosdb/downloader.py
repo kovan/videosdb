@@ -95,9 +95,16 @@ class Downloader:
                 # separate so that it uses remaining quota
                 await self._fill_related_videos()
         except YoutubeAPI.QuotaExceededError as e:
-            logger.exception(e)
+            logger.error(e)
+        except anyio.ExceptionGroup as group:
+            for e in group.exceptions:
+                if type(e) == YoutubeAPI.QuotaExceededError:
+                    logger.error(e)
+                else:
+                    raise e
         finally:
             await self.api.aclose()
+
         await self.db.update_last_updated()
 
     async def _start(self):
