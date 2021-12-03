@@ -19,7 +19,7 @@ export default {
   publicRuntimeConfig: {
     title: "Sadhguru wisdom",
     subtitle: "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
-    firebase: FIREBASE_SETTINGS
+    firebase: JSON.parse(JSON.stringify(FIREBASE_SETTINGS)) // deep copy
   },
 
   generate: {
