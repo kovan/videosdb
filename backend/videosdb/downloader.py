@@ -149,16 +149,7 @@ class Downloader:
                     processed_playlist_ids.add(playlist_id)
 
     async def _video_processor(self, video_receiver):
-        # processed_video_ids = set()
-        # async with anyio.create_task_group() as nursery:
-        #     async for video_id, playlist_id in video_receiver:
-        #         if video_id not in processed_video_ids:
-        #             result = await self._create_video(video_id)
-        #             if result:
-        #                 processed_video_ids.add(video_id)
 
-        #         if playlist_id and video_id in processed_video_ids:
-        #             await self.db.add_playlist_to_video(video_id, playlist_id)
         # One stream per video, because when a video is found in a new playlist,
         # the video has to already exist in the DB for the playlist to be added.
         # This way, DB operations on a video are always in sequential order.
@@ -173,14 +164,15 @@ class Downloader:
                     await video_streams[video_id].send(coro)
 
                 if playlist_id:
-                    coro = self.db.add_playlist_to_video(video_id, playlist_id)
-                    await video_streams[video_id].send(coro)
+                    async with anyio.create_task_group() as nursery2:
+                        coro = self.db.add_playlist_to_video(
+                            video_id, playlist_id)
+                        nursery2.start_soon(video_streams[video_id].send, coro)
 
             for stream in video_streams.values():
                 stream.close()
 
     async def _process_video(self, task_receiver):
-        # async with aclosing(task_receiver) as aiter:
         breaking = False
         async for task in task_receiver:
             if breaking:
