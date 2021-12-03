@@ -155,16 +155,18 @@ class Downloader:
         # This way, DB operations on a video are always in sequential order.
         video_streams = dict()
         async with anyio.create_task_group() as nursery:
-            async for video_id, playlist_id in video_receiver:
-                if video_id not in video_streams:
-                    snd_stream, rcv_stream = anyio.create_memory_object_stream()
-                    nursery.start_soon(self._process_video, rcv_stream)
-                    video_streams[video_id] = snd_stream
-                    coro = self._create_video(video_id)
-                    await video_streams[video_id].send(coro)
+            async with anyio.create_task_group() as nursery2:
+                async for video_id, playlist_id in video_receiver:
 
-                if playlist_id:
-                    async with anyio.create_task_group() as nursery2:
+                    if video_id not in video_streams:
+                        snd_stream, rcv_stream = anyio.create_memory_object_stream()
+                        nursery.start_soon(self._process_video, rcv_stream)
+                        video_streams[video_id] = snd_stream
+                        coro = self._create_video(video_id)
+                        await video_streams[video_id].send(coro)
+
+                    if playlist_id:
+
                         coro = self.db.add_playlist_to_video(
                             video_id, playlist_id)
                         nursery2.start_soon(video_streams[video_id].send, coro)
