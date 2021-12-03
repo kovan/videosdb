@@ -97,7 +97,7 @@ export default {
     hostname: "https://www.sadhguru.digital",
     gzip: true,
     routes: async () => {
-      return await getSitemap(FIREBASE_SETTINGS)
+      return await getSitemap(JSON.parse(JSON.stringify(FIREBASE_SETTINGS))) // deep copy)
     }
   },
 
@@ -139,7 +139,7 @@ export default {
   hooks: {
     generate: {
       async route({ setPayload }) {
-        let db = getDb(FIREBASE_SETTINGS)
+        let db = getDb(JSON.parse(JSON.stringify(FIREBASE_SETTINGS))) // deep copy)
         let vuex_data = await getVuexData(db)
         setPayload({ vuex_data })
       }
