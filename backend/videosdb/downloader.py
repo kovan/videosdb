@@ -3,7 +3,7 @@
 from async_generator import aclosing
 import anyio
 from datetime import date, datetime
-import asyncio
+import random
 
 import logging
 import os
@@ -276,7 +276,9 @@ class Downloader:
 
         async with anyio.create_task_group() as tg:
             meta_doc = await self.db.db.collection("meta").document("meta").get()
-            for video_id in meta_doc.to_dict()["videoIds"]:
+            randomized_ids = meta_doc.to_dict()["videoIds"]
+            random.shuffle(randomized_ids)
+            for video_id in randomized_ids:
                 for related in await self.api.get_related_videos(video_id):
                     # for now skip videos from other channels:
                     if "snippet" in related and related["snippet"]["channelId"] \
