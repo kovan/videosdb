@@ -30,9 +30,6 @@
     },
     "firestore": {
       "port": 6001
-    },
-    "functions": {
-      "port": 6002
     }
   },
   "firestore": {
