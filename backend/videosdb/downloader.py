@@ -1,5 +1,4 @@
 
-import signal
 
 from async_generator import aclosing
 import anyio
@@ -44,6 +43,11 @@ class DB:
             await doc_ref.set({"videoIds": list()})
         return obj
 
+    async def add_video_id_to_video_index(self, video_id):
+        await self.db.collection("meta").document("meta").update({
+            "videoIds": firestore.ArrayUnion([video_id])
+        })
+
     async def regenerate_video_index(self):
         ids = []
         async for video in self.db.collection("videos").stream():
@@ -58,7 +62,7 @@ class DB:
             "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
 
     async def add_playlist_to_video(self, video_id, playlist):
-        return await self.db.collection("videos").document(video_id).update({
+        await self.db.collection("videos").document(video_id).update({
             "videosdb.playlists": firestore.ArrayUnion([playlist])
         })
 
@@ -69,14 +73,6 @@ class DB:
                 print("Channel mismatch, expected %s, found %s" %
                       (YT_CHANNEL_ID, video_obj["snippet"]["channelId"]))
                 await self.db.collection("videos").document(video_obj["id"]).delete()
-
-    async def write_video(self, video):
-
-        await self.db.collection("videos").document(
-            video["id"]).set(video, merge=True,)
-        await self.db.collection("meta").document("meta").update({
-            "videoIds": firestore.ArrayUnion([video["id"]])
-        })
 
 
 class Downloader:
@@ -98,33 +94,20 @@ class Downloader:
             if not "DEBUG" in os.environ:
                 # separate so that it uses remaining quota
                 await self._fill_related_videos()
-            await self.db.update_last_updated()
         except YoutubeAPI.QuotaExceededError as e:
-            logger.error(e)
+            logger.exception(e)
         finally:
             await self.api.aclose()
-
-    @staticmethod
-    async def _print_stats_thread(streams):
-        with anyio.open_signal_receiver(signal.SIGHUP) as signals:
-            async for signum in signals:
-                if signum != signal.SIGHUP:
-                    continue
-                print("stats: ")
-                for stream in streams:
-                    print(stream.statistics())
+        await self.db.update_last_updated()
 
     async def _start(self):
         video_sender, video_receiver = anyio.create_memory_object_stream()
         playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
-
         async with anyio.create_task_group() as nursery:
-            nursery.start_soon(self._video_processor, video_receiver)
+            nursery.start_soon(self._playlist_retriever, playlist_sender)
             nursery.start_soon(self._playlist_processor,
                                playlist_receiver, video_sender)
-            nursery.start_soon(self._playlist_retriever, playlist_sender)
-            nursery.start_soon(self._print_stats_thread, [
-                               video_receiver, video_sender, playlist_sender, playlist_receiver])
+            nursery.start_soon(self._video_processor, video_receiver)
 
     async def _playlist_retriever(self, playlist_sender):
         channel_id = YT_CHANNEL_ID
@@ -149,8 +132,8 @@ class Downloader:
             )
 
         with playlist_sender:
-            async with playlist_ids.stream() as streamer:
-                async for playlist_id in streamer:
+            async with aclosing(playlist_ids.stream()) as aiter:
+                async for playlist_id in aiter:
                     await playlist_sender.send(playlist_id)
 
     async def _playlist_processor(self, playlist_receiver, video_sender):
@@ -166,43 +149,23 @@ class Downloader:
                     processed_playlist_ids.add(playlist_id)
 
     async def _video_processor(self, video_receiver):
-        # One stream per video, because when a video is found in a new playlist,
-        # the video has to already exist in the DB for the playlist to be added.
-        # This way, DB operations on a video are always in sequential order.
-        video_streams = dict()
+        processed_video_ids = set()
         async with anyio.create_task_group() as nursery:
             async for video_id, playlist_id in video_receiver:
-                if video_id not in video_streams:
-                    snd_stream, rcv_stream = anyio.create_memory_object_stream()
-                    nursery.start_soon(self._process_video, rcv_stream)
-                    video_streams[video_id] = snd_stream
-                    coro = self._create_video(video_id)
-                    await video_streams[video_id].send(coro)
+                if video_id not in processed_video_ids:
+                    result = await self._create_video(video_id)
+                    if result:
+                        processed_video_ids.add(video_id)
 
-                if playlist_id:
-                    coro = self.db.add_playlist_to_video(video_id, playlist_id)
-                    await video_streams[video_id].send(coro)
-
-            for stream in video_streams.values():
-                stream.close()
-
-    async def _process_video(self, task_receiver):
-        # async with aclosing(task_receiver) as aiter:
-        breaking = False
-        async for task in task_receiver:
-            if breaking:
-                task.close()  # to prevent Python warning of unawaited coroutine
-            else:
-                result = await task
-                if not result:
-                    breaking = True
+                if playlist_id and video_id in processed_video_ids:
+                    await self.db.add_playlist_to_video(video_id, playlist_id)
 
     async def _process_playlist(self, playlist_id, video_sender):
         playlist = await self.api.get_playlist_info(playlist_id)
         if playlist["snippet"]["channelTitle"] != YT_CHANNEL_NAME:
             return
 
-        playlist = playlist if playlist["snippet"]["title"] != "Uploads from " +\
+        playlist = playlist if playlist["snippet"]["title"] != "Uploads from " + \
             playlist["snippet"]["channelTitle"] else None
 
         items = []
@@ -250,18 +213,33 @@ class Downloader:
 
         old_video_doc = await self.db.db.collection("videos").document(video_id).get()
 
-        self._prepare_video_for_db(video)
+        custom_attrs = dict()
 
-        # download transcript:
         if (not old_video_doc.exists or
             not "transcript_status" in old_video_doc.to_dict()["videosdb"] or
                 old_video_doc.to_dict()["videosdb"]["transcript_status"] == "pending"):
             transcript, new_status = await self._download_transcript(video_id)
-            video["videosdb"]["transcript_status"] = new_status
+            custom_attrs["transcript_status"] = new_status
             if transcript:
-                video["videosdb"]["transcript"] = transcript
+                custom_attrs["transcript"] = transcript
 
-        await self.db.write_video(video)
+        custom_attrs["slug"] = slugify(
+            video["snippet"]["title"])
+        custom_attrs["descriptionTrimmed"] = self._description_trimmed(
+            video["snippet"]["description"])
+        custom_attrs["durationSeconds"] = isodate.parse_duration(
+            video["contentDetails"]["duration"]).total_seconds()
+
+        video["videosdb"] = custom_attrs
+        video["snippet"]["publishedAt"] = isodate.parse_datetime(
+            video["snippet"]["publishedAt"])
+        for stat, value in video["statistics"].items():
+            video["statistics"][stat] = int(value)
+
+        await self.db.db.collection("videos").document(
+            video_id).set(video, merge=True)
+
+        await self.db.add_video_id_to_video_index(video_id)
 
         logger.info("Created video: " + video["snippet"]["title"])
 
@@ -319,19 +297,3 @@ class Downloader:
         if match and match.start() != -1:
             return description[:match.start()]
         return description
-
-    @staticmethod
-    def _prepare_video_for_db(video):
-        custom_attrs = dict()
-        custom_attrs["slug"] = slugify(
-            video["snippet"]["title"])
-        custom_attrs["descriptionTrimmed"] = Downloader._description_trimmed(
-            video["snippet"]["description"])
-        custom_attrs["durationSeconds"] = isodate.parse_duration(
-            video["contentDetails"]["duration"]).total_seconds()
-
-        video["videosdb"] = custom_attrs
-        video["snippet"]["publishedAt"] = isodate.parse_datetime(
-            video["snippet"]["publishedAt"])
-        for stat, value in video["statistics"].items():
-            video["statistics"][stat] = int(value)
