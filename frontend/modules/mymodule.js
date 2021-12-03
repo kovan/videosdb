@@ -2,7 +2,7 @@ process.on('unhandledRejection', (error) => {
     console.trace(error);
 });
 var AsyncLock = require('async-lock');
-import { getDb } from "../utils/utils"
+import { getDb, dateToISO } from "../utils/utils"
 
 var lock = new AsyncLock();
 const NodeCache = require("node-cache");
@@ -30,7 +30,7 @@ async function getSitemap(dbOptions) {
                         ? video.videosdb.descriptionTrimmed
                         : video.snippet.title,
                     duration: video.videosdb.durationSeconds,
-                    publication_date: video.snippet.publishedAt
+                    publication_date: dateToISO(video.snippet.publishedAt)
                 },
             ],
             priority: 1.0,
