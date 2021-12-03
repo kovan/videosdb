@@ -39,4 +39,4 @@ steps:
       - deploy
       - --only=hosting
 
-timeout: 7200s
+timeout: 3600s
