@@ -37,7 +37,7 @@
                   NuxtLink(:to='"/video/" + video.videosdb.slug')
                     | {{ video.snippet.title }}
                 .d-flex.justify-content-between.align-items-center
-                  small.text-muted Published: <br/>{{ formatDate(video.snippet.publishedAt) }}
+                  small.text-muted Published: <br/>{{ $myFormatDate(video.snippet.publishedAt) }}
                   small.text-muted Duration: <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
         .col-md-4
           Loading(v-if='loading')
@@ -46,8 +46,6 @@
 <script >
 import LazyHydrate from 'vue-lazy-hydration'
 import Loading from '~/components/Loading.vue'
-import { parseISO, sub } from 'date-fns'
-import { formatDate, getWithCache } from '~/utils/utils'
 
 export default {
   name: 'Explorer',
@@ -133,10 +131,6 @@ export default {
   //   this.current_page = this.$route.query.page || this.initial_page
   // },
   methods: {
-    formatDate: function (date) {
-      return formatDate(date)
-    },
-
     async loadMore() {
       this.loading = true
       await this.doQuery()
@@ -205,7 +199,7 @@ export default {
           query = query.startAfter(this.query_cursor)
         }
 
-        let results = await getWithCache(query)
+        let results = await query.get()
 
         //  Nuxt cant serialize the resulting objects
         if (process.server) this.from_ssr = true

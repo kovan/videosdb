@@ -1,5 +1,5 @@
 import { getDb } from "~/utils/utils"
-import { formatDate } from '~/utils/utils'
+import { formatDate, dateToISO } from '~/utils/utils'
 
 
 var db = null
@@ -13,4 +13,5 @@ export default function ({ app, $config, $db }, inject) {
     inject("myLog", console.log)
     inject("myDebugger", function () { debugger })
     inject("myFormatDate", formatDate)
+    inject("myDateToISO", dateToISO)
 }

@@ -10,7 +10,7 @@ b-container.m-0.p-0.mx-auto
             :src='`https://www.youtube.com/watch?v=${this.video.id}`'
           )
       small
-        | Published: {{ formatDate(this.video.snippet.publishedAt) }}.
+        | Published: {{ $myFormatDate(this.video.snippet.publishedAt) }}.
         | Duration: {{ new Date(this.video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
     .my-4(v-if='this.video.videosdb.descriptionTrimmed')
       strong Description
@@ -42,28 +42,41 @@ b-container.m-0.p-0.mx-auto
     .my-4(
       v-if='this.video.videosdb.playlists && this.video.videosdb.playlists.length > 0'
     )
-      strong Categories
-      ul
-        li(v-for='category in this.video.categories', :key='category.id')
-          NuxtLink(:to='"/category/" + category.videosdb.slug')
-            | {{ category.snippet.title }}
-
-    .my-4(v-if='this.video.snippet.tags && this.video.snippet.tags.length > 0')
-      p.text-center
-        NuxtLink.p-1(
-          :to='"/tag/" + encodeURIComponent(tag)',
-          v-for='tag in this.video.snippet.tags',
-          :key='tag'
-        )
-          b-button.mt-2(size='sm', pill)
-            | {{ tag }}
+      p
+        h2 In categories:
+      .album.py-1
+        .row
+          .col-md-4(
+            v-for='item in this.video.videosdb.playlists',
+            :key='item.id'
+          )
+            LazyHydrate(when-visible)
+              .card.mb-4.shadow-sm.text-center
+                NuxtLink(:to='"/category/" + item.videosdb.slug')
+                  b-img-lazy.bd-placeholder-img.card-img-top(
+                    :src='item.snippet.thumbnails.medium.url',
+                    height='180',
+                    width='320',
+                    :id='item.id',
+                    :alt='item.snippet.title',
+                    fluid
+                  )
+                  b-popover(
+                    :target='item.id',
+                    triggers='hover focus',
+                    :content='item.snippet.description'
+                  )
+                .card-body
+                  p.card-text
+                    NuxtLink(:to='"/category/" + item.videosdb.slug')
+                      | {{ item.snippet.title }}
 
     .my-4(
       v-if='this.video.videosdb.related_videos && this.video.videosdb.related_videos.length > 0'
     )
       p
         h2 Related videos:
-      .album.py-1.bg-light
+      .album.py-1
         .row
           .col-md-4(
             v-for='related in this.video.videosdb.related_videos',
@@ -87,21 +100,32 @@ b-container.m-0.p-0.mx-auto
                   )
                 .card-body
                   p.card-text
-                    NuxtLink(:to='"/video/" + related.slug')
-                      | {{ related.title }}
+                    NuxtLink(:to='"/video/" + related.videosdb.slug')
+                      | {{ related.snippet.title }}
                   .d-flex.justify-content-between.align-items-center
-                    small.text-muted Published: {{ formatDate(related.snippet.publishedAt) }}
+                    small.text-muted Published: {{ $myFormatDate(related.snippet.publishedAt) }}
                     small.text-muted Duration: {{ new Date(related.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
+
+    .my-4(v-if='this.video.snippet.tags && this.video.snippet.tags.length > 0')
+      p.text-center
+        strong Tags:
+      p.text-center
+        NuxtLink.p-1(
+          :to='"/tag/" + encodeURIComponent(tag)',
+          v-for='tag in this.video.snippet.tags',
+          :key='tag'
+        )
+          b-button.mt-2(size='sm', pill)
+            | {{ tag }}
 
     .my-4(v-if='this.video.videosdb.transcript')
       p
         strong Transcription:
-      p(style='white-space: pre-line') {{ this.video.videosdb.transcript }}
+      small(style='white-space: pre-line') {{ this.video.videosdb.transcript }}
 </template>
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
-import { formatDate, getWithCache } from '~/utils/utils'
-import { formatISO } from 'date-fns'
+import { getWithCache, dereferenceDb } from '~/utils/utils'
 
 export default {
   components: {
@@ -142,10 +166,7 @@ export default {
         thumbnailUrl: Object.values(this.video.snippet.thumbnails).map(
           (thumb) => thumb.url
         ),
-        uploadDate:
-          typeof this.video.snippet.publishedAt == 'object'
-            ? formatISO(this.video.snippet.publishedAt.toDate())
-            : this.video.snippet.publishedAt,
+        uploadDate: this.$myDateToISO(this.video.snippet.publishedAt),
         duration: this.video.contentDetails.duration,
       }
       let url = null
@@ -163,48 +184,36 @@ export default {
       return string
     },
   },
-  methods: {
-    formatDate: function (date) {
-      return formatDate(date)
-    },
-  },
+  methods: {},
   async asyncData({ $db, params, payload, error, store }) {
     let video = null
     if (payload) {
       video = payload.obj
       store.commit('setInitial', payload.vuex_data)
     } else {
-      const q = await getWithCache(
-        $db.collection('videos').where('videosdb.slug', '==', params.slug)
-      )
+      const q = await $db
+        .collection('videos')
+        .where('videosdb.slug', '==', params.slug)
+        .get()
+
       video = q.docs[0].data()
     }
 
     if ('playlists' in video.videosdb && video.videosdb.playlists.length) {
-      const results = await getWithCache(
-        $db.collection('playlists').where('id', 'in', video.videosdb.playlists)
+      video.videosdb.playlists = await dereferenceDb(
+        video.videosdb.playlists,
+        $db.collection('playlists')
       )
-      let categories = []
-      results.forEach((doc) => {
-        categories.push(doc.data())
-      })
-      video.categories = categories
     }
 
     if (
       'related_videos' in video.videosdb &&
       video.videosdb.related_videos.length
     ) {
-      const results = await getWithCache(
-        $db
-          .collection('videos')
-          .where('id', 'in', video.videosdb.related_videos)
+      video.videosdb.related_videos = await dereferenceDb(
+        video.videosdb.related_videos,
+        $db.collection('videos')
       )
-      let related_videos = []
-      results.forEach((doc) => {
-        related_videos.push(doc.data())
-      })
-      video.videosdb.related_videos = related_videos
     }
 
     return { video }
@@ -215,6 +224,7 @@ export default {
 
 <router>
   {
-    path: '/video/:slug'
+    path: '/video/:slug',
+
   }
 </router>

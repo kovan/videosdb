@@ -2,7 +2,7 @@ import firebase from 'firebase/app';
 
 //import 'firebase/firestore/memory';
 import { firestore } from 'firebase/firestore';
-import { parseISO } from 'date-fns'
+import { formatISO, parseISO } from 'date-fns'
 var db = null
 var vuex_data = null
 
@@ -100,6 +100,20 @@ function formatDate(date) {
     throw TypeError()
 }
 
+function dateToISO(date) {
+    if (typeof date == "string")
+        return date
+    if (date instanceof Date)
+        return formatISO(date)
+    if (date instanceof firebase.firestore.Timestamp)
+        return formatISO(date.toDate())
+    if (date instanceof Object)
+        return formatISO(new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate())
+
+    throw TypeError()
+
+}
+
 async function getWithCache(query) {
     return await query.get();
     // let snap = null
@@ -117,5 +131,20 @@ async function getWithCache(query) {
     // return snap
 }
 
-export { getDb, formatDate, getWithCache, getVuexData }
+
+async function dereferenceDb(id_list, collection) {
+    let items = []
+    const results =
+        await collection
+            .where('id', 'in', id_list)
+            .get()
+
+    results.forEach((doc) => {
+        items.push(doc.data())
+    })
+    return items
+}
+
+
+export { getDb, formatDate, getWithCache, getVuexData, dereferenceDb, dateToISO }
 

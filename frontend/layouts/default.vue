@@ -68,9 +68,9 @@ div
 function getRandomInt(max) {
   return Math.floor(Math.random() * max)
 }
-import { format, parseISO } from 'date-fns'
+import { parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-import { formatDate, getVuexData, getWithCache } from '~/utils/utils'
+import { getVuexData } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
 
 export default {
@@ -102,9 +102,8 @@ export default {
       const video_ids = this.$store.state.meta_data.videoIds
 
       let video_id = video_ids[Math.floor(Math.random() * video_ids.length)]
-      const video_doc = await getWithCache(
-        this.$db.collection('videos').doc(video_id)
-      )
+      const video_doc = await this.$db.collection('videos').doc(video_id).get()
+
       let video = video_doc.data()
 
       this.$router.push('/video/' + video.videosdb.slug)
