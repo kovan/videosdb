@@ -1,19 +1,17 @@
 <template lang="pug">
-.col-md-4
-  .card.mb-4.shadow-sm.text-center 
-    .sk-fading-circle
-      .sk-circle1.sk-circle
-      .sk-circle2.sk-circle
-      .sk-circle3.sk-circle
-      .sk-circle4.sk-circle
-      .sk-circle5.sk-circle
-      .sk-circle6.sk-circle
-      .sk-circle7.sk-circle
-      .sk-circle8.sk-circle
-      .sk-circle9.sk-circle
-      .sk-circle10.sk-circle
-      .sk-circle11.sk-circle
-      .sk-circle12.sk-circle
+.sk-fading-circle
+  .sk-circle1.sk-circle
+  .sk-circle2.sk-circle
+  .sk-circle3.sk-circle
+  .sk-circle4.sk-circle
+  .sk-circle5.sk-circle
+  .sk-circle6.sk-circle
+  .sk-circle7.sk-circle
+  .sk-circle8.sk-circle
+  .sk-circle9.sk-circle
+  .sk-circle10.sk-circle
+  .sk-circle11.sk-circle
+  .sk-circle12.sk-circle
 </template>
 
 <style scoped>

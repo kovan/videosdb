@@ -40,7 +40,8 @@
                   small.text-muted Published: <br/>{{ $myFormatDate(video.snippet.publishedAt) }}
                   small.text-muted Duration: <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
         .col-md-4
-          Loading(v-if='loading')
+          .card.mb-4.shadow-sm.text-center 
+            Loading(v-if='loading')
 </template>
 
 <script >
