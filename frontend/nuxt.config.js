@@ -19,7 +19,7 @@ export default {
   publicRuntimeConfig: {
     title: "Sadhguru wisdom",
     subtitle: "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
-    firebase: JSON.parse(JSON.stringify(FIREBASE_SETTINGS)) // deep copy
+    firebase: FIREBASE_SETTINGS
   },
 
   generate: {
@@ -97,7 +97,7 @@ export default {
     hostname: "https://www.sadhguru.digital",
     gzip: true,
     routes: async () => {
-      return await getSitemap(JSON.parse(JSON.stringify(FIREBASE_SETTINGS))) // deep copy)
+      return await getSitemap(FIREBASE_SETTINGS)
     }
   },
 
@@ -139,7 +139,7 @@ export default {
   hooks: {
     generate: {
       async route({ setPayload }) {
-        let db = getDb(JSON.parse(JSON.stringify(FIREBASE_SETTINGS))) // deep copy)
+        let db = getDb(FIREBASE_SETTINGS)
         let vuex_data = await getVuexData(db)
         setPayload({ vuex_data })
       }
