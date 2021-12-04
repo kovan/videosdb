@@ -39,9 +39,9 @@
                 .d-flex.justify-content-between.align-items-center
                   small.text-muted Published: <br/>{{ $myFormatDate(video.snippet.publishedAt) }}
                   small.text-muted Duration: <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
-        .col-md-4
+        .col-md-4(v-if='loading')
           .card.mb-4.shadow-sm.text-center 
-            Loading(v-if='loading')
+            Loading
 </template>
 
 <script >
@@ -58,8 +58,6 @@ export default {
     return {
       loading: false,
       query_cursor: null,
-      from_ssr: false,
-      current_page: 1,
       scroll_disabled: false,
       videos: {},
       // period_options: [
@@ -189,9 +187,9 @@ export default {
         if (this.tag)
           query = query.where('snippet.tags', 'array-contains', this.tag)
 
-        if (this.from_ssr) {
+        if (!this.query_cursor && Object.keys(this.videos).length) {
+          // we come from SSR
           query = query.limit(PAGE_SIZE * 2)
-          this.from_ssr = false
         } else {
           query = query.limit(PAGE_SIZE)
         }
@@ -203,7 +201,7 @@ export default {
         let results = await query.get()
 
         //  Nuxt cant serialize the resulting objects
-        if (process.server) this.from_ssr = true
+        if (process.server) this.query_cursor = null
         else this.query_cursor = results.docs.at(-1)
 
         results.forEach((doc) => {
