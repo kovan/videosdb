@@ -97,13 +97,10 @@ class IPFS:
                            settings.VIDEOSDB_DOMAIN, root_hash)
         self.dnslink_update_pending = False
 
-    def download_and_register_folder(self, overwrite_hashes=False):
-        yt_dl = YoutubeDL()
-        db = firestore.Client()
-        videos_dir = os.path.abspath(settings.VIDEO_FILES_DIR)
-        if not os.path.exists(videos_dir):
-            os.mkdir(videos_dir)
-
+    def _files_in_ipfs_dict(self):
+        # 'Entries': [
+        #     {'Size': 0, 'Hash': '', 'Name': 'Software', 'Type': 0}
+        # ]
         files = self.api.files.ls(self.files_root, opts=dict(long=True))
         files_in_ipfs = {}
         if files["Entries"]:
@@ -113,27 +110,38 @@ class IPFS:
                     if not youtube_id or youtube_id in files_in_ipfs:
                         raise Exception()
                     files_in_ipfs[youtube_id] = file
+        return files_in_ipfs
 
+    @staticmethod
+    def _files_in_disk_dict(dir):
         files_in_disk = {}
-        for file in os.listdir(videos_dir):
+        for file in os.listdir(dir):
             youtube_id = parse_youtube_id(file)
             if file.endswith(".part"):
                 continue
             if not youtube_id or youtube_id in files_in_disk:
                 raise Exception()
             files_in_disk[youtube_id] = file
+        return files_in_disk
 
-        # 'Entries': [
-        #     {'Size': 0, 'Hash': '', 'Name': 'Software', 'Type': 0}
-        # ]
-        # videos = Video.objects.all().order_by("?")
-        video_ids = db.collection("meta").document(
+    def download_and_register_folder(self, overwrite_hashes=False):
+        yt_dl = YoutubeDL()
+        db = firestore.Client()
+
+        videos_dir = os.path.abspath(settings.VIDEO_FILES_DIR)
+        if not os.path.exists(videos_dir):
+            os.mkdir(videos_dir)
+
+        files_in_ipfs_by_id = self._files_in_ipfs_dict()
+        files_in_disk_by_id = self._files_in_disk_dict(videos_dir)
+
+        videos_in_db_ids = db.collection("meta").document(
             "meta").get().to_dict()["videoIds"]
 
-        for video_id in video_ids:
+        for video_id in videos_in_db_ids:
             video_ref = db.collection("videos").document(video_id)
 
-            if not video_id in files_in_disk:
+            if not video_id in files_in_disk_by_id:
                 logger.debug("Downloading " + video_id)
                 with tempfile.TemporaryDirectory() as tmpdir:
                     os.chdir(tmpdir)
@@ -153,12 +161,12 @@ class IPFS:
                         logger.exception(e)
                         continue
 
-            file = files_in_disk.get(video_id)
+            file = files_in_disk_by_id.get(video_id)
             # if file and file != video.filename:
             #     video.filename = file
 
-            if video_id in files_in_ipfs:
-                file = files_in_ipfs[video_id]
+            if video_id in files_in_ipfs_by_id:
+                file = files_in_ipfs_by_id[video_id]
 
                 logger.debug("Already in IPFS:  " + str(file))
                 video_ref.set({
