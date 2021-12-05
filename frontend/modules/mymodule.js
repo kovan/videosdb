@@ -2,7 +2,7 @@ process.on('unhandledRejection', (error) => {
     console.trace(error);
 });
 var AsyncLock = require('async-lock');
-import { getDb, dateToISO } from "../utils/utils"
+import { getDb, dateToISO, FIREBASE_SETTINGS } from "../utils/utils"
 
 var lock = new AsyncLock();
 const NodeCache = require("node-cache");
@@ -132,7 +132,7 @@ async function generateRoutes(dbOptions) {
 export default function (moduleOptions) {
     this.nuxt.hook('generate:before', async (generator, generateOptions) => {
 
-        generateOptions.routes = await generateRoutes(generator.options.publicRuntimeConfig.firebase)
+        generateOptions.routes = await generateRoutes(FIREBASE_SETTINGS)
     })
 
 

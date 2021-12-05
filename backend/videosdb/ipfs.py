@@ -13,6 +13,7 @@ from google.cloud import firestore
 
 logger = logging.getLogger(__name__)
 
+
 class DNS:
     def __init__(self, dns_zone):
         self.dns_zone = dns_zone
@@ -126,7 +127,8 @@ class IPFS:
         #     {'Size': 0, 'Hash': '', 'Name': 'Software', 'Type': 0}
         # ]
         # videos = Video.objects.all().order_by("?")
-        video_ids = db.collection("meta").document("meta").get().to_dict()["videoIds"]
+        video_ids = db.collection("meta").document(
+            "meta").get().to_dict()["videoIds"]
 
         for video_id in video_ids:
             video_ref = db.collection("videos").document(video_id)
@@ -171,7 +173,7 @@ class IPFS:
             video_doc = video_ref.get()
             video = video_doc.to_dict()
             logger.debug("Adding to IPFS: ID:%s, title: %s, Filename: %s, Hash: %s" %
-                          (video_id, video["snippet"]["title"], video["videosdb"].get("filename",""), video["videosdb"].get("ipfs_hash", "")))
+                         (video_id, video["snippet"]["title"], video["videosdb"].get("filename", ""), video["videosdb"].get("ipfs_hash", "")))
             ipfs_hash = self.add_file(videos_dir + "/" +
                                       video["videosdb"]["filename"],
                                       wrap_with_directory=True,
@@ -184,5 +186,5 @@ class IPFS:
 
         self.update_dnslink()
 
-    def _list_amule_shares(self):
-        result = execute('amulecmd -P amule -c "show shared"')
+    # def _list_amule_shares(self):
+    #     result = execute('amulecmd -P amule -c "show shared"')

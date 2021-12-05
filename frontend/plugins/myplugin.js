@@ -1,11 +1,11 @@
-import { getDb, formatDate, dateToISO } from '~/utils/utils'
+import { getDb, formatDate, dateToISO, FIREBASE_SETTINGS } from '~/utils/utils'
 
 
 var db = null
 
 export default function ({ app }, inject) { // real args are: context and inject
     if (!db)
-        db = getDb(app.$config.firebase)
+        db = getDb(FIREBASE_SETTINGS)
 
     inject("db", db)
     inject("myLog", console.log)

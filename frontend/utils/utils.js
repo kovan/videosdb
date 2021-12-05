@@ -1,5 +1,15 @@
 import firebase from 'firebase/app';
 
+const FIREBASE_SETTINGS = {
+    apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
+    authDomain: "worpdress-279321.firebaseapp.com",
+    projectId: "worpdress-279321",
+    storageBucket: "worpdress-279321.appspot.com",
+    messagingSenderId: "149555456673",
+    appId: "1:149555456673:web:5bb83ccdf79e8e47b3dee0",
+    measurementId: "G-CPNNB5CBJM"
+}
+
 //import 'firebase/firestore/memory';
 import { firestore } from 'firebase/firestore';
 import { formatISO, parseISO } from 'date-fns'
@@ -146,5 +156,5 @@ async function dereferenceDb(id_list, collection) {
 }
 
 
-export { getDb, formatDate, getWithCache, getVuexData, dereferenceDb, dateToISO }
+export { getDb, formatDate, getWithCache, getVuexData, dereferenceDb, dateToISO, FIREBASE_SETTINGS }
 
