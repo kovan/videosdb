@@ -8,6 +8,10 @@ export default {
   target: "static",
   telemetry: false,
 
+  publicRuntimeConfig: {
+    title: "Sadhguru wisdom",
+    subtitle: "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
+  },
 
   generate: {
     concurrency: 200,
