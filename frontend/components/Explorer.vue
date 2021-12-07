@@ -118,7 +118,30 @@ export default {
       return ''
     },
   },
-
+  beforeCreate: function () {
+    // console.debug('beforecreate')
+  },
+  created: function () {
+    // console.debug('created')
+  },
+  beforeMount: function () {
+    // console.debug('beforeMount')
+  },
+  mounted: function () {
+    // console.debug('mounted')
+  },
+  beforeUpdate: function () {
+    // console.debug('beforeUpdate')
+  },
+  beforeUpdate: function () {
+    // console.debug('updated')
+  },
+  beforeUnmount: function () {
+    // console.debug('beforeUnmount')
+  },
+  unmounted: function () {
+    // console.debug('unmounted')
+  },
   // watch: {
   //   '$route.query': '$fetch',
   //   // $route(to, from) {
@@ -131,22 +154,18 @@ export default {
   // },
   methods: {
     async loadMore() {
-      this.loading = true
       await this.doQuery()
-      this.loading = false
     },
     async handleChange() {
       // if (this.ordering != 'snippet.publishedAt') this.start_date = null
-
+      // console.debug('handling change')
       this.query_cursor = null
       for (var key in this.videos) {
         // this check can be safely omitted in modern JS engines
         // if (obj.hasOwnProperty(key))
         delete this.videos[key]
       }
-      this.loading = true
       await this.doQuery()
-      this.loading = false
     },
 
     // getSrcSetAndSizes (video) {
@@ -167,16 +186,20 @@ export default {
     //   return [srcset.slice(0, -2), sizes.slice(0, -2)]
     // }
     async doQuery() {
+      var self = this
       const PAGE_SIZE = 20
-      try {
-        let query = this.$db.collection('videos')
-        if (this.ordering) query = query.orderBy(this.ordering, 'desc')
+      if (self.loading) return
 
-        if (this.category) {
+      try {
+        self.loading = true
+        let query = self.$db.collection('videos')
+        if (self.ordering) query = query.orderBy(this.ordering, 'desc')
+
+        if (self.category) {
           query = query.where(
             'videosdb.playlists',
             'array-contains',
-            this.category['id']
+            self.category['id']
           )
         }
 
@@ -184,38 +207,47 @@ export default {
         //   query = query.where('snippet.publishedAt', '>', this.start_date)
         // }
 
-        if (this.tag)
-          query = query.where('snippet.tags', 'array-contains', this.tag)
+        if (self.tag)
+          query = query.where('snippet.tags', 'array-contains', self.tag)
 
-        if (!this.query_cursor && Object.keys(this.videos).length) {
-          // we come from SSR
-          query = query.limit(PAGE_SIZE * 2)
+        let video_count = Object.keys(self.videos).length
+        if (!self.query_cursor && video_count) {
+          let limit = video_count + PAGE_SIZE
+          query = query.limit(limit)
+          // console.debug('querying for ', limit)
         } else {
           query = query.limit(PAGE_SIZE)
         }
 
-        if (this.query_cursor) {
-          query = query.startAfter(this.query_cursor)
+        if (self.query_cursor) {
+          query = query.startAfter(self.query_cursor)
+          // console.debug('aplying cursor')
         }
 
         let results = await query.get()
 
         //  Nuxt cant serialize the resulting objects
-        if (process.server) this.query_cursor = null
-        else this.query_cursor = results.docs.at(-1)
+        if (process.server) {
+          self.query_cursor = null
+          // console.debug('not saving cursor')
+        } else {
+          self.query_cursor = results.docs.at(-1)
+          // console.debug('saving cursor')
+        }
 
         results.forEach((doc) => {
-          this.$set(this.videos, doc.data().id, doc.data())
+          self.$set(self.videos, doc.data().id, doc.data())
         })
 
-        this.scroll_disabled = results.docs.length < PAGE_SIZE
-      } catch (e) {
-        console.log(e)
+        self.scroll_disabled = results.docs.length < PAGE_SIZE
+      } finally {
+        self.loading = false
       }
     },
   },
 
   async fetch() {
+    if (Object.keys(this.videos).length) return
     await this.doQuery()
   },
 }

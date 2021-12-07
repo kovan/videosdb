@@ -7,6 +7,7 @@ export default {
   ssr: true,
   target: "static",
   telemetry: false,
+  devtools: true,
 
   publicRuntimeConfig: {
     title: "Sadhguru wisdom",
@@ -48,7 +49,8 @@ export default {
   ],
 
   router: {
-    prefetchLinks: false
+    prefetchLinks: false,
+    prefetchPayloads: false,
   },
   components: true,
 
@@ -94,8 +96,8 @@ export default {
 
   build: {
     extend(config, ctx) {
+      config.devtool = 'source-map';
       if (ctx.isClient) {
-        config.devtool = 'source-map';
         config.optimization.splitChunks.maxSize = 250000;
       }
     },
@@ -120,6 +122,13 @@ export default {
         return [preset];
       },
     },
+  },
+
+  vue: {
+    config: {
+      productionTip: false,
+      devtools: process.env.NODE_ENV == "development"
+    }
   },
   server: {},
 
