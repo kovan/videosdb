@@ -1,4 +1,7 @@
 import firebase from 'firebase/app';
+//import 'firebase/firestore/memory';
+import { firestore } from 'firebase/firestore';
+import { formatISO, parseISO } from 'date-fns'
 
 const FIREBASE_SETTINGS = {
     apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
@@ -10,41 +13,41 @@ const FIREBASE_SETTINGS = {
     measurementId: "G-CPNNB5CBJM"
 }
 
-//import 'firebase/firestore/memory';
-import { firestore } from 'firebase/firestore';
-import { formatISO, parseISO } from 'date-fns'
+
 var db = null
 var vuex_data = null
 
 async function getVuexData(db) {
+    if (vuex_data)
+        return vuex_data
 
-    if (!vuex_data) {
-        const query = db
-            .collection('playlists')
-            .orderBy('videosdb.lastUpdated', 'desc')
+    console.log("getting vuex data")
+    const query = db
+        .collection('playlists')
+        .orderBy('videosdb.lastUpdated', 'desc')
 
-        const meta_query = db.collection('meta').doc('meta')
+    const meta_query = db.collection('meta').doc('meta')
 
-        let [results, meta_results] = await Promise.all([
-            query.get(),
-            meta_query.get(),
-        ])
-        let categories = []
-        results.forEach((doc) => {
-            let category = {
-                name: doc.data().snippet.title,
-                slug: doc.data().videosdb.slug,
-                use_count: doc.data().videosdb.videoCount,
-            }
-            categories.push(category)
-        })
-
-        let meta_data = meta_results.data()
-        vuex_data = {
-            categories,
-            meta_data
+    let [results, meta_results] = await Promise.all([
+        query.get(),
+        meta_query.get(),
+    ])
+    let categories = []
+    results.forEach((doc) => {
+        let category = {
+            name: doc.data().snippet.title,
+            slug: doc.data().videosdb.slug,
+            use_count: doc.data().videosdb.videoCount,
         }
+        categories.push(category)
+    })
+
+    let meta_data = meta_results.data()
+    vuex_data = {
+        categories,
+        meta_data
     }
+
     return vuex_data
 }
 
@@ -124,23 +127,6 @@ function dateToISO(date) {
 
 }
 
-async function getWithCache(query) {
-    return await query.get();
-    // let snap = null
-    // try {
-    //     snap = await query.get({ source: "cache" });
-    // } catch (e) {
-    //     // not in cache
-    //     if (e.code != "unavailable")
-    //         throw e
-    // }
-    // if (!snap || snap.empty) {
-    //     // cache didn't have anything, so try a fetch from server instead
-    //     snap = await query.get();
-    // }
-    // return snap
-}
-
 
 async function dereferenceDb(id_list, collection) {
     let items = []
@@ -156,5 +142,5 @@ async function dereferenceDb(id_list, collection) {
 }
 
 
-export { getDb, formatDate, getWithCache, getVuexData, dereferenceDb, dateToISO, FIREBASE_SETTINGS }
+export { getDb, formatDate, getVuexData, dereferenceDb, dateToISO, FIREBASE_SETTINGS }
 
