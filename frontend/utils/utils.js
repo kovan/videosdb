@@ -87,7 +87,7 @@ function getDb(config) {
     try {
         if (process.env.NODE_ENV === 'development') {
             console.info("USING FIREBASE EMULATOR")
-            db.useEmulator("127.0.0.1", 6001);
+            db.useEmulator("192.168.1.4", 6001);
 
         }
     } catch (e) {
