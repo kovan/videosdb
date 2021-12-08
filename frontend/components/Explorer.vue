@@ -47,6 +47,7 @@
 <script >
 import LazyHydrate from 'vue-lazy-hydration'
 import Loading from '~/components/Loading.vue'
+import { Mutex } from 'async-mutex'
 
 export default {
   name: 'Explorer',
@@ -59,6 +60,7 @@ export default {
       loading: false,
       query_cursor: null,
       scroll_disabled: false,
+      mutex: new Mutex(),
       videos: {},
       // period_options: [
       //   {
@@ -188,9 +190,8 @@ export default {
     async doQuery() {
       var self = this
       const PAGE_SIZE = 20
-      if (self.loading) return
 
-      try {
+      await this.mutex.runExclusive(async () => {
         self.loading = true
         let query = self.$db.collection('videos')
         if (self.ordering) query = query.orderBy(this.ordering, 'desc')
@@ -240,9 +241,7 @@ export default {
         })
 
         self.scroll_disabled = results.docs.length < PAGE_SIZE
-      } finally {
-        self.loading = false
-      }
+      })
     },
   },
 
