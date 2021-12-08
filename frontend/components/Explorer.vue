@@ -136,7 +136,7 @@ export default {
     // console.debug('beforeUpdate')
   },
   beforeUpdate: function () {
-    // console.debug('updated')
+    // // console.debug('updated')
   },
   beforeUnmount: function () {
     // console.debug('beforeUnmount')
@@ -156,6 +156,7 @@ export default {
   // },
   methods: {
     async loadMore() {
+      // console.debug('loadMore')
       await this.doQuery()
     },
     async handleChange() {
@@ -188,10 +189,14 @@ export default {
     //   return [srcset.slice(0, -2), sizes.slice(0, -2)]
     // }
     async doQuery() {
+      if (this.loading) return
+
       var self = this
       const PAGE_SIZE = 20
-
-      await mutex.runExclusive(async () => {
+      // console.debug('--- doQuery ----')
+      // await mutex.runExclusive(async () => {
+      try {
+        // console.debug('--- doQuery in mutex----')
         self.loading = true
         let query = self.$db.collection('videos')
         if (self.ordering) query = query.orderBy(this.ordering, 'desc')
@@ -241,11 +246,15 @@ export default {
         })
 
         self.scroll_disabled = results.docs.length < PAGE_SIZE
-      })
+        // console.debug('scroll status: ', self.scroll_disabled)
+      } finally {
+        self.loading = false
+      }
     },
   },
 
   async fetch() {
+    // console.debug('fetch')
     if (Object.keys(this.videos).length) return
     await this.doQuery()
   },
