@@ -121,10 +121,7 @@ export default {
         }
         return [preset];
       },
-    },
-    transpile: [
-      "async-mutex"
-    ]
+    }
   },
 
   vue: {
