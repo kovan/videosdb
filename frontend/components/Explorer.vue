@@ -166,6 +166,7 @@ export default {
       // if (this.ordering != 'snippet.publishedAt') this.start_date = null
       // this.logs.push('handling change')
       this.query_cursor = null
+      this.no_more_data = false
       for (var key in this.videos) {
         // this check can be safely omitted in modern JS engines
         // if (obj.hasOwnProperty(key))
