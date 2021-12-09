@@ -1,6 +1,7 @@
 <template lang="pug">
 .pt-2(
   v-infinite-scroll='loadMore',
+  infinite-scroll-immediate-check='false',
   infinite-scroll-disabled='loading',
   infinite-scroll-distance=100
 )
