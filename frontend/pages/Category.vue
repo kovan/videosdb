@@ -8,7 +8,6 @@ b-container.p-0.m-0
 </template>
 
 <script>
-import { getWithCache } from '~/utils/utils'
 export default {
   head() {
     return {
@@ -34,9 +33,10 @@ export default {
       return { category: payload.obj }
     }
 
-    const q_category = await getWithCache(
-      $db.collection('playlists').where('videosdb.slug', '==', params.slug)
-    )
+    const q_category = await $db
+      .collection('playlists')
+      .where('videosdb.slug', '==', params.slug)
+      .get()
 
     let category = q_category.docs[0].data()
     return { category }

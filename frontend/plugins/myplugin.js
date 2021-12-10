@@ -3,7 +3,8 @@ import { getDb, formatDate, dateToISO, FIREBASE_SETTINGS } from '~/utils/utils'
 
 var db = null
 
-export default function ({ app }, inject) { // real args are: context and inject
+export default function (context, inject) { // real args are: context and inject
+    //console.debug("executing plugin, db=", db, "$db=", context.$db)
     if (!db)
         db = getDb(FIREBASE_SETTINGS)
 

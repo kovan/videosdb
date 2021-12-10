@@ -1,5 +1,10 @@
 <template lang="pug">
-.pt-2(v-infinite-scroll='loadMore', infinite-scroll-disabled='scroll_disabled')
+.pt-2(
+  v-infinite-scroll='loadMore',
+  infinite-scroll-immediate-check='false',
+  infinite-scroll-disabled='loading',
+  infinite-scroll-distance=100
+)
   .album.py-1.bg-light
     .px-3
       .row
@@ -47,6 +52,7 @@
 <script >
 import LazyHydrate from 'vue-lazy-hydration'
 import Loading from '~/components/Loading.vue'
+import { Mutex } from 'async-mutex'
 
 export default {
   name: 'Explorer',
@@ -56,9 +62,11 @@ export default {
   },
   data: () => {
     return {
+      logs: [],
+      mutex: new Mutex(),
       loading: false,
       query_cursor: null,
-      scroll_disabled: false,
+      no_more_data: false,
       videos: {},
       // period_options: [
       //   {
@@ -118,7 +126,28 @@ export default {
       return ''
     },
   },
-
+  beforeCreate: function () {},
+  created: function () {
+    // this.logs.push('created')
+  },
+  beforeMount: function () {
+    // this.logs.push('beforeMount')
+  },
+  mounted: function () {
+    // this.logs.push('mounted')
+  },
+  beforeUpdate: function () {
+    // this.logs.push('beforeUpdate')
+  },
+  beforeUpdate: function () {
+    // // this.logs.push('updated')
+  },
+  beforeUnmount: function () {
+    // this.logs.push('beforeUnmount')
+  },
+  unmounted: function () {
+    // this.logs.push('unmounted')
+  },
   // watch: {
   //   '$route.query': '$fetch',
   //   // $route(to, from) {
@@ -131,22 +160,20 @@ export default {
   // },
   methods: {
     async loadMore() {
-      this.loading = true
+      // this.logs.push('loadMore')
       await this.doQuery()
-      this.loading = false
     },
     async handleChange() {
       // if (this.ordering != 'snippet.publishedAt') this.start_date = null
-
+      // this.logs.push('handling change')
       this.query_cursor = null
+      this.no_more_data = false
       for (var key in this.videos) {
         // this check can be safely omitted in modern JS engines
         // if (obj.hasOwnProperty(key))
         delete this.videos[key]
       }
-      this.loading = true
       await this.doQuery()
-      this.loading = false
     },
 
     // getSrcSetAndSizes (video) {
@@ -167,16 +194,25 @@ export default {
     //   return [srcset.slice(0, -2), sizes.slice(0, -2)]
     // }
     async doQuery() {
+      if (this.no_more_data) return
+      this.loading = true
+      var self = this
       const PAGE_SIZE = 20
-      try {
-        let query = this.$db.collection('videos')
-        if (this.ordering) query = query.orderBy(this.ordering, 'desc')
+      // this.logs.push('--- doQuery ----')
 
-        if (this.category) {
+      if (!(this.mutex instanceof Mutex)) this.mutex = new Mutex()
+      await this.mutex.runExclusive(async () => {
+        // this.logs.push('--- doQuery ---- inside lock')
+        //try {
+
+        let query = self.$db.collection('videos')
+        if (self.ordering) query = query.orderBy(this.ordering, 'desc')
+
+        if (self.category) {
           query = query.where(
             'videosdb.playlists',
             'array-contains',
-            this.category['id']
+            self.category['id']
           )
         }
 
@@ -184,38 +220,48 @@ export default {
         //   query = query.where('snippet.publishedAt', '>', this.start_date)
         // }
 
-        if (this.tag)
-          query = query.where('snippet.tags', 'array-contains', this.tag)
+        if (self.tag)
+          query = query.where('snippet.tags', 'array-contains', self.tag)
 
-        if (!this.query_cursor && Object.keys(this.videos).length) {
-          // we come from SSR
-          query = query.limit(PAGE_SIZE * 2)
+        let video_count = Object.keys(self.videos).length
+        if (!self.query_cursor && video_count) {
+          let limit = video_count + PAGE_SIZE
+          query = query.limit(limit)
+          // this.logs.push('querying for ', limit)
         } else {
           query = query.limit(PAGE_SIZE)
         }
 
-        if (this.query_cursor) {
-          query = query.startAfter(this.query_cursor)
+        if (self.query_cursor) {
+          query = query.startAfter(self.query_cursor)
+          // this.logs.push('aplying cursor')
         }
 
         let results = await query.get()
 
         //  Nuxt cant serialize the resulting objects
-        if (process.server) this.query_cursor = null
-        else this.query_cursor = results.docs.at(-1)
+        if (process.server) {
+          self.query_cursor = null
+          // this.logs.push('not saving cursor')
+        } else {
+          self.query_cursor = results.docs.at(-1)
+          // this.logs.push('saving cursor')
+        }
 
         results.forEach((doc) => {
-          this.$set(this.videos, doc.data().id, doc.data())
+          self.$set(self.videos, doc.data().id, doc.data())
         })
 
-        this.scroll_disabled = results.docs.length < PAGE_SIZE
-      } catch (e) {
-        console.log(e)
-      }
+        self.no_more_data = results.docs.length < PAGE_SIZE
+        // this.logs.push('scroll disabled: ', self.scroll_disabled)
+        self.loading = false
+      })
     },
   },
 
   async fetch() {
+    // this.logs.push('fetch')
+    if (Object.keys(this.videos).length) return
     await this.doQuery()
   },
 }

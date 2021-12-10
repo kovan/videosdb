@@ -35,8 +35,12 @@ steps:
 
 
   - name: gcr.io/worpdress-279321/firebase
+    env:
+      - 'GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/creds.json'
     args: 
       - deploy
+      - --project
+      - videosdb-firebase
       - --only=hosting
 
 timeout: 3600s

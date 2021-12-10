@@ -125,7 +125,7 @@ b-container.m-0.p-0.mx-auto
 </template>
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
-import { getWithCache, dereferenceDb } from '~/utils/utils'
+import { dereferenceDb } from '~/utils/utils'
 
 export default {
   components: {

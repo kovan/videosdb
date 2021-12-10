@@ -4,15 +4,7 @@ RUN echo 'root:toor' | chpasswd
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt update
-RUN apt install -y python3-dev
-RUN apt install -y python3.9-venv
-RUN apt install -y rustc
-RUN apt install -y wget
-RUN apt install -y git-core
-RUN apt install -y wget
-RUN apt install -y libssl-dev
-RUN apt install -y libffi-dev 
-RUN apt install -y aria2
+RUN apt install -y python3-dev python3.9-venv rustc wget git-core wget libssl-dev libffi-dev aria2
 RUN apt clean
 
 # workaround for QEMU bug: https://github.com/rust-lang/cargo/issues/8719
