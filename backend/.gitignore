@@ -9,3 +9,4 @@ node_modules
 httplib2_cache
 .web_cache
 firestore-emulator-data
+firebase-export*
