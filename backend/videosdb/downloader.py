@@ -79,14 +79,17 @@ class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
 
+    async def init(self):
+        self.api = await YoutubeAPI.create()
+        self.db = await DB.create()
+
     def check_for_new_videos(self):
         logger.info("Sync start")
         anyio.run(self.check_for_new_videos_async)
         logger.info("Sync finished")
 
     async def check_for_new_videos_async(self):
-        self.api = await YoutubeAPI.create()
-        self.db = await DB.create()
+        self.init()
 
         try:
             await self._start()
@@ -286,7 +289,12 @@ class Downloader:
             randomized_ids = meta_doc.to_dict()["videoIds"]
             random.shuffle(randomized_ids)
             for video_id in randomized_ids:
-                for related in await self.api.get_related_videos(video_id):
+                try:
+                    related_videos = await self.api.get_related_videos(video_id)
+                except:
+                    continue
+
+                for related in related_videos:
                     # for now skip videos from other channels:
                     if "snippet" in related and related["snippet"]["channelId"] \
                             != YT_CHANNEL_ID:
