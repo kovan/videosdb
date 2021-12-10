@@ -89,7 +89,7 @@ class Downloader:
         logger.info("Sync finished")
 
     async def check_for_new_videos_async(self):
-        self.init()
+        await self.init()
 
         try:
             await self._start()
