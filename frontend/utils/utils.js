@@ -4,13 +4,12 @@ import { firestore } from 'firebase/firestore';
 import { formatISO, parseISO } from 'date-fns'
 
 const FIREBASE_SETTINGS = {
-    apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
-    authDomain: "worpdress-279321.firebaseapp.com",
-    projectId: "worpdress-279321",
-    storageBucket: "worpdress-279321.appspot.com",
-    messagingSenderId: "149555456673",
-    appId: "1:149555456673:web:5bb83ccdf79e8e47b3dee0",
-    measurementId: "G-CPNNB5CBJM"
+  apiKey: "AIzaSyAhKg1pGeJnL_ZyD1wv7ZPXwfZ6_7OBRa8",
+  authDomain: "videosdb-firebase.firebaseapp.com",
+  projectId: "videosdb-firebase",
+  storageBucket: "videosdb-firebase.appspot.com",
+  messagingSenderId: "136865344383",
+  appId: "1:136865344383:web:2d9764597f98be41c7884a"
 }
 
 

@@ -37,6 +37,8 @@ steps:
   - name: gcr.io/worpdress-279321/firebase
     args: 
       - deploy
+      - --project
+      - videosdb-firebase
       - --only=hosting
 
 timeout: 3600s
