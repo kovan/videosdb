@@ -143,7 +143,7 @@ class IPFS:
 
             if not video_id in files_in_disk_by_id:
                 logger.debug("Downloading " + video_id)
-                with tempfile.TemporaryDirectory() as tmpdir:
+                with tempfile.TemporaryDirectory(dir=videos_dir) as tmpdir:
                     os.chdir(tmpdir)
                     try:
                         filename = yt_dl.download_video(
