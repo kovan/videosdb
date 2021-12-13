@@ -6,25 +6,30 @@ import tempfile
 import ipfshttpclient
 import videosdb.settings as settings
 import socket
-
+from google.oauth2.credentials import Credentials
 from videosdb.youtube_api import YoutubeDL, parse_youtube_id
 #from videosdb.models import Video
 from google.cloud import firestore
+from google.cloud import dns
 
 logger = logging.getLogger(__name__)
+
+BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 
 
 class DNS:
     def __init__(self, dns_zone):
         self.dns_zone = dns_zone
+        creds_json_path = os.path.join(BASE_DIR, "creds-worpdress.json")
+        self.client = dns.Client(
+            credentials=Credentials.from_authorized_user_file(creds_json_path))
 
     def _update_record(self, record_name, record_type, ttl, new_value):
-        from google.cloud import dns
+
         if not self.dns_zone:
             return
 
-        client = dns.Client()
-        zone = client.zone(self.dns_zone)
+        zone = self.client.zone(self.dns_zone)
         records = zone.list_resource_record_sets()
 
         # init transaction
@@ -50,7 +55,9 @@ class DNS:
 
 class IPFS:
     def __init__(self, files_root="/videos"):
-
+        creds_json_path = os.path.join(BASE_DIR, "creds.json")
+        self.db = firestore.Client(
+            credentials=Credentials.from_authorized_user_file(creds_json_path))
         self.host = socket.gethostbyname(settings.IPFS_HOST)
         self.port = settings.IPFS_PORT
         self.files_root = files_root
@@ -126,7 +133,6 @@ class IPFS:
 
     def download_and_register_folder(self, overwrite_hashes=False):
         yt_dl = YoutubeDL()
-        db = firestore.Client()
 
         videos_dir = os.path.abspath(settings.VIDEO_FILES_DIR)
         if not os.path.exists(videos_dir):
@@ -135,11 +141,11 @@ class IPFS:
         files_in_ipfs_by_id = self._files_in_ipfs_dict()
         files_in_disk_by_id = self._files_in_disk_dict(videos_dir)
 
-        videos_in_db_ids = db.collection("meta").document(
+        videos_in_db_ids = self.db.collection("meta").document(
             "meta").get().to_dict()["videoIds"]
 
         for video_id in videos_in_db_ids:
-            video_ref = db.collection("videos").document(video_id)
+            video_ref = self.db.collection("videos").document(video_id)
 
             if not video_id in files_in_disk_by_id:
                 logger.debug("Downloading " + video_id)
