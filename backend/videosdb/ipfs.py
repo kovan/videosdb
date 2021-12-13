@@ -6,7 +6,7 @@ import tempfile
 import ipfshttpclient
 import videosdb.settings as settings
 import socket
-from google.oauth2.credentials import Credentials
+from google.oauth2 import service_account
 from videosdb.youtube_api import YoutubeDL, parse_youtube_id
 #from videosdb.models import Video
 from google.cloud import firestore
@@ -22,7 +22,7 @@ class DNS:
         self.dns_zone = dns_zone
         creds_json_path = os.path.join(BASE_DIR, "creds-worpdress.json")
         self.client = dns.Client(
-            credentials=Credentials.from_authorized_user_file(creds_json_path))
+            credentials=service_account.Credentials.from_service_account_file(creds_json_path))
 
     def _update_record(self, record_name, record_type, ttl, new_value):
 
@@ -57,7 +57,7 @@ class IPFS:
     def __init__(self, files_root="/videos"):
         creds_json_path = os.path.join(BASE_DIR, "creds.json")
         self.db = firestore.Client(
-            credentials=Credentials.from_authorized_user_file(creds_json_path))
+            credentials=service_account.Credentials.from_service_account_file(creds_json_path))
         self.host = socket.gethostbyname(settings.IPFS_HOST)
         self.port = settings.IPFS_PORT
         self.files_root = files_root
