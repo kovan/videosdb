@@ -7,7 +7,7 @@ export default {
   ssr: true,
   target: "static",
   telemetry: false,
-  devtools: true,
+
 
   publicRuntimeConfig: {
     title: "Sadhguru wisdom",
@@ -27,7 +27,7 @@ export default {
   //css: ["~/assets/scss/custom.scss"],
   render: {
     resourceHints: false,
-    asyncScripts: true,
+    //asyncScripts: true,
   },
 
   plugins: [{
