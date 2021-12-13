@@ -7,6 +7,7 @@ services:
     environment:
       - IPFS_HOST=ipfs
       - PYTHONWARNINGS=ignore
+      - GRPC_DNS_RESOLVER=native
     build:
       context: ./backend
     entrypoint:
