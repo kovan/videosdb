@@ -4,12 +4,12 @@ import { firestore } from 'firebase/firestore';
 import { formatISO, parseISO } from 'date-fns'
 
 const FIREBASE_SETTINGS = {
-  apiKey: "AIzaSyAhKg1pGeJnL_ZyD1wv7ZPXwfZ6_7OBRa8",
-  authDomain: "videosdb-firebase.firebaseapp.com",
-  projectId: "videosdb-firebase",
-  storageBucket: "videosdb-firebase.appspot.com",
-  messagingSenderId: "136865344383",
-  appId: "1:136865344383:web:2d9764597f98be41c7884a"
+    apiKey: "AIzaSyAhKg1pGeJnL_ZyD1wv7ZPXwfZ6_7OBRa8",
+    authDomain: "videosdb-firebase.firebaseapp.com",
+    projectId: "videosdb-firebase",
+    storageBucket: "videosdb-firebase.appspot.com",
+    messagingSenderId: "136865344383",
+    appId: "1:136865344383:web:2d9764597f98be41c7884a"
 }
 
 
@@ -86,7 +86,7 @@ function getDb(config) {
     try {
         if (process.env.NODE_ENV === 'development') {
             console.info("USING FIREBASE EMULATOR")
-            db.useEmulator("192.168.1.4", 6001);
+            db.useEmulator("127.0.0.1", 6001);
 
         }
     } catch (e) {

@@ -8,14 +8,17 @@ from .downloader import Downloader
 from .settings import LOGGING
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
-os.environ.setdefault('GOOGLE_APPLICATION_CREDENTIALS',
-                      os.path.join(BASE_DIR, "creds.json"))
 
 
 def dbg():
     os.chdir("/tmp")
     import ipdb
     ipdb.set_trace()
+
+
+def set_creds(file):
+    os.environ.setdefault('GOOGLE_APPLICATION_CREDENTIALS',
+                          os.path.join(BASE_DIR, file))
 
 
 def main():
@@ -30,15 +33,18 @@ def main():
 
     options = parser.parse_args()
     if options.check_for_new_videos:
+        set_creds("creds.json")
         downloader = Downloader()
         downloader.check_for_new_videos()
 
     if options.download_and_register_in_ipfs:
+        set_creds("creds-worpdress.json")
         ipfs = IPFS()
         ipfs.download_and_register_folder(
             options.overwrite_hashes)
 
     if options.update_dnslink:
+        set_creds("creds-worpdress.json")
         ipfs = IPFS()
         ipfs.update_dnslink(force=True)
 
