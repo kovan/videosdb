@@ -1,4 +1,5 @@
-
+import signal
+import asyncio
 
 from async_generator import aclosing
 import anyio
@@ -7,6 +8,7 @@ import random
 
 import logging
 import os
+import types
 import isodate
 import re
 from slugify import slugify
@@ -29,50 +31,47 @@ async def asyncgenerator(item):
     yield item
 
 
+def _filter_exceptions(group: anyio.ExceptionGroup, exception_type, handler_func):
+    unhandled_exceptions = []
+    for e in group.exceptions:
+        if type(e) == exception_type:
+            handler_func(e)
+        else:
+            unhandled_exceptions.append(e)
+
+    if unhandled_exceptions:
+        raise anyio.ExceptionGroup(unhandled_exceptions)
+
+
 class DB:
 
     @classmethod
     async def create(cls):
         obj = cls()
-        obj.db = firestore.AsyncClient()
+        obj.db = firestore.AsyncClient(project="videosdb-firebase")
 
         # initialize meta table:
         doc_ref = obj.db.collection("meta").document("meta")
         doc = await doc_ref.get()
         if not doc.exists or "videoIds" not in doc.to_dict():
-            await doc_ref.set({"videoIds": list()})
+            await doc_ref.set({"videoIds": list()}, merge=True)
         return obj
-
-    async def add_video_id_to_video_index(self, video_id):
-        await self.db.collection("meta").document("meta").update({
-            "videoIds": firestore.ArrayUnion([video_id])
-        })
-
-    async def regenerate_video_index(self):
-        ids = []
-        async for video in self.db.collection("videos").stream():
-            ids.append(video.to_dict()["id"])
-
-        await self.db.collection("meta").document("meta").update({
-            "videoIds": ids
-        })
 
     async def update_last_updated(self):
         return await self.db.collection("meta").document(
             "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
 
-    async def add_playlist_to_video(self, video_id, playlist):
-        return await self.db.collection("videos").document(video_id).update({
-            "videosdb.playlists": firestore.ArrayUnion([playlist])
-        })
+    class Doc:
+        def __init__(self, doc_ref):
+            self.doc_ref = doc_ref
 
-    async def ensure_all_videos_belong_to_channel(self):
-        async for video in self.db.collection("videos").stream():
-            video_obj = video.to_dict()
-            if video_obj["snippet"]["channelId"] != YT_CHANNEL_ID:
-                print("Channel mismatch, expected %s, found %s" %
-                      (YT_CHANNEL_ID, video_obj["snippet"]["channelId"]))
-                await self.db.collection("videos").document(video_obj["id"]).delete()
+        async def __aenter__(self):
+            doc = await self.doc_ref.get()
+            self.dict = doc.to_dict()
+            return self.dict
+
+        async def __aexit__(self, exc_type, exc, tb):
+            await self.doc_ref.set(self.dict, merge=True)
 
 
 class Downloader:
@@ -100,11 +99,9 @@ class Downloader:
         except YoutubeAPI.QuotaExceededError as e:
             logger.error(e)
         except anyio.ExceptionGroup as group:
-            for e in group.exceptions:
-                if type(e) == YoutubeAPI.QuotaExceededError:
-                    logger.error(e)
-                else:
-                    raise e
+            _filter_exceptions(
+                group, YoutubeAPI.QuotaExceededError, logger.error)
+
         finally:
             await self.api.aclose()
 
@@ -159,40 +156,68 @@ class Downloader:
                     processed_playlist_ids.add(playlist_id)
 
     async def _video_processor(self, video_receiver):
+        async def _send_to_task(stream, payload):
+            try:
+                await stream.send(payload)
+            except anyio.BrokenResourceError:
+                # stream was closed on the other end
+                pass
 
         # One stream per video, because when a video is found in a new playlist,
         # the video has to already exist in the DB for the playlist to be added.
         # This way, DB operations on a video are always in sequential order.
-        video_streams = dict()
+
         async with anyio.create_task_group() as nursery:
-            async with anyio.create_task_group() as nursery2:
+            video_streams = dict()
+            try:
+                nursery.start_soon(self._print_stats_thread,
+                                   video_streams.values())
                 async for video_id, playlist_id in video_receiver:
 
-                    if video_id not in video_streams:
+                    if not video_id in video_streams:
                         snd_stream, rcv_stream = anyio.create_memory_object_stream()
-                        nursery.start_soon(self._process_video, rcv_stream)
+                        nursery.start_soon(
+                            self._process_video, rcv_stream)
                         video_streams[video_id] = snd_stream
-                        coro = self._create_video(video_id)
-                        await video_streams[video_id].send(coro)
 
-                    if playlist_id:
+                    nursery.start_soon(
+                        _send_to_task, video_streams[video_id], (video_id, playlist_id))
 
-                        coro = self.db.add_playlist_to_video(
-                            video_id, playlist_id)
-                        nursery2.start_soon(video_streams[video_id].send, coro)
+            finally:
+                for stream in video_streams.values():
+                    stream.close()
 
-            for stream in video_streams.values():
-                stream.close()
+                meta_doc = self.db.db.collection("meta").document("meta")
+
+                async with DB.Doc(meta_doc) as meta:
+                    ids = set(meta["videoIds"])
+                    ids.update(video_streams.keys())
+                    meta["videoIds"] = list(ids)
 
     async def _process_video(self, task_receiver):
-        breaking = False
-        async for task in task_receiver:
-            if breaking:
-                task.close()  # to prevent Python warning of unawaited coroutine
-            else:
-                result = await task
-                if not result:
-                    breaking = True
+        try:
+            self_video_id = None
+            playlist_ids = []
+            async with aclosing(task_receiver):
+                async for video_id, playlist_id in task_receiver:
+                    logger.debug("Processing video %s playlist %s " %
+                                 (video_id, playlist_id))
+                    if not self_video_id:
+                        if not await self._create_video(video_id):
+                            break
+                        self_video_id = video_id
+
+                    if playlist_id:
+                        playlist_ids.append(playlist_id)
+
+        finally:
+            logger.debug("Writing playlist info for video: " +
+                         str(self_video_id))
+            await self.db.db.collection("videos").document(self_video_id).set({
+                "videosdb": {
+                    "playlists": playlist_ids
+                }
+            }, merge=True)
 
     async def _process_playlist(self, playlist_id, video_sender):
         playlist = await self.api.get_playlist_info(playlist_id)
@@ -249,9 +274,12 @@ class Downloader:
 
         custom_attrs = dict()
 
-        if (not old_video_doc.exists or
-            not "transcript_status" in old_video_doc.to_dict()["videosdb"] or
-                old_video_doc.to_dict()["videosdb"]["transcript_status"] == "pending"):
+        old_video = old_video_doc.to_dict() if old_video_doc.exists else None
+
+        if (not old_video or
+            not "videosdb" in old_video or
+            not "transcript_status" in old_video["videosdb"] or
+                old_video["videosdb"]["transcript_status"] == "pending"):
             transcript, new_status = await self._download_transcript(video_id)
             custom_attrs["transcript_status"] = new_status
             if transcript:
@@ -273,9 +301,8 @@ class Downloader:
         await self.db.db.collection("videos").document(
             video_id).set(video, merge=True)
 
-        await self.db.add_video_id_to_video_index(video_id)
-
-        logger.info("Created video: " + video["snippet"]["title"])
+        logger.info("Created video ID[%s]: %s" %
+                    (video["id"], video["snippet"]["title"]))
 
         return video
 
@@ -289,10 +316,8 @@ class Downloader:
             randomized_ids = meta_doc.to_dict()["videoIds"]
             random.shuffle(randomized_ids)
             for video_id in randomized_ids:
-                try:
-                    related_videos = await self.api.get_related_videos(video_id)
-                except:
-                    continue
+
+                related_videos = await self.api.get_related_videos(video_id)
 
                 for related in related_videos:
                     # for now skip videos from other channels:
@@ -307,7 +332,8 @@ class Downloader:
                     logger.info("Added new related videos to video %s" %
                                 (video_id))
 
-    async def _download_transcript(self, video_id):
+    @ staticmethod
+    async def _download_transcript(video_id):
         try:
             transcript = await anyio.to_thread.run_sync(
                 get_video_transcript, video_id)
@@ -338,3 +364,15 @@ class Downloader:
         if match and match.start() != -1:
             return description[:match.start()]
         return description
+
+    @staticmethod
+    async def _print_stats_thread(streams):
+        with anyio.open_signal_receiver(signal.SIGHUP) as signals:
+            async for signum in signals:
+                if signum != signal.SIGHUP:
+                    continue
+                print("stats: ")
+                for task in asyncio.all_tasks():
+                    print(task)
+                for stream in streams:
+                    print(stream.statistics())
