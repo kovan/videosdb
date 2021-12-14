@@ -175,12 +175,13 @@ class IPFS:
                 file = files_in_ipfs_by_id[video_id]
 
                 logger.debug("Already in IPFS:  " + str(file))
-                video_ref.set({
-                    "videosdb": {
-                        "filename": file["Name"],
-                        "ipfs_hash": file["Hash"]
-                    }
-                }, merge=True)
+                if overwrite_hashes:
+                    video_ref.set({
+                        "videosdb": {
+                            "filename": file["Name"],
+                            "ipfs_hash": file["Hash"]
+                        }
+                    }, merge=True)
                 continue
 
             # adding to IPFS:
