@@ -194,30 +194,39 @@ class Downloader:
                     ids.update(video_streams.keys())
                     meta["videoIds"] = list(ids)
 
+        logger.debug("All videos processed.")
+
     async def _process_video(self, task_receiver):
         try:
+            breaking = False
             self_video_id = None
             playlist_ids = []
-            async with aclosing(task_receiver):
-                async for video_id, playlist_id in task_receiver:
-                    logger.debug("Processing video %s playlist %s " %
-                                 (video_id, playlist_id))
-                    if not self_video_id:
-                        if not await self._create_video(video_id):
-                            break
-                        self_video_id = video_id
 
-                    if playlist_id:
-                        playlist_ids.append(playlist_id)
+            async for video_id, playlist_id in task_receiver:
+                if breaking:
+                    continue
+
+                logger.debug("Processing video %s playlist %s " %
+                             (video_id, playlist_id))
+                if not self_video_id:
+                    if not await self._create_video(video_id):
+                        breaking = True
+                        continue
+                    self_video_id = video_id
+
+                if playlist_id:
+                    playlist_ids.append(playlist_id)
 
         finally:
-            logger.debug("Writing playlist info for video: " +
-                         str(self_video_id))
+            if not self_video_id:
+                return
             await self.db.db.collection("videos").document(self_video_id).set({
                 "videosdb": {
                     "playlists": playlist_ids
                 }
             }, merge=True)
+            logger.debug("Wrote playlist info for video: " +
+                         str(self_video_id))
 
     async def _process_playlist(self, playlist_id, video_sender):
         playlist = await self.api.get_playlist_info(playlist_id)
@@ -374,5 +383,7 @@ class Downloader:
                 print("stats: ")
                 for task in asyncio.all_tasks():
                     print(task)
+                    for line in task.get_stack():
+                        print(line)
                 for stream in streams:
                     print(stream.statistics())
