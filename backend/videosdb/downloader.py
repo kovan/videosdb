@@ -1,5 +1,4 @@
-import signal
-import asyncio
+
 
 from async_generator import aclosing
 import anyio
@@ -8,7 +7,6 @@ import random
 
 import logging
 import os
-import types
 import isodate
 import re
 from slugify import slugify
@@ -54,14 +52,42 @@ class DB:
         doc_ref = obj.db.collection("meta").document("meta")
         doc = await doc_ref.get()
         if not doc.exists or "videoIds" not in doc.to_dict():
-            await doc_ref.set({"videoIds": list()}, merge=True)
+            await doc_ref.set({"videoIds": list()})
         return obj
+
+    async def add_video_id_to_video_index(self, video_id):
+        await self.db.collection("meta").document("meta").update({
+            "videoIds": firestore.ArrayUnion([video_id])
+        })
+
+    async def regenerate_video_index(self):
+        ids = []
+        async for video in self.db.collection("videos").stream():
+            ids.append(video.to_dict()["id"])
+
+        await self.db.collection("meta").document("meta").update({
+            "videoIds": ids
+        })
 
     async def update_last_updated(self):
         return await self.db.collection("meta").document(
             "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
 
+    async def add_playlist_to_video(self, video_id, playlist):
+        return await self.db.collection("videos").document(video_id).update({
+            "videosdb.playlists": firestore.ArrayUnion([playlist])
+        })
+
+    async def ensure_all_videos_belong_to_channel(self):
+        async for video in self.db.collection("videos").stream():
+            video_obj = video.to_dict()
+            if video_obj["snippet"]["channelId"] != YT_CHANNEL_ID:
+                print("Channel mismatch, expected %s, found %s" %
+                      (YT_CHANNEL_ID, video_obj["snippet"]["channelId"]))
+                await self.db.collection("videos").document(video_obj["id"]).delete()
+
     class Doc:
+
         def __init__(self, doc_ref):
             self.doc_ref = doc_ref
 
@@ -99,9 +125,11 @@ class Downloader:
         except YoutubeAPI.QuotaExceededError as e:
             logger.error(e)
         except anyio.ExceptionGroup as group:
-            _filter_exceptions(
-                group, YoutubeAPI.QuotaExceededError, logger.error)
-
+            for e in group.exceptions:
+                if type(e) == YoutubeAPI.QuotaExceededError:
+                    logger.error(e)
+                else:
+                    raise e
         finally:
             await self.api.aclose()
 
@@ -156,67 +184,66 @@ class Downloader:
                     processed_playlist_ids.add(playlist_id)
 
     async def _video_processor(self, video_receiver):
-        async def _send_to_task(stream, payload):
-            try:
-                await stream.send(payload)
-            except anyio.BrokenResourceError:
-                # stream was closed on the other end
-                pass
 
         # One stream per video, because when a video is found in a new playlist,
         # the video has to already exist in the DB for the playlist to be added.
         # This way, DB operations on a video are always in sequential order.
-
+        video_streams = dict()
         async with anyio.create_task_group() as nursery:
-            video_streams = dict()
             try:
-                nursery.start_soon(self._print_stats_thread,
-                                   video_streams.values())
-                async for video_id, playlist_id in video_receiver:
+                async with anyio.create_task_group() as nursery2:
+                    async for video_id, playlist_id in video_receiver:
 
-                    if not video_id in video_streams:
-                        snd_stream, rcv_stream = anyio.create_memory_object_stream()
-                        nursery.start_soon(
-                            self._process_video, rcv_stream)
-                        video_streams[video_id] = snd_stream
+                        if video_id not in video_streams:
+                            snd_stream, rcv_stream = anyio.create_memory_object_stream()
+                            nursery.start_soon(self._process_video, rcv_stream)
+                            video_streams[video_id] = snd_stream
+                            task = {
+                                "action": "create",
+                                "video_id": video_id
+                            }
+                            await video_streams[video_id].send(task)
 
-                    nursery.start_soon(
-                        _send_to_task, video_streams[video_id], (video_id, playlist_id))
+                        if playlist_id:
+                            task = {
+                                "action": "add_playlist",
+                                "video_id": video_id,
+                                "playlist_id": playlist_id
+                            }
 
+                            nursery2.start_soon(
+                                video_streams[video_id].send, task)
             finally:
                 for stream in video_streams.values():
                     stream.close()
 
                 meta_doc = self.db.db.collection("meta").document("meta")
-
                 async with DB.Doc(meta_doc) as meta:
                     ids = set(meta["videoIds"])
                     ids.update(video_streams.keys())
                     meta["videoIds"] = list(ids)
 
-        logger.debug("All videos processed.")
-
     async def _process_video(self, task_receiver):
+        breaking = False
+        self_video_id = None
+        playlist_ids = []
         try:
-            breaking = False
-            self_video_id = None
-            playlist_ids = []
-
-            async for video_id, playlist_id in task_receiver:
+            async for task in task_receiver:
                 if breaking:
                     continue
 
-                logger.debug("Processing video %s playlist %s " %
-                             (video_id, playlist_id))
-                if not self_video_id:
-                    if not await self._create_video(video_id):
+                if task["action"] == "create":
+                    result = await self._create_video(task["video_id"])
+                    if not result:
                         breaking = True
                         continue
-                    self_video_id = video_id
+                    self_video_id = task["video_id"]
 
-                if playlist_id:
-                    playlist_ids.append(playlist_id)
+                elif task["action"] == "add_playlist":
+                    playlist_ids.append(task["playlist_id"])
 
+                else:
+                    raise ValueError()
         finally:
             if not self_video_id:
                 return
@@ -310,8 +337,9 @@ class Downloader:
         await self.db.db.collection("videos").document(
             video_id).set(video, merge=True)
 
-        logger.info("Created video ID[%s]: %s" %
-                    (video["id"], video["snippet"]["title"]))
+        await self.db.add_video_id_to_video_index(video_id)
+
+        logger.info("Created video: " + video["snippet"]["title"])
 
         return video
 
@@ -341,8 +369,7 @@ class Downloader:
                     logger.info("Added new related videos to video %s" %
                                 (video_id))
 
-    @ staticmethod
-    async def _download_transcript(video_id):
+    async def _download_transcript(self, video_id):
         try:
             transcript = await anyio.to_thread.run_sync(
                 get_video_transcript, video_id)
@@ -373,17 +400,3 @@ class Downloader:
         if match and match.start() != -1:
             return description[:match.start()]
         return description
-
-    @staticmethod
-    async def _print_stats_thread(streams):
-        with anyio.open_signal_receiver(signal.SIGHUP) as signals:
-            async for signum in signals:
-                if signum != signal.SIGHUP:
-                    continue
-                print("stats: ")
-                for task in asyncio.all_tasks():
-                    print(task)
-                    for line in task.get_stack():
-                        print(line)
-                for stream in streams:
-                    print(stream.statistics())
