@@ -1,10 +1,10 @@
 
-
+import signal
 from async_generator import aclosing
 import anyio
 from datetime import date, datetime
 import random
-
+import asyncio
 import logging
 import os
 import isodate
@@ -55,36 +55,9 @@ class DB:
             await doc_ref.set({"videoIds": list()})
         return obj
 
-    async def add_video_id_to_video_index(self, video_id):
-        await self.db.collection("meta").document("meta").update({
-            "videoIds": firestore.ArrayUnion([video_id])
-        })
-
-    async def regenerate_video_index(self):
-        ids = []
-        async for video in self.db.collection("videos").stream():
-            ids.append(video.to_dict()["id"])
-
-        await self.db.collection("meta").document("meta").update({
-            "videoIds": ids
-        })
-
     async def update_last_updated(self):
         return await self.db.collection("meta").document(
             "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
-
-    async def add_playlist_to_video(self, video_id, playlist):
-        return await self.db.collection("videos").document(video_id).update({
-            "videosdb.playlists": firestore.ArrayUnion([playlist])
-        })
-
-    async def ensure_all_videos_belong_to_channel(self):
-        async for video in self.db.collection("videos").stream():
-            video_obj = video.to_dict()
-            if video_obj["snippet"]["channelId"] != YT_CHANNEL_ID:
-                print("Channel mismatch, expected %s, found %s" %
-                      (YT_CHANNEL_ID, video_obj["snippet"]["channelId"]))
-                await self.db.collection("videos").document(video_obj["id"]).delete()
 
     class Doc:
 
@@ -125,11 +98,8 @@ class Downloader:
         except YoutubeAPI.QuotaExceededError as e:
             logger.error(e)
         except anyio.ExceptionGroup as group:
-            for e in group.exceptions:
-                if type(e) == YoutubeAPI.QuotaExceededError:
-                    logger.error(e)
-                else:
-                    raise e
+            _filter_exceptions(
+                group, YoutubeAPI.QuotaExceededError, logger.error)
         finally:
             await self.api.aclose()
 
@@ -337,8 +307,6 @@ class Downloader:
         await self.db.db.collection("videos").document(
             video_id).set(video, merge=True)
 
-        await self.db.add_video_id_to_video_index(video_id)
-
         logger.info("Created video: " + video["snippet"]["title"])
 
         return video
@@ -369,7 +337,8 @@ class Downloader:
                     logger.info("Added new related videos to video %s" %
                                 (video_id))
 
-    async def _download_transcript(self, video_id):
+    @staticmethod
+    async def _download_transcript(video_id):
         try:
             transcript = await anyio.to_thread.run_sync(
                 get_video_transcript, video_id)
@@ -400,3 +369,17 @@ class Downloader:
         if match and match.start() != -1:
             return description[:match.start()]
         return description
+
+    @staticmethod
+    async def _print_stats_thread(streams):
+        with anyio.open_signal_receiver(signal.SIGHUP) as signals:
+            async for signum in signals:
+                if signum != signal.SIGHUP:
+                    continue
+                print("stats: ")
+                for task in asyncio.all_tasks():
+                    print(task)
+                    for line in task.get_stack():
+                        print(line)
+                for stream in streams:
+                    print(stream.statistics())
