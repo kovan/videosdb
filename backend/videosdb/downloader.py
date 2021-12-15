@@ -1,5 +1,3 @@
-
-import signal
 from async_generator import aclosing
 import anyio
 from datetime import date, datetime
@@ -102,8 +100,7 @@ class Downloader:
                 group, YoutubeAPI.QuotaExceededError, logger.error)
         finally:
             await self.api.aclose()
-
-        await self.db.update_last_updated()
+            await self.db.update_last_updated()
 
     async def _start(self):
         video_sender, video_receiver = anyio.create_memory_object_stream()
@@ -369,17 +366,3 @@ class Downloader:
         if match and match.start() != -1:
             return description[:match.start()]
         return description
-
-    @staticmethod
-    async def _print_stats_thread(streams):
-        with anyio.open_signal_receiver(signal.SIGHUP) as signals:
-            async for signum in signals:
-                if signum != signal.SIGHUP:
-                    continue
-                print("stats: ")
-                for task in asyncio.all_tasks():
-                    print(task)
-                    for line in task.get_stack():
-                        print(line)
-                for stream in streams:
-                    print(stream.statistics())
