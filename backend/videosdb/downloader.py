@@ -2,7 +2,7 @@ from async_generator import aclosing
 import anyio
 from datetime import date, datetime
 import random
-import asyncio
+import sys
 import logging
 import os
 import isodate
@@ -11,11 +11,13 @@ from slugify import slugify
 
 
 from google.cloud import firestore
+from google.oauth2 import service_account
 import youtube_transcript_api
 from aiostream import stream
 
 
 from .youtube_api import YoutubeAPI, get_video_transcript
+BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,10 @@ class DB:
     @classmethod
     async def create(cls):
         obj = cls()
-        obj.db = firestore.AsyncClient(project="videosdb-firebase")
+
+        creds_json_path = os.path.join(BASE_DIR, "creds.json")
+        obj.db = firestore.AsyncClient(project="videosdb-firebase",
+                                       credentials=service_account.Credentials.from_service_account_file(creds_json_path))
 
         # initialize meta table:
         doc_ref = obj.db.collection("meta").document("meta")
