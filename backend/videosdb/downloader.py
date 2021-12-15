@@ -74,6 +74,8 @@ class DB:
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
+    def __init__(self):
+        self.valid_video_ids = set()
 
     async def init(self):
         self.api = await YoutubeAPI.create()
@@ -90,7 +92,7 @@ class Downloader:
         try:
             await self._start()
 
-            if not "DEBUG" in os.environ:
+            if True:  # not "DEBUG" in os.environ:
                 # separate so that it uses remaining quota
                 await self._fill_related_videos()
         except YoutubeAPI.QuotaExceededError as e:
@@ -187,7 +189,7 @@ class Downloader:
                 meta_doc = self.db.db.collection("meta").document("meta")
                 async with DB.Doc(meta_doc) as meta:
                     ids = set(meta["videoIds"])
-                    ids.update(video_streams.keys())
+                    ids.update(self.valid_video_ids)
                     meta["videoIds"] = list(ids)
 
     async def _process_video(self, task_receiver):
@@ -304,6 +306,7 @@ class Downloader:
         await self.db.db.collection("videos").document(
             video_id).set(video, merge=True)
 
+        self.valid_video_ids.add(video["id"])
         logger.info("Created video: " + video["snippet"]["title"])
 
         return video
