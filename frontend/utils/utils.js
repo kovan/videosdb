@@ -141,5 +141,80 @@ async function dereferenceDb(id_list, collection) {
 }
 
 
-export { getDb, formatDate, getVuexData, dereferenceDb, dateToISO, FIREBASE_SETTINGS }
+function videoToSitemapEntry(video) {
+    // Reference:
+    // https://developers.google.com/search/docs/advanced/sitemaps/video-sitemaps
+    let json = {
+        url: `/video/${video.videosdb.slug}`,
+        video: [
+            {
+                thumbnail_loc: video.snippet.thumbnails.medium.url,
+                title: video.snippet.title,
+                description: video.videosdb.descriptionTrimmed
+                    ? video.videosdb.descriptionTrimmed
+                    : video.snippet.title,
+                duration: video.videosdb.durationSeconds,
+                publication_date: dateToISO(video.snippet.publishedAt)
+            },
+        ],
+        priority: 1.0,
+    }
+
+    if ('filename' in video.videosdb) {
+        json.video[0].content_loc =
+            'https://videos.sadhguru.digital/' +
+            encodeURIComponent(video.videosdb.filename)
+    } else {
+        json.video[0].player_loc = `https://www.youtube.com/watch?v=${video.id}`
+
+    }
+
+
+    return json
+}
+
+function videoToStructuredData(video) {
+    // Reference:
+    // https://developers.google.com/search/docs/advanced/sitemaps/video-sitemaps
+    let json = {
+        '@context': 'https://schema.org',
+        '@type': 'VideoObject',
+        name: video.snippet.title,
+        description: video.videosdb.descriptionTrimmed
+            ? video.videosdb.descriptionTrimmed
+            : video.snippet.title,
+        thumbnailUrl: Object.values(video.snippet.thumbnails).map(
+            (thumb) => thumb.url
+        ),
+        uploadDate: dateToISO(video.snippet.publishedAt),
+        duration: video.contentDetails.duration,
+    }
+
+    if ('filename' in video.videosdb) {
+        json.contentUrl =
+            'https://videos.sadhguru.digital/' +
+            encodeURIComponent(video.videosdb.filename)
+
+    } else {
+        json.embedUrl = `https://www.youtube.com/watch?v=${video.id}`
+
+    }
+
+
+
+    let string = JSON.stringify(json)
+    return string
+}
+
+
+export {
+    getDb,
+    formatDate,
+    getVuexData,
+    dereferenceDb,
+    dateToISO,
+    videoToStructuredData,
+    videoToSitemapEntry,
+    FIREBASE_SETTINGS
+}
 

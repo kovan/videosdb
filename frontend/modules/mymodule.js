@@ -2,7 +2,7 @@ process.on('unhandledRejection', (error) => {
     console.trace(error);
 });
 var AsyncLock = require('async-lock');
-import { getDb, dateToISO, FIREBASE_SETTINGS } from "../utils/utils"
+import { getDb, videoToSitemapEntry, FIREBASE_SETTINGS } from "../utils/utils"
 
 var lock = new AsyncLock();
 const NodeCache = require("node-cache");
@@ -19,35 +19,6 @@ async function getSitemap(dbOptions) {
             priority: 0.1
         }
     }
-    function transformVideo(video) {
-        let json = {
-            url: `/video/${video.videosdb.slug}`,
-            video: [
-                {
-                    thumbnail_loc: video.snippet.thumbnails.medium.url,
-                    title: video.snippet.title,
-                    description: video.videosdb.descriptionTrimmed
-                        ? video.videosdb.descriptionTrimmed
-                        : video.snippet.title,
-                    duration: video.videosdb.durationSeconds,
-                    publication_date: dateToISO(video.snippet.publishedAt)
-                },
-            ],
-            priority: 1.0,
-        }
-        let url = null
-        if ('filename' in video.videosdb) {
-            url =
-                'https://videos.sadhguru.digital/' +
-                encodeURIComponent(video.videosdb.filename)
-        } else {
-            url = `https://www.sadhguru.digital/video/${video.videosdb.slug}`
-        }
-        json.video[0].content_loc = url
-        json.video[0].player_loc = url
-
-        return json
-    }
 
     var sitemap = [
         {
@@ -62,7 +33,7 @@ async function getSitemap(dbOptions) {
         if (key.indexOf("/category/") != -1)
             sitemap.push(transformCategory(item))
         if (key.indexOf("/video/") != -1)
-            sitemap.push(transformVideo(item))
+            sitemap.push(videoToSitemapEntry(item))
     })
 
     return sitemap

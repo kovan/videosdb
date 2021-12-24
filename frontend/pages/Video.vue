@@ -126,7 +126,7 @@ b-container.m-0.p-0.mx-auto
 </template>
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
-import { dereferenceDb } from '~/utils/utils'
+import { dereferenceDb, videoToStructuredData } from '~/utils/utils'
 
 export default {
   components: {
@@ -157,32 +157,7 @@ export default {
   },
   computed: {
     video_json: function () {
-      let json = {
-        '@context': 'https://schema.org',
-        '@type': 'VideoObject',
-        name: this.video.snippet.title,
-        description: this.video.videosdb.descriptionTrimmed
-          ? this.video.videosdb.descriptionTrimmed
-          : this.video.snippet.title,
-        thumbnailUrl: Object.values(this.video.snippet.thumbnails).map(
-          (thumb) => thumb.url
-        ),
-        uploadDate: this.$myDateToISO(this.video.snippet.publishedAt),
-        duration: this.video.contentDetails.duration,
-      }
-      let url = null
-      if ('filename' in this.video.videosdb) {
-        url =
-          'https://videos.sadhguru.digital/' +
-          encodeURIComponent(this.video.videosdb.filename)
-      } else {
-        url = `https://www.sadhguru.digital/video/${this.video.videosdb.slug}`
-      }
-      json.contentUrl = url
-      json.embedUrl = url
-
-      let string = JSON.stringify(json)
-      return string
+      return videoToStructuredData(this.video)
     },
   },
   methods: {},
