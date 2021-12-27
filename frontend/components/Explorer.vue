@@ -9,7 +9,7 @@
     .px-3
       .row
         .col
-          .container.p-2.text-right.align-middle
+          .container.p-2.text-right
             | Order by:
         .col
           .container.p-1.pb-3 

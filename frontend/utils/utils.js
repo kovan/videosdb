@@ -37,6 +37,7 @@ async function getVuexData(db) {
             name: doc.data().snippet.title,
             slug: doc.data().videosdb.slug,
             use_count: doc.data().videosdb.videoCount,
+            last_updated: doc.data().videosdb.lastUpdated.toDate()
         }
         categories.push(category)
     })

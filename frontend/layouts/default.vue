@@ -40,6 +40,17 @@ div
           no-slide,
           title='Categories'
         )
+          b-container
+          .col 
+            small Order by:
+          .col
+            b-form-select(
+              text='Order by',
+              v-model='ordering',
+              :options='ordering_options',
+              @change='handleChange'
+            )
+
           ul.flex-column
             li.mr-2.nav-item(
               v-for='category in this.categories',
@@ -72,6 +83,7 @@ import { parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
 import { getVuexData } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
+import { orderBy } from 'lodash'
 
 export default {
   fetchKey: 'site-sidebar',
@@ -91,10 +103,37 @@ export default {
       title: this.$config.title,
       subtitle: this.$config.subtitle,
       last_updated: null,
+      ordering_options: [
+        {
+          text: 'Last updated',
+          value: 'last_updated',
+        },
+        {
+          text: 'Video count',
+          value: 'use_count',
+        },
+        {
+          text: 'Alphabetical',
+          value: 'name',
+        },
+      ],
+      ordering: 'last_updated',
     }
   },
 
   methods: {
+    async handleChange() {
+      let directions = {
+        name: 'asc',
+        use_count: 'desc',
+        last_updated: 'desc',
+      }
+      this.categories = orderBy(
+        this.categories,
+        [this.ordering],
+        [directions[this.ordering]]
+      )
+    },
     format(iso_date) {
       return parseISO(iso_date).toLocaleDateString()
     },
@@ -132,7 +171,7 @@ export default {
       this.$store.commit('setInitial', vuex_data)
     }
 
-    this.categories = this.$store.state.categories
+    this.categories = [...this.$store.state.categories]
     this.last_updated = this.$store.state.meta_data.lastUpdated
   },
 }
