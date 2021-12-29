@@ -90,26 +90,51 @@ export default {
       ordering_options: [
         {
           text: 'Latest',
-          value: 'snippet.publishedAt',
+          value: {
+            field: 'snippet.publishedAt',
+            direction: 'desc',
+          },
+        },
+        {
+          text: 'Oldest',
+          value: {
+            field: 'snippet.publishedAt',
+            direction: 'asc',
+          },
         },
         {
           text: 'Most viewed',
-          value: 'statistics.viewCount',
+          value: {
+            field: 'statistics.viewCount',
+            direction: 'desc',
+          },
         },
         {
           text: 'Most liked',
-          value: 'statistics.likeCount',
+          value: {
+            field: 'statistics.likeCount',
+            direction: 'desc',
+          },
         },
         {
           text: 'Most commented',
-          value: 'statistics.commentCount',
+          value: {
+            field: 'statistics.commentCount',
+            direction: 'desc',
+          },
         },
         {
           text: 'Most favorited',
-          value: 'statistics.favoriteCount',
+          value: {
+            field: 'snippet.publishedAt',
+            direction: 'desc',
+          },
         },
       ],
-      ordering: 'snippet.publishedAt',
+      ordering: {
+        field: 'snippet.publishedAt',
+        direction: 'desc',
+      },
     }
   },
   props: {
@@ -206,7 +231,8 @@ export default {
         //try {
 
         let query = self.$db.collection('videos')
-        if (self.ordering) query = query.orderBy(this.ordering, 'desc')
+        if (self.ordering)
+          query = query.orderBy(self.ordering.field, self.ordering.direction)
 
         if (self.category) {
           query = query.where(
