@@ -130,6 +130,20 @@ export default {
             direction: 'desc',
           },
         },
+        {
+          text: 'Longest',
+          value: {
+            field: 'videosdb.durationSeconds',
+            direction: 'desc',
+          },
+        },
+        {
+          text: 'Shortest',
+          value: {
+            field: 'videosdb.durationSeconds',
+            direction: 'asc',
+          },
+        },
       ],
       ordering: {
         field: 'snippet.publishedAt',
