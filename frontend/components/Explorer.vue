@@ -144,6 +144,13 @@ export default {
             direction: 'asc',
           },
         },
+        {
+          text: 'Alphabetical',
+          value: {
+            field: 'snippet.title',
+            direction: 'asc',
+          },
+        },
       ],
       ordering: {
         field: 'snippet.publishedAt',
