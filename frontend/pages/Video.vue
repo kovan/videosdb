@@ -120,10 +120,10 @@ b-container.m-0.p-0.mx-auto
           b-button.mt-2(size='sm', pill)
             | {{ tag }}
 
-    .my-4(v-if='this.video.videosdb.transcript')
-      p
-        strong Transcription:
-      small(style='white-space: pre-line') {{ this.video.videosdb.transcript }}
+    //- .my-4(v-if='this.video.videosdb.transcript')
+    //-   p
+    //-     strong Transcription:
+    //-   small(style='white-space: pre-line') {{ this.video.videosdb.transcript }}
 </template>
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
