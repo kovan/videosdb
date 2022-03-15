@@ -18,26 +18,6 @@ b-container.m-0.p-0.mx-auto
       strong Description
       p(style='white-space: pre-line') {{ this.video.videosdb.descriptionTrimmed }}
 
-    .my-4(v-if='this.video.videosdb.ipfs_hash')
-      p(align='center')
-        b-link(
-          :href='"https://videos.sadhguru.digital/" + encodeURIComponent(this.video.videosdb.filename)',
-          download
-        )
-          b-button
-            | View / Download
-      p(align='center') 
-        b-link(
-          :href='"ipns://videos.sadhguru.digital/" + encodeURIComponent(this.video.videosdb.filename)'
-        )
-          b-button
-            | View / Download - with &nbsp;
-            b-img(
-              src='/ipfs-logo-text-128-ice-white.png',
-              height='24px',
-              alt='IPFS Logo'
-            )
-
       p(align='center')
         small NOTE: to download the videos, right click on the download link and choose "Save as.."
 
