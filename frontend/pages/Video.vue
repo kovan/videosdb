@@ -18,9 +18,6 @@ b-container.m-0.p-0.mx-auto
       strong Description
       p(style='white-space: pre-line') {{ this.video.videosdb.descriptionTrimmed }}
 
-      p(align='center')
-        small NOTE: to download the videos, right click on the download link and choose "Save as.."
-
     .my-4(
       v-if='this.video.videosdb.playlists && this.video.videosdb.playlists.length > 0'
     )
