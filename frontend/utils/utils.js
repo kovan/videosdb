@@ -136,7 +136,7 @@ async function dereferenceDb(id_list, collection) {
     let items = []
 
     await Promise.all(id_list.map(async (id) => {
-        let doc = await collection.document("id").get()
+        let doc = await collection.doc("id").get()
         items.push(doc.data())
     }));
 
