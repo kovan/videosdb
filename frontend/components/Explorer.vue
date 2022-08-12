@@ -43,7 +43,7 @@
                     | {{ video.snippet.title }}
                 .d-flex.justify-content-between.align-items-center
                   small.text-muted Published: <br/>{{ $myFormatDate(video.snippet.publishedAt) }}
-                  small.text-muted Duration: <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
+                  small.text-muted Duration (hh:mm:ss): <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
         .col-md-4(v-if='loading')
           .card.mb-4.shadow-sm.text-center 
             Loading

@@ -1,9 +1,7 @@
 import pytest
 import logging
-import asyncio
 import os
 from videosdb.downloader import Downloader
-from google.cloud import firestore
 from videosdb.youtube_api import YoutubeAPI
 
 # @pytest.fixture
@@ -12,20 +10,21 @@ from videosdb.youtube_api import YoutubeAPI
 
 def setup_module(module):
     logging.getLogger("videosdb.downloader").setLevel(logging.DEBUG)
-    os.environ.setdefault(
-        "YOUTUBE_API_URL", "http://127.0.0.1:2000/youtube/v3")
+    # os.environ.setdefault(
+    #     "YOUTUBE_API_URL", "http://127.0.0.1:2000/youtube/v3")
     os.environ.setdefault(
         "YOUTUBE_API_KEY", "AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs")
     # os.environ.setdefault("DEBUG", "1")
     os.environ.setdefault("LOGLEVEL", "DEBUG")
     os.environ.setdefault("PYTHONDEVMODE", "1")
     #os.environ.setdefault("FIRESTORE_EMULATOR_HOST", "localhost:6001")
-    os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "videosdb-firebase")
+    """ os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "videosdb-firebase") """
 
 
-@pytest.fixture
+""" @pytest.fixture
 def db():
     yield firestore.AsyncClient()
+ """
 
 
 @pytest.fixture
@@ -38,9 +37,9 @@ async def api():
     yield await YoutubeAPI.create()
 
 
-# def test_downloader():
-#     downloader = Downloader()
-#     downloader.check_for_new_videos()
+def test_downloader():
+    downloader = Downloader()
+    downloader.check_for_new_videos()
 
 
 # def test_not_array_too_large_to_be_used_in_query(db):
@@ -69,7 +68,7 @@ async def api():
 #         assert pl["videosdb"]["videoCount"]
 
 
-@pytest.mark.asyncio
+""" @pytest.mark.asyncio
 async def test_fill_related(db, downloader):
     await downloader.init()
-    await downloader._fill_related_videos()
+    await downloader._fill_related_videos() """

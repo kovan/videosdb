@@ -101,16 +101,20 @@ function getDb(config) {
 
 function formatDate(date) {
 
-    if (typeof date == "string")
-        return parseISO(date).toLocaleDateString()
-    if (date instanceof Date)
-        return date.toLocaleDateString()
-    if (date instanceof firebase.firestore.Timestamp)
-        return date.toDate().toLocaleDateString()
-    if (date instanceof Object)
-        return new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate().toLocaleDateString()
 
-    throw TypeError()
+    if (typeof date == "string")
+        date = parseISO(date)
+    else if (date instanceof firebase.firestore.Timestamp)
+        date = date.toDate()
+    else if (date instanceof Object)
+        date = new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate()
+    if (!(date instanceof Date))
+        throw TypeError()
+
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString(undefined, options)
+
+
 }
 
 function dateToISO(date) {

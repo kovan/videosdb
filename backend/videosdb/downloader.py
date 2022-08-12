@@ -1,6 +1,5 @@
-from async_generator import aclosing
 import anyio
-from datetime import date, datetime
+from datetime import datetime
 import random
 import sys
 import logging
@@ -16,7 +15,7 @@ import youtube_transcript_api
 from aiostream import stream
 
 
-from .youtube_api import YoutubeAPI, get_video_transcript
+from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 
 logger = logging.getLogger(__name__)
@@ -231,6 +230,9 @@ class Downloader:
 
     async def _process_playlist(self, playlist_id, video_sender):
         playlist = await self.api.get_playlist_info(playlist_id)
+        if not playlist:
+            return
+
         if playlist["snippet"]["channelTitle"] != YT_CHANNEL_NAME:
             return
 
