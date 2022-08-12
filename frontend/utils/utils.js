@@ -134,10 +134,12 @@ function dateToISO(date) {
 
 async function dereferenceDb(id_list, collection) {
     let items = []
-    id_list.forEach((id) => {
+
+    await Promise.all(id_list.map(async (id) => {
         let doc = await collection.document("id").get()
         items.push(doc.data())
-    })
+    }));
+
     return items
 }
 
