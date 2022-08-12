@@ -2,6 +2,7 @@ import firebase from 'firebase/app';
 //import 'firebase/firestore/memory';
 import { firestore } from 'firebase/firestore';
 import { formatISO, parseISO } from 'date-fns'
+import logger from '@nuxtjs/sitemap/lib/logger';
 
 const FIREBASE_SETTINGS = {
     apiKey: "AIzaSyAhKg1pGeJnL_ZyD1wv7ZPXwfZ6_7OBRa8",
@@ -85,7 +86,7 @@ function getDb(config) {
     //     });
 
     try {
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.VIDEOSDB_DEBUG != undefined) {
             console.info("USING FIREBASE EMULATOR")
             db.useEmulator("127.0.0.1", 6001);
 
@@ -101,18 +102,21 @@ function getDb(config) {
 
 function formatDate(date) {
 
+    let result = null
+    //console.log("DATE IS " + JSON.stringify(date))
+    if (date instanceof firebase.firestore.Timestamp) {
+        result = date.toDate()
+    } else if (typeof date == "object") {
+        result = new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate()
+    } else if (typeof date == "string") {
+        result = parseISO(date)
+    }
 
-    if (typeof date == "string")
-        date = parseISO(date)
-    else if (date instanceof firebase.firestore.Timestamp)
-        date = date.toDate()
-    else if (date instanceof Object)
-        date = new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate()
-    if (!(date instanceof Date))
-        throw TypeError()
+    result = Date(result)
+
 
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString(undefined, options)
+    return new Date().toLocaleDateString(undefined, options)
 
 
 }
