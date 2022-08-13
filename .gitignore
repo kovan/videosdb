@@ -30,3 +30,6 @@ ui-debug.log
 backend/firebase-export-1636822598723S9SPsL/firestore_export/firestore_export.overall_export_metadata
 backend/firebase-export-1636822598723S9SPsL/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
 backend/firebase-export-1636822598723S9SPsL/firestore_export/all_namespaces/all_kinds/output-0
+tests/end2end/emulator-data/firebase-export-metadata.json
+tests/end2end/emulator-data/firestore_export/firestore_export.overall_export_metadata
+tests/end2end/firebase-export-1660417206643jEJnBx/firestore_export/firestore_export.overall_export_metadata
