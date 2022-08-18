@@ -78,7 +78,9 @@ class DB:
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, exclude_transcripts=False):
+        self.exclude_transcripts = exclude_transcripts
+        logger.debug("Excluding transcripts")
         self.valid_video_ids = set()
 
     async def init(self):
@@ -96,7 +98,7 @@ class Downloader:
         try:
             await self._start()
 
-            if True:  # not "DEBUG" in os.environ:
+            if not "DEBUG" in os.environ:
                 # separate so that it uses remaining quota
                 await self._fill_related_videos()
         except YoutubeAPI.QuotaExceededError as e:
@@ -166,7 +168,8 @@ class Downloader:
             try:
                 async with anyio.create_task_group() as nursery2:
                     async for video_id, playlist_id in video_receiver:
-
+                        logger.debug("Processing " +
+                                     video_id + " " + playlist_id)
                         if video_id not in video_streams:
                             snd_stream, rcv_stream = anyio.create_memory_object_stream()
                             nursery.start_soon(self._process_video, rcv_stream)
@@ -271,7 +274,7 @@ class Downloader:
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     async def _create_video(self, video_id):
-
+        logger.debug("Fetching video info for video: " + video_id)
         video = await self.api.get_video_info(video_id)
         if not video:
             return
@@ -288,7 +291,8 @@ class Downloader:
 
         old_video = old_video_doc.to_dict() if old_video_doc.exists else None
 
-        if (not old_video or
+        if (not self.exclude_transcripts and
+            not old_video or
             not "videosdb" in old_video or
             not "transcript_status" in old_video["videosdb"] or
                 old_video["videosdb"]["transcript_status"] == "pending"):

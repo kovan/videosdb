@@ -31,7 +31,7 @@ services:
     build:
       context: utils/firebase-emulator
     volumes:
-      - emulator-data:/root/emulator-data:rw
+      - emulator-data:/root:rw
 
 volumes:
   emulator-data:

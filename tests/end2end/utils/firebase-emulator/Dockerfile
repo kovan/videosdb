@@ -9,4 +9,6 @@ RUN apt-get install -y openjdk-18-jre-headless
 RUN npm install -g firebase-tools
 
 COPY firebase.json .
+RUN firebase setup:emulators:firestore
+
 ENTRYPOINT [ "firebase", "emulators:start", "--export-on-exit", "/root/emulator-data", "--import", "/root/emulator-data" ]
