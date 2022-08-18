@@ -1,17 +1,22 @@
-#!bin/bash
-function cleanup() {
-    kill $EMU_PID
-}
-
-#sudo apt install openjdk-18-jre -y
-#sudo npm install -g firebase-tools
-#service docker start
-firebase emulators:start --export-on-exit emulator-data &
-EMU_PID=$!
-trap 'cleanup' 2 # capture SIGINT
-
-docker build ../../backend
-docker run --rm -e LOGLEVEL=DEBUG backend poetry run python -m videosdb -c
+#!/bin/sh
 
 
-cleanup()
+ 
+# STEP 1:  build everything and start supporting apps:
+docker compose build
+docker compose up --detach
+
+# STEP 2: Fill database:
+
+docker compose run --rm \
+    backend \
+    poetry run \
+      python -m videosdb \
+        --check-for-new-videos \
+&& \
+# STEP 3: Generate static site 
+
+docker compose run --rm \
+    frontend \
+    yarn generate
+    

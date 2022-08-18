@@ -9,7 +9,7 @@ import hashlib
 import executor
 import httpx
 import youtube_transcript_api
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlencode
 from executor import execute
 from google.cloud import firestore
 
@@ -73,6 +73,7 @@ class YoutubeAPI:
         if "YOUTUBE_API_CACHE" in os.environ:
             obj.cache = Cache()
 
+        logger.debug("Pointing at URL: " + obj.root_url)
         return obj
 
     async def get_playlist_info(self, playlist_id):

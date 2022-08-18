@@ -1,9 +1,9 @@
 import argparse
 import logging.config
-from .ipfs import IPFS
+from videosdb.ipfs import IPFS
 
-from .downloader import Downloader
-from .settings import LOGGING
+from videosdb.downloader import Downloader
+from videosdb.settings import LOGGING
 
 
 def main():

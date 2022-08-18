@@ -86,9 +86,9 @@ function getDb(config) {
     //     });
 
     try {
-        if (process.env.VIDEOSDB_DEBUG != undefined) {
+        if (process.env.FIRESOTRE_EMULATOR_HOST != undefined) {
             console.info("USING FIREBASE EMULATOR")
-            db.useEmulator("127.0.0.1", 6001);
+            db.useEmulator(...process.env.FIRESOTRE_EMULATOR_HOST.split(":"));
 
         }
     } catch (e) {
