@@ -21,3 +21,4 @@ docker compose run --rm \
     frontend \
     yarn generate
     
+docker compose down
