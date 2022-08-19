@@ -9,6 +9,7 @@ services:
     environment:
       - DEBUG=1
       - PYTHONDEVMODE=1
+      - PYTHONASYNCIODEBUG=1
       - FIRESTORE_EMULATOR_HOST=firestore-emulator:6001
       - YOUTUBE_API_KEY=AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs
       - YOUTUBE_API_URL=http://json-caching-proxy:8080/youtube/v3

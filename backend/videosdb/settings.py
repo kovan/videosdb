@@ -29,6 +29,10 @@ LOGGING = {
         }
     },
     'loggers': {
+
+        'asyncio': {
+            "level": os.environ.get("LOGLEVEL", "WARNING"),
+        },
         'videosdb': {
             'handlers': ['console'],
             'level': os.environ.get("LOGLEVEL", "WARNING"),
