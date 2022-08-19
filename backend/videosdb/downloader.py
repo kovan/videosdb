@@ -1,3 +1,5 @@
+import pprint
+import signal
 import anyio
 from datetime import datetime
 import random
@@ -83,6 +85,11 @@ class Downloader:
         logger.debug("Excluding transcripts")
         self.valid_video_ids = set()
 
+        def handler(signum, frame):
+            print('Running tasks:')
+            pprint.pprint(anyio.get_running_tasks())
+        signal.signal(signal.SIGHUP, handler)
+
     async def init(self):
         self.api = await YoutubeAPI.create()
         self.db = await DB.create()
@@ -114,10 +121,12 @@ class Downloader:
         video_sender, video_receiver = anyio.create_memory_object_stream()
         playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
         async with anyio.create_task_group() as nursery:
-            nursery.start_soon(self._playlist_retriever, playlist_sender)
+            nursery.start_soon(self._playlist_retriever,
+                               playlist_sender, name="Playlist retriever")
             nursery.start_soon(self._playlist_processor,
-                               playlist_receiver, video_sender)
-            nursery.start_soon(self._video_processor, video_receiver)
+                               playlist_receiver, video_sender, name="Playlist receiver")
+            nursery.start_soon(self._video_processor,
+                               video_receiver, name="Video receiver")
 
     async def _playlist_retriever(self, playlist_sender):
         channel_id = YT_CHANNEL_ID
@@ -154,7 +163,7 @@ class Downloader:
                     if playlist_id in processed_playlist_ids:
                         continue
                     nursery.start_soon(
-                        self._process_playlist, playlist_id, video_sender)
+                        self._process_playlist, playlist_id, video_sender, name="PL " + playlist_id)
 
                     processed_playlist_ids.add(playlist_id)
 
@@ -172,7 +181,8 @@ class Downloader:
                                      video_id + " " + playlist_id)
                         if video_id not in video_streams:
                             snd_stream, rcv_stream = anyio.create_memory_object_stream()
-                            nursery.start_soon(self._process_video, rcv_stream)
+                            nursery.start_soon(
+                                self._process_video, rcv_stream, name="VID " + video_id)
                             video_streams[video_id] = snd_stream
                             task = {
                                 "action": "create",
@@ -188,7 +198,7 @@ class Downloader:
                             }
 
                             nursery2.start_soon(
-                                video_streams[video_id].send, task)
+                                video_streams[video_id].send, task, name="VID_TASK " + str(task))
             finally:
                 for stream in video_streams.values():
                     stream.close()

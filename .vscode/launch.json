@@ -51,7 +51,8 @@
       "envFile": "${workspaceFolder}/frontend/.env",
       "env": {
         "DEBUG": "1",
-        "NODE_ENV": "development"
+        "NODE_ENV": "development",
+        "FIRESTORE_EMULATOR_HOST": "localhost:6001",
       },
       "cwd": "${workspaceFolder}/frontend",
       "console": "integratedTerminal",
