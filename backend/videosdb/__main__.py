@@ -1,9 +1,9 @@
 import argparse
 import logging.config
-from .ipfs import IPFS
+from videosdb.ipfs import IPFS
 
-from .downloader import Downloader
-from .settings import LOGGING
+from videosdb.downloader import Downloader
+from videosdb.settings import LOGGING
 
 
 def main():
@@ -11,6 +11,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
+    parser.add_argument("-e", "--exclude-transcripts", action="store_true")
     parser.add_argument("-u", "--update-dnslink", action="store_true")
     parser.add_argument(
         "-f", "--download-and-register-in-ipfs", action="store_true")
@@ -18,7 +19,8 @@ def main():
 
     options = parser.parse_args()
     if options.check_for_new_videos:
-        downloader = Downloader()
+        downloader = Downloader(
+            exclude_transcripts=options.exclude_transcripts)
         downloader.check_for_new_videos()
 
     if options.download_and_register_in_ipfs:

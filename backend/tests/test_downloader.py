@@ -1,45 +1,40 @@
-import pytest
-import logging
-import os
-from videosdb.downloader import Downloader
-from videosdb.youtube_api import YoutubeAPI
 
 # @pytest.fixture
 # async def api():
 
 
-def setup_module(module):
-    logging.getLogger("videosdb.downloader").setLevel(logging.DEBUG)
-    # os.environ.setdefault(
-    #     "YOUTUBE_API_URL", "http://127.0.0.1:2000/youtube/v3")
-    os.environ.setdefault(
-        "YOUTUBE_API_KEY", "AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs")
-    # os.environ.setdefault("DEBUG", "1")
-    os.environ.setdefault("LOGLEVEL", "DEBUG")
-    os.environ.setdefault("PYTHONDEVMODE", "1")
-    #os.environ.setdefault("FIRESTORE_EMULATOR_HOST", "localhost:6001")
-    """ os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "videosdb-firebase") """
+# def setup_module(module):
+#     logging.getLogger("videosdb.downloader").setLevel(logging.DEBUG)
+#     # os.environ.setdefault(
+#     #     "YOUTUBE_API_URL", "http://127.0.0.1:2000/youtube/v3")
+#     os.environ.setdefault(
+#         "YOUTUBE_API_KEY", "AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs")
+#     # os.environ.setdefault("DEBUG", "1")
+#     os.environ.setdefault("LOGLEVEL", "DEBUG")
+#     os.environ.setdefault("PYTHONDEVMODE", "1")
+#     #os.environ.setdefault("FIRESTORE_EMULATOR_HOST", "localhost:6001")
+#     """ os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "videosdb-firebase") """
 
 
-""" @pytest.fixture
-def db():
-    yield firestore.AsyncClient()
- """
+# """ @pytest.fixture
+# def db():
+#     yield firestore.AsyncClient()
+#  """
 
 
-@pytest.fixture
-def downloader():
-    yield Downloader()
+# @pytest.fixture
+# def downloader():
+#     yield Downloader()
 
 
-@pytest.fixture
-async def api():
-    yield await YoutubeAPI.create()
+# @pytest.fixture
+# async def api():
+#     yield await YoutubeAPI.create()
 
 
-def test_downloader():
-    downloader = Downloader()
-    downloader.check_for_new_videos()
+# def test_downloader():
+#     downloader = Downloader()
+#     downloader.check_for_new_videos()
 
 
 # def test_not_array_too_large_to_be_used_in_query(db):

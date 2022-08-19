@@ -86,10 +86,12 @@ function getDb(config) {
     //     });
 
     try {
-        if (process.env.VIDEOSDB_DEBUG != undefined) {
-            console.info("USING FIREBASE EMULATOR")
-            db.useEmulator("127.0.0.1", 6001);
-
+        console.debug(process.env)
+        if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
+            console.info("Using FIREBASE EMULATOR")
+            db.useEmulator(...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
+        } else {
+            console.info("Using LIVE database.")
         }
     } catch (e) {
         if (e.name == "FirebaseError" && e.code == "failed-precondition")
@@ -111,9 +113,6 @@ function formatDate(date) {
     } else if (typeof date == "string") {
         result = parseISO(date)
     }
-
-    result = Date(result)
-
 
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     return new Date().toLocaleDateString(undefined, options)

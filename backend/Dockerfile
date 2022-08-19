@@ -41,5 +41,5 @@ COPY --chown=appuser:appuser . .
 
 
 
-CMD ["/bin/bash", "-c",  "poetry run python -O -m videosdb"]
+#CMD ["/bin/bash", "-c",  "poetry run python -O -m videosdb"]
 
