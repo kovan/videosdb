@@ -82,7 +82,7 @@ class DB:
         ids.update(new_list)
         doc_dict["videoIds"] = list(ids)
         async with self as db:
-            await self.doc_ref.set(doc_dict, merge=True)
+            await meta_doc.set(doc_dict, merge=True)
 
 
 class Downloader:
