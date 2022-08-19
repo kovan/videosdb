@@ -5,11 +5,11 @@ services:
       context: ../../backend
     depends_on:
       - json-caching-proxy
-      - firebase-emulator
+      - firestore-emulator
     environment:
       - DEBUG=1
       - PYTHONDEVMODE=1
-      - FIRESTORE_EMULATOR_HOST=firebase-emulator:6001
+      - FIRESTORE_EMULATOR_HOST=firestore-emulator:6001
       - YOUTUBE_API_KEY=AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs
       - YOUTUBE_API_URL=http://json-caching-proxy:8080/youtube/v3
       - LOGLEVEL=DEBUG
@@ -17,21 +17,25 @@ services:
 
   frontend:
     environment:
-      - FIRESTORE_EMULATOR_HOST=firebase-emulator:6001
+      - FIRESTORE_EMULATOR_HOST=firestore-emulator:6001
     build:
       context: ../../frontend
     depends_on:
-      - firebase-emulator
+      - firestore-emulator
 
   json-caching-proxy:
     build:
       context: utils/json-caching-proxy
+    ports:
+      - 6001:6001
 
-  firebase-emulator:
+  firestore-emulator:
     build:
-      context: utils/firebase-emulator
+      context: utils/firestore-emulator
     volumes:
       - emulator-data:/root:rw
+    ports:
+      - 8080:8080
 
 volumes:
   emulator-data:

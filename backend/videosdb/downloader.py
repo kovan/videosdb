@@ -43,9 +43,15 @@ def _filter_exceptions(group: anyio.ExceptionGroup, exception_type, handler_func
 
 
 class DB:
+    def __init__(self):
+        self.semaphore = anyio.Semaphore(1) if "DEBUG" in os.environ else None
+
     async def __aenter__(self):
         if self.semaphore:
             await self.semaphore.acquire()
+        logger.debug("DB operation." + str(self.semaphore.statistics())
+                     if self.semaphore else "")
+
         return self.db
 
     async def __aexit__(self, exc_type, exc, tb):
@@ -59,8 +65,6 @@ class DB:
         creds_json_path = os.path.join(BASE_DIR, "creds.json")
         obj.db = firestore.AsyncClient(project="videosdb-firebase",
                                        credentials=service_account.Credentials.from_service_account_file(creds_json_path))
-
-        obj.semaphore = anyio.Semaphore(10) if "DEBUG" in os.environ else None
 
         # initialize meta table:
         doc_ref = obj.db.collection("meta").document("meta")
@@ -76,8 +80,9 @@ class DB:
 
     async def update_videoid_list(self, new_list):
         async with self as db:
-            meta_doc = await db.collection("meta").document("meta").get()
-        doc_dict = meta_doc.to_dict()
+            meta_doc = db.collection("meta").document("meta")
+            doc_ref = await meta_doc.get()
+        doc_dict = doc_ref.to_dict()
         ids = set(doc_dict["videoIds"])
         ids.update(new_list)
         doc_dict["videoIds"] = list(ids)

@@ -13,11 +13,11 @@ youtube-dl = {git = "https://github.com/ytdl-org/youtube-dl.git"}
 google-cloud-dns = "^0.32.1"
 aiostream = "^0.4.3"
 google-cloud-firestore = "^2.3.4"
-httpx = {extras = ["http2"], version = "^0.20.0"}
 youtube-transcript-api = {git = "https://github.com/kovan/youtube-transcript-api", rev = "base_exception"}
 python-slugify = "^5.0.2"
 anyio = "^3.4.0"
 async_generator = "^1.10"
+httpx = {extras = ["http2"], version = "^0.23.0"}
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.4"
