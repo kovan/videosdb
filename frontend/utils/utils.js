@@ -108,14 +108,14 @@ function formatDate(date) {
     //console.log("DATE IS " + JSON.stringify(date))
     if (date instanceof firebase.firestore.Timestamp) {
         result = date.toDate()
-    } else if (typeof date == "object") {
+    } else if (typeof date == "object" || date instanceof Object) {
         result = new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate()
-    } else if (typeof date == "string") {
+    } else if (typeof date == "string" || date instanceof String) {
         result = parseISO(date)
     }
 
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date().toLocaleDateString(undefined, options)
+    return result.toLocaleDateString(undefined, options)
 
 
 }
