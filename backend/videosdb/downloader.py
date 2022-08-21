@@ -74,11 +74,13 @@ class DB:
         return obj
 
     async def update_last_updated(self):
+        logger.info("Updating last modified info.")
         async with self as db:
-            return await self.db.collection("meta").document(
+            return await db.collection("meta").document(
                 "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
 
     async def update_videoid_list(self, new_list):
+        logger.info("Updating VideoID list.")
         async with self as db:
             meta_doc = db.collection("meta").document("meta")
             doc_ref = await meta_doc.get()
