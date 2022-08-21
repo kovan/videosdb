@@ -25,12 +25,14 @@ services:
       - firestore-emulator
 
   json-caching-proxy:
+    network_mode: "host"
     build:
       context: utils/json-caching-proxy
     ports:
       - 6001:6001
 
   firestore-emulator:
+    network_mode: "host"
     build:
       context: utils/firestore-emulator
     volumes:
