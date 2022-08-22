@@ -3,8 +3,8 @@ sudo service docker start
 
  
 # STEP 1:  build everything and start supporting apps:
-docker compose build
-docker compose up --detach
+docker compose build 
+docker compose up --detach 
 
 sleep 3
 
