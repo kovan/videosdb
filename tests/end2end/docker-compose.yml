@@ -1,6 +1,7 @@
 version: "3"
 services:
   backend:
+    network_mode: "host"
     build:
       context: ../../backend
     depends_on:
@@ -10,15 +11,16 @@ services:
       - DEBUG=1
       - PYTHONDEVMODE=1
       - PYTHONASYNCIODEBUG=1
-      - FIRESTORE_EMULATOR_HOST=firestore-emulator:6001
+      - FIRESTORE_EMULATOR_HOST=localhost:6001
       - YOUTUBE_API_KEY=AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs
-      - YOUTUBE_API_URL=http://json-caching-proxy:8080/youtube/v3
+      - YOUTUBE_API_URL=http://localhost:8080/youtube/v3
       - LOGLEVEL=DEBUG
       - GOOGLE_CLOUD_PROJECT=videosdb-firebase
 
   frontend:
+    network_mode: "host"
     environment:
-      - FIRESTORE_EMULATOR_HOST=firestore-emulator:6001
+      - FIRESTORE_EMULATOR_HOST=localhost:6001
     build:
       context: ../../frontend
     depends_on:
