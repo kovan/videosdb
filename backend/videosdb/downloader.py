@@ -77,6 +77,11 @@ class DB:
             await self.doc_ref.set(self.dict, merge=True)
 
 
+def handler(signum, frame):
+    print('Running tasks:')
+    pprint.pprint(anyio.get_running_tasks())
+
+
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
@@ -85,9 +90,6 @@ class Downloader:
         logger.debug("Excluding transcripts")
         self.valid_video_ids = set()
 
-        def handler(signum, frame):
-            print('Running tasks:')
-            pprint.pprint(anyio.get_running_tasks())
         signal.signal(signal.SIGHUP, handler)
 
     async def init(self):
@@ -213,23 +215,27 @@ class Downloader:
         breaking = False
         self_video_id = None
         playlist_ids = []
+
         try:
+
             async for task in task_receiver:
+
                 if breaking:
                     continue
 
-                if task["action"] == "create":
-                    result = await self._create_video(task["video_id"])
-                    if not result:
-                        breaking = True
-                        continue
-                    self_video_id = task["video_id"]
+                with anyio.fail_after(10):
+                    if task["action"] == "create":
+                        result = await self._create_video(task["video_id"])
+                        if not result:
+                            breaking = True
+                            continue
+                        self_video_id = task["video_id"]
 
-                elif task["action"] == "add_playlist":
-                    playlist_ids.append(task["playlist_id"])
+                    elif task["action"] == "add_playlist":
+                        playlist_ids.append(task["playlist_id"])
 
-                else:
-                    raise ValueError()
+                    else:
+                        raise ValueError()
         finally:
             if not self_video_id:
                 return
@@ -284,7 +290,6 @@ class Downloader:
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     async def _create_video(self, video_id):
-        logger.debug("Fetching video info for video: " + video_id)
         video = await self.api.get_video_info(video_id)
         if not video:
             return
@@ -301,15 +306,15 @@ class Downloader:
 
         old_video = old_video_doc.to_dict() if old_video_doc.exists else None
 
-        if (not self.exclude_transcripts and
-            not old_video or
-            not "videosdb" in old_video or
-            not "transcript_status" in old_video["videosdb"] or
-                old_video["videosdb"]["transcript_status"] == "pending"):
-            transcript, new_status = await self._download_transcript(video_id)
-            custom_attrs["transcript_status"] = new_status
-            if transcript:
-                custom_attrs["transcript"] = transcript
+        if not self.exclude_transcripts:
+            if (not old_video or
+                not "videosdb" in old_video or
+                not "transcript_status" in old_video["videosdb"] or
+                    old_video["videosdb"]["transcript_status"] == "pending"):
+                transcript, new_status = await self._download_transcript(video_id)
+                custom_attrs["transcript_status"] = new_status
+                if transcript:
+                    custom_attrs["transcript"] = transcript
 
         custom_attrs["slug"] = slugify(
             video["snippet"]["title"])
@@ -358,14 +363,14 @@ class Downloader:
                     logger.info("Added new related videos to video %s" %
                                 (video_id))
 
-    @staticmethod
+    @ staticmethod
     async def _download_transcript(video_id):
         try:
+            logger.info(
+                "Downloading transcript for video: " + str(video_id))
             transcript = await anyio.to_thread.run_sync(
                 get_video_transcript, video_id)
 
-            logger.info(
-                "Transcription downloaded for video: " + str(video_id))
             return transcript, "downloaded"
         except youtube_transcript_api.TooManyRequests as e:
             logger.warn(e)
