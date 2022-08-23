@@ -6,7 +6,7 @@ sudo service docker start
 docker compose build 
 docker compose up --detach 
 
-sleep 3
+sleep 2
 
 # STEP 2: Fill database and generate webpages:
 
@@ -17,7 +17,7 @@ docker compose run --rm \
         --check-for-new-videos \
         --exclude-transcripts \
 && \
-docker compose run --rm \
+docker compose run \
     frontend \
     yarn generate
     
