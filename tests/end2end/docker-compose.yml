@@ -2,6 +2,7 @@ version: "3"
 services:
   backend:
     network_mode: "host"
+    image: ${REPO}backend
     build:
       context: ../../backend
     depends_on:
@@ -19,6 +20,7 @@ services:
 
   frontend:
     network_mode: "host"
+    image: ${REPO}frontend
     environment:
       - FIRESTORE_EMULATOR_HOST=localhost:6001
     build:
@@ -28,6 +30,7 @@ services:
 
   json-caching-proxy:
     network_mode: "host"
+    image: ${REPO}json-caching-proxy
     build:
       context: utils/json-caching-proxy
     ports:
@@ -35,6 +38,7 @@ services:
 
   firestore-emulator:
     network_mode: "host"
+    image: ${REPO}firestore-emulator
     build:
       context: utils/firestore-emulator
     volumes:
