@@ -39,6 +39,6 @@ steps:
 timeout: 3600s
 images: 
   - gcr.io/worpdress-279321/json-caching-proxy
-  - gcr.io/worpdress-279321/firebase-emulator
+  - gcr.io/worpdress-279321/firestore-emulator
   - gcr.io/worpdress-279321/frontend
   - gcr.io/worpdress-279321/backend
