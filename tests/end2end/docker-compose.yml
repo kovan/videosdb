@@ -43,7 +43,7 @@ services:
     build:
       context: utils/firestore-emulator
     volumes:
-      - emulator-data:/root:rw
+      - emulator-data:/root/emulator-data:rw
     ports:
       - 8080:8080
 
