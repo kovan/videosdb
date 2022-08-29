@@ -23,15 +23,17 @@ export default {
       this.loaded = false
     })
   },
-  head: {
-    title: 'Search' + ' - ' + 'Sadhguru wisdom',
-    meta: [
-      {
-        hid: 'description',
-        name: 'description',
-        content: 'Search',
-      },
-    ],
+  head() {
+    return {
+      title: 'Search' + ' - ' + this.$config.title,
+      meta: [
+        {
+          hid: 'description',
+          name: 'description',
+          content: 'Search',
+        },
+      ]
+    }
   },
   async asyncData({ payload, store }) {
     if (payload) {

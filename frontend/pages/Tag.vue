@@ -11,7 +11,7 @@ b-container.p-0.m-0
 export default {
   head() {
     return {
-      title: this.$route.params.slug + ' - Sadhguru wisdom',
+      title: this.$route.params.slug + ' - ' + this.$config.title,
       meta: [
         {
           hid: 'description',

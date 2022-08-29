@@ -21,6 +21,7 @@ services:
   frontend:
     network_mode: "host"
     image: ${REPO}frontend
+    env_file: ../../env_file.sadhguru.txt
     environment:
       - FIRESTORE_EMULATOR_HOST=localhost:6001
     build:

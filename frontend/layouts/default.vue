@@ -41,7 +41,7 @@ div
           title='Categories'
         )
           b-container
-          .col 
+          .col
             small Order by:
           .col
             b-form-select(
@@ -68,11 +68,8 @@ div
   footer.text-muted.text-center
     .my-3
       p For more resources visit:
-        a(href='https://isha.sadhguru.org/global/en/wisdom')
-          |
-          | https://isha.sadhguru.org/global/en/wisdom
-      p 
-        small This page is not associated with Sadhguru or Isha Foundation in any way.
+        a(:href="this.$config.VIDEOSDB_WEBSITE")
+          | {{ this.$config.VIDEOSDB_WEBSITE }}
 </template>
 
 <script>

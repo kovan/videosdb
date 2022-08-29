@@ -2,7 +2,7 @@ steps:
 
   - id: check-for-new-videos
     name: docker
-    args: 
+    args:
       - run
       - --rm
       - -e
@@ -22,6 +22,8 @@ steps:
       - run
       - --name
       - generate
+      - --env-file
+      - env_file.sadhguru.txt
       - gcr.io/worpdress-279321/frontend
       - yarn
       - generate
@@ -37,7 +39,7 @@ steps:
   - name: gcr.io/worpdress-279321/firebase
     env:
       - 'GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/creds.json'
-    args: 
+    args:
       - deploy
       - --project
       - videosdb-firebase
