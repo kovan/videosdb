@@ -1,5 +1,5 @@
 import { getSitemap } from "./modules/mymodule.js"
-import { getVuexData, getDb, FIREBASE_SETTINGS } from "./utils/utils"
+import { getVuexData, getDb, getFirebaseSettings } from "./utils/utils"
 
 let myConfig = {
 
@@ -94,7 +94,7 @@ export default {
     hostname: myConfig.hostname,
     gzip: true,
     routes: async () => {
-      return await getSitemap(FIREBASE_SETTINGS)
+      return await getSitemap(await getFirebaseSettings())
     }
   },
 
@@ -143,7 +143,7 @@ export default {
   hooks: {
     generate: {
       async route({ setPayload }) {
-        let db = getDb(FIREBASE_SETTINGS)
+        let db = getDb(await getFirebaseSettings())
         let vuex_data = await getVuexData(db)
         setPayload({ vuex_data })
       }

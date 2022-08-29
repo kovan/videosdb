@@ -22,9 +22,6 @@ BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 
 logger = logging.getLogger(__name__)
 
-YT_CHANNEL_NAME = os.environ.get("YT_CHANNEL_NAME", "Sadhguru")
-YT_CHANNEL_ID = os.environ.get("YT_CHANNEL_ID", "UCcYzLCs3zrQIBVHYA1sK2sw")
-
 
 async def asyncgenerator(item):
     yield item
@@ -49,7 +46,7 @@ class DB:
         obj = cls()
 
         creds_json_path = os.path.join(BASE_DIR, "creds.json")
-        obj.db = firestore.AsyncClient(project="videosdb-firebase",
+        obj.db = firestore.AsyncClient(project=os.environ["VIDEOSDB_FIREBASE_PROJECT"],
                                        credentials=service_account.Credentials.from_service_account_file(creds_json_path))
 
         # initialize meta table:
@@ -87,7 +84,9 @@ class Downloader:
     # PUBLIC: -------------------------------------------------------------
     def __init__(self, exclude_transcripts=False):
         self.exclude_transcripts = exclude_transcripts
-        logger.debug("Excluding transcripts")
+        if exclude_transcripts:
+            logger.debug("Excluding transcripts")
+        self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
         self.valid_video_ids = set()
 
         signal.signal(signal.SIGHUP, handler)
@@ -131,12 +130,13 @@ class Downloader:
                                video_receiver, name="Video receiver")
 
     async def _playlist_retriever(self, playlist_sender):
-        channel_id = YT_CHANNEL_ID
+        channel_id = self.YT_CHANNEL_ID
         channel_info = await self.api.get_channel_info(
             channel_id)
 
         logger.info("Processing channel: " +
                     str(channel_info["snippet"]["title"]))
+        self.YT_CHANNEL_NAME = str(channel_info["snippet"]["title"])
 
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
@@ -252,7 +252,7 @@ class Downloader:
         if not playlist:
             return
 
-        if playlist["snippet"]["channelTitle"] != YT_CHANNEL_NAME:
+        if playlist["snippet"]["channelTitle"] != self.YT_CHANNEL_NAME:
             return
 
         playlist = playlist if playlist["snippet"]["title"] != "Uploads from " + \
@@ -260,7 +260,7 @@ class Downloader:
 
         items = []
         async for item in self.api.list_playlist_items(playlist_id):
-            if item["snippet"]["channelId"] != YT_CHANNEL_ID:
+            if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
                 continue
             video_id = item["snippet"]["resourceId"]["videoId"]
             items.append(item)
@@ -297,7 +297,7 @@ class Downloader:
         # for now exclude those videos
         # in the future maybe exclude whole playlist
 
-        if video["snippet"]["channelId"] != YT_CHANNEL_ID:
+        if video["snippet"]["channelId"] != self.YT_CHANNEL_ID:
             return
 
         old_video_doc = await self.db.db.collection("videos").document(video_id).get()
@@ -353,7 +353,7 @@ class Downloader:
                 for related in related_videos:
                     # for now skip videos from other channels:
                     if "snippet" in related and related["snippet"]["channelId"] \
-                            != YT_CHANNEL_ID:
+                            != self.YT_CHANNEL_ID:
                         continue
 
                     await self.db.db.collection("videos").document(video_id).update({

@@ -5,16 +5,11 @@ steps:
     args:
       - run
       - --rm
-      - -e
-      - LOGLEVEL=$_LOGLEVEL
+      - --env-file
+      - common/env/$_VIDEOSDB_CONFIG.txt
       - gcr.io/worpdress-279321/backend
-      - poetry
-      - run
-      - python
-      - -O
-      - -m
-      - videosdb
       - --check-for-new-videos
+
 
   - id: generate
     name: docker
@@ -22,11 +17,12 @@ steps:
       - run
       - --name
       - generate
-      - --env-file
-      - env_file.sadhguru.txt
       - gcr.io/worpdress-279321/frontend
       - yarn
       - generate
+      - --dotenv
+      - common/env/$_VIDEOSDB_CONFIG.txt
+    waitFor:
 
   - id: copy
     name: docker
@@ -42,7 +38,7 @@ steps:
     args:
       - deploy
       - --project
-      - videosdb-firebase
+      - videosdb-$_VIDEOSDB_CONFIG
       - --only=hosting
 
 timeout: 3600s

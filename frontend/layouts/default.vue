@@ -68,8 +68,8 @@ div
   footer.text-muted.text-center
     .my-3
       p For more resources visit:
-        a(:href="this.$config.VIDEOSDB_WEBSITE")
-          | {{ this.$config.VIDEOSDB_WEBSITE }}
+        a(:href="$config.website")
+          | {{ $config.website }}
 </template>
 
 <script>

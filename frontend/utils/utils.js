@@ -4,14 +4,14 @@ import { firestore } from 'firebase/firestore';
 import { formatISO, parseISO } from 'date-fns'
 import logger from '@nuxtjs/sitemap/lib/logger';
 
-const FIREBASE_SETTINGS = {
-  apiKey: "AIzaSyAhKg1pGeJnL_ZyD1wv7ZPXwfZ6_7OBRa8",
-  authDomain: "videosdb-firebase.firebaseapp.com",
-  projectId: "videosdb-firebase",
-  storageBucket: "videosdb-firebase.appspot.com",
-  messagingSenderId: "136865344383",
-  appId: "1:136865344383:web:2d9764597f98be41c7884a"
+
+async function getFirebaseSettings() {
+  let current_config = process.env.VIDEOSDB_CONFIG;
+  let { FIREBASE_SETTINGS } = await import("../firebase_settings/" + current_config)
+  return FIREBASE_SETTINGS
 }
+
+
 
 
 var db = null
@@ -223,6 +223,6 @@ export {
   dateToISO,
   videoToStructuredData,
   videoToSitemapEntry,
-  FIREBASE_SETTINGS
+  getFirebaseSettings
 }
 
