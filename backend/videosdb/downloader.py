@@ -90,6 +90,7 @@ class Downloader:
         self.valid_video_ids = set()
 
         signal.signal(signal.SIGHUP, handler)
+        signal.signal(signal.SIGINT, handler)
 
     async def init(self):
         self.api = await YoutubeAPI.create()
