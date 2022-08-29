@@ -1,15 +1,21 @@
 steps:
   - name: docker/compose
     dir: tests/end2end
+    env:
+      - REPO=gcr.io/worpdress-279321/
     args:
       - build
   - name: docker/compose
     dir: tests/end2end
+    env:
+      - REPO=gcr.io/worpdress-279321/
     args:
       - up
       - '-d'
   - name: docker/compose
     dir: tests/end2end
+    env:
+      - REPO=gcr.io/worpdress-279321/
     args:
       - run
       - backend
@@ -22,6 +28,8 @@ steps:
       - '--exclude-transcripts'
   - name: docker/compose
     dir: tests/end2end
+    env:
+      - REPO=gcr.io/worpdress-279321/
     args:
       - run
       - frontend
@@ -29,8 +37,3 @@ steps:
       - generate
 
 timeout: 3600s
-images: 
-  - gcr.io/worpdress-279321/json-caching-proxy
-  - gcr.io/worpdress-279321/firebase-emulator
-  - gcr.io/worpdress-279321/frontend
-  - gcr.io/worpdress-279321/backend

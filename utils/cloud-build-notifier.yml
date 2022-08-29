@@ -4,14 +4,37 @@ metadata:
   name: example-smtp-notifier
 spec:
   notification:
-    filter: build.status == Build.Status.FAILURE || build.status == Build.Status.INTERNAL_ERROR || build.status == Build.Status.TIMEOUT || build.status == Build.Status.CANCELLED || build.status == Build.Status.EXPIRED
+    filter: build.status in [Build.Status.FAILURE, Build.Status.INTERNAL_ERROR, Build.Status.TIMEOUT, Build.Status.CANCELLED, Build.Status.EXPIRED]
+    template:
+      type: golang
+      content: |
+                <html>
+                  <body>
+                  <table>
+                    <tbody>
+                      <tr>
+                          <td>Build Status from Build</td>
+                          <td>{{.Build.Status}}</td>
+                      </tr>
+                      <tr>
+                        <td>Build Status from Params</td>
+                        <td>{{.Params.buildStatus}}</td>
+                    </tr>
+                    <tr>
+                        <td>Build Log from Build</td>
+                        <td>{{.Build.LogUrl}}</td>
+                    </tr>
+                    </tbody>
+                  </table>
+                  </body>
+                </html>    
     delivery:
       server: smtp.gmail.com
       port: "587"
-      sender: johnnnnyha@gmail.com
-      from: johnnnnyha@gmail.com
+      sender: johhhhnyha@gmail.com
+      from: johhhhnyha@gmail.com
       recipients:
-        - johnnnnyha@gmail.com
+        - johhhhnyha@gmail.com
         # optional: more emails here
       password:
         secretRef: passsmtp
