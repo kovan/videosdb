@@ -1,7 +1,13 @@
 import { getSitemap } from "./modules/mymodule.js"
-import { getVuexData, getDb, FIREBASE_SETTINGS } from "./utils/utils"
+import { getVuexData, getDb, getFirebaseSettings } from "./utils/utils"
 
+let myConfig = {
 
+  title: process.env.VIDEOSDB_TITLE,
+  subtitle: process.env.VIDEOSDB_SUBTITLE,
+  hostname: process.env.VIDEOSDB_HOSTNAME,
+  website: process.env.VIDEOSDB_WEBSITE
+}
 
 export default {
   ssr: true,
@@ -9,10 +15,8 @@ export default {
   telemetry: false,
 
 
-  publicRuntimeConfig: {
-    title: "Sadhguru wisdom",
-    subtitle: "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
-  },
+  publicRuntimeConfig: { ...myConfig },
+
 
   generate: {
     concurrency: 200,
@@ -87,10 +91,10 @@ export default {
 
   sitemap: {
     cacheTime: 86400000 * 2, // 48h
-    hostname: "https://www.sadhguru.digital",
+    hostname: myConfig.hostname,
     gzip: true,
     routes: async () => {
-      return await getSitemap(FIREBASE_SETTINGS)
+      return await getSitemap(await getFirebaseSettings())
     }
   },
 
@@ -139,7 +143,7 @@ export default {
   hooks: {
     generate: {
       async route({ setPayload }) {
-        let db = getDb(FIREBASE_SETTINGS)
+        let db = getDb(await getFirebaseSettings())
         let vuex_data = await getVuexData(db)
         setPayload({ vuex_data })
       }
@@ -150,7 +154,7 @@ export default {
     htmlAttrs: {
       lang: "en",
     },
-    title: "Sadhguru wisdom",
+    title: process.env.VIDEOSDB_TITLE,
     meta: [
       { charset: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -159,7 +163,7 @@ export default {
         hid: "description",
         name: "description",
         content:
-          "Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.",
+          process.env.VIDEOSDB_SUBTITLE,
       },
     ],
     link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],

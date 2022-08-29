@@ -10,16 +10,18 @@ export default {
   components: {
     Explorer,
   },
-  head: {
-    title: 'Sadhguru wisdom',
-    meta: [
-      {
-        hid: 'description',
-        name: 'description',
-        content:
-          'Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more.',
-      },
-    ],
+  head() {
+    return {
+      title: this.$config.title,
+      meta: [
+        {
+          hid: 'description',
+          name: 'description',
+          content:
+            this.$config.subtitle,
+        },
+      ],
+    }
   },
   async asyncData({ payload, store }) {
     if (payload) {

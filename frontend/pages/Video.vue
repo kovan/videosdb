@@ -107,7 +107,7 @@ export default {
   },
   head() {
     return {
-      title: this.video.snippet.title + ' - ' + 'Sadhguru wisdom',
+      title: this.video.snippet.title + ' - ' + this.$config.subtitle,
       meta: [
         {
           hid: 'description',
@@ -118,7 +118,7 @@ export default {
       link: [
         {
           rel: 'canonical',
-          href: `https://www.sadhguru.digital/video/${this.video.videosdb.slug}`,
+          href: `${this.$config.hostname}/video/${this.video.videosdb.slug}`,
         },
       ],
     }

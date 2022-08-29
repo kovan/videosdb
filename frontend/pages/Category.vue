@@ -11,7 +11,7 @@ b-container.p-0.m-0
 export default {
   head() {
     return {
-      title: this.category.snippet.title + ' - ' + 'Sadhguru wisdom',
+      title: this.category.snippet.title + ' - ' + this.$config.title,
       meta: [
         {
           hid: 'description',

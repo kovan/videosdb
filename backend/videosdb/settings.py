@@ -31,11 +31,11 @@ LOGGING = {
     'loggers': {
 
         'asyncio': {
-            "level": os.environ.get("LOGLEVEL", "WARNING"),
+            "level": os.environ.get("LOGLEVEL", "INFO"),
         },
         'videosdb': {
             'handlers': ['console'],
-            'level': os.environ.get("LOGLEVEL", "WARNING"),
+            'level': os.environ.get("LOGLEVEL", "INFO"),
             'propagate': False,
         },
         "property_manager": {

@@ -5,6 +5,7 @@ services:
     image: ${REPO}backend
     build:
       context: ../../backend
+    env_file: ../../common/env/sadhguru.txt
     depends_on:
       - json-caching-proxy
       - firestore-emulator
@@ -21,6 +22,7 @@ services:
   frontend:
     network_mode: "host"
     image: ${REPO}frontend
+    env_file: ../../common/env/sadhguru.txt
     environment:
       - FIRESTORE_EMULATOR_HOST=localhost:6001
     build:
@@ -42,7 +44,7 @@ services:
     build:
       context: utils/firestore-emulator
     volumes:
-      - emulator-data:/root:rw
+      - emulator-data:/root/emulator-data:rw
     ports:
       - 8080:8080
 

@@ -11,7 +11,7 @@ RUN apt install -y wget
 RUN apt install -y git-core
 RUN apt install -y wget
 RUN apt install -y libssl-dev
-RUN apt install -y libffi-dev 
+RUN apt install -y libffi-dev
 RUN apt install -y aria2
 RUN apt clean
 
@@ -41,5 +41,5 @@ COPY --chown=appuser:appuser . .
 
 
 
-#CMD ["/bin/bash", "-c",  "poetry run python -O -m videosdb"]
+ENTRYPOINT ["poetry", "run", "python", "-O", "-m", "videosdb"]
 

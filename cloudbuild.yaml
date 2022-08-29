@@ -2,19 +2,14 @@ steps:
 
   - id: check-for-new-videos
     name: docker
-    args: 
+    args:
       - run
       - --rm
-      - -e
-      - LOGLEVEL=$_LOGLEVEL
+      - --env-file
+      - common/env/$_VIDEOSDB_CONFIG.txt
       - gcr.io/worpdress-279321/backend
-      - poetry
-      - run
-      - python
-      - -O
-      - -m
-      - videosdb
       - --check-for-new-videos
+
 
   - id: generate
     name: docker
@@ -25,6 +20,9 @@ steps:
       - gcr.io/worpdress-279321/frontend
       - yarn
       - generate
+      - --dotenv
+      - common/env/$_VIDEOSDB_CONFIG.txt
+    waitFor:
 
   - id: copy
     name: docker
@@ -37,10 +35,10 @@ steps:
   - name: gcr.io/worpdress-279321/firebase
     env:
       - 'GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/creds.json'
-    args: 
+    args:
       - deploy
       - --project
-      - videosdb-firebase
+      - videosdb-$_VIDEOSDB_CONFIG
       - --only=hosting
 
 timeout: 3600s
