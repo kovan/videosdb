@@ -46,7 +46,9 @@ class DB:
         obj = cls()
 
         creds_json_path = os.path.join(BASE_DIR, "creds.json")
-        obj.db = firestore.AsyncClient(project=os.environ["VIDEOSDB_FIREBASE_PROJECT"],
+        project = os.environ["VIDEOSDB_FIREBASE_PROJECT"]
+        logger.info("Current project: " + project)
+        obj.db = firestore.AsyncClient(project=project,
                                        credentials=service_account.Credentials.from_service_account_file(creds_json_path))
 
         # initialize meta table:
