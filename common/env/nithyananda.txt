@@ -1,4 +1,4 @@
-VIDEOSDB_CONFIG="nithyananda"
+VIDEOSDB_CONFIG=nithyananda
 VIDEOSDB_TITLE="Nithyananda info"
 VIDEOSDB_SUBTITLE="Videos directly from the avatar SPH JGM Nithyananda Paramashivam and his team"
 VIDEOSDB_HOSTNAME="https://www.nithyananda.cc"

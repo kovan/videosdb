@@ -47,7 +47,7 @@ class DB:
 
         project = os.environ["VIDEOSDB_FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
-        creds_json_path = os.path.join(BASE_DIR, "keys/" + config + ".json")
+        creds_json_path = os.path.join(BASE_DIR, "keys/%s.json" % config)
 
         logger.info("Current project: " + project)
         obj.db = firestore.AsyncClient(project=project,
