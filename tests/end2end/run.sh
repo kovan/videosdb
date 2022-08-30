@@ -7,7 +7,7 @@ docker compose build \
 && \
 docker compose up --detach \
 && \
-sleep 2 \
+sleep 1 \
 && \
 docker compose run --rm \
     backend \

@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "videosdb-nithyananda",
+  "private_key_id": "314a6fafafffc9387ce3f3d1adcba68478aa41fb",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDbGjPOGRqJNVW5\nWAmEJh7N+7f7GPujilWsmUtjPgBhEOtc9X2/LYll/NhpZSG9oYd07Yk924G/zdh7\np965zyAhxmfDbTuCNFYt302cRvZOwj7aOyAT6FA3n1wZ8Pm+9yuHzEZy2KNVaidW\n0JuHEoRBNtJFcmt6gpDcVP9rdK/511ExzQBgRPFA2msgKl1gau/tUlmUNHtDEjO0\nJJHwzULXdipE84EtTgiUkBykBVIw/Zg1aMwrb2o/fAdsYDz+rz49k4Br5/xmTRlY\nw9hYhbbIbaCMJecRbzRr9dadMmkQPYtX/OsehcKCCoLi3DyT0t72h3Dd0WATHtd0\nJvbuUgUpAgMBAAECggEAFzjhHANi4b9Ih1EWjB42tl4LN1bD6Abb0wP53qpGA8O1\ncHg4BFTlGs1IWi5c+8J0rw7UlJzw9PVyMBQAKiky9oV2/rpze9bEeg7whMNsLHeP\nzhVFbnq5UtXl/v1gmQ4NO/LJljdSI3XRdtT8IP40TI2tDm2EyPqw9BthqX/X/Xaz\nmFelAkHilrWbuyJw9Dn+7Z68TMyEKfcGh8hxxRaG88WYh+cjLCuO9hOfx0q7d81Q\njCSObns5/U80wSqzskL1qlJB8CjdypHOYU3LV4Eh28/Rqk6+GVxa7bl8T7kxaL9c\n1XNW2htIxLL1Gv4Z+9QDGlMfO+WNv05ZA+lZlrIckQKBgQD+WrtrDuFBz+nPq/9i\nx+EcZ7Cx/LAtO250TYKUEb93UUD+IaDq7zByKz+AZiq8lzCEuznv+vG8KIywnFjw\nuhqHjuwDQ0VYwqeWcJeVuSWKbW+87t25SDYu3FEEEpAGmxpK0XmQJewG9BVLFDa5\nKZki137YtXBUVzvdipEaLgaM8QKBgQDchRW+gdD3X8uE98Q0iihUZAcErpJjsS4K\nuwSdKr91Q1wq8eFCY/58eWh/bI2uaFhPmBZNfDMDQXjoVcEQ/z8DsJZejuknbRjw\nT9EYBVmb4FmUrz9iFY0h/era308G/9A4Gzi5+xszLp+3gLC+7Lc4QCO7OrCoHqxU\n0dw8sUTbuQKBgQDRBf0Y2KySqerqB92i7sF211tkmVSqhzmZCA1z4zXmNvbjIP2d\ns5yrZhEUUmFyhAiSO048gYvgZa5ggMuyYC3nErOvZrv5WlXgknxvxSwtmwuFRwMc\n/VPRpKpLX3nOg+3SaFyu8gsKF9Hb1iu2dJHtCQyryEcceGexAuuFiSdG8QKBgQC+\nRgbxDkokaH/PB4pAW0VZK8XygD7HzkWP9LaSdiQlJi4M0BAxnN4kwQ0thZjqeBZa\n9zunOBc8I+4TaorgA513rZLRnDYJUtVF5VjhhRxAp2AkLuJd24KfZdyTZkNmIqyi\n/LoBn21kyEH/sAbRdqbQ3mb2UjnDllPUDBAgPkTP4QKBgF87JVXa2J9I8FE7BMTE\nRJb7cmXHh1f+bLMD0iS5JfeLtsm0UWQGhnK3JK2RNwNUwv/lTMtgIVUb0u3fRhA3\nwpzDbatSS+dkSYH8MNztubnI4daw3T5JnbCmzeL6Wi4GiRnaToSre2D6lXVhgzZE\npiJyy4iUf4os33JI6Adr/lGa\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-dd0rh@videosdb-nithyananda.iam.gserviceaccount.com",
+  "client_id": "101229413170550610033",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-dd0rh%40videosdb-nithyananda.iam.gserviceaccount.com"
+}
