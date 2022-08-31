@@ -57,7 +57,8 @@ class YoutubeAPI:
             "part": "snippet",
             "id": playlist_id
         }
-        return YoutubeAPI.Response(self,  url, params, etag)
+        response = YoutubeAPI.Response(self,  url, params, etag)
+        return response, await response.one()
 
     async def list_channnelsection_playlist_ids(self, channel_id, etag=None):
         url = "/channelSections"
@@ -89,7 +90,8 @@ class YoutubeAPI:
             "part": "snippet,contentDetails,statistics",
             "id": youtube_id
         }
-        return YoutubeAPI.Response(self,  url, params, etag)
+        response = YoutubeAPI.Response(self,  url, params, etag)
+        return response, await response.one()
 
     async def list_playlist_items(self, playlist_id, etag=None):
         url = "/playlistItems"
@@ -121,7 +123,8 @@ class YoutubeAPI:
             "part": "snippet,contentDetails,statistics",
             "id": channel_id
         }
-        return YoutubeAPI.Response(self,  url, params, etag)
+        response = YoutubeAPI.Response(self,  url, params, etag)
+        return response, await response.one()
 
 
 # ------- PRIVATE-------------------------------------------------------
