@@ -40,7 +40,7 @@ class YoutubeAPI:
         obj = cls()
 
         limits = httpx.Limits(max_connections=50)
-        obj.http = httpx.AsyncClient(http2=True, limits=limits)
+        obj.http = httpx.AsyncClient(limits=limits)
         obj.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
         if not obj.yt_key:
             obj.yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
