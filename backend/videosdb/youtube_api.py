@@ -39,7 +39,8 @@ class YoutubeAPI:
     async def create(cls, yt_key=None):
         obj = cls()
 
-        obj.http = httpx.AsyncClient(http2=True)
+        limits = httpx.Limits(max_connections=50)
+        obj.http = httpx.AsyncClient(http2=True, limits=limits)
         obj.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
         if not obj.yt_key:
             obj.yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
@@ -129,7 +130,6 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
-
     class Request():
         def __init__(self, youtube_api, url, params, etag=None):
             self.api = youtube_api
@@ -148,9 +148,11 @@ class YoutubeAPI:
             return self
 
         async def one(self):
-            async for item in self:
-                return item
-            return None
+            i = aiter(self)
+            try:
+                return await anext(i)
+            except StopAsyncIteration:
+                return None
 
         async def __anext__(self):
             if self._items:

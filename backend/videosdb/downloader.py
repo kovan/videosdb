@@ -413,20 +413,22 @@ class Downloader:
         try:
             logger.info(
                 "Downloading transcript for video: " + str(video_id))
-            with anyio.fail_after(20):
+            with anyio.fail_after(60):
                 transcript = await anyio.to_thread.run_sync(
                     get_video_transcript, video_id)
 
             return transcript, "downloaded"
         except youtube_transcript_api.TooManyRequests as e:
-            logger.warn(str(e) + " New status: pending")
+            logger.warn(str(e))
+            logger.warn("New status: pending")
             return None, "pending"
         except youtube_transcript_api.CouldNotRetrieveTranscript as e:
             # weird but that's how the lib works:
             if (hasattr(e, "video_id")
                 and hasattr(e.video_id, "response")
                     and e.video_id.response.status_code == 429):
-                logger.warn(str(e) + " New status: pending")
+                logger.warn(str(e))
+                logger.warn("New status: pending")
                 return None, "pending"
             else:
                 logger.info(
