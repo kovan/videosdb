@@ -95,6 +95,8 @@ class DB:
 def handler(signum, frame):
     print('Running tasks:')
     pprint.pprint(anyio.get_running_tasks())
+    if signum == signal.SIGINT:
+        sys.exit(-1)
 
 
 class Downloader:
