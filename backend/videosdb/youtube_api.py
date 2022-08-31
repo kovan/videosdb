@@ -32,9 +32,6 @@ class YoutubeAPI:
         def __str__(self):
             return "%s %s" % (self.status, json.dumps(self.json, indent=4, sort_keys=True))
 
-    async def aclose(self):
-        return await self.http.aclose()
-
     @classmethod
     async def create(cls, yt_key=None):
         obj = cls()
@@ -184,9 +181,9 @@ class YoutubeAPI:
             response.raise_for_status()
             json_response = response.json()
 
-            logger.debug("Response:\n" + json.dumps(json_response,
-                                                    indent=4, sort_keys=True))
-
+            # logger.debug("Response:\n" + json.dumps(json_response,
+            #                                         indent=4, sort_keys=True))
+            logger.debug("Response etag: " + json_response["etag"])
             self._items = json_response["items"]
 
             if not "nextPageToken" in json_response:

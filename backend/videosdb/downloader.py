@@ -144,8 +144,8 @@ class Downloader:
             _filter_exceptions(
                 group, YoutubeAPI.QuotaExceededError, logger.error)
         finally:
-            anyio.wait_all_tasks_blocked()
-            await self.api.aclose()
+            await anyio.wait_all_tasks_blocked()
+            # await self.api.aclose()
             await self.db.update_last_updated()
 
     async def _start(self):
