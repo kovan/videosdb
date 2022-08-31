@@ -175,7 +175,7 @@ class YoutubeAPI:
                 raise StopAsyncIteration
 
             if response.status_code == 403:
-                raise self.QuotaExceededError(
+                raise self.api.QuotaExceededError(
                     response.status_code, response.json())
 
             response.raise_for_status()
@@ -196,47 +196,8 @@ class YoutubeAPI:
             else:
                 raise StopAsyncIteration
 
-    async def _request(self, url, params, etag=None):
 
-        headers = {}
-        if etag:
-            headers["If-None-Match"] = etag
-
-        params["key"] = self.yt_key
-        url += "?" + urlencode(params)
-        page_token = None
-
-        while True:
-            if page_token:
-                final_url = url + "&pageToken=" + page_token
-            else:
-                final_url = url
-            logger.debug("requesting: " + final_url)
-
-            response = await self.http.get(
-                self.root_url + final_url,  headers=headers, timeout=30.0)
-
-            if response.status_code == 304:
-                logger.debug("304 Not modified.")
-                return
-
-            if response.status_code == 403:
-                raise self.QuotaExceededError(
-                    response.status_code, response.json())
-
-            response.raise_for_status()
-            json_response = response.json()
-
-            logger.debug("Response:\n" + json.dumps(json_response,
-                                                    indent=4, sort_keys=True))
-
-            for item in json_response["items"]:
-                yield item
-
-            if not "nextPageToken" in json_response:
-                break
-            else:
-                page_token = json_response["nextPageToken"]
+# ----------- unused -----------------:
 
 
 class YoutubeDL:
