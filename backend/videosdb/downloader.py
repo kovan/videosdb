@@ -52,7 +52,12 @@ class DB:
 
         logger.info("Current project: " + project)
         obj.db = firestore.AsyncClient(project=project,
-                                       credentials=service_account.Credentials.from_service_account_file(creds_json_path))
+                                       credentials=service_account.Credentials.from_service_account_file(
+                                           creds_json_path))
+        # client_info = {
+        #     "initial_ops_per_second": 10,
+        #     "max_ops_per_second": 10
+        # }
 
         # initialize meta table:
         doc_ref = obj.db.collection("meta").document("meta")
