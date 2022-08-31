@@ -19,11 +19,12 @@ steps:
       - run
       - --name
       - generate
+      - --env-file
+      - common/env/$_VIDEOSDB_CONFIG.txt
       - gcr.io/worpdress-279321/frontend
       - yarn
       - generate
-      - --dotenv
-      - common/env/$_VIDEOSDB_CONFIG.txt
+
     waitFor:
 
   - id: copy
