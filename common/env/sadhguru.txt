@@ -1,4 +1,4 @@
-VIDEOSDB_CONFIG="sadhguru"
+VIDEOSDB_CONFIG=sadhguru
 VIDEOSDB_TITLE="Sadhguru wisdom"
 VIDEOSDB_SUBTITLE="Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more."
 VIDEOSDB_HOSTNAME="https://www.sadhguru.digital"

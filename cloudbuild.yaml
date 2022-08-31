@@ -37,7 +37,7 @@ steps:
 
   - name: gcr.io/worpdress-279321/firebase
     env:
-      - 'GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/creds.json'
+      - 'GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/keys/$_VIDEOSDB_CONFIG.json'
     args:
       - deploy
       - --project
