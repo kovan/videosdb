@@ -57,7 +57,7 @@ class YoutubeAPI:
             "part": "snippet",
             "id": playlist_id
         }
-        response = YoutubeAPI.Response(self,  url, params, etag)
+        response = YoutubeAPI.Request(self,  url, params, etag)
         return response, await response.one()
 
     async def list_channnelsection_playlist_ids(self, channel_id, etag=None):
@@ -66,7 +66,7 @@ class YoutubeAPI:
             "part": "contentDetails",
             "channelId": channel_id
         }
-        async for item in YoutubeAPI.Response(self,  url, params):
+        async for item in YoutubeAPI.Request(self,  url, params):
             details = item.get("contentDetails")
             if not details:
                 continue
@@ -81,7 +81,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails",
             "channelId": channel_id
         }
-        async for item in YoutubeAPI.Response(self,  url, params, etag):
+        async for item in YoutubeAPI.Request(self,  url, params, etag):
             yield item["id"]
 
     async def get_video_info(self, youtube_id, etag=None):
@@ -90,7 +90,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails,statistics",
             "id": youtube_id
         }
-        response = YoutubeAPI.Response(self,  url, params, etag)
+        response = YoutubeAPI.Request(self,  url, params, etag)
         return response, await response.one()
 
     async def list_playlist_items(self, playlist_id, etag=None):
@@ -99,7 +99,7 @@ class YoutubeAPI:
             "part": "snippet",
             "playlistId": playlist_id
         }
-        return YoutubeAPI.Response(self,  url, params, etag)
+        return YoutubeAPI.Request(self,  url, params, etag)
 
     async def get_related_videos(self, youtube_id, etag=None):
         url = "/search"
@@ -110,7 +110,7 @@ class YoutubeAPI:
         }
         logger.info("getting related videos")
         result = dict()
-        async for video in YoutubeAPI.Response(self,  url, params, etag):
+        async for video in YoutubeAPI.Request(self,  url, params, etag):
             if video["id"]["videoId"] in result:
                 continue
 
@@ -123,13 +123,13 @@ class YoutubeAPI:
             "part": "snippet,contentDetails,statistics",
             "id": channel_id
         }
-        response = YoutubeAPI.Response(self,  url, params, etag)
+        response = YoutubeAPI.Request(self,  url, params, etag)
         return response, await response.one()
 
 
 # ------- PRIVATE-------------------------------------------------------
 
-    class Response():
+    class Request():
         def __init__(self, youtube_api, url, params, etag=None):
             self.api = youtube_api
             self._headers = {}
@@ -191,7 +191,10 @@ class YoutubeAPI:
             else:
                 self._page_token = json_response["nextPageToken"]
 
-            return self._items.pop()
+            if self._items:
+                return self._items.pop()
+            else:
+                raise StopAsyncIteration
 
     async def _request(self, url, params, etag=None):
 
