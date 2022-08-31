@@ -1,52 +1,54 @@
 version: "3"
 services:
-  backend:
-    network_mode: "host"
-    image: ${REPO}backend
-    build:
-      context: ../../backend
-    env_file: ../../common/env/sadhguru.txt
-    depends_on:
-      - json-caching-proxy
-      - firestore-emulator
-    environment:
-      - DEBUG=1
-      - PYTHONDEVMODE=1
-      - PYTHONASYNCIODEBUG=1
-      - FIRESTORE_EMULATOR_HOST=localhost:6001
-      - YOUTUBE_API_KEY=AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs
-      - YOUTUBE_API_URL=http://localhost:8080/youtube/v3
-      - LOGLEVEL=DEBUG
-      - GOOGLE_CLOUD_PROJECT=videosdb-firebase
+    backend:
+        network_mode: "host"
+        image: ${REPO}backend
+        build:
+            context: ../../backend
+        env_file: ../../common/env/sadhguru.txt
+        depends_on:
+            - json-caching-proxy
+            - firestore-emulator
+        environment:
+            - DEBUG=1
+            - PYTHONDEVMODE=1
+            - PYTHONASYNCIODEBUG=1
+            - FIRESTORE_EMULATOR_HOST=localhost:6001
+            - YOUTUBE_API_KEY=AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs
+            - YOUTUBE_API_URL=http://localhost:8080/youtube/v3
+            - LOGLEVEL=DEBUG
+            - GOOGLE_CLOUD_PROJECT=videosdb-firebase
 
-  frontend:
-    network_mode: "host"
-    image: ${REPO}frontend
-    env_file: ../../common/env/sadhguru.txt
-    environment:
-      - FIRESTORE_EMULATOR_HOST=localhost:6001
-    build:
-      context: ../../frontend
-    depends_on:
-      - firestore-emulator
+    frontend:
+        network_mode: "host"
+        image: ${REPO}frontend
+        env_file: ../../common/env/sadhguru.txt
+        environment:
+            - FIRESTORE_EMULATOR_HOST=localhost:6001
+        build:
+            context: ../../frontend
+        depends_on:
+            - firestore-emulator
 
-  json-caching-proxy:
-    network_mode: "host"
-    image: ${REPO}json-caching-proxy
-    build:
-      context: utils/json-caching-proxy
-    ports:
-      - 6001:6001
+    json-caching-proxy:
+        network_mode: "host"
+        image: ${REPO}json-caching-proxy
+        build:
+            context: utils/json-caching-proxy
+        ports:
+            - 6001:6001
+        stop_signal: SIGINT
 
-  firestore-emulator:
-    network_mode: "host"
-    image: ${REPO}firestore-emulator
-    build:
-      context: utils/firestore-emulator
-    volumes:
-      - emulator-data:/root/emulator-data:rw
-    ports:
-      - 8080:8080
+    firestore-emulator:
+        network_mode: "host"
+        image: ${REPO}firestore-emulator
+        build:
+            context: utils/firestore-emulator
+        volumes:
+            - emulator-data:/root/emulator-data
+        ports:
+            - 8080:8080
 
 volumes:
-  emulator-data:
+    emulator-data:
+        name: emulator-data

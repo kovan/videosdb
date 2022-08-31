@@ -3,9 +3,7 @@ sudo service docker start
 
 
 
-docker compose build \
-&& \
-docker compose up --detach \
+docker compose up --build --detach \
 && \
 sleep 1 \
 && \

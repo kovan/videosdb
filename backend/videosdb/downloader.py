@@ -65,6 +65,19 @@ class DB:
         return await self.db.collection("meta").document(
             "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
 
+    async def get_video_count(self):
+        doc = await self.db.collection("meta").document("meta").get()
+        if doc.exists:
+            return len(doc.to_dict()["videoIds"])
+        else:
+            return 0
+
+    async def get_etag(self, collection, id):
+        doc_ref = await self.db.collection(
+            collection).document(id).get()
+
+        return doc_ref.to_dict()["etag"] if doc_ref.exists else None
+
     class Doc:
 
         def __init__(self, doc_ref):
@@ -110,6 +123,9 @@ class Downloader:
         await self.init()
 
         try:
+
+            logger.info("Currently there are %s videos in the DB",
+                        await self.db.get_video_count())
             await self._start()
 
             if not "DEBUG" in os.environ:
@@ -137,12 +153,20 @@ class Downloader:
 
     async def _playlist_retriever(self, playlist_sender):
         channel_id = self.YT_CHANNEL_ID
-        channel_info = await self.api.get_channel_info(
-            channel_id)
+
+        etag = await self.db.get_etag("channel_infos", channel_id)
+        response = await self.api.get_channel_info(channel_id, etag)
+        if response.not_modified:
+            return
+
+        channel_info = await response.one()
+        if not channel_info:
+            raise Exception("Bad channel")
 
         logger.info("Processing channel: " +
                     str(channel_info["snippet"]["title"]))
         self.YT_CHANNEL_NAME = str(channel_info["snippet"]["title"])
+        await self.db.db.collection("channel_infos").document(channel_id).set(channel_info)
 
         all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
@@ -254,7 +278,13 @@ class Downloader:
                          str(self_video_id))
 
     async def _process_playlist(self, playlist_id, video_sender):
-        playlist = await self.api.get_playlist_info(playlist_id)
+
+        etag = await self.db.get_etag("playlists", playlist_id)
+        response = await self.api.get_playlist(playlist_id, etag)
+        if response.not_modified:
+            return
+
+        playlist = await response.one()
         if not playlist:
             return
 
@@ -296,7 +326,13 @@ class Downloader:
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     async def _create_video(self, video_id):
-        video = await self.api.get_video_info(video_id)
+        etag = await self.db.get_etag("videos", video_id)
+        response = await self.api.get_video_info(video_id, etag)
+        if response.not_modified:
+            return
+
+        video = await response.one()
+
         if not video:
             return
         # some playlists include videos from other channels
