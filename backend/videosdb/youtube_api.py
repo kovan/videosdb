@@ -129,6 +129,7 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     class Request():
         def __init__(self, youtube_api, url, params, etag=None):
             self.api = youtube_api
@@ -287,4 +288,5 @@ def get_video_transcript(youtube_id):
     result = ""
     for d in transcripts:
         result += d["text"] + "\n"
-    return _sentence_case(result.capitalize() + ".")
+    result = _sentence_case(result.capitalize() + ".")
+    logger.info("Transcription successfully downloaded for video " + youtube_id)
