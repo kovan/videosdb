@@ -156,10 +156,11 @@ class Downloader:
 
         etag = await self.db.get_etag("channel_infos", channel_id)
         response = await self.api.get_channel_info(channel_id, etag)
+
+        channel_info = await response.one()
         if response.not_modified:
             return
 
-        channel_info = await response.one()
         if not channel_info:
             raise Exception("Bad channel")
 
@@ -281,10 +282,12 @@ class Downloader:
 
         etag = await self.db.get_etag("playlists", playlist_id)
         response = await self.api.get_playlist(playlist_id, etag)
+
+        playlist = await response.one()
+
         if response.not_modified:
             return
 
-        playlist = await response.one()
         if not playlist:
             return
 
@@ -295,7 +298,7 @@ class Downloader:
             playlist["snippet"]["channelTitle"] else None
 
         items = []
-        async for item in self.api.list_playlist_items(playlist_id):
+        async for item in await self.api.list_playlist_items(playlist_id):
             if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
                 continue
             video_id = item["snippet"]["resourceId"]["videoId"]
