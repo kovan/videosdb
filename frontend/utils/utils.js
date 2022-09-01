@@ -3,12 +3,20 @@ import firebase from 'firebase/app';
 import { firestore } from 'firebase/firestore';
 import { formatISO, parseISO } from 'date-fns'
 import logger from '@nuxtjs/sitemap/lib/logger';
-
+import { sadhguru, nithyananda } from 'utils/firebase-settings'
 
 async function getFirebaseSettings() {
     let current_config = process.env.VIDEOSDB_CONFIG;
-    let { FIREBASE_SETTINGS } = await import("../firebase_settings/" + current_config + ".js")
-    return FIREBASE_SETTINGS
+    let settings = null
+    switch (current_config) {
+        case "nityhananda":
+            settings = nithyananda
+            break
+        case "sadhguru":
+            settings = sadhguru
+            break
+    }
+    return settings
 }
 
 
