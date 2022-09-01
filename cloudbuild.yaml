@@ -24,7 +24,6 @@ steps:
       - gcr.io/worpdress-279321/frontend
       - yarn
       - generate
-      - --fail-on-error
 
   - id: copy
     name: docker
