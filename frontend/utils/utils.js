@@ -3,17 +3,38 @@ import firebase from 'firebase/app';
 import { firestore } from 'firebase/firestore';
 import { formatISO, parseISO } from 'date-fns'
 import logger from '@nuxtjs/sitemap/lib/logger';
-import { sadhguru, nithyananda } from 'utils/firebase-settings'
+
+const firebase_sadhguru = {
+    apiKey: "AIzaSyAhKg1pGeJnL_ZyD1wv7ZPXwfZ6_7OBRa8",
+    authDomain: "videosdb-firebase.firebaseapp.com",
+    projectId: "videosdb-firebase",
+    storageBucket: "videosdb-firebase.appspot.com",
+    messagingSenderId: "136865344383",
+    appId: "1:136865344383:web:2d9764597f98be41c7884a"
+}
+
+
+const firebase_nithyananda = {
+    apiKey: "AIzaSyAokazNFM0aCatQ2HLQI2EmsL_fJvTUWyQ",
+    authDomain: "videosdb-nithyananda.firebaseapp.com",
+    projectId: "videosdb-nithyananda",
+    storageBucket: "videosdb-nithyananda.appspot.com",
+    messagingSenderId: "550038984532",
+    appId: "1:550038984532:web:c69ab834dc3da08481dac1",
+    measurementId: "G-9FCP7M1VDV"
+};
+
+
 
 async function getFirebaseSettings() {
     let current_config = process.env.VIDEOSDB_CONFIG;
     let settings = null
     switch (current_config) {
         case "nityhananda":
-            settings = nithyananda
+            settings = firebase_nithyananda
             break
         case "sadhguru":
-            settings = sadhguru
+            settings = firebase_sadhguru
             break
     }
     return settings
