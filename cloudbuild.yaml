@@ -39,7 +39,7 @@ steps:
     args:
       - deploy
       - --project
-      - videosdb-$_VIDEOSDB_CONFIG
+      - $_FIREBASE_PROJECT
       - --only=hosting
 
 timeout: 3600s
