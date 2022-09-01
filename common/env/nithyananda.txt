@@ -1,8 +1,8 @@
 VIDEOSDB_CONFIG=nithyananda
 VIDEOSDB_TITLE="Nithyananda info"
 VIDEOSDB_SUBTITLE="Videos directly from the avatar SPH JGM Nithyananda Paramashivam and his team"
-VIDEOSDB_HOSTNAME="https://www.nithyananda.cc"
-VIDEOSDB_WEBSITE="https://kailaasa.org/"
+VIDEOSDB_HOSTNAME=https://www.nithyananda.cc
+VIDEOSDB_WEBSITE=https://kailaasa.org/
 VIDEOSDB_FIREBASE_PROJECT=videosdb-nithyananda
 YOUTUBE_CHANNEL_ID=UC9OM-qeiYIPtAkBe9veG5uw
 YOUTUBE_API_KEY=AIzaSyCRG-LiGKbn0ZFzNUU7qD3nzwkAw8I9Oa4
