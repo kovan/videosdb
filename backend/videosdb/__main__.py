@@ -6,7 +6,7 @@ from videosdb.downloader import Downloader
 from videosdb.settings import LOGGING
 
 
-def main():
+def entrypoint():
     logging.config.dictConfig(LOGGING)
 
     parser = argparse.ArgumentParser()
@@ -33,4 +33,6 @@ def main():
         ipfs.update_dnslink(force=True)
 
 
-main()
+if __name__ == "__main__":
+    entrypoint()
+
