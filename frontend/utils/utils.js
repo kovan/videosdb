@@ -32,7 +32,7 @@ async function getFirebaseSettings(config) {
     let current_config = config ? config.config : process.env.VIDEOSDB_CONFIG
     let settings = null
     switch (current_config) {
-        case "nityhananda":
+        case "nithyananda":
             settings = firebase_nithyananda
             break
         case "sadhguru":
