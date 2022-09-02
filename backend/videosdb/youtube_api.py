@@ -208,9 +208,9 @@ class YoutubeDL:
     def download_video(self, _id, asynchronous=False):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
         cmd = self.BASE_CMD + \
-              "--external-downloader=aria2c --external-downloader-args '--min-split-size=1M --max-connection-per-server=16 --max-concurrent-downloads=16 --split=16' " + \
-              "--output '%s' %s" % (filename_format,
-                                    "http://www.youtube.com/watch?v=" + _id)
+            "--external-downloader=aria2c --external-downloader-args '--min-split-size=1M --max-connection-per-server=16 --max-concurrent-downloads=16 --split=16' " + \
+            "--output '%s' %s" % (filename_format,
+                                  "http://www.youtube.com/watch?v=" + _id)
         logger.info(cmd)
         try:
             # import ipdb
@@ -234,8 +234,8 @@ class YoutubeDL:
 
     def download_info(self, youtube_id):
         cmd = self.BASE_CMD + \
-              "--write-info-json --skip-download --output '%(id)s' http://www.youtube.com/watch?v=" + \
-              youtube_id
+            "--write-info-json --skip-download --output '%(id)s' http://www.youtube.com/watch?v=" + \
+            youtube_id
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
@@ -247,7 +247,7 @@ class YoutubeDL:
             if ("copyright" in out or
                 "Unable to extract video title" in out or
                 "available in your country" in out or
-                "video is unavailable" in out):
+                    "video is unavailable" in out):
                 raise self.UnavailableError(repr(e))
             raise
         return video_json
