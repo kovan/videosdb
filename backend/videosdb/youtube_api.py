@@ -1,18 +1,19 @@
+import asyncio
 import io
 import json
 import logging
 import os
 import re
 import tempfile
+import hashlib
 import executor
 import httpx
 import youtube_transcript_api
 from urllib.parse import urlencode
 from executor import execute
+from google.cloud import firestore
 
 logger = logging.getLogger(__name__)
-
-MAX_CACHE_SIZE = 100000
 
 
 def parse_youtube_id(string: str):
@@ -22,7 +23,30 @@ def parse_youtube_id(string: str):
     return match.group(1)
 
 
+class Cache:
+
+    def __init__(self):
+        self.db = firestore.AsyncClient()
+
+    @staticmethod
+    def _key_func(key):
+        return hashlib.sha256(key.encode('utf-8')).hexdigest()
+
+    async def get(self, key):
+        doc = await self.db.collection("cache").document(self._key_func(key)).get()
+        if doc.exists:
+            return doc.to_dict()
+        return None
+
+    async def set(self, key, val):
+        await self.db.collection("cache").document(self._key_func(key)).set(val)
+
+    async def delete(self, key):
+        await self.db.collection("cache").document(self._key_func(key)).delete()
+
+
 class YoutubeAPI:
+
     class QuotaExceededError(Exception):
         def __init__(self, status, json):
             self.status = status
@@ -31,70 +55,80 @@ class YoutubeAPI:
         def __str__(self):
             return "%s %s" % (self.status, json.dumps(self.json, indent=4, sort_keys=True))
 
-    def __init__(self, yt_key=None):
-        limits = httpx.Limits(max_connections=50)
-        self.http = httpx.AsyncClient(limits=limits)
-        self.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
-        if not self.yt_key:
-            self.yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
+    async def aclose(self):
+        return await self.http.aclose()
 
-        self.root_url = os.environ.get(
+    @classmethod
+    async def create(cls, yt_key=None):
+        obj = cls()
+
+        obj.http = httpx.AsyncClient(http2=True)
+        obj.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
+        if not obj.yt_key:
+            obj.yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
+
+        obj.root_url = os.environ.get(
             "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
 
-        logger.debug("Pointing at URL: " + self.root_url)
+        if "YOUTUBE_API_CACHE" in os.environ:
+            obj.cache = Cache()
 
-    # @cached(cache=LRUCache(maxsize=MAX_CACHE_SIZE))
-    async def get_playlist(self, playlist_id, etag=None):
+        logger.debug("Pointing at URL: " + obj.root_url)
+        return obj
+
+    async def get_playlist_info(self, playlist_id):
         url = "/playlists"
         params = {
             "part": "snippet",
             "id": playlist_id
         }
-        response = YoutubeAPI.Request(self, url, params, etag)
-        return response, await response.one()
+        return await self._request_one(url, params)
 
-    async def list_channelsection_playlist_ids(self, channel_id, etag=None):
+    async def list_channelsection_playlist_ids(self, channel_id):
         url = "/channelSections"
         params = {
             "part": "contentDetails",
             "channelId": channel_id
         }
-        async for item in YoutubeAPI.Request(self, url, params):
+        async for item in self._request_many(url, params):
             details = item.get("contentDetails")
             if not details:
                 continue
-            if "playlists" not in details:
+            if not "playlists" in details:
                 continue
             for id in details["playlists"]:
                 yield id
 
-    async def list_channel_playlist_ids(self, channel_id, etag=None):
+    async def list_channel_playlist_ids(self, channel_id):
         url = "/playlists"
         params = {
             "part": "snippet,contentDetails",
             "channelId": channel_id
         }
-        async for item in YoutubeAPI.Request(self, url, params, etag):
+        async for item in self._request_many(url, params):
             yield item["id"]
 
-    async def get_video_info(self, youtube_id, etag=None):
+    async def get_video_info(self, youtube_id):
         url = "/videos"
         params = {
             "part": "snippet,contentDetails,statistics",
             "id": youtube_id
         }
-        response = YoutubeAPI.Request(self, url, params, etag)
-        return response, await response.one()
+        item = await self._request_one(url, params)
+        if not item:
+            return None
+        return item
 
-    async def list_playlist_items(self, playlist_id, etag=None):
+    async def list_playlist_items(self, playlist_id):
         url = "/playlistItems"
         params = {
             "part": "snippet",
             "playlistId": playlist_id
         }
-        return YoutubeAPI.Request(self, url, params, etag)
+        async for item in self._request_many(url, params):
+            yield item
 
-    async def get_related_videos(self, youtube_id, etag=None):
+    async def get_related_videos(self, youtube_id):
         url = "/search"
         params = {
             "part": "snippet",
@@ -103,94 +137,81 @@ class YoutubeAPI:
         }
         logger.info("getting related videos")
         result = dict()
-        async for video in YoutubeAPI.Request(self, url, params, etag):
+        async for video in self._request_many(url, params):
             if video["id"]["videoId"] in result:
                 continue
 
             result[video["id"]["videoId"]] = video
         return result.values()
 
-    async def get_channel_info(self, channel_id, etag=None):
+    async def get_channel_info(self, channel_id):
         url = "/channels"
         params = {
             "part": "snippet,contentDetails,statistics",
             "id": channel_id
         }
-        response = YoutubeAPI.Request(self, url, params, etag)
-        return response, await response.one()
+        return await self._request_one(url, params)
 
-    # ------- PRIVATE-------------------------------------------------------
-    class Request:
-        def __init__(self, youtube_api, url, params, etag=None):
-            self.api = youtube_api
-            self._headers = {}
-            if etag:
-                self._headers["If-None-Match"] = etag
 
-            params["key"] = youtube_api.yt_key
-            self._url = url + "?" + urlencode(params)
+# ------- PRIVATE-------------------------------------------------------
 
-        def __aiter__(self):
-            self._page_token = None
-            self.not_modified = False
-            self._items = []
-            self._finished = False
-            return self
+    async def _request_one(self, url, params):
+        async for item in self._request_many(url, params):
+            return item
 
-        async def one(self):
-            i = aiter(self)
-            try:
-                return await anext(i)
-            except StopAsyncIteration:
-                return None
+    async def _request_many(self, url, params):
 
-        async def __anext__(self):
-            if self._items:
-                return self._items.pop()
+        async def _get_with_cache(url):
+            headers = {}
+            cached = await self.cache.get(url)
+            if cached:
+                headers["If-None-Match"] = cached["content"]["etag"]
 
-            if self._finished:
-                raise StopAsyncIteration
-
-            # otherwise we make one request more:
-            if self._page_token:
-                final_url = self._url + "&pageToken=" + self._page_token
-            else:
-                final_url = self._url
-            logger.debug("requesting: " + final_url)
-
-            response = await self.api.http.get(
-                self.api.root_url + final_url, headers=self._headers, timeout=60.0)
+            response = await self.http.get(
+                self.root_url + url, timeout=30.0, headers=headers)
 
             if response.status_code == 304:
-                logger.debug("304 Not modified.")
-                self.not_modified = True
-                self._finished = True
-                raise StopAsyncIteration
+                logger.debug("Using cached response.")
+                return response, True,  cached["content"]
+
+            asyncio.create_task(self.cache.set(url, {
+                "url": url,
+                "headers": dict(response.headers),
+                "content": response.json()
+            }))  # defer
+            return response, False
+
+        params["key"] = self.yt_key
+        url += "?" + urlencode(params)
+        page_token = None
+
+        while True:
+            if page_token:
+                final_url = url + "&pageToken=" + page_token
+            else:
+                final_url = url
+            logger.debug("requesting: " + final_url)
+
+            if hasattr(self, "cache"):
+                response, from_cache, content = await _get_with_cache(url)
+            else:
+                response = await self.http.get(
+                    self.root_url + final_url, timeout=30.0)
 
             if response.status_code == 403:
-                raise self.api.QuotaExceededError(
+                raise self.QuotaExceededError(
                     response.status_code, response.json())
 
             response.raise_for_status()
             json_response = response.json()
 
-            # logger.debug("Response:\n" + json.dumps(json_response,
-            #                                         indent=4, sort_keys=True))
-            logger.debug("Response etag: " + json_response["etag"])
-            self._items = json_response["items"]
+            for item in json_response["items"]:
+                yield item
 
-            if "nextPageToken" not in json_response:
-                self._finished = True
+            if not "nextPageToken" in json_response:
+                break
             else:
-                self._page_token = json_response["nextPageToken"]
-
-            if self._items:
-                return self._items.pop()
-            else:
-                raise StopAsyncIteration
-
-
-# ----------- unused -----------------:
+                page_token = json_response["nextPageToken"]
 
 
 class YoutubeDL:
@@ -208,7 +229,7 @@ class YoutubeDL:
     def download_video(self, _id, asynchronous=False):
         filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
         cmd = self.BASE_CMD + \
-            "--external-downloader=aria2c --external-downloader-args '--min-split-size=1M --max-connection-per-server=16 --max-concurrent-downloads=16 --split=16' " + \
+            "--external-downloader=aria2c --external-downloader-args '--min-split-size=1M --max-connection-per-server=16 --max-concurrent-downloads=16 --split=16' " +\
             "--output '%s' %s" % (filename_format,
                                   "http://www.youtube.com/watch?v=" + _id)
         logger.info(cmd)
@@ -244,10 +265,10 @@ class YoutubeDL:
                     video_json = json.load(f)
         except executor.ExternalCommandFailed as e:
             out = str(e.command.stderr)
-            if ("copyright" in out or
-                "Unable to extract video title" in out or
-                "available in your country" in out or
-                    "video is unavailable" in out):
+            if "copyright" in out or \
+               "Unable to extract video title" in out or \
+               "available in your country" in out or \
+               "video is unavailable" in out:
                 raise self.UnavailableError(repr(e))
             raise
         return video_json
@@ -263,22 +284,21 @@ class YoutubeDL:
 
 
 def get_video_transcript(youtube_id):
+
     def _sentence_case(text):
         punc_filter = re.compile(r'([.!?]\s*)')
         split_with_punctuation = punc_filter.split(text)
 
         final = ''.join([i.capitalize() for i in split_with_punctuation])
         return final
-
     # url = "/captions?part=id,snippet&videoId=" + youtube_id
     # transcripts = self.transcript_fetcher.fetch(youtube_id)
     # transcript = transcripts.find_transcript(
     #     ("en", "en-US", "en-GB")).fetch()
     transcripts = youtube_transcript_api.YouTubeTranscriptApi.get_transcript(
-        youtube_id, languages=["en", "en-US", "en-GB"])
+        youtube_id, languages=("en", "en-US", "en-GB"))
 
     result = ""
     for d in transcripts:
         result += d["text"] + "\n"
-    result = _sentence_case(result.capitalize() + ".")
-    logger.info("Transcription successfully downloaded for video " + youtube_id)
+    return _sentence_case(result.capitalize() + ".")

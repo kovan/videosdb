@@ -56,6 +56,7 @@ class DB:
         # }
 
     async def init(self):
+        self.api = await YoutubeAPI.create()
 
         # initialize meta table:
         doc_ref = self.db.collection("meta").document("meta")
@@ -96,7 +97,7 @@ class DB:
 
 
 async def _signal_handler(*streams):
-    with anyio.open_signal_receiver(signal.SIGHUP) as signals:
+    with anyio.open_signal_receiver(signal.SIGHUP, signal.SIGTERM) as signals:
         async for signum in signals:
             if signum == signal.SIGHUP:
                 tasks = anyio.get_running_tasks()
@@ -104,6 +105,8 @@ async def _signal_handler(*streams):
                 pprint.pprint(tasks)
                 for stream in streams:
                     print(str(stream.statistics()))
+            elif signum == signal.SIGTERM:
+                return
 
 
 class Downloader:
@@ -122,6 +125,7 @@ class Downloader:
 
     async def init(self):
         await self.db.init()
+        self.api = await YoutubeAPI.create()
 
     def check_for_new_videos(self):
         logger.info("Sync start")
@@ -154,27 +158,24 @@ class Downloader:
         video_sender, video_receiver = anyio.create_memory_object_stream()
         playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
 
-        async with anyio.create_task_group() as nursery:
-            nursery.start_soon(_signal_handler,
-                               video_receiver, video_receiver, playlist_sender, playlist_receiver,
-                               name="Signal handler")
-            nursery.start_soon(self._playlist_retriever,
-                               playlist_sender, name="Playlist retriever")
-            nursery.start_soon(self._playlist_processor,
-                               playlist_receiver, video_sender, name="Playlist receiver")
-            nursery.start_soon(self._video_processor,
-                               video_receiver, name="Video receiver")
+        async with anyio.create_task_group() as global_scope:
+            async with anyio.create_task_group() as processors:
+                processors.start_soon(self._playlist_retriever,
+                                      playlist_sender, name="Playlist retriever")
+                processors.start_soon(self._playlist_processor,
+                                      playlist_receiver, video_sender, name="Playlist receiver")
+                processors.start_soon(self._video_processor,
+                                      video_receiver, name="Video receiver")
+
+            global_scope.start_soon(_signal_handler,
+                                    video_receiver, video_receiver, playlist_sender, playlist_receiver,
+                                    name="Signal handler")
+            global_scope.cancel_scope.cancel()
 
     async def _playlist_retriever(self, playlist_sender):
         channel_id = self.YT_CHANNEL_ID
-
-        etag = await self.db.get_etag("channel_infos", channel_id)
-        response, channel_info = await self.api.get_channel_info(channel_id, etag)
-
-        if response.not_modified:
-            return
-        if not channel_info:
-            raise Exception("Bad channel")
+        channel_info = await self.api.get_channel_info(
+            channel_id)
 
         logger.info("Processing channel: " +
                     str(channel_info["snippet"]["title"]))
@@ -291,12 +292,7 @@ class Downloader:
                          str(self_video_id))
 
     async def _process_playlist(self, playlist_id, video_sender):
-
-        etag = await self.db.get_etag("playlists", playlist_id)
-        response, playlist = await self.api.get_playlist(playlist_id, etag)
-
-        if response.not_modified:
-            return
+        playlist = await self.api.get_playlist_info(playlist_id)
         if not playlist:
             return
 
@@ -304,10 +300,10 @@ class Downloader:
             return
 
         playlist = playlist if playlist["snippet"]["title"] != "Uploads from " + \
-                               playlist["snippet"]["channelTitle"] else None
+            playlist["snippet"]["channelTitle"] else None
 
         items = []
-        async for item in await self.api.list_playlist_items(playlist_id):
+        async for item in self.api.list_playlist_items(playlist_id):
             if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
                 continue
             video_id = item["snippet"]["resourceId"]["videoId"]
@@ -338,11 +334,7 @@ class Downloader:
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     async def _create_video(self, video_id):
-        etag = await self.db.get_etag("videos", video_id)
-        response, video = await self.api.get_video_info(video_id, etag)
-        if response.not_modified:
-            return
-
+        video = await self.api.get_video_info(video_id)
         if not video:
             return
         # some playlists include videos from other channels
@@ -362,7 +354,7 @@ class Downloader:
             if (not old_video or
                 "videosdb" not in old_video or
                 "transcript_status" not in old_video["videosdb"] or
-                old_video["videosdb"]["transcript_status"] == "pending"):
+                    old_video["videosdb"]["transcript_status"] == "pending"):
                 transcript, new_status = await self._download_transcript(video_id)
                 custom_attrs["transcript_status"] = new_status
                 if transcript:
@@ -405,7 +397,7 @@ class Downloader:
                 for related in related_videos:
                     # for now skip videos from other channels:
                     if "snippet" in related and related["snippet"]["channelId"] \
-                        != self.YT_CHANNEL_ID:
+                            != self.YT_CHANNEL_ID:
                         continue
 
                     await self.db.db.collection("videos").document(video_id).update({
@@ -433,7 +425,7 @@ class Downloader:
             # weird but that's how the lib works:
             if (hasattr(e, "video_id")
                 and hasattr(e.video_id, "response")
-                and e.video_id.response.status_code == 429):
+                    and e.video_id.response.status_code == 429):
                 logger.warning(str(e))
                 logger.warning("New status: pending")
                 return None, "pending"
