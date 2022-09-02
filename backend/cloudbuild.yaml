@@ -1,12 +1,12 @@
 steps:
- # Build the container image
-  - name: "gcr.io/cloud-builders/docker"
-    dir: "backend"
-    args: ["build", "-t", "gcr.io/$PROJECT_ID/backend:latest", "."]
- # Push the container image to Container Registry
-  - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "gcr.io/$PROJECT_ID/backend:latest"]
-    
-
-images:
-  - "gcr.io/$PROJECT_ID/backend:latest"
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', 'docker pull gcr.io/worpdress-279321/backend:latest || exit 0']
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+            'build',
+            '-t', 'gcr.io/worpdress-279321/backend:latest',
+            '--cache-from', 'gcr.io/worpdress-279321/backend:latest',
+            '.'
+        ]
+images: ['gcr.io/worpdress-279321/backend:latest']
