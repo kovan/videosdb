@@ -3,6 +3,7 @@ steps:
   entrypoint: 'bash'
   args: ['-c', 'docker pull gcr.io/worpdress-279321/frontend:latest || exit 0']
 - name: 'gcr.io/cloud-builders/docker'
+  dir: "frontend"
   args: [
             'build',
             '-t', 'gcr.io/worpdress-279321/frontend:latest',

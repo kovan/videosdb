@@ -4,7 +4,7 @@ metadata:
   name: example-smtp-notifier
 spec:
   notification:
-    filter: build.status in [Build.Status.FAILURE, Build.Status.INTERNAL_ERROR, Build.Status.TIMEOUT, Build.Status.CANCELLED, Build.Status.EXPIRED]
+    filter: build.status in [Build.Status.FAILURE, Build.Status.INTERNAL_ERROR, Build.Status.TIMEOUT, Build.Status.EXPIRED]
     template:
       type: golang
       content: |
@@ -27,7 +27,7 @@ spec:
                     </tbody>
                   </table>
                   </body>
-                </html>    
+                </html>
     delivery:
       server: smtp.gmail.com
       port: "587"
