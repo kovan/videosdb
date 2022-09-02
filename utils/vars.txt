@@ -1,0 +1,15 @@
+DEBUG=1
+LOGLEVEL=DEBUG
+YOUTUBE_API_URL=http://127.0.0.1:8080/youtube/v3
+PYTHONDEVMODE=1
+FIRESTORE_EMULATOR_HOST=localhost:6001
+YOUTUBE_API_KEY=AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs
+
+VIDEOSDB_CONFIG=sadhguru
+VIDEOSDB_TITLE="Sadhguru wisdom"
+VIDEOSDB_SUBTITLE="Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more."
+VIDEOSDB_HOSTNAME=https://www.sadhguru.digital
+VIDEOSDB_WEBSITE=https://isha.sadhguru.org/global/en/wisdom
+VIDEOSDB_FIREBASE_PROJECT=videosdb-firebase
+YOUTUBE_CHANNEL_ID=UCcYzLCs3zrQIBVHYA1sK2sw
+FIREBASE_PROJECT=videosdb-firebase

@@ -26,8 +26,10 @@ const firebase_nithyananda = {
 
 
 
-async function getFirebaseSettings() {
-    let current_config = process.env.VIDEOSDB_CONFIG;
+async function getFirebaseSettings(config) {
+
+
+    let current_config = config ? config : process.env.VIDEOSDB_CONFIG;
     let settings = null
     switch (current_config) {
         case "nityhananda":
