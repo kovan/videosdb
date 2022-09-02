@@ -68,8 +68,8 @@ async function getVuexData(db) {
         let category = {
             name: doc.data().snippet.title,
             slug: doc.data().videosdb.slug,
-            use_count: "videoCount" in doc.data().videosdb ? doc.data().videosdb.videoCount : null,
-            last_updated: "lastUpdated" in doc.data().videosdb ? doc.data().videosdb.lastUpdated.toDate() : null
+            use_count: doc.data().videosdb.videoCount,
+            last_updated: doc.data().videosdb.lastUpdated != null ? doc.data().videosdb.lastUpdated.toDate() : null
         }
         categories.push(category)
     })
