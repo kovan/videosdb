@@ -8,7 +8,7 @@ RUN apt-get install -y nodejs
 RUN apt-get install -y openjdk-18-jre-headless
 RUN npm install -g firebase-tools
 RUN firebase setup:emulators:firestore
-COPY firebase.json .wd
+COPY firebase.json .
 COPY .firebaserc .
 
 

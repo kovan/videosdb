@@ -166,7 +166,7 @@ class YoutubeAPI:
             logger.debug("requesting: " + final_url)
 
             response = await self.api.http.get(
-                self.api.root_url + final_url,  headers=self._headers, timeout=30.0)
+                self.api.root_url + final_url,  headers=self._headers, timeout=60.0)
 
             if response.status_code == 304:
                 logger.debug("304 Not modified.")

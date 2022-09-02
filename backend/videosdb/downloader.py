@@ -97,13 +97,6 @@ class DB:
             await self.doc_ref.set(self.dict, merge=True)
 
 
-def handler(signum, frame):
-    print('Running tasks:')
-    pprint.pprint(anyio.get_running_tasks())
-    if signum == signal.SIGINT:
-        sys.exit(-1)
-
-
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
@@ -114,8 +107,18 @@ class Downloader:
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
         self.valid_video_ids = set()
 
-        signal.signal(signal.SIGHUP, handler)
-        signal.signal(signal.SIGINT, handler)
+        # signal.signal(signal.SIGHUP, handler)
+        # signal.signal(signal.SIGINT, handler)
+
+    async def _signal_handler(self, *streams):
+        with anyio.open_signal_receiver(signal.SIGHUP) as signals:
+            async for signum in signals:
+                if signum == signal.SIGHUP:
+                    tasks = anyio.get_running_tasks()
+                    print('Running tasks:' + str(len(tasks)))
+                    pprint.pprint(tasks)
+                    for stream in streams:
+                        print(str(stream.statistics()))
 
     async def init(self):
         self.api = await YoutubeAPI.create()
@@ -151,7 +154,10 @@ class Downloader:
     async def _start(self):
         video_sender, video_receiver = anyio.create_memory_object_stream()
         playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
+
         async with anyio.create_task_group() as nursery:
+            nursery.start_soon(self._signal_handler,
+                               video_receiver, video_receiver, playlist_sender, playlist_receiver, name="Signal handler")
             nursery.start_soon(self._playlist_retriever,
                                playlist_sender, name="Playlist retriever")
             nursery.start_soon(self._playlist_processor,

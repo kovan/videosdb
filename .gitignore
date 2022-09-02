@@ -30,3 +30,4 @@ ui-debug.log
 
 tests/end2end/emulator-data/
 emulator-data/
+backend/output.txt
