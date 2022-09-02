@@ -10,14 +10,13 @@ import isodate
 import re
 from slugify import slugify
 
-
 from google.cloud import firestore
 from google.oauth2 import service_account
 import youtube_transcript_api
 from aiostream import stream
 
-
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
+
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 
 logger = logging.getLogger(__name__)
@@ -41,30 +40,29 @@ def _filter_exceptions(group: anyio.ExceptionGroup, exception_type, handler_func
 
 class DB:
 
-    @classmethod
-    async def create(cls):
-        obj = cls()
-
+    def __init__(self):
         project = os.environ["VIDEOSDB_FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
         creds_json_path = os.path.join(
             BASE_DIR, "keys/%s.json" % config.strip('"'))
 
         logger.info("Current project: " + project)
-        obj.db = firestore.AsyncClient(project=project,
-                                       credentials=service_account.Credentials.from_service_account_file(
-                                           creds_json_path))
+        self.db = firestore.AsyncClient(project=project,
+                                        credentials=service_account.Credentials.from_service_account_file(
+                                            creds_json_path))
         # client_info = {
         #     "initial_ops_per_second": 10,
         #     "max_ops_per_second": 10
         # }
 
+    async def init(self):
+
         # initialize meta table:
-        doc_ref = obj.db.collection("meta").document("meta")
+        doc_ref = self.db.collection("meta").document("meta")
         doc = await doc_ref.get()
         if not doc.exists or "videoIds" not in doc.to_dict():
             await doc_ref.set({"videoIds": list()})
-        return obj
+        return self
 
     async def update_last_updated(self):
         return await self.db.collection("meta").document(
@@ -97,6 +95,17 @@ class DB:
             await self.doc_ref.set(self.dict, merge=True)
 
 
+async def _signal_handler(*streams):
+    with anyio.open_signal_receiver(signal.SIGHUP) as signals:
+        async for signum in signals:
+            if signum == signal.SIGHUP:
+                tasks = anyio.get_running_tasks()
+                print('Running tasks:' + str(len(tasks)))
+                pprint.pprint(tasks)
+                for stream in streams:
+                    print(str(stream.statistics()))
+
+
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
@@ -106,23 +115,13 @@ class Downloader:
             logger.debug("Excluding transcripts")
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
         self.valid_video_ids = set()
-
+        self.db = DB()
+        self.api = YoutubeAPI()
         # signal.signal(signal.SIGHUP, handler)
         # signal.signal(signal.SIGINT, handler)
 
-    async def _signal_handler(self, *streams):
-        with anyio.open_signal_receiver(signal.SIGHUP) as signals:
-            async for signum in signals:
-                if signum == signal.SIGHUP:
-                    tasks = anyio.get_running_tasks()
-                    print('Running tasks:' + str(len(tasks)))
-                    pprint.pprint(tasks)
-                    for stream in streams:
-                        print(str(stream.statistics()))
-
     async def init(self):
-        self.api = await YoutubeAPI.create()
-        self.db = await DB.create()
+        await self.db.init()
 
     def check_for_new_videos(self):
         logger.info("Sync start")
@@ -138,7 +137,7 @@ class Downloader:
                         await self.db.get_video_count())
             await self._start()
 
-            if not "DEBUG" in os.environ:
+            if "DEBUG" not in os.environ:
                 # separate so that it uses remaining quota
                 await self._fill_related_videos()
         except YoutubeAPI.QuotaExceededError as e:
@@ -156,8 +155,9 @@ class Downloader:
         playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
 
         async with anyio.create_task_group() as nursery:
-            nursery.start_soon(self._signal_handler,
-                               video_receiver, video_receiver, playlist_sender, playlist_receiver, name="Signal handler")
+            nursery.start_soon(_signal_handler,
+                               video_receiver, video_receiver, playlist_sender, playlist_receiver,
+                               name="Signal handler")
             nursery.start_soon(self._playlist_retriever,
                                playlist_sender, name="Playlist retriever")
             nursery.start_soon(self._playlist_processor,
@@ -185,13 +185,13 @@ class Downloader:
 
         if "DEBUG" in os.environ:
             playlist_ids = stream.iterate(
-                self.api.list_channnelsection_playlist_ids(channel_id)
+                self.api.list_channelsection_playlist_ids(channel_id)
             )
 
         else:
             playlist_ids = stream.merge(
                 asyncgenerator(all_uploads_playlist_id),
-                self.api.list_channnelsection_playlist_ids(channel_id),
+                self.api.list_channelsection_playlist_ids(channel_id),
                 self.api.list_channel_playlist_ids(channel_id)
             )
 
@@ -304,7 +304,7 @@ class Downloader:
             return
 
         playlist = playlist if playlist["snippet"]["title"] != "Uploads from " + \
-            playlist["snippet"]["channelTitle"] else None
+                               playlist["snippet"]["channelTitle"] else None
 
         items = []
         async for item in await self.api.list_playlist_items(playlist_id):
@@ -360,9 +360,9 @@ class Downloader:
 
         if not self.exclude_transcripts:
             if (not old_video or
-                not "videosdb" in old_video or
-                not "transcript_status" in old_video["videosdb"] or
-                    old_video["videosdb"]["transcript_status"] == "pending"):
+                "videosdb" not in old_video or
+                "transcript_status" not in old_video["videosdb"] or
+                old_video["videosdb"]["transcript_status"] == "pending"):
                 transcript, new_status = await self._download_transcript(video_id)
                 custom_attrs["transcript_status"] = new_status
                 if transcript:
@@ -394,7 +394,7 @@ class Downloader:
         # use remaining YT API daily quota to download a few related video lists:
         logger.info("Filling related videos info.")
 
-        async with anyio.create_task_group() as tg:
+        async with anyio.create_task_group():
             meta_doc = await self.db.db.collection("meta").document("meta").get()
             randomized_ids = meta_doc.to_dict()["videoIds"]
             random.shuffle(randomized_ids)
@@ -405,7 +405,7 @@ class Downloader:
                 for related in related_videos:
                     # for now skip videos from other channels:
                     if "snippet" in related and related["snippet"]["channelId"] \
-                            != self.YT_CHANNEL_ID:
+                        != self.YT_CHANNEL_ID:
                         continue
 
                     await self.db.db.collection("videos").document(video_id).update({
@@ -413,9 +413,9 @@ class Downloader:
                     })
 
                     logger.info("Added new related videos to video %s" %
-                                (video_id))
+                                video_id)
 
-    @ staticmethod
+    @staticmethod
     async def _download_transcript(video_id):
         try:
             logger.info(
@@ -426,16 +426,16 @@ class Downloader:
 
             return transcript, "downloaded"
         except youtube_transcript_api.TooManyRequests as e:
-            logger.warn(str(e))
-            logger.warn("New status: pending")
+            logger.warning(str(e))
+            logger.warning("New status: pending")
             return None, "pending"
         except youtube_transcript_api.CouldNotRetrieveTranscript as e:
             # weird but that's how the lib works:
             if (hasattr(e, "video_id")
                 and hasattr(e.video_id, "response")
-                    and e.video_id.response.status_code == 429):
-                logger.warn(str(e))
-                logger.warn("New status: pending")
+                and e.video_id.response.status_code == 429):
+                logger.warning(str(e))
+                logger.warning("New status: pending")
                 return None, "pending"
             else:
                 logger.info(
@@ -443,7 +443,7 @@ class Downloader:
                 logger.info(str(e) + " New status: unavailable")
                 return None, "unavailable"
 
-    @ staticmethod
+    @staticmethod
     def _description_trimmed(description):
         if not description:
             return
