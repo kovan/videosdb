@@ -155,6 +155,7 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     async def _request_one(self, url, params):
         async for item in self._request_many(url, params):
             return item
@@ -193,7 +194,7 @@ class YoutubeAPI:
             logger.debug("requesting: " + final_url)
 
             if hasattr(self, "cache"):
-                response, from_cache, content = await _get_with_cache(url)
+                response, from_cache = await _get_with_cache(url)
             else:
                 response = await self.http.get(
                     self.root_url + final_url, timeout=30.0)
