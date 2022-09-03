@@ -129,7 +129,7 @@ class Downloader:
 
     async def init(self):
         await self.db.init()
-        self.api = await YoutubeAPI.create(self.db)
+        self.api = await YoutubeAPI.create(self.db.db)
 
     def check_for_new_videos(self):
         logger.info("Sync start")
