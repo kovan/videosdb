@@ -29,6 +29,9 @@ LOGGING = {
         }
     },
     'loggers': {
+        'anyio': {
+            "level": os.environ.get("LOGLEVEL", "INFO"),
+        },
 
         'asyncio': {
             "level": os.environ.get("LOGLEVEL", "INFO"),
@@ -40,12 +43,12 @@ LOGGING = {
         },
         "property_manager": {
             'handlers': ['console'],
-            "level": "WARNING",
+            "level": "INFO",
             'propagate': False,
         },
         '': {
             'handlers': ['console'],
-            'level': "WARNING",
+            'level': "INFO",
             'propagate': True
         }
     },

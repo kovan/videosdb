@@ -56,8 +56,6 @@ class DB:
         # }
 
     async def init(self):
-        self.api = await YoutubeAPI.create()
-
         # initialize meta table:
         doc_ref = self.db.collection("meta").document("meta")
         doc = await doc_ref.get()
@@ -96,15 +94,19 @@ class DB:
             await self.doc_ref.set(self.dict, merge=True)
 
 
+def _print_debug_info(*streams):
+    tasks = anyio.get_running_tasks()
+    print('Running tasks:' + str(len(tasks)))
+    pprint.pprint(tasks)
+    for stream in streams:
+        print(str(stream.statistics()))
+
+
 async def _signal_handler(*streams):
     with anyio.open_signal_receiver(signal.SIGHUP, signal.SIGTERM) as signals:
         async for signum in signals:
             if signum == signal.SIGHUP:
-                tasks = anyio.get_running_tasks()
-                print('Running tasks:' + str(len(tasks)))
-                pprint.pprint(tasks)
-                for stream in streams:
-                    print(str(stream.statistics()))
+                _print_debug_info(streams)
             elif signum == signal.SIGTERM:
                 return
 
@@ -136,14 +138,8 @@ class Downloader:
         await self.init()
 
         try:
-
-            logger.info("Currently there are %s videos in the DB",
-                        await self.db.get_video_count())
             await self._start()
 
-            if "DEBUG" not in os.environ:
-                # separate so that it uses remaining quota
-                await self._fill_related_videos()
         except YoutubeAPI.QuotaExceededError as e:
             logger.error(e)
         except anyio.ExceptionGroup as group:
@@ -155,10 +151,16 @@ class Downloader:
             await self.db.update_last_updated()
 
     async def _start(self):
+        logger.info("Currently there are %s videos in the DB",
+                    await self.db.get_video_count())
+
         video_sender, video_receiver = anyio.create_memory_object_stream()
         playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
 
         async with anyio.create_task_group() as global_scope:
+            global_scope.start_soon(_signal_handler,
+                                    video_receiver, video_receiver, playlist_sender, playlist_receiver,
+                                    name="Signal handler")
             async with anyio.create_task_group() as processors:
                 processors.start_soon(self._playlist_retriever,
                                       playlist_sender, name="Playlist retriever")
@@ -167,9 +169,9 @@ class Downloader:
                 processors.start_soon(self._video_processor,
                                       video_receiver, name="Video receiver")
 
-            global_scope.start_soon(_signal_handler,
-                                    video_receiver, video_receiver, playlist_sender, playlist_receiver,
-                                    name="Signal handler")
+            if "DEBUG" not in os.environ:
+                # separate so that it uses remaining quota
+                await self._fill_related_videos()
             global_scope.cancel_scope.cancel()
 
     async def _playlist_retriever(self, playlist_sender):

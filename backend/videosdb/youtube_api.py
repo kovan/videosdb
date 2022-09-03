@@ -156,6 +156,7 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     async def _request_one(self, url, params):
         async for item in self._request_many(url, params):
             return item
@@ -206,6 +207,8 @@ class YoutubeAPI:
             response.raise_for_status()
             json_response = response.json()
 
+            logger.debug("Received response with etag: " +
+                         str(json_response.get("etag")))
             for item in json_response["items"]:
                 yield item
 
