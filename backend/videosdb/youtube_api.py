@@ -11,7 +11,6 @@ import httpx
 import youtube_transcript_api
 from urllib.parse import urlencode
 from executor import execute
-from google.cloud import firestore
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +24,8 @@ def parse_youtube_id(string: str):
 
 class Cache:
 
-    def __init__(self):
-        self.db = firestore.AsyncClient()
+    def __init__(self, db):
+        self.db = db
 
     @staticmethod
     def _key_func(key):
@@ -59,7 +58,7 @@ class YoutubeAPI:
         return await self.http.aclose()
 
     @classmethod
-    async def create(cls, yt_key=None):
+    async def create(cls, db, yt_key=None):
         obj = cls()
         limits = httpx.Limits(max_connections=50)
         obj.http = httpx.AsyncClient(limits=limits)
@@ -72,7 +71,7 @@ class YoutubeAPI:
             "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
 
         if "YOUTUBE_API_CACHE" in os.environ:
-            obj.cache = Cache()
+            obj.cache = Cache(db)
 
         logger.debug("Pointing at URL: " + obj.root_url)
         return obj
@@ -155,7 +154,6 @@ class YoutubeAPI:
 
 
 # ------- PRIVATE-------------------------------------------------------
-
 
     async def _request_one(self, url, params):
         async for item in self._request_many(url, params):

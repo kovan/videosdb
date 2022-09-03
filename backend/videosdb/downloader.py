@@ -115,6 +115,8 @@ class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
     def __init__(self, exclude_transcripts=False):
+        logger.debug("ENVIRONMENT:")
+        logger.debug(str(os.environ))
         self.exclude_transcripts = exclude_transcripts
         if exclude_transcripts:
             logger.debug("Excluding transcripts")
@@ -127,7 +129,7 @@ class Downloader:
 
     async def init(self):
         await self.db.init()
-        self.api = await YoutubeAPI.create()
+        self.api = await YoutubeAPI.create(self.db)
 
     def check_for_new_videos(self):
         logger.info("Sync start")
