@@ -7,6 +7,8 @@ steps:
       - --rm
       - -e
       - LOGLEVEL=$_LOGLEVEL
+      - -e
+      - YOUTUBE_API_CACHE=1
       - --env-file
       - common/env/$_VIDEOSDB_CONFIG.txt
       - gcr.io/worpdress-279321/backend
