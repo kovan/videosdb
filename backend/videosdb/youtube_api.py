@@ -155,7 +155,6 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
-
     async def _request_one(self, url, params):
         async for item in self._request_many(url, params):
             return item
@@ -170,17 +169,22 @@ class YoutubeAPI:
 
             response = await self.http.get(
                 self.root_url + url, timeout=30.0, headers=headers)
+            if response.status_code == 403:
+                raise self.QuotaExceededError(
+                    response.status_code, response.json())
 
             if response.status_code == 304:
                 logger.debug("Using cached response.")
-                return response, True,  cached["content"]
+                return cached["content"], True
+
+            response.raise_for_status()
 
             asyncio.create_task(self.cache.set(url, {
                 "url": url,
                 "headers": dict(response.headers),
                 "content": response.json()
             }))  # defer
-            return response, False
+            return response.json(), False
 
         params["key"] = self.yt_key
         url += "?" + urlencode(params)
@@ -194,17 +198,11 @@ class YoutubeAPI:
             logger.debug("requesting: " + final_url)
 
             if hasattr(self, "cache"):
-                response, from_cache = await _get_with_cache(url)
+                json_response, from_cache = await _get_with_cache(url)
             else:
                 response = await self.http.get(
                     self.root_url + final_url, timeout=30.0)
-
-            if response.status_code == 403:
-                raise self.QuotaExceededError(
-                    response.status_code, response.json())
-
-            response.raise_for_status()
-            json_response = response.json()
+                json_response = response.json()
 
             logger.debug("Received response with etag: " +
                          str(json_response.get("etag")))
