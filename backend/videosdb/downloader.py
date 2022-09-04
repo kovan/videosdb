@@ -176,7 +176,7 @@ class Downloader:
                 await self._fill_related_videos()
             global_scope.cancel_scope.cancel()
 
-    @traced(logger)
+    @traced
     async def _playlist_retriever(self, playlist_sender):
         with playlist_sender:
 
@@ -209,7 +209,7 @@ class Downloader:
                 async for playlist_id in streamer:
                     await playlist_sender.send(playlist_id)
 
-    @traced(logger)
+    @traced
     async def _playlist_processor(self, playlist_receiver, video_sender):
         processed_playlist_ids = set()
         with video_sender:
@@ -222,7 +222,7 @@ class Downloader:
 
                     processed_playlist_ids.add(playlist_id)
 
-    @traced(logger)
+    @traced
     async def _video_processor(self, video_receiver):
 
         # One stream per video, because when a video is found in a new playlist,
@@ -266,7 +266,7 @@ class Downloader:
                     ids.update(self.valid_video_ids)
                     meta["videoIds"] = list(ids)
 
-    @traced(logger)
+    @traced
     async def _process_video(self, task_receiver):
         breaking = False
         self_video_id = None
@@ -303,7 +303,7 @@ class Downloader:
             logger.debug("Wrote playlist info for video: " +
                          str(self_video_id))
 
-    @traced(logger)
+    @traced
     async def _process_playlist(self, playlist_id, video_sender):
         result, playlist = await self._get_with_etag("playlists", self.api.get_playlist_info,  playlist_id)
         if result == 304:  # Not modified
@@ -329,7 +329,7 @@ class Downloader:
         if playlist:
             await self._create_playlist(playlist, items)
 
-    @traced(logger)
+    @traced
     async def _create_playlist(self, playlist, items):
         video_count = 0
         last_updated = None
@@ -350,7 +350,7 @@ class Downloader:
         await self.db.db.collection("playlists").document(playlist["id"]).set(playlist)
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
-    @traced(logger)
+    @traced
     async def _create_video(self, video_id):
         result, video = await self._get_with_etag("videos", self.api.get_video_info,  video_id)
         if result == 304:  # Not modified
@@ -401,7 +401,7 @@ class Downloader:
 
         return video
 
-    @traced(logger)
+    @traced
     async def _fill_related_videos(self):
 
         # use remaining YT API daily quota to download a few related video lists:
