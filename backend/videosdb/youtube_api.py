@@ -5,7 +5,6 @@ import os
 import re
 import tempfile
 import hashlib
-import executor
 import httpx
 import youtube_transcript_api
 from urllib.parse import urlencode
