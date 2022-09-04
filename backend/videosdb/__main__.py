@@ -1,12 +1,17 @@
 import argparse
 import logging.config
-
+import logging
+import os
 from videosdb.downloader import Downloader
 from videosdb.settings import LOGGING
+from autologging import TRACE
 
 
 def entrypoint():
+
     logging.config.dictConfig(LOGGING)
+    if os.environ["LOGLEVEL"] == "TRACE":
+        logging.getLogger("videosdb").setLevel(TRACE)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")

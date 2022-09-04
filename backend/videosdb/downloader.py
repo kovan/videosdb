@@ -9,13 +9,13 @@ import os
 import isodate
 import re
 from slugify import slugify
-
+from autologging import traced
 from google.cloud import firestore
 from google.oauth2 import service_account
 import youtube_transcript_api
 from aiostream import stream
 
-from videosdb.youtube_api import YoutubeAPI, get_video_transcript
+from videosdb.youtube_api import YoutubeAPI
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 
@@ -176,6 +176,7 @@ class Downloader:
                 await self._fill_related_videos()
             global_scope.cancel_scope.cancel()
 
+    @traced(logger)
     async def _playlist_retriever(self, playlist_sender):
         with playlist_sender:
 
@@ -208,6 +209,7 @@ class Downloader:
                 async for playlist_id in streamer:
                     await playlist_sender.send(playlist_id)
 
+    @traced(logger)
     async def _playlist_processor(self, playlist_receiver, video_sender):
         processed_playlist_ids = set()
         with video_sender:
@@ -220,6 +222,7 @@ class Downloader:
 
                     processed_playlist_ids.add(playlist_id)
 
+    @traced(logger)
     async def _video_processor(self, video_receiver):
 
         # One stream per video, because when a video is found in a new playlist,
@@ -234,9 +237,10 @@ class Downloader:
                                      video_id + " " + playlist_id)
                         if video_id not in video_streams:
                             snd_stream, rcv_stream = anyio.create_memory_object_stream()
+                            video_streams[video_id] = snd_stream
                             nursery.start_soon(
                                 self._process_video, rcv_stream, name="VID " + video_id)
-                            video_streams[video_id] = snd_stream
+
                             task = {
                                 "action": "create",
                                 "video_id": video_id
@@ -262,6 +266,7 @@ class Downloader:
                     ids.update(self.valid_video_ids)
                     meta["videoIds"] = list(ids)
 
+    @traced(logger)
     async def _process_video(self, task_receiver):
         breaking = False
         self_video_id = None
@@ -298,6 +303,7 @@ class Downloader:
             logger.debug("Wrote playlist info for video: " +
                          str(self_video_id))
 
+    @traced(logger)
     async def _process_playlist(self, playlist_id, video_sender):
         result, playlist = await self._get_with_etag("playlists", self.api.get_playlist_info,  playlist_id)
         if result == 304:  # Not modified
@@ -323,6 +329,7 @@ class Downloader:
         if playlist:
             await self._create_playlist(playlist, items)
 
+    @traced(logger)
     async def _create_playlist(self, playlist, items):
         video_count = 0
         last_updated = None
@@ -343,6 +350,7 @@ class Downloader:
         await self.db.db.collection("playlists").document(playlist["id"]).set(playlist)
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
+    @traced(logger)
     async def _create_video(self, video_id):
         result, video = await self._get_with_etag("videos", self.api.get_video_info,  video_id)
         if result == 304:  # Not modified
@@ -393,6 +401,7 @@ class Downloader:
 
         return video
 
+    @traced(logger)
     async def _fill_related_videos(self):
 
         # use remaining YT API daily quota to download a few related video lists:
