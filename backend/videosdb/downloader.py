@@ -422,7 +422,7 @@ class Downloader:
     async def _get_with_etag(self, collection, api_func, id):
         etag = await self.db.get_etag(collection, id)
         result = await api_func(id, etag)
-
+        logger.info("ID: %s of collection %s not modified" % (id, collection))
         if type(result) == int:
             return result, None
         return 200, result
