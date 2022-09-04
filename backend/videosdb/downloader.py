@@ -177,30 +177,33 @@ class Downloader:
             global_scope.cancel_scope.cancel()
 
     async def _playlist_retriever(self, playlist_sender):
-        channel_id = self.YT_CHANNEL_ID
-        channel_info = await self.api.get_channel_info(
-            channel_id)
-
-        logger.info("Processing channel: " +
-                    str(channel_info["snippet"]["title"]))
-        self.YT_CHANNEL_NAME = str(channel_info["snippet"]["title"])
-        await self.db.db.collection("channel_infos").document(channel_id).set(channel_info)
-
-        all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
-
-        if "DEBUG" in os.environ:
-            playlist_ids = stream.iterate(
-                self.api.list_channelsection_playlist_ids(channel_id)
-            )
-
-        else:
-            playlist_ids = stream.merge(
-                asyncgenerator(all_uploads_playlist_id),
-                self.api.list_channelsection_playlist_ids(channel_id),
-                self.api.list_channel_playlist_ids(channel_id)
-            )
-
         with playlist_sender:
+
+            channel_id = self.YT_CHANNEL_ID
+            result, channel_info = await self._get_with_etag("channel_infos", self.api.get_channel_info, channel_id)
+
+            if result == 304:  # Not modified
+                return
+
+            logger.info("Processing channel: " +
+                        str(channel_info["snippet"]["title"]))
+            self.YT_CHANNEL_NAME = str(channel_info["snippet"]["title"])
+            await self.db.db.collection("channel_infos").document(channel_id).set(channel_info)
+
+            all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
+
+            if "DEBUG" in os.environ:
+                playlist_ids = stream.iterate(
+                    self.api.list_channelsection_playlist_ids(channel_id)
+                )
+
+            else:
+                playlist_ids = stream.merge(
+                    asyncgenerator(all_uploads_playlist_id),
+                    self.api.list_channelsection_playlist_ids(channel_id),
+                    self.api.list_channel_playlist_ids(channel_id)
+                )
+
             async with playlist_ids.stream() as streamer:
                 async for playlist_id in streamer:
                     await playlist_sender.send(playlist_id)
@@ -410,6 +413,14 @@ class Downloader:
 
                     logger.info("Added new related videos to video %s" %
                                 video_id)
+
+    async def _get_with_etag(self, collection, api_func, id):
+        etag = await self.db.get_etag(collection, id)
+        result = await api_func(id, etag)
+
+        if type(result) == int:
+            return result, None
+        return 200, result
 
     @staticmethod
     async def _download_transcript(video_id):

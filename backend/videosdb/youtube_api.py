@@ -181,7 +181,7 @@ class YoutubeAPI:
             response.raise_for_status()
 
             if response.status_code == 304:
-                logger.debug("Using cached response.")
+                logger.debug("304 Not modified.")
                 yield response.status_code
 
             json_response = response.json()
