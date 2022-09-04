@@ -113,10 +113,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails,statistics",
             "id": youtube_id
         }
-        item = await self._request_one(url, params)
-        if not item:
-            return None
-        return item
+        return await self._request_one(url, params)
 
     async def list_playlist_items(self, playlist_id):
         url = "/playlistItems"
