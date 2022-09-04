@@ -1,4 +1,3 @@
-import asyncio
 import io
 import json
 import logging
@@ -70,8 +69,8 @@ class YoutubeAPI:
         obj.root_url = os.environ.get(
             "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
 
-        if "YOUTUBE_API_CACHE" in os.environ:
-            obj.cache = Cache(db)
+        # if "YOUTUBE_API_CACHE" in os.environ:
+        #     obj.cache = Cache(db)
 
         logger.debug("Pointing at URL: " + obj.root_url)
         return obj
@@ -155,40 +154,19 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     async def _request_one(self, url, params):
         async for item in self._request_many(url, params):
             return item
 
-    async def _request_many(self, url, params):
+    async def _request_many(self, url, params, etag=None):
 
-        async def _get_with_cache(url):
-            headers = {}
-            cached = await self.cache.get(url)
-            if cached:
-                headers["If-None-Match"] = cached["content"]["etag"]
-
-            response = await self.http.get(
-                self.root_url + url, timeout=30.0, headers=headers)
-            if response.status_code == 403:
-                raise self.QuotaExceededError(
-                    response.status_code, response.json())
-
-            if response.status_code == 304:
-                logger.debug("Using cached response.")
-                return cached["content"], True
-
-            response.raise_for_status()
-
-            asyncio.create_task(self.cache.set(url, {
-                "url": url,
-                "headers": dict(response.headers),
-                "content": response.json()
-            }))  # defer
-            return response.json(), False
-
+        headers = {}
         params["key"] = self.yt_key
         url += "?" + urlencode(params)
         page_token = None
+        if etag:
+            headers["If-None-Match"] = etag
 
         while True:
             if page_token:
@@ -197,12 +175,20 @@ class YoutubeAPI:
                 final_url = url
             logger.debug("requesting: " + final_url)
 
-            if hasattr(self, "cache"):
-                json_response, from_cache = await _get_with_cache(url)
-            else:
-                response = await self.http.get(
-                    self.root_url + final_url, timeout=30.0)
-                json_response = response.json()
+            response = await self.http.get(
+                self.root_url + final_url, timeout=30.0, headers=headers)
+
+            if response.status_code == 403:
+                raise self.QuotaExceededError(
+                    response.status_code, response.json())
+
+            response.raise_for_status()
+
+            if response.status_code == 304:
+                logger.debug("Using cached response.")
+                yield response.status_code
+
+            json_response = response.json()
 
             logger.debug("Received response with etag: " +
                          str(json_response.get("etag")))
