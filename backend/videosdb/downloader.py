@@ -15,7 +15,7 @@ from google.oauth2 import service_account
 import youtube_transcript_api
 from aiostream import stream
 
-from videosdb.youtube_api import YoutubeAPI
+from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 
