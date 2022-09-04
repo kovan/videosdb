@@ -1,6 +1,5 @@
 import argparse
 import logging.config
-from videosdb.ipfs import IPFS
 
 from videosdb.downloader import Downloader
 from videosdb.settings import LOGGING
@@ -35,4 +34,3 @@ def entrypoint():
 
 if __name__ == "__main__":
     entrypoint()
-
