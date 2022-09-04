@@ -1,0 +1,14 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "effection": "^2.0.4",
+    "firebase": "^9.9.4",
+    "googleapis": "^107.0.0",
+    "slugify": "^1.6.5",
+    "youtube-captions-scraper": "^2.0.0"
+  }
+}
