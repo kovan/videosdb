@@ -9,7 +9,7 @@ import executor
 import httpx
 import youtube_transcript_api
 from urllib.parse import urlencode
-from executor import execute
+
 
 logger = logging.getLogger(__name__)
 
