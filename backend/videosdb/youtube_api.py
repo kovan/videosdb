@@ -75,13 +75,13 @@ class YoutubeAPI:
         logger.debug("Pointing at URL: " + obj.root_url)
         return obj
 
-    async def get_playlist_info(self, playlist_id):
+    async def get_playlist_info(self, playlist_id, etag=None):
         url = "/playlists"
         params = {
             "part": "snippet",
             "id": playlist_id
         }
-        return await self._request_one(url, params)
+        return await self._request_one(url, params, etag)
 
     async def list_channelsection_playlist_ids(self, channel_id):
         url = "/channelSections"
@@ -107,13 +107,13 @@ class YoutubeAPI:
         async for item in self._request_many(url, params):
             yield item["id"]
 
-    async def get_video_info(self, youtube_id):
+    async def get_video_info(self, youtube_id, etag=None):
         url = "/videos"
         params = {
             "part": "snippet,contentDetails,statistics",
             "id": youtube_id
         }
-        return await self._request_one(url, params)
+        return await self._request_one(url, params, etag)
 
     async def list_playlist_items(self, playlist_id):
         url = "/playlistItems"
@@ -140,20 +140,19 @@ class YoutubeAPI:
             result[video["id"]["videoId"]] = video
         return result.values()
 
-    async def get_channel_info(self, channel_id):
+    async def get_channel_info(self, channel_id, etag=None):
         url = "/channels"
         params = {
             "part": "snippet,contentDetails,statistics",
             "id": channel_id
         }
-        return await self._request_one(url, params)
+        return await self._request_one(url, params, etag)
 
 
 # ------- PRIVATE-------------------------------------------------------
 
-
-    async def _request_one(self, url, params):
-        async for item in self._request_many(url, params):
+    async def _request_one(self, url, params, etag=None):
+        async for item in self._request_many(url, params, etag):
             return item
 
     async def _request_many(self, url, params, etag=None):
