@@ -299,7 +299,10 @@ class Downloader:
                          str(self_video_id))
 
     async def _process_playlist(self, playlist_id, video_sender):
-        playlist = await self.api.get_playlist_info(playlist_id)
+        result, playlist = await self._get_with_etag("playlists", self.api.get_playlist_info,  playlist_id)
+        if result == 304:  # Not modified
+            return
+
         if not playlist:
             return
 
@@ -341,7 +344,9 @@ class Downloader:
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     async def _create_video(self, video_id):
-        video = await self.api.get_video_info(video_id)
+        result, video = await self._get_with_etag("videos", self.api.get_video_info,  video_id)
+        if result == 304:  # Not modified
+            return
         if not video:
             return
         # some playlists include videos from other channels
