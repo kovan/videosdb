@@ -5,9 +5,19 @@
         "version": "0.2.0",
         "configurations": [
             {
+                "cwd": "${workspaceFolder}/backend/js",
+                "command": "npm start",
+                "name": "Run npm start",
+                "request": "launch",
+                "type": "node-terminal"
+            },
+            {
                 "name": "backend JS",
                 "cwd": "${workspaceFolder}/backend/js",
-                "program": "app.js",
+                "runtimeArgs": [
+                    "start",
+                    "debug"
+                ],
                 "request": "launch",
                 "skipFiles": [
                     "<node_internals>/**"
