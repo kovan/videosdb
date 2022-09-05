@@ -1,8 +1,43 @@
+- fix sadhguru timeout
+- fix random video not working (vue.runtime.esm.js:1897 TypeError: Cannot read properties of undefined (reading 'videosdb')
+    at l.randomVideo (default.vue:145:43))
+- pasar a js
+- rellenar transcripts en "pending"
+-en Nithyananda las categorias no van (vue.runtime.esm.js:1897 TypeError: Cannot read properties of undefined (reading 'videosdb')
+    at l.randomVideo (default.vue:145:43))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 TODO
 ------------------------
 - migración desde AWS:
   1 - backup de la base de datos y subir a git
-  2 - en local hacer un pull y un restore de la db 
+  2 - en local hacer un pull y un restore de la db
   3 - redirigir el dominio por dyndns a la IP local
   4 - asegurarse de que la db que se consulta pasa a ser la local
   5 - migrar scripts de cron
@@ -27,7 +62,7 @@ TODO
 - ¿? buscador filtros por rangos de fechas, visitas, idioma, palabras en campos... etc.
 
 - ¿? los tags más usados mostrar en barra lateral
-- ¿? buscador avanzado (basado en settings). 
+- ¿? buscador avanzado (basado en settings).
   - Campos:
     - titulo
     - categorias

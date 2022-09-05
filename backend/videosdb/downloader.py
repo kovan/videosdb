@@ -8,6 +8,7 @@ import logging
 import os
 import isodate
 import re
+import fnc
 from slugify import slugify
 from autologging import traced
 from google.cloud import firestore
@@ -55,20 +56,25 @@ class DB:
         #     "max_ops_per_second": 10
         # }
 
+    def meta_ref(self):
+        return self.db.collection("meta").document("meta")
+
     async def init(self):
         # initialize meta table:
-        doc_ref = self.db.collection("meta").document("meta")
-        doc = await doc_ref.get()
+        doc = await self.db.meta_ref().get()
         if not doc.exists or "videoIds" not in doc.to_dict():
-            await doc_ref.set({"videoIds": list()})
+            await self.db.meta_ref().set(
+                {"videoIds": list()}
+            )
         return self
 
     async def update_last_updated(self):
-        return await self.db.collection("meta").document(
-            "meta").set({"lastUpdated": datetime.now().isoformat()}, merge=True)
+        return await self.db.meta_ref().set({
+            "lastUpdated": datetime.now().isoformat()
+        }, merge=True)
 
     async def get_video_count(self):
-        doc = await self.db.collection("meta").document("meta").get()
+        doc = await self.db.meta_ref().get()
         if doc.exists:
             return len(doc.to_dict()["videoIds"])
         else:
@@ -98,8 +104,10 @@ def _print_debug_info(*streams):
     tasks = anyio.get_running_tasks()
     print('Running tasks:' + str(len(tasks)))
     pprint.pprint(tasks)
-    for stream in streams:
-        print(str(stream.statistics()))
+
+
+"""     for stream in streams:
+        print(str(stream.statistics())) """
 
 
 async def _signal_handler(*streams):
@@ -121,11 +129,8 @@ class Downloader:
         if exclude_transcripts:
             logger.debug("Excluding transcripts")
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
-        self.valid_video_ids = set()
         self.db = DB()
         self.api = YoutubeAPI()
-        # signal.signal(signal.SIGHUP, handler)
-        # signal.signal(signal.SIGINT, handler)
 
     async def init(self):
         await self.db.init()
@@ -137,20 +142,35 @@ class Downloader:
         logger.info("Sync finished")
 
     async def check_for_new_videos_async(self):
-        await self.init()
+        async with anyio.create_task_group() as global_scope:
+            await self.init()
+            global_scope.start_soon(_signal_handler,
+                                    name="Signal handler")
 
-        try:
-            await self._start()
+            try:
+                await self._start()
 
-        except YoutubeAPI.QuotaExceededError as e:
-            logger.error(e)
-        except anyio.ExceptionGroup as group:
-            _filter_exceptions(
-                group, YoutubeAPI.QuotaExceededError, logger.error)
-        finally:
+            except YoutubeAPI.QuotaExceededError as e:
+                logger.error(e)
+            except anyio.ExceptionGroup as group:
+                _filter_exceptions(
+                    group, YoutubeAPI.QuotaExceededError, logger.error)
+
+            video_ids = set()
+            async for video in self.db.db.collection("videos").stream():
+                v = video.to_dict()
+                video_ids.add(v.id)
+                if not self.exclude_transcripts:
+                    global_scope.start_soon(self._handle_transcript, video)
+
+            meta_ref = self.db.db.collection("meta").document("meta")
+            async with DB.Doc(meta_ref) as meta:
+                meta["videoIds"] = list(video_ids)
+
             await anyio.wait_all_tasks_blocked()
             # await self.api.aclose()
             await self.db.update_last_updated()
+            global_scope.cancel_scope.cancel()
 
     async def _start(self):
         logger.info("Currently there are %s videos in the DB",
@@ -159,22 +179,17 @@ class Downloader:
         video_sender, video_receiver = anyio.create_memory_object_stream()
         playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
 
-        async with anyio.create_task_group() as global_scope:
-            global_scope.start_soon(_signal_handler,
-                                    video_receiver, video_receiver, playlist_sender, playlist_receiver,
-                                    name="Signal handler")
-            async with anyio.create_task_group() as processors:
-                processors.start_soon(self._playlist_retriever,
-                                      playlist_sender, name="Playlist retriever")
-                processors.start_soon(self._playlist_processor,
-                                      playlist_receiver, video_sender, name="Playlist receiver")
-                processors.start_soon(self._video_processor,
-                                      video_receiver, name="Video receiver")
+        async with anyio.create_task_group() as processors:
+            processors.start_soon(self._playlist_retriever,
+                                  playlist_sender, name="Playlist retriever")
+            processors.start_soon(self._playlist_processor,
+                                  playlist_receiver, video_sender, name="Playlist receiver")
+            processors.start_soon(self._video_processor,
+                                  video_receiver, name="Video receiver")
 
-            if "DEBUG" not in os.environ:
-                # separate so that it uses remaining quota
-                await self._fill_related_videos()
-            global_scope.cancel_scope.cancel()
+        if "DEBUG" not in os.environ:
+            # separate so that it uses remaining quota
+            await self._fill_related_videos()
 
     @traced
     async def _playlist_retriever(self, playlist_sender):
@@ -259,12 +274,6 @@ class Downloader:
             finally:
                 for stream in video_streams.values():
                     stream.close()
-
-                meta_doc = self.db.db.collection("meta").document("meta")
-                async with DB.Doc(meta_doc) as meta:
-                    ids = set(meta["videoIds"])
-                    ids.update(self.valid_video_ids)
-                    meta["videoIds"] = list(ids)
 
     @traced
     async def _process_video(self, task_receiver):
@@ -364,21 +373,7 @@ class Downloader:
         if video["snippet"]["channelId"] != self.YT_CHANNEL_ID:
             return
 
-        old_video_doc = await self.db.db.collection("videos").document(video_id).get()
-
         custom_attrs = dict()
-
-        old_video = old_video_doc.to_dict() if old_video_doc.exists else None
-
-        if not self.exclude_transcripts:
-            if (not old_video or
-                "videosdb" not in old_video or
-                "transcript_status" not in old_video["videosdb"] or
-                    old_video["videosdb"]["transcript_status"] == "pending"):
-                transcript, new_status = await self._download_transcript(video_id)
-                custom_attrs["transcript_status"] = new_status
-                if transcript:
-                    custom_attrs["transcript"] = transcript
 
         custom_attrs["slug"] = slugify(
             video["snippet"]["title"])
@@ -396,7 +391,6 @@ class Downloader:
         await self.db.db.collection("videos").document(
             video_id).set(video, merge=True)
 
-        self.valid_video_ids.add(video["id"])
         logger.info("Created video: " + video["snippet"]["title"])
 
         return video
@@ -435,6 +429,23 @@ class Downloader:
         if type(result) == int:
             return result, None
         return 200, result
+
+    async def _handle_transcript(self, video):
+        if not video.exists:
+            return
+
+        v = video.to_dict()
+        if fnc.get("videosdb.transcript_status", v) not in ("pending", None):
+            return
+
+        transcript, new_status = await self._download_transcript(v["id"])
+        new_data = {
+            "videosdb": {
+                "transcript_status": new_status,
+                "transcript": transcript
+            }
+        }
+        video.set(new_data, merge=True)
 
     @staticmethod
     async def _download_transcript(video_id):

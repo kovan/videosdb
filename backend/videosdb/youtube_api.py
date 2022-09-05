@@ -1,9 +1,7 @@
-import io
 import json
 import logging
 import os
 import re
-import tempfile
 import hashlib
 import httpx
 import youtube_transcript_api
@@ -150,6 +148,7 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     async def _request_one(self, url, params, etag=None):
         async for item in self._request_many(url, params, etag):
             return item
@@ -195,6 +194,7 @@ class YoutubeAPI:
                 page_token = json_response["nextPageToken"]
 
 
+"""
 class YoutubeDL:
     class UnavailableError(Exception):
         def __init__(self, s):
@@ -261,7 +261,7 @@ class YoutubeDL:
         for video_json in result.splitlines():
             video = json.loads(video_json)
             videos.append(video)
-        return videos
+        return videos """
 
 
 def get_video_transcript(youtube_id):
