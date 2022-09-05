@@ -434,17 +434,22 @@ class Downloader:
             return
 
         v = video.to_dict()
-        if fnc.get("videosdb.transcript_status", v) not in ("pending", None):
+        current_status = fnc.get("videosdb.transcript_status", v)
+        if current_status not in ("pending", None):
             return
 
         transcript, new_status = await self._download_transcript(v["id"])
+        if new_status == current_status:
+            return
+
         new_data = {
             "videosdb": {
                 "transcript_status": new_status,
                 "transcript": transcript
             }
         }
-        video.set(new_data, merge=True)
+        self.db.db.collection("videos").document(
+            v["id"]).set(new_data, merge=True)
 
     @staticmethod
     async def _download_transcript(video_id):
