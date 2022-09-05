@@ -61,20 +61,20 @@ class DB:
 
     async def init(self):
         # initialize meta table:
-        doc = await self.db.meta_ref().get()
+        doc = await self.meta_ref().get()
         if not doc.exists or "videoIds" not in doc.to_dict():
-            await self.db.meta_ref().set(
+            await self.meta_ref().set(
                 {"videoIds": list()}
             )
         return self
 
     async def update_last_updated(self):
-        return await self.db.meta_ref().set({
+        return await self.meta_ref().set({
             "lastUpdated": datetime.now().isoformat()
         }, merge=True)
 
     async def get_video_count(self):
-        doc = await self.db.meta_ref().get()
+        doc = await self.meta_ref().get()
         if doc.exists:
             return len(doc.to_dict()["videoIds"])
         else:
@@ -159,12 +159,11 @@ class Downloader:
             video_ids = set()
             async for video in self.db.db.collection("videos").stream():
                 v = video.to_dict()
-                video_ids.add(v.id)
+                video_ids.add(v["id"])
                 if not self.exclude_transcripts:
                     global_scope.start_soon(self._handle_transcript, video)
 
-            meta_ref = self.db.db.collection("meta").document("meta")
-            async with DB.Doc(meta_ref) as meta:
+            async with DB.Doc(self.db.meta_ref()) as meta:
                 meta["videoIds"] = list(video_ids)
 
             await anyio.wait_all_tasks_blocked()
@@ -402,7 +401,7 @@ class Downloader:
         logger.info("Filling related videos info.")
 
         async with anyio.create_task_group():
-            meta_doc = await self.db.db.collection("meta").document("meta").get()
+            meta_doc = await self.db.meta_ref().get()
             randomized_ids = meta_doc.to_dict()["videoIds"]
             random.shuffle(randomized_ids)
             for video_id in randomized_ids:
