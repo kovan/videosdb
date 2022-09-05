@@ -9,7 +9,8 @@
                 "command": "npm start",
                 "name": "Run npm start",
                 "request": "launch",
-                "type": "node-terminal"
+                "type": "node-terminal",
+                "envFile": "${workspaceFolder}/../../utils/vars.txt"
             },
             {
                 "name": "backend JS",
@@ -22,7 +23,8 @@
                 "skipFiles": [
                     "<node_internals>/**"
                 ],
-                "type": "node"
+                "type": "node",
+                "envFile": "${workspaceFolder}/../../utils/vars.txt"
             },
             {
                 "name": "Backend run check",

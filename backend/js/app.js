@@ -46,25 +46,25 @@ class Downloader {
         let videoQueue = createQueue("Video queue")
         let playlistQueue = createQueue("Playlist queue")
 
-        yield spawn(this._playlistRetriever(playlistQueue))
-        yield spawn(this._playlistProcessor(playlistQueue, videoQueue))
-        yield spawn(this._videoProcessor(videoQueue))
+        yield all([spawn(this._playlistRetriever(playlistQueue)),
+        spawn(this._playlistProcessor(playlistQueue, videoQueue)),
+        spawn(this._videoProcessor(videoQueue))])
         console.info("Sync finished")
 
     }
 
-    async _playlistRetriever(playlistQueue) {
+    * _playlistRetriever(playlistQueue) {
         let params = {
             "part": "snippet,contentDetails,statistics",
             "id": this.YT_CHANNEL_ID
         }
         console.info("Retrieving channel " + this.YT_CHANNEL_ID)
-        let channel_info = await this.api.channels.list(params)
-        console.log(channel_info)
+        let channel_info = yield this.api.channels.list(params)
+        console.log("channel_info = " + channel_info)
     }
-    async _playlistProcessor(playlistQueue, videoQueue) {
+    * _playlistProcessor(playlistQueue, videoQueue) {
     }
-    async _videoProcessor(videoQueue) {
+    * _videoProcessor(videoQueue) {
     }
 }
 
@@ -72,6 +72,11 @@ class Downloader {
 
 main(function* () {
     let d = new Downloader()
+    try {
+        yield spawn(d.check_for_new_videos())
+    } catch (err) {
+        console.error("ERROR: " + err)
+    }
 
-    yield spawn(d.check_for_new_videos())
+
 })
