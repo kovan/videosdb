@@ -5,6 +5,16 @@
         "version": "0.2.0",
         "configurations": [
             {
+                "name": "backend JS",
+                "cwd": "${workspaceFolder}/backend/js",
+                "program": "app.js",
+                "request": "launch",
+                "skipFiles": [
+                    "<node_internals>/**"
+                ],
+                "type": "node"
+            },
+            {
                 "name": "Backend run check",
                 "type": "python",
                 "request": "launch",
