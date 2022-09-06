@@ -423,7 +423,7 @@ class Downloader:
         doc = await self.db.db.collection(
             collection).document(id).get()
 
-        etag = doc.to_dict() if doc.exists else None
+        etag = doc.to_dict()["etag"] if doc.exists else None
 
         result = await api_func(id, etag)
 
