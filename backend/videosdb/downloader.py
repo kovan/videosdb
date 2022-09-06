@@ -1,20 +1,22 @@
-import pprint
-import signal
-import anyio
-from datetime import datetime
-import random
-import sys
 import logging
 import os
-import isodate
+import pprint
+import random
+import re
+import signal
+import sys
+from datetime import datetime
+
+import anyio
 import fnc
-from slugify import slugify
+import isodate
+from aiostream import stream
 from autologging import traced
 from google.cloud import firestore
 from google.oauth2 import service_account
-from aiostream import stream
-
-from videosdb.youtube_api import YoutubeAPI
+from slugify import slugify
+from videosdb.youtube_api import YoutubeAPI, get_video_transcript
+import youtube_transcript_api
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 
