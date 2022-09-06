@@ -476,7 +476,8 @@ class Downloader:
             else:
                 logger.info(
                     "Transcription not available for video: " + str(video_id))
-                logger.info(str(e) + " New status: unavailable")
+                logger.info(str(e))
+                logger.info("New status: unavailable")
                 return None, "unavailable"
 
     @staticmethod
