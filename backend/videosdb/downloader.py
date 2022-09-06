@@ -80,12 +80,6 @@ class DB:
         else:
             return 0
 
-    async def get_etag(self, collection, id):
-        doc_ref = await self.db.collection(
-            collection).document(id).get()
-
-        return doc_ref.to_dict()["etag"] if doc_ref.exists else None
-
     class Doc:
 
         def __init__(self, doc_ref):
@@ -195,7 +189,7 @@ class Downloader:
         with playlist_sender:
 
             channel_id = self.YT_CHANNEL_ID
-            result, channel_info = await self._get_with_etag("channel_infos", self.api.get_channel_info, channel_id)
+            result, channel_info, doc = await self._get_with_etag("channel_infos", self.api.get_channel_info, channel_id)
 
             if result == 304:  # Not modified
                 return
@@ -313,8 +307,10 @@ class Downloader:
 
     @traced
     async def _process_playlist(self, playlist_id, video_sender):
-        result, playlist = await self._get_with_etag("playlists", self.api.get_playlist_info,  playlist_id)
-        if result == 304:  # Not modified
+        result, playlist, doc = await self._get_with_etag("playlists", self.api.get_playlist_info,  playlist_id)
+
+        # Not modified
+        if result == 304 and fnc.get("videosdb.lastUpdated", doc.to_dict()):
             return
 
         if not playlist:
@@ -348,6 +344,8 @@ class Downloader:
                 item["snippet"]["publishedAt"])
             if not last_updated or video_date > last_updated:
                 last_updated = video_date
+            # self.db.db.collection("playlists").document(
+            #     playlist["id"]).collection("items").document(item[id]).set(item)
 
         playlist["videosdb"] = dict()
         playlist["videosdb"]["slug"] = slugify(
@@ -360,7 +358,7 @@ class Downloader:
 
     @traced
     async def _create_video(self, video_id):
-        result, video = await self._get_with_etag("videos", self.api.get_video_info,  video_id)
+        result, video, doc = await self._get_with_etag("videos", self.api.get_video_info,  video_id)
         if result == 304:  # Not modified
             return
         if not video:
@@ -422,12 +420,16 @@ class Downloader:
                                 video_id)
 
     async def _get_with_etag(self, collection, api_func, id):
-        etag = await self.db.get_etag(collection, id)
+        doc = await self.db.db.collection(
+            collection).document(id).get()
+
+        etag = doc.to_dict() if doc.exists else None
+
         result = await api_func(id, etag)
-        logger.info("ID: %s of collection %s not modified" % (id, collection))
+
         if type(result) == int:
-            return result, None
-        return 200, result
+            return result, None, doc
+        return 200, result, doc
 
     async def _handle_transcript(self, video):
         if not video.exists:
