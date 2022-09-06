@@ -1,11 +1,10 @@
 - fix sadhguru timeout
-- fix random video not working (vue.runtime.esm.js:1897 TypeError: Cannot read properties of undefined (reading 'videosdb')
-    at l.randomVideo (default.vue:145:43))
 - pasar a js
-- rellenar transcripts en "pending"
+
 -en Nithyananda las categorias no van (vue.runtime.esm.js:1897 TypeError: Cannot read properties of undefined (reading 'videosdb')
     at l.randomVideo (default.vue:145:43))
-
+- quitar cola por video, crear video vacío si es necesario
+- busqueda nith no va
 
 
 

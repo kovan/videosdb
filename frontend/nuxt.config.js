@@ -7,7 +7,8 @@ let myConfig = {
     subtitle: process.env.VIDEOSDB_SUBTITLE,
     hostname: process.env.VIDEOSDB_HOSTNAME,
     website: process.env.VIDEOSDB_WEBSITE,
-    config: process.env.VIDEOSDB_CONFIG
+    config: process.env.VIDEOSDB_CONFIG,
+    cseUrl: process.env.VIDEOSDB_CSE_URL
 }
 
 export default {
