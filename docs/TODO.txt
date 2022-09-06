@@ -4,8 +4,7 @@
 -en Nithyananda las categorias no van (vue.runtime.esm.js:1897 TypeError: Cannot read properties of undefined (reading 'videosdb')
     at l.randomVideo (default.vue:145:43))
 - quitar cola por video, crear video vacío si es necesario
-- busqueda nith no va
-
+- mirar lo de que no se puede comprar con más de 10 elementos o eso.
 
 
 

@@ -168,12 +168,9 @@ function dateToISO(date) {
 
 async function dereferenceDb(id_list, collection) {
     let items = []
-    const results =
-        await collection
-            .where('id', 'in', id_list)
-            .get()
-
-    results.forEach((doc) => {
+    id_list.forEach(async (id) => {
+        let doc_ref = collection.doc(id)
+        let doc = await doc_ref.get()
         items.push(doc.data())
     })
     return items
