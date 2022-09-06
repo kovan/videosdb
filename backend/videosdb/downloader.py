@@ -7,16 +7,14 @@ import sys
 import logging
 import os
 import isodate
-import re
 import fnc
 from slugify import slugify
 from autologging import traced
 from google.cloud import firestore
 from google.oauth2 import service_account
-import youtube_transcript_api
 from aiostream import stream
 
-from videosdb.youtube_api import YoutubeAPI, get_video_transcript
+from videosdb.youtube_api import YoutubeAPI
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 
@@ -428,6 +426,9 @@ class Downloader:
         result = await api_func(id, etag)
 
         if type(result) == int:
+            if result == 304:
+                logger.debug(
+                    "Got 304 Not modified for item %s of collection %s" % (id, collection))
             return result, None, doc
         return 200, result, doc
 
