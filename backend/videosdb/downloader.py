@@ -297,11 +297,15 @@ class Downloader:
         finally:
             if not self_video_id:
                 return
-            await self.db.db.collection("videos").document(self_video_id).set({
+
+            doc = self.db.db.collection("videos").document(self_video_id)
+            await doc.set({
                 "videosdb": {
-                    "playlists": playlist_ids
+                    "playlists": playlist_ids,
+                    "lastUpdated": datetime.now().isoformat()
                 }
             }, merge=True)
+
             logger.debug("Wrote playlist info for video: " +
                          str(self_video_id))
 
@@ -359,7 +363,7 @@ class Downloader:
     @traced
     async def _create_video(self, video_id):
         result, video, doc = await self._get_with_etag("videos", self.api.get_video_info,  video_id)
-        if result == 304:  # Not modified
+        if result == 304 and fnc.get("videosdb.lastUpdated", doc.to_dict()):
             return
         if not video:
             return

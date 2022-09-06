@@ -1,10 +1,10 @@
 - fix sadhguru timeout
 - pasar a js
 
--en Nithyananda las categorias no van (vue.runtime.esm.js:1897 TypeError: Cannot read properties of undefined (reading 'videosdb')
-    at l.randomVideo (default.vue:145:43))
+-en Nithyananda las categorias no van
 - quitar cola por video, crear video vacío si es necesario
 - mirar lo de que no se puede comprar con más de 10 elementos o eso.
+- Linkificar la descripcion de lso videos
 
 
 
