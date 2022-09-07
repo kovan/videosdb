@@ -186,8 +186,8 @@ function videoToSitemapEntry(video) {
             {
                 thumbnail_loc: video.snippet.thumbnails.medium.url,
                 title: video.snippet.title,
-                description: video.videosdb.descriptionTrimmed
-                    ? video.videosdb.descriptionTrimmed.substring(0, 2048)
+                description: video.snippet.description
+                    ? video.snippet.description.substring(0, 2048)
                     : video.snippet.title,
                 duration: video.videosdb.durationSeconds,
                 publication_date: dateToISO(video.snippet.publishedAt)
@@ -216,8 +216,8 @@ function videoToStructuredData(video) {
         '@context': 'https://schema.org',
         '@type': 'VideoObject',
         name: video.snippet.title,
-        description: video.videosdb.descriptionTrimmed
-            ? video.videosdb.descriptionTrimmed
+        description: video.snippet.description
+            ? video.snippet.description
             : video.snippet.title,
         thumbnailUrl: Object.values(video.snippet.thumbnails).map(
             (thumb) => thumb.url

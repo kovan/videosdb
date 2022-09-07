@@ -6,6 +6,7 @@
 - Linkificar la descripcion de lso videos
 - Las categorias en Video.vue (sadhguru) no aparecen
 
+- lo del etag no va
 
 
 
