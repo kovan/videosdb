@@ -291,12 +291,18 @@ class Downloader:
                              video_id + " " + playlist_id)
 
                 video = None
+                new = True
                 async with lock:
                     if video_id not in processed_videos:
-                        video = await self._create_video(video_id)
                         processed_videos.add(video_id)
-                        if not video:
-                            continue
+                    else:
+                        new = False
+
+                if new:
+                    video = await self._create_video(video_id)
+
+                if not video:
+                    continue
 
                 if video:
                     nursery.start_soon(self._add_playlist_to_video,
