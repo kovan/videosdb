@@ -16,7 +16,7 @@ b-container.m-0.p-0.mx-auto
                     )
         .my-4(v-if='this.video.snippet.description')
             strong Description
-            p {{ this.video.snippet.description }}
+            p(style='white-space: pre-line') {{ this.video.snippet.description }}
 
         .my-4(
             v-if='this.video.videosdb.playlists && this.video.videosdb.playlists.length > 0'
