@@ -344,6 +344,7 @@ class Downloader:
             video["snippet"]["description"])
         custom_attrs["durationSeconds"] = isodate.parse_duration(
             video["contentDetails"]["duration"]).total_seconds()
+        custom_attrs["playlists"] = list()
 
         video["videosdb"] = custom_attrs
         video["snippet"]["publishedAt"] = isodate.parse_datetime(

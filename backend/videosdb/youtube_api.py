@@ -148,7 +148,6 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
-
     async def _request_one(self, url, params, etag=None):
         async for item in self._request_many(url, params, etag):
             return item
@@ -171,7 +170,8 @@ class YoutubeAPI:
 
             response = await self.http.get(
                 self.root_url + final_url, timeout=30.0, headers=headers)
-
+            logger.debug("Received response, code: " +
+                         str(response.status_code))
             if response.status_code == 403:
                 raise self.QuotaExceededError(
                     response.status_code, response.json())
@@ -183,8 +183,6 @@ class YoutubeAPI:
 
             json_response = response.json()
 
-            logger.debug("Received response with etag: " +
-                         str(json_response.get("etag")))
             for item in json_response["items"]:
                 yield item
 

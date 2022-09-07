@@ -39,7 +39,6 @@
                     "DEBUG": "1",
                     "LOGLEVEL": "DEBUG",
                     "PYTHONDEVMODE": "1",
-                    "FIRESTORE_EMULATOR_HOST": "localhost:6001",
                 },
                 "envFile": "${workspaceFolder}/common/env/nithyananda.txt",
                 "args": [
