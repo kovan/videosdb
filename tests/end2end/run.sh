@@ -16,6 +16,6 @@ docker compose run \
     frontend \
     yarn generate \
 && \
-docker cp end2end-frontend-1:/src/dist dist
+docker compose run frontend yarn start
 
 docker compose down
