@@ -168,12 +168,12 @@ export default {
         return { video }
     },
 }
-pt >
+</script>
 
 
-    <router>
-        {
-            path: '/video/:slug',
+<router>
+    {
+        path: '/video/:slug',
 
   }
-    </router>
+</router>

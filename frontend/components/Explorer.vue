@@ -49,7 +49,7 @@
                         Loading
 </template>
 
-script >
+<script>
 import LazyHydrate from 'vue-lazy-hydration'
 import Loading from '~/components/Loading.vue'
 import { Mutex } from 'async-mutex'

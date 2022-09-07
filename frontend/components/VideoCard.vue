@@ -24,7 +24,7 @@ LazyHydrate(when-visible)
             small.text-muted Duration: <br/>{{ new Date(this.video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
 </template>
 
-script>
+<script>
 import LazyHydrate from 'vue-lazy-hydration'
 export default {
     components: {
