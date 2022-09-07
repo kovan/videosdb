@@ -5,7 +5,7 @@
 - quitar cola por video, crear video vacío si es necesario
 - mirar lo de que no se puede comprar con más de 10 elementos o eso.
 - Linkificar la descripcion de lso videos
-
+- Las categorias en Video.vue (sadhguru) no aparecen
 
 
 

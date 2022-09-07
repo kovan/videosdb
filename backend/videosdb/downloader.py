@@ -231,85 +231,6 @@ class Downloader:
                     processed_playlist_ids.add(playlist_id)
 
     @traced
-    async def _video_processor(self, video_receiver):
-
-        # One stream per video, because when a video is found in a new playlist,
-        # the video has to already exist in the DB for the playlist to be added.
-        # This way, DB operations on a video are always in sequential order.
-        video_streams = dict()
-        async with anyio.create_task_group() as nursery:
-            try:
-                async with anyio.create_task_group() as nursery2:
-                    async for video_id, playlist_id in video_receiver:
-                        logger.debug("Processing " +
-                                     video_id + " " + playlist_id)
-                        if video_id not in video_streams:
-                            snd_stream, rcv_stream = anyio.create_memory_object_stream()
-                            video_streams[video_id] = snd_stream
-                            nursery.start_soon(
-                                self._process_video, rcv_stream, name="VID " + video_id)
-
-                            task = {
-                                "action": "create",
-                                "video_id": video_id
-                            }
-                            await video_streams[video_id].send(task)
-
-                        if playlist_id:
-                            task = {
-                                "action": "add_playlist",
-                                "video_id": video_id,
-                                "playlist_id": playlist_id
-                            }
-
-                            nursery2.start_soon(
-                                video_streams[video_id].send, task, name="VID_TASK " + str(task))
-            finally:
-                for stream in video_streams.values():
-                    stream.close()
-
-    @traced
-    async def _process_video(self, task_receiver):
-        breaking = False
-        self_video_id = None
-        playlist_ids = []
-
-        try:
-
-            async for task in task_receiver:
-
-                if breaking:
-                    continue
-
-                with anyio.fail_after(10):
-                    if task["action"] == "create":
-                        result = await self._create_video(task["video_id"])
-                        if not result:
-                            breaking = True
-                            continue
-                        self_video_id = task["video_id"]
-
-                    elif task["action"] == "add_playlist":
-                        playlist_ids.append(task["playlist_id"])
-
-                    else:
-                        raise ValueError()
-        finally:
-            if not self_video_id:
-                return
-
-            doc = self.db.db.collection("videos").document(self_video_id)
-            await doc.set({
-                "videosdb": {
-                    "playlists": playlist_ids,
-                    "lastUpdated": datetime.now().isoformat()
-                }
-            }, merge=True)
-
-            logger.debug("Wrote playlist info for video: " +
-                         str(self_video_id))
-
-    @traced
     async def _process_playlist(self, playlist_id, video_sender):
         result, playlist, doc = await self._get_with_etag("playlists", self.api.get_playlist_info,  playlist_id)
 
@@ -361,6 +282,39 @@ class Downloader:
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     @traced
+    async def _video_processor(self, video_receiver):
+        processed_videos = set()
+        lock = anyio.Lock()
+        async with anyio.create_task_group() as nursery:
+            async for video_id, playlist_id in video_receiver:
+                logger.debug("Processing " +
+                             video_id + " " + playlist_id)
+
+                async with lock:
+                    if video_id not in processed_videos:
+                        video = await self._create_video(video_id)
+                        processed_videos.add(video_id)
+                        if not video:
+                            continue
+
+                nursery.start_soon(self._add_playlist_to_video,
+                                   video_id, playlist_id)
+
+    @traced
+    async def _add_playlist_to_video(self, video_id, playlist_id):
+
+        # doc = self.db.db.collection("videos").document(
+        #     video_id).collection("playlists").document(playlist_id)
+        # await doc.set(playlist_id)
+
+        await self.db.db.collection("videos").document(video_id).update({
+            "videosdb.playlists": firestore.ArrayUnion([playlist_id])
+        })
+
+        logger.debug("Wrote playlist %s info for video %s: " %
+                     (playlist_id, video_id))
+
+    @traced
     async def _create_video(self, video_id):
         result, video, doc = await self._get_with_etag("videos", self.api.get_video_info,  video_id)
         if result == 304 and fnc.get("videosdb.lastUpdated", doc.to_dict()):
@@ -407,8 +361,9 @@ class Downloader:
             randomized_ids = meta_doc.to_dict()["videoIds"]
             random.shuffle(randomized_ids)
             for video_id in randomized_ids:
-
-                related_videos = await self.api.get_related_videos(video_id)
+                result, related_videos, doc = await self._get_with_etag("videos", self.api.get_related_videos, video_id)
+                if result == 304:
+                    continue  # "Not modified"
 
                 for related in related_videos:
                     # for now skip videos from other channels:
