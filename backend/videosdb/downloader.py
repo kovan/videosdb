@@ -1,6 +1,6 @@
 import logging
 import os
-import bleach
+import re
 import pprint
 import random
 import signal
@@ -340,8 +340,8 @@ class Downloader:
 
         custom_attrs["slug"] = slugify(
             video["snippet"]["title"])
-        custom_attrs["descriptionTrimmed"] = bleach.linkify(
-            video["snippet"]["description"])
+        custom_attrs["descriptionTrimmed"] = self._description_trimmed(
+            video["snippet"]["description"])  # bleach.linkify(
         custom_attrs["durationSeconds"] = isodate.parse_duration(
             video["contentDetails"]["duration"]).total_seconds()
         custom_attrs["playlists"] = list()
@@ -453,3 +453,12 @@ class Downloader:
                 logger.info(str(e))
                 logger.info("New status: unavailable")
                 return None, "unavailable"
+
+    @staticmethod
+    def _description_trimmed(description):
+        if not description:
+            return
+        match = re.search("#Sadhguru", description)
+        if match and match.start() != -1:
+            return description[:match.start()]
+        return description
