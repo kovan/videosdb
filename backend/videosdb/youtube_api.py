@@ -121,7 +121,7 @@ class YoutubeAPI:
         async for item in self._request_many(url, params):
             yield item
 
-    async def get_related_videos(self, youtube_id):
+    async def get_related_videos(self, youtube_id, etag=None):
         url = "/search"
         params = {
             "part": "snippet",
@@ -130,7 +130,7 @@ class YoutubeAPI:
         }
         logger.info("getting related videos")
         result = dict()
-        async for video in self._request_many(url, params):
+        async for video in self._request_many(url, params, etag):
             if video["id"]["videoId"] in result:
                 continue
 
