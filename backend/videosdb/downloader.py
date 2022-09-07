@@ -412,7 +412,7 @@ class Downloader:
         if current_status not in ("pending", None):
             return
         logger.info("Downloading transcript for video: " +
-                    str(v["id"]) + " because its status is " + current_status)
+                    str(v["id"]) + " because its status is " + str(current_status))
         transcript, new_status = await self._download_transcript(v["id"])
         if new_status == current_status:
             return
