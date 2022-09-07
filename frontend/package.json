@@ -1,43 +1,45 @@
 {
-  "name": "videosdb",
-  "version": "1.0.1",
-  "private": true,
-  "scripts": {
-    "dev": "nuxt",
-    "buildx": "nuxt build",
-    "start": "nuxt start",
-    "build": "nuxt build",
-    "generate": "node --experimental-specifier-resolution=node node_modules/.bin/nuxt generate",
-    "test": "jest",
-    "dev-debug": "node node_modules/.bin/nuxt"
-  },
-  "dependencies": {
-    "@nuxtjs/google-analytics": "^2.4.0",
-    "@nuxtjs/proxy": "^2.1.0",
-    "@nuxtjs/router-extras": "^1.1.1",
-    "@nuxtjs/sitemap": "^2.4.0",
-    "async-lock": "^1.3.0",
-    "async-mutex": "^0.3.2",
-    "bootstrap": "^4.6.0",
-    "bootstrap-vue": "^2",
-    "cacheable-lookup": "^6.0.1",
-    "date-fns": "^2.26.0",
-    "firebase": "8",
-    "lodash": "^4.17.21",
-    "node-cache": "^5.1.2",
-    "nuxt": "^2.15",
-    "pug": "^3.0.0",
-    "pug-plain-loader": "^1.1.0",
-    "vue-infinite-scroll": "^2.0.2",
-    "vue-lazy-hydration": "^2.0.0-beta.4",
-    "vue-lazytube": "^1.0.2",
-    "vue-plugin-load-script": "^1.3.2",
-    "vue-scroll-behavior": "^0.3.0"
-  },
-  "devDependencies": {
-    "eslint-config-prettier": "^6.12.0",
-    "eslint-plugin-prettier": "^3.1.4",
-    "prettier": "^2.1.2",
-    "source-map": "^0.7.3"
-  }
+    "name": "videosdb",
+    "version": "1.0.1",
+    "private": true,
+    "scripts": {
+        "dev": "nuxt",
+        "buildx": "nuxt build",
+        "start": "nuxt start",
+        "build": "nuxt build",
+        "generate": "node --experimental-specifier-resolution=node node_modules/.bin/nuxt generate",
+        "generate-and-run": "run-s generate start",
+        "test": "jest",
+        "dev-debug": "node node_modules/.bin/nuxt"
+    },
+    "dependencies": {
+        "@nuxtjs/google-analytics": "^2.4.0",
+        "@nuxtjs/proxy": "^2.1.0",
+        "@nuxtjs/router-extras": "^1.1.1",
+        "@nuxtjs/sitemap": "^2.4.0",
+        "async-lock": "^1.3.0",
+        "async-mutex": "^0.3.2",
+        "bootstrap": "^4.6.0",
+        "bootstrap-vue": "^2",
+        "cacheable-lookup": "^6.0.1",
+        "date-fns": "^2.26.0",
+        "firebase": "8",
+        "lodash": "^4.17.21",
+        "node-cache": "^5.1.2",
+        "nuxt": "^2.15",
+        "pug": "^3.0.0",
+        "pug-plain-loader": "^1.1.0",
+        "vue-infinite-scroll": "^2.0.2",
+        "vue-lazy-hydration": "^2.0.0-beta.4",
+        "vue-lazytube": "^1.0.2",
+        "vue-plugin-load-script": "^1.3.2",
+        "vue-scroll-behavior": "^0.3.0"
+    },
+    "devDependencies": {
+        "eslint-config-prettier": "^6.12.0",
+        "eslint-plugin-prettier": "^3.1.4",
+        "npm-run-all": "^4.1.5",
+        "prettier": "^2.1.2",
+        "source-map": "^0.7.3"
+    }
 }

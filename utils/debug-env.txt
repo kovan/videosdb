@@ -13,3 +13,4 @@ VIDEOSDB_WEBSITE=https://isha.sadhguru.org/global/en/wisdom
 VIDEOSDB_FIREBASE_PROJECT=videosdb-firebase
 YOUTUBE_CHANNEL_ID=UCcYzLCs3zrQIBVHYA1sK2sw
 FIREBASE_PROJECT=videosdb-firebase
+NODE_OPTIONS=--openssl-legacy-provider

@@ -171,7 +171,8 @@ async function dereferenceDb(id_list, collection) {
     id_list.forEach(async (id) => {
         let doc_ref = collection.doc(id)
         let doc = await doc_ref.get()
-        items.push(doc.data())
+        if (doc.exists)
+            items.push(doc.data())
     })
     return items
 }
