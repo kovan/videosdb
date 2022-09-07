@@ -1,8 +1,8 @@
 import logging
 import os
+import bleach
 import pprint
 import random
-import re
 import signal
 import sys
 from datetime import datetime
@@ -332,7 +332,7 @@ class Downloader:
 
         custom_attrs["slug"] = slugify(
             video["snippet"]["title"])
-        custom_attrs["descriptionTrimmed"] = self._description_trimmed(
+        custom_attrs["descriptionTrimmed"] = bleach.linkify(
             video["snippet"]["description"])
         custom_attrs["durationSeconds"] = isodate.parse_duration(
             video["contentDetails"]["duration"]).total_seconds()
@@ -346,7 +346,8 @@ class Downloader:
         await self.db.db.collection("videos").document(
             video_id).set(video, merge=True)
 
-        logger.info("Created video: " + video["snippet"]["title"])
+        logger.info("Created video: %s (%s)" %
+                    (video_id, video["snippet"]["title"]))
 
         return video
 
@@ -443,12 +444,3 @@ class Downloader:
                 logger.info(str(e))
                 logger.info("New status: unavailable")
                 return None, "unavailable"
-
-    @staticmethod
-    def _description_trimmed(description):
-        if not description:
-            return
-        match = re.search("#Sadhguru", description)
-        if match and match.start() != -1:
-            return description[:match.start()]
-        return description
