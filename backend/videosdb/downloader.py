@@ -290,6 +290,7 @@ class Downloader:
                 logger.debug("Processing " +
                              video_id + " " + playlist_id)
 
+                video = None
                 async with lock:
                     if video_id not in processed_videos:
                         video = await self._create_video(video_id)
@@ -297,8 +298,9 @@ class Downloader:
                         if not video:
                             continue
 
-                nursery.start_soon(self._add_playlist_to_video,
-                                   video_id, playlist_id)
+                if video:
+                    nursery.start_soon(self._add_playlist_to_video,
+                                       video_id, playlist_id)
 
     @traced
     async def _add_playlist_to_video(self, video_id, playlist_id):
