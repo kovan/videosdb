@@ -411,7 +411,8 @@ class Downloader:
         current_status = fnc.get("videosdb.transcript_status", v)
         if current_status not in ("pending", None):
             return
-
+        logger.info("Downloading transcript for video: " +
+                    str(v["id"]) + " because its status is " + current_status)
         transcript, new_status = await self._download_transcript(v["id"])
         if new_status == current_status:
             return
@@ -428,8 +429,6 @@ class Downloader:
     @staticmethod
     async def _download_transcript(video_id):
         try:
-            logger.info(
-                "Downloading transcript for video: " + str(video_id))
             with anyio.fail_after(60):
                 transcript = await anyio.to_thread.run_sync(
                     get_video_transcript, video_id)

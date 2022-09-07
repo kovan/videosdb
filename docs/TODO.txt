@@ -1,14 +1,13 @@
-- fix sadhguru timeout
-- pasar a js
 
--en Nithyananda las categorias no van
-- quitar cola por video, crear video vacío si es necesario
+
+
+
+- Las categorias en Video.vue no aparecen
 - Linkificar la descripcion de lso videos
-- Las categorias en Video.vue (sadhguru) no aparecen
-
+- enviar nithyananda.cc a Google Search Console
 - lo del etag no va
 
-
+- pasar a js
 
 
 
