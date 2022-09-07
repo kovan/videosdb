@@ -98,7 +98,7 @@ b-container.m-0.p-0.mx-auto
                         | {{ tag }}
 </template>
 <script>
-LazyHydrate from 'vue-lazy-hydration'
+import LazyHydrate from 'vue-lazy-hydration'
 import { dereferenceDb, videoToStructuredData } from '~/utils/utils'
 
 export default {
@@ -168,12 +168,12 @@ export default {
         return { video }
     },
 }
-</script>
+pt >
 
 
-<router>
-  {
- path: '/video/:slug',
+    <router>
+        {
+            path: '/video/:slug',
 
   }
-</router>
+    </router>
