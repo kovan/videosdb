@@ -4,11 +4,10 @@
     "private": true,
     "scripts": {
         "dev": "nuxt",
-        "buildx": "nuxt build",
         "start": "nuxt start",
         "build": "nuxt build",
-        "generate": "node --experimental-specifier-resolution=node node_modules/.bin/nuxt generate",
-        "generate-and-run": "run-s generate start",
+        "generate": "node --experimental-specifier-resolution=node node_modules/.bin/nuxt generate --fail-on-error",
+        "generate-and-start": "run-s generate start",
         "test": "jest",
         "dev-debug": "node node_modules/.bin/nuxt"
     },
@@ -36,6 +35,8 @@
         "vue-scroll-behavior": "^0.3.0"
     },
     "devDependencies": {
+        "@babel/runtime-corejs3": "^7.19.0",
+        "core-js": "3",
         "eslint-config-prettier": "^6.12.0",
         "eslint-plugin-prettier": "^3.1.4",
         "npm-run-all": "^4.1.5",
