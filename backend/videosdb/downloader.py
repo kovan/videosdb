@@ -231,9 +231,6 @@ class Downloader:
     async def _process_playlist(self, playlist_id, video_sender):
         status_code, playlist = await self.api.get_playlist_info(playlist_id)
 
-        if not playlist:
-            return
-
         if playlist["snippet"]["channelTitle"] != self.YT_CHANNEL_NAME:
             return
 
