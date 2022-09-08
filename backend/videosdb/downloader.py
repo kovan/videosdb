@@ -6,7 +6,6 @@ import random
 import signal
 import sys
 from datetime import datetime
-
 import anyio
 import fnc
 import isodate
@@ -189,15 +188,13 @@ class Downloader:
         with playlist_sender:
 
             channel_id = self.YT_CHANNEL_ID
-            result, channel_info, doc = await self._get_with_etag("channel_infos", self.api.get_channel_info, channel_id)
-
-            if result == 304:  # Not modified
-                return
+            status_code, channel_info = await self.api.get_channel_info(channel_id)
 
             logger.info("Processing channel: " +
                         str(channel_info["snippet"]["title"]))
             self.YT_CHANNEL_NAME = str(channel_info["snippet"]["title"])
-            await self.db.db.collection("channel_infos").document(channel_id).set(channel_info)
+
+            await self.db.db.collection("channel_infos").document(channel_id).set(channel_info, merge=True)
 
             all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
 
@@ -232,11 +229,7 @@ class Downloader:
 
     @traced
     async def _process_playlist(self, playlist_id, video_sender):
-        result, playlist, doc = await self._get_with_etag("playlists", self.api.get_playlist_info,  playlist_id)
-
-        # Not modified
-        if result == 304 and fnc.get("videosdb.lastUpdated", doc.to_dict()):
-            return
+        status_code, playlist = await self.api.get_playlist_info(playlist_id)
 
         if not playlist:
             return
@@ -248,7 +241,12 @@ class Downloader:
             playlist["snippet"]["channelTitle"] else None
 
         items = []
-        async for item in self.api.list_playlist_items(playlist_id):
+        status_code, result = await self.api.list_playlist_items(playlist_id)
+
+        if status_code == 304:
+            return
+
+        async for item in result:
             if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
                 continue
             video_id = item["snippet"]["resourceId"]["videoId"]
@@ -278,7 +276,7 @@ class Downloader:
         playlist["videosdb"]["videoCount"] = video_count
         playlist["videosdb"]["lastUpdated"] = last_updated
 
-        await self.db.db.collection("playlists").document(playlist["id"]).set(playlist)
+        await self.db.db.collection("playlists").document(playlist["id"]).set(playlist, merge=True)
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     @traced
@@ -324,9 +322,10 @@ class Downloader:
 
     @traced
     async def _create_video(self, video_id):
-        result, video, doc = await self._get_with_etag("videos", self.api.get_video_info,  video_id)
-        if result == 304 and fnc.get("videosdb.lastUpdated", doc.to_dict()):
+        status_code, video = await self.api.get_video_info(video_id)
+        if status_code == 304:
             return
+
         if not video:
             return
         # some playlists include videos from other channels
@@ -371,8 +370,8 @@ class Downloader:
             randomized_ids = meta_doc.to_dict()["videoIds"]
             random.shuffle(randomized_ids)
             for video_id in randomized_ids:
-                result, related_videos, doc = await self._get_with_etag("videos", self.api.get_related_videos, video_id)
-                if result == 304:
+                status_code, related_videos = await self.api.get_related_videos(video_id)
+                if status_code == 304:
                     continue  # "Not modified"
 
                 for related in related_videos:
@@ -387,21 +386,6 @@ class Downloader:
 
                     logger.info("Added new related videos to video %s" %
                                 video_id)
-
-    async def _get_with_etag(self, collection, api_func, id):
-        doc = await self.db.db.collection(
-            collection).document(id).get()
-
-        etag = doc.to_dict()["etag"] if doc.exists else None
-
-        result = await api_func(id, etag)
-
-        if type(result) == int:
-            if result == 304:
-                logger.debug(
-                    "Got 304 Not modified for item %s of collection %s" % (id, collection))
-            return result, None, doc
-        return 200, result, doc
 
     async def _handle_transcript(self, video):
         if not video.exists:
