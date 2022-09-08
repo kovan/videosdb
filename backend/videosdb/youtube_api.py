@@ -84,7 +84,7 @@ class YoutubeAPI:
             "part": "contentDetails",
             "channelId": channel_id
         }
-        status_code, results = await self._request_many(url, params, channel_id)
+        status_code, results = await self._request_many(url, params, channel_id, False)
 
         async for item in results:
             details = item.get("contentDetails")
@@ -101,7 +101,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails",
             "channelId": channel_id
         }
-        status_code, results = await self._request_many(url, params, channel_id)
+        status_code, results = await self._request_many(url, params, channel_id, False)
         async for item in results:
             yield item["id"]
 
