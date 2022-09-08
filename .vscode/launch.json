@@ -40,7 +40,7 @@
                     "LOGLEVEL": "DEBUG",
                     "PYTHONDEVMODE": "1",
                 },
-                "envFile": "${workspaceFolder}/common/env/sadhguru.txt",
+                "envFile": "${workspaceFolder}/utils/debug-env.txt",
                 "args": [
                     "-c",
                 ],

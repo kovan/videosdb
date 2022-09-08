@@ -114,6 +114,8 @@ class Downloader:
         self.db = DB()
         self.api = YoutubeAPI()
         self.streams = []
+        self.processed_videos = set()
+        self.processed_videos_lock = anyio.Lock()
 
     async def init(self):
         await self.db.init()
@@ -160,11 +162,8 @@ class Downloader:
         logger.info("Currently there are %s videos in the DB",
                     await self.db.get_video_count())
 
-        video_sender, video_receiver = anyio.create_memory_object_stream()
         playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
         self.streams = [
-            video_receiver,
-            video_sender,
             playlist_receiver,
             playlist_sender
         ]
@@ -173,9 +172,7 @@ class Downloader:
             processors.start_soon(self._playlist_retriever,
                                   playlist_sender, name="Playlist retriever")
             processors.start_soon(self._playlist_processor,
-                                  playlist_receiver, video_sender, name="Playlist receiver")
-            processors.start_soon(self._video_processor,
-                                  video_receiver, name="Video receiver")
+                                  playlist_receiver, name="Playlist receiver")
 
         if "DEBUG" not in os.environ:
             # separate so that it uses remaining quota
@@ -213,20 +210,20 @@ class Downloader:
                     await playlist_sender.send(playlist_id)
 
     @traced
-    async def _playlist_processor(self, playlist_receiver, video_sender):
+    async def _playlist_processor(self, playlist_receiver):
         processed_playlist_ids = set()
-        with video_sender:
-            async with anyio.create_task_group() as nursery:
-                async for playlist_id in playlist_receiver:
-                    if playlist_id in processed_playlist_ids:
-                        continue
-                    nursery.start_soon(
-                        self._process_playlist, playlist_id, video_sender, name="PL " + playlist_id)
 
-                    processed_playlist_ids.add(playlist_id)
+        async with anyio.create_task_group() as nursery:
+            async for playlist_id in playlist_receiver:
+                if playlist_id in processed_playlist_ids:
+                    continue
+                nursery.start_soon(
+                    self._process_playlist, playlist_id, name="PL " + playlist_id)
+
+                processed_playlist_ids.add(playlist_id)
 
     @traced
-    async def _process_playlist(self, playlist_id, video_sender):
+    async def _process_playlist(self, playlist_id):
         status_code, playlist = await self.api.get_playlist_info(playlist_id)
 
         if playlist["snippet"]["channelTitle"] != self.YT_CHANNEL_NAME:
@@ -241,12 +238,15 @@ class Downloader:
         if status_code == 304:
             return
 
-        async for item in result:
-            if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
-                continue
-            video_id = item["snippet"]["resourceId"]["videoId"]
-            items.append(item)
-            await video_sender.send((video_id, playlist_id))
+        async with anyio.create_task_group() as nursery:
+            async for item in result:
+                if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
+                    continue
+                video_id = item["snippet"]["resourceId"]["videoId"]
+                items.append(item)
+
+                nursery.start_soon(self._playlistitem_processor, video_id, playlist_id, nursery,
+                                   name="_playlistitem_processor")
 
         if playlist:
             await self._create_playlist(playlist, items)
@@ -275,31 +275,24 @@ class Downloader:
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     @traced
-    async def _video_processor(self, video_receiver):
-        processed_videos = set()
-        lock = anyio.Lock()
-        async with anyio.create_task_group() as nursery:
-            async for video_id, playlist_id in video_receiver:
-                logger.debug("Processing " +
-                             video_id + " " + playlist_id)
+    async def _playlistitem_processor(self, video_id, playlist_id, nursery):
 
-                video = None
-                new = True
-                async with lock:
-                    if video_id not in processed_videos:
-                        processed_videos.add(video_id)
-                    else:
-                        new = False
+        logger.debug("Processing " +
+                     video_id + " " + playlist_id)
 
-                if new:
-                    video = await self._create_video(video_id)
+        video = None
 
-                if not video:
-                    continue
+        async with self.processed_videos_lock:
+            if video_id not in self.processed_videos:
+                self.processed_videos.add(video_id)
+                video = await self._create_video(video_id)
 
-                if video:
-                    nursery.start_soon(self._add_playlist_to_video,
-                                       video_id, playlist_id, name="Adding playlist %s to video %s " % (playlist_id, video_id))
+        if not video:
+            return
+
+        if video:
+            nursery.start_soon(self._add_playlist_to_video,
+                               video_id, playlist_id, name="Adding playlist %s to video %s " % (playlist_id, video_id))
 
     @traced
     async def _add_playlist_to_video(self, video_id, playlist_id):

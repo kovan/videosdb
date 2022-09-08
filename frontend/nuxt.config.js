@@ -118,15 +118,14 @@ export default {
         //cache: true,
         //hardSource: false
         babel: {
-            presets({ isClient }, preset) {
-                if (isClient) {
-                    // https://babeljs.io/docs/en/babel-preset-env
-                    preset[1].targets = {
-                        chrome: "58",
-                    };
-                }
-                return [preset];
-            },
+            presets(env, [preset, options]) {
+                return [
+                    ["@nuxt/babel-preset-app", {
+                        corejs: { version: 3 },
+                        compact: false
+                    }]
+                ]
+            }
         }
     },
 
