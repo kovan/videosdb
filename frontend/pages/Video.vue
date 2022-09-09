@@ -14,9 +14,9 @@ b-container.m-0.p-0.mx-auto
                     LazyYoutube(
                         :src='`https://www.youtube.com/watch?v=${this.video.id}`'
                     )
-        .my-4(v-if='this.video.snippet.description')
+        .my-4(v-if='this.video.videosdb.descriptionTrimmed')
             strong Description
-            p(style='white-space: pre-line') {{ this.video.snippet.description }}
+            p(style='white-space: pre-line', v-html='this.video.videosdb.descriptionTrimmed')
 
         .my-4(
             v-if='this.video.videosdb.playlists && this.video.videosdb.playlists.length > 0'

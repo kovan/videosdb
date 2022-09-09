@@ -1,4 +1,5 @@
 import logging
+import bleach
 import os
 import pprint
 import re
@@ -330,8 +331,8 @@ class Downloader:
 
         custom_attrs["slug"] = slugify(
             video["snippet"]["title"])
-        custom_attrs["descriptionTrimmed"] = self._description_trimmed(
-            video["snippet"]["description"])  # bleach.linkify(
+        custom_attrs["descriptionTrimmed"] = bleach.linkify(
+            video["snippet"]["description"])
         custom_attrs["durationSeconds"] = isodate.parse_duration(
             video["contentDetails"]["duration"]).total_seconds()
         custom_attrs["playlists"] = list()

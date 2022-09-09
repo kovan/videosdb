@@ -8,5 +8,6 @@ VIDEOSDB_CSE_URL=https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635
 YOUTUBE_CHANNEL_ID=UCcYzLCs3zrQIBVHYA1sK2sw
 FIREBASE_PROJECT=videosdb-firebase
 VIDEOSDB_SHOW_TRANSCRIPTS=false
+NODE_OPTIONS=--openssl-legacy-provider
 
 

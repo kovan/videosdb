@@ -25,6 +25,7 @@ services:
         env_file: ../../common/env/sadhguru.txt
         environment:
             - FIRESTORE_EMULATOR_HOST=localhost:6001
+            - NODE_OPTIONS=--openssl-legacy-provider
         build:
             context: ../../frontend
         depends_on:
