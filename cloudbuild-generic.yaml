@@ -1,7 +1,7 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
-  args: ['-c', 'cat $_DOCKER_PASSWORD | docker login --username foo --password-stdin']
+  args: ['-c', 'echo $_DOCKER_PASSWORD | docker login --username foo --password-stdin']
 
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
