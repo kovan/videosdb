@@ -1,11 +1,12 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
-  args: ['-c', 'echo $_DOCKER_PASSWORD | docker login --username foo --password-stdin']
+  args: ['-c', 'echo $_DOCKER_PASSWORD | docker login --username eelis --password-stdin']
 
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
   args: ['-c', 'docker pull gcr.io/worpdress-279321/$_IMAGE:latest || exit 0']
+
 - name: 'gcr.io/cloud-builders/docker'
   dir: "$_IMAGE"
   args: [
