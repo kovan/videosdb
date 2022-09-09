@@ -221,7 +221,7 @@ function videoToSitemapEntry(video) {
                 thumbnail_loc: video.snippet.thumbnails.medium.url,
                 title: video.snippet.title,
                 description: video.snippet.description
-                    ? removeXMLInvalidChars(video.snippet.description, false).substring(0, 2048)
+                    ? removeXMLInvalidChars(video.snippet.description, true).substring(0, 2048)
                     : video.snippet.title,
                 duration: video.videosdb.durationSeconds,
                 publication_date: dateToISO(video.snippet.publishedAt)
