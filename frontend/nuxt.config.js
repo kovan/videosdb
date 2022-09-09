@@ -118,11 +118,14 @@ export default {
         //cache: true,
         //hardSource: false
         babel: {
+            compact: true,
             presets(env, [preset, options]) {
                 return [
                     ["@nuxt/babel-preset-app", {
                         corejs: { version: 3 },
-                        compact: false
+                        targets: {
+                            chrome: "58",
+                        }
                     }]
                 ]
             }
