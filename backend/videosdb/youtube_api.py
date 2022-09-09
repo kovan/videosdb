@@ -76,7 +76,7 @@ class YoutubeAPI:
             "part": "snippet",
             "id": playlist_id
         }
-        return await self._request_one(url, params, playlist_id)
+        return await self._request_one(url, params, playlist_id, False)
 
     async def list_channelsection_playlist_ids(self, channel_id):
         url = "/channelSections"

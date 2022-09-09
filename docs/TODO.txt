@@ -6,7 +6,6 @@
 
 - enviar nithyananda.cc a Google Search Console
 - lo del etag no va
-- que si da errorres el generate falle el build
 - Linkificar la descripcion de lso videos
 
 - pasar a js
