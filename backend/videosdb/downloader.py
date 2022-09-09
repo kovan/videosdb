@@ -445,4 +445,7 @@ class Downloader:
 
             for stream in self.streams:
                 print(str(stream.statistics()))
+
+            print(str(self.processed_videos_lock.statistics()))
+
             await anyio.sleep(30)
