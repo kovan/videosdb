@@ -5,7 +5,6 @@
 - Las categorias en Video.vue no aparecen
 
 - lo del etag no va
-- Linkificar la descripcion de lso videos
 
 - pasar a js
 

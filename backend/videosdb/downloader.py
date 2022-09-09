@@ -250,7 +250,7 @@ class Downloader:
                 items.append(item)
 
                 nursery.start_soon(self._playlistitem_processor, video_id, playlist_id, nursery,
-                                   name="_playlistitem_processor")
+                                   name="_playlistitem_processor with videoid: %s and playlist_id %s" % (video_id, playlist_id))
 
         if playlist:
             await self._create_playlist(playlist, items)
