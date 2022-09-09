@@ -42,4 +42,4 @@ steps:
       - $_FIREBASE_PROJECT
       - --only=hosting
 
-timeout: 3600s
+timeout: 5400s
