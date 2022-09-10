@@ -2,7 +2,7 @@ version: "3"
 services:
     backend:
         network_mode: "host"
-        image: ${REPO}backend
+        image: backend
         build:
             context: ../../backend
         env_file: ../../common/env/sadhguru.txt
@@ -21,7 +21,7 @@ services:
 
     frontend:
         network_mode: "host"
-        image: ${REPO}frontend
+        image: frontend
         env_file: ../../common/env/sadhguru.txt
         environment:
             - FIRESTORE_EMULATOR_HOST=localhost:6001
@@ -30,25 +30,27 @@ services:
             context: ../../frontend
         depends_on:
             - firestore-emulator
+        entrypoint: yarn
 
     json-caching-proxy:
         network_mode: "host"
-        image: ${REPO}json-caching-proxy
+        image: json-caching-proxy
         build:
             context: utils/json-caching-proxy
         ports:
             - 6001:6001
-        stop_signal: SIGINT
+        stop_signal: SIGKILL
 
     firestore-emulator:
         network_mode: "host"
-        image: ${REPO}firestore-emulator
-        build:
-            context: utils/firestore-emulator
+        image: mtlynch/firestore-emulator
+        environment:
+            - FIRESTORE_PROJECT_ID=videosdb-firebase
+            - PORT=6001
         volumes:
-            - emulator-data:/root/emulator-data
+            - emulator-data:/root
         ports:
-            - 8080:8080
+            - 6001:6001
 
 volumes:
     emulator-data:

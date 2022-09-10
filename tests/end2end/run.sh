@@ -9,6 +9,6 @@ sleep 2 \
 && \
 docker compose run --rm backend -c -e \
 && \
-docker compose run frontend yarn generate-and-start\
+docker compose run frontend generate-and-start\
 
 docker compose down
