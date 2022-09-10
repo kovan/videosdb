@@ -4,7 +4,7 @@
 
 - Las categorias en Video.vue no aparecen
 
-- lo del etag no va
+- lo del etag no va maneja errores ni de quota
 
 - pasar a js
 
