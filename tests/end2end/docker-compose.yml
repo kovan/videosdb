@@ -13,9 +13,9 @@ services:
             - DEBUG=1
             - PYTHONDEVMODE=1
             - PYTHONASYNCIODEBUG=1
-            - FIRESTORE_EMULATOR_HOST=localhost:6001
+            - FIRESTORE_EMULATOR_HOST=localhost:8080
             - YOUTUBE_API_KEY=AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs
-            - YOUTUBE_API_URL=http://localhost:8080/youtube/v3
+            - YOUTUBE_API_URL=http://localhost:43783/youtube/v3
             - LOGLEVEL=DEBUG
             - GOOGLE_CLOUD_PROJECT=videosdb-firebase
 
@@ -24,7 +24,7 @@ services:
         image: frontend
         env_file: ../../common/env/sadhguru.txt
         environment:
-            - FIRESTORE_EMULATOR_HOST=localhost:6001
+            - FIRESTORE_EMULATOR_HOST=localhost:8080
             - NODE_OPTIONS=--openssl-legacy-provider
         build:
             context: ../../frontend
@@ -43,14 +43,12 @@ services:
 
     firestore-emulator:
         network_mode: "host"
-        image: mtlynch/firestore-emulator
+        image: spine3/firebase-emulator
         environment:
-            - FIRESTORE_PROJECT_ID=videosdb-firebase
-            - PORT=6001
+            - GCP_PROJECT=videosdb-firebase
+            - ENABLE_UI=true
         volumes:
-            - emulator-data:/root
-        ports:
-            - 6001:6001
+            - emulator-data:/firebase/baseline-data
 
 volumes:
     emulator-data:

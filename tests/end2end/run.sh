@@ -5,10 +5,10 @@ rm -fr ./dist
 
 docker compose up --build --detach \
 && \
-sleep 2 \
+until  nc -z localhost 8080; do sleep 1; done \
 && \
 docker compose run --rm backend -c -e \
 && \
 docker compose run frontend generate-and-start\
 
-docker compose down
+#docker compose down
