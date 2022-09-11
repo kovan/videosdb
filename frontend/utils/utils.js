@@ -201,6 +201,7 @@ async function dereferenceDb(id_list, collection) {
         let doc = await doc_ref.get()
         if (doc.exists)
             items.push(doc.data())
+        console.debug(doc.data())
     })
     return items
 }

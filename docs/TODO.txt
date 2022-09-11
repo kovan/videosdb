@@ -1,6 +1,6 @@
 
 
-
+- poner el contador de videos arriba y descripciones de los botones table/escritorio ()
 
 - Las categorias en Video.vue no aparecen
 
