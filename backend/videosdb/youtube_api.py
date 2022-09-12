@@ -111,7 +111,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails,statistics",
             "id": youtube_id
         }
-        return await self._request_one(url, params, youtube_id)
+        return await self._request_one(url, params, youtube_id, False)
 
     async def list_playlist_items(self, playlist_id):
         url = "/playlistItems"
@@ -205,6 +205,9 @@ class YoutubeAPI:
             response.raise_for_status()
 
             json_response = response.json()
+            if "pageInfo" in json_response:
+                logger.debug(
+                    "Pages: " + str(json_response["pageInfo"]["totalResults"]))
             if not page_token and use_cache:  # first page
                 await self._cache.set(id, {
                     "etag": json_response["etag"],
