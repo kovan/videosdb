@@ -43,6 +43,7 @@
                 "envFile": "${workspaceFolder}/utils/debug-env.txt",
                 "args": [
                     "-c",
+                    "-e"
                 ],
                 "console": "integratedTerminal",
                 "cwd": "${workspaceFolder}/backend",

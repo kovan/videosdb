@@ -102,6 +102,12 @@ class DB:
 #                 return
 
 
+class LockedSet:
+    def __init__(self):
+        self.lock = anyio.Lock()
+        self.set = set()
+
+
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
@@ -117,10 +123,11 @@ class Downloader:
         self.streams = []
         self.processed_videos = set()
         self.processed_videos_lock = anyio.Lock()
+        self.video_ids_set = LockedSet()
 
     async def init(self):
         await self.db.init()
-        self.api = await YoutubeAPI.create(self.db.db)
+        self.api = YoutubeAPI(self.db.db)
 
     def check_for_new_videos(self):
         logger.info("Sync start")
@@ -175,16 +182,16 @@ class Downloader:
             processors.start_soon(self._playlist_processor,
                                   playlist_receiver, name="Playlist receiver")
 
-        if "DEBUG" not in os.environ:
-            # separate so that it uses remaining quota
-            await self._fill_related_videos()
+        # if "DEBUG" not in os.environ:
+        #     # separate so that it uses remaining quota
+        #     await self._fill_related_videos()
 
     @traced
     async def _playlist_retriever(self, playlist_sender):
         with playlist_sender:
 
             channel_id = self.YT_CHANNEL_ID
-            status_code, channel_info = await self.api.get_channel_info(channel_id)
+            channel_info = await self.api.get_channel_info(channel_id)
 
             logger.info("Processing channel: " +
                         str(channel_info["snippet"]["title"]))
@@ -225,7 +232,7 @@ class Downloader:
 
     @traced
     async def _process_playlist(self, playlist_id):
-        status_code, playlist = await self.api.get_playlist_info(playlist_id)
+        playlist = await self.api.get_playlist_info(playlist_id)
 
         if not playlist:
             return
@@ -237,10 +244,7 @@ class Downloader:
             playlist["snippet"]["channelTitle"] else None
 
         items = []
-        status_code, result = await self.api.list_playlist_items(playlist_id)
-
-        if status_code == 304:
-            return
+        result = await self.api.list_playlist_items(playlist_id)
 
         async with anyio.create_task_group() as nursery:
             async for item in result:
@@ -314,9 +318,7 @@ class Downloader:
 
     @traced
     async def _create_video(self, video_id):
-        status_code, video = await self.api.get_video_info(video_id)
-        if status_code == 304:
-            return
+        video = await self.api.get_video_info(video_id)
 
         if not video:
             return
@@ -362,9 +364,7 @@ class Downloader:
             randomized_ids = meta_doc.to_dict()["videoIds"]
             random.shuffle(randomized_ids)
             for video_id in randomized_ids:
-                status_code, related_videos = await self.api.get_related_videos(video_id)
-                if status_code == 304:
-                    continue  # "Not modified"
+                related_videos = await self.api.get_related_videos(video_id)
 
                 for related in related_videos:
                     # for now skip videos from other channels:

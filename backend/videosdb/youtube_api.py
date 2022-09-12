@@ -1,3 +1,4 @@
+from google.cloud import firestore
 import json
 import logging
 import os
@@ -5,7 +6,6 @@ import re
 import httpx
 import youtube_transcript_api
 from urllib.parse import urlencode
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -15,28 +15,6 @@ def parse_youtube_id(string: str):
     if not match:
         return None
     return match.group(1)
-
-
-class Cache:
-
-    def __init__(self, db):
-        self.db = db
-
-    # @staticmethod
-    # def _key_func(key):
-    #     return hashlib.sha256(key.encode('utf-8')).hexdigest()
-
-    async def get(self, key):
-        doc = await self.db.collection("cache").document(key).get()
-        if doc.exists:
-            return doc.to_dict()
-        return None
-
-    async def set(self, key, val):
-        await self.db.collection("cache").document(key).set(val)
-
-    async def delete(self, key):
-        await self.db.collection("cache").document(key).delete()
 
 
 class YoutubeAPI:
@@ -52,23 +30,19 @@ class YoutubeAPI:
     async def aclose(self):
         return await self.http.aclose()
 
-    @classmethod
-    async def create(cls, db, yt_key=None):
-        obj = cls()
+    def __init__(self, db, yt_key=None):
+        self.db = db
         limits = httpx.Limits(max_connections=50)
-        obj.http = httpx.AsyncClient(limits=limits)
+        self.http = httpx.AsyncClient(limits=limits)
 
-        obj.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
-        if not obj.yt_key:
-            obj.yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
+        self.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
+        if not self.yt_key:
+            self.yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
 
-        obj.root_url = os.environ.get(
+        self.root_url = os.environ.get(
             "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
 
-        obj._cache = Cache(db)
-
-        logger.debug("Pointing at URL: " + obj.root_url)
-        return obj
+        logger.debug("Pointing at URL: " + self.root_url)
 
     async def get_playlist_info(self, playlist_id):
         url = "/playlists"
@@ -84,7 +58,7 @@ class YoutubeAPI:
             "part": "contentDetails",
             "channelId": channel_id
         }
-        status_code, results = await self._request_many(url, params, channel_id, False)
+        results = await self._request_many(url, params, channel_id, False)
 
         async for item in results:
             details = item.get("contentDetails")
@@ -101,7 +75,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails",
             "channelId": channel_id
         }
-        status_code, results = await self._request_many(url, params, channel_id, False)
+        results = await self._request_many(url, params, channel_id, False)
         async for item in results:
             yield item["id"]
 
@@ -121,26 +95,24 @@ class YoutubeAPI:
         }
         return await self._request_many(url, params, playlist_id)
 
-    async def get_related_videos(self, youtube_id):
-        url = "/search"
-        params = {
-            "part": "snippet",
-            "type": "video",
-            "relatedToVideoId": youtube_id
-        }
-        logger.info("getting related videos")
+    # async def get_related_videos(self, youtube_id):
+    #     url = "/search"
+    #     params = {
+    #         "part": "snippet",
+    #         "type": "video",
+    #         "relatedToVideoId": youtube_id
+    #     }
+    #     logger.info("getting related videos")
 
-        status_code, results = await self._request_many(url, params, youtube_id)
-        if status_code == 304:
-            return status_code, None
+    #     results = await self._request_many(url, params, youtube_id)
 
-        related_videos = dict()
-        async for video in results:
-            if video["id"]["videoId"] in related_videos:
-                continue
+    #     related_videos = dict()
+    #     async for video in results:
+    #         if video["id"]["videoId"] in related_videos:
+    #             continue
 
-            related_videos[video["id"]["videoId"]] = video
-        return status_code, related_videos.values()
+    #         related_videos[video["id"]["videoId"]] = video
+    #     return related_videos.values()
 
     async def get_channel_info(self, channel_id):
         url = "/channels"
@@ -154,31 +126,37 @@ class YoutubeAPI:
 # ------- PRIVATE-------------------------------------------------------
 
     async def _request_one(self, url, params, id, use_cache=True):
-        result = self._request(url, params, id, use_cache)
-        status_code = await anext(result)
+        transaction = self.db.transaction()
+        result = self._request(url, params, id, transaction, use_cache)
         try:
             item = await anext(result)
         except StopAsyncIteration:
             item = None
-        return status_code, item
+        return item
 
     async def _request_many(self, url, params, id, use_cache=True):
-        results = self._request(url, params, id, use_cache)
-        status_code = await anext(results)
-        return status_code, results
+        transaction = self.db.transaction()
+        results = self._request(url, params, id, transaction, use_cache)
+        return results
 
-    async def _request(self, url, params, id, use_cache=True):
+    @firestore.async_transactional
+    async def _request(self, url, params, id, transaction, use_cache=True):
 
         params["key"] = self.yt_key
         url += "?" + urlencode(params)
         page_token = None
 
         headers = {}
+        cached = None
+        cache_col = self.db.collection("cache")
+        cached_ref = cache_col.document(id)
+
         if use_cache:
-            cached = await self._cache.get(id)
-            if cached:
+            cached = await cached_ref.get(transaction=transaction)
+            if cached.exists:
                 headers["If-None-Match"] = cached["etag"]
 
+        page = 0
         while True:
             if page_token:
                 final_url = url + "&pageToken=" + page_token
@@ -192,14 +170,15 @@ class YoutubeAPI:
                          str(response.status_code))
             if response.status_code == 403:
                 raise self.QuotaExceededError(
-                    response.status_code, response.json())
-
-            if not page_token:  # first page
-                yield response.status_code
+                    response.response.json())
 
             if response.status_code == 304:
                 logger.debug(
                     "Got 304 Not modified for id " + str(id))
+                if use_cache:
+                    async for page in cached.collection("pages").stream():
+                        for item in page["items"]:
+                            yield item
                 break
 
             response.raise_for_status()
@@ -208,19 +187,23 @@ class YoutubeAPI:
             if "pageInfo" in json_response:
                 logger.debug(
                     "Pages: " + str(json_response["pageInfo"]["totalResults"]))
-            if not page_token and use_cache:  # first page
-                await self._cache.set(id, {
-                    "etag": json_response["etag"],
-                    "timestamp": datetime.now().isoformat()
-                })
 
             for item in json_response["items"]:
+                if use_cache:
+                    if page == 0:
+                        transaction.set(
+                            cached_ref, {"etag": json_response["etag"]})
+                    transaction.set(
+                        cached_ref.collection("pages").document(page),
+                        json_response)
+
                 yield item
 
             if not "nextPageToken" in json_response:
                 break
             else:
                 page_token = json_response["nextPageToken"]
+                page += 1
 
 
 """
