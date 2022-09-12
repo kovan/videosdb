@@ -58,7 +58,7 @@ class YoutubeAPI:
             "part": "contentDetails",
             "channelId": channel_id
         }
-        results = await self._request_many(url, params, channel_id)
+        results = await self._request_main(url, params, channel_id)
 
         async for item in results:
             details = item.get("contentDetails")
@@ -75,7 +75,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails",
             "channelId": channel_id
         }
-        results = await self._request_many(url, params, channel_id)
+        results = await self._request_main(url, params, channel_id)
         async for item in results:
             yield item["id"]
 
@@ -93,7 +93,7 @@ class YoutubeAPI:
             "part": "snippet",
             "playlistId": playlist_id
         }
-        return await self._request_many(url, params, playlist_id)
+        return await self._request_main(url, params, playlist_id)
 
     # async def get_related_videos(self, youtube_id):
     #     url = "/search"
@@ -125,50 +125,64 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     async def _request_one(self, url, params, id, use_cache=True):
 
-        result = self._request(url, params, id, use_cache)
+        result = self._request_main(url, params, id)
         try:
             item = await anext(result)
         except StopAsyncIteration:
             item = None
         return item
 
-    async def _request_many(self, url, params, id, use_cache=True):
+    async def _request_main(self,  use_cache=True, *args, **kwargs):
+        if use_cache:
+            return self._request_with_cache(*args, **kwargs)
+        else:
+            return self._request_without_cache(*args, **kwargs)
 
-        results = self._request(url, params, id, use_cache)
-        return results
+    async def _request_without_cache(self, *args, **kwargs):
+        status_code, pages = self._request_decoupled(*args, **kwargs)
+
+        async for page in pages:
+            for item in page["items"]:
+                yield item
+
+    async def _request_with_cache(self, url, params, id):
+        cache_col = self.db.collection("cache")
+        cached_ref = cache_col.document(id)
+        transaction = self.db.transaction()
+        cached = await cached_ref.get(transaction=transaction)
+        headers = {}
+        if cached.exists:
+            headers["If-None-Match"] = cached["etag"]
+
+        status_code, response_pages = self._request_decoupled(
+            url, params, id, headers)
+
+        if status_code == 304:
+            async for page in self.db.cached_ref.collection("pages").stream():
+                yield page
+        elif status_code >= 200 and status_code < 300:
+            page_n = 0
+            for page in response_pages:
+                _write_to_cache(
+                    transaction, cached_ref, page, page_n)
+                yield page
+                page_n += 1
 
     @staticmethod
-    @firestore.async_transactional
-    async def _write_cached_response(transaction, cached_ref, json_response, page):
-        if page == 0:
-            transaction.set(
-                cached_ref, {"etag": json_response["etag"]})
+    async def _request_decoupled(self, *args, **kwargs):
+        response = self._request_base(*args, *kwargs)
+        status_code = await anext(response)
+        return status_code, response
 
-        transaction.set(
-            cached_ref.collection("pages").document(page),
-            json_response)
-
-    async def _request(self, url, params, id, transaction, use_cache=True):
+    async def _request_base(self, url, params, id, headers=None):
 
         params["key"] = self.yt_key
         url += "?" + urlencode(params)
         page_token = None
 
-        headers = {}
-        transaction = None
-        cached = None
-        cache_col = self.db.collection("cache")
-        cached_ref = cache_col.document(id)
-
-        if use_cache:
-            transaction = self.db.transaction()
-            cached = await cached_ref.get(transaction=transaction)
-            if cached.exists:
-                headers["If-None-Match"] = cached["etag"]
-
-        page = 0
         while True:
             if page_token:
                 final_url = url + "&pageToken=" + page_token
@@ -177,21 +191,18 @@ class YoutubeAPI:
             logger.debug("requesting: " + final_url)
 
             response = await self.http.get(
-                self.root_url + final_url, timeout=30.0, headers=headers)
+                self.root_url + final_url, timeout=30.0, headers=headers if headers else {})
             logger.debug("Received response, code: " +
                          str(response.status_code))
             if response.status_code == 403:
                 raise self.QuotaExceededError(
                     response.response.json())
+            if not page_token:  # first page
+                yield response.status_code
 
             if response.status_code == 304:
                 logger.debug(
                     "Got 304 Not modified for id " + str(id))
-
-                if use_cache:
-                    async for page in cached.collection("pages").stream():
-                        for item in page["items"]:
-                            yield item
                 break
 
             response.raise_for_status()
@@ -201,18 +212,23 @@ class YoutubeAPI:
                 logger.debug(
                     "Pages: " + str(json_response["pageInfo"]["totalResults"]))
 
-            for item in json_response["items"]:
-                if use_cache:
-                    YoutubeAPI._write_cached_response(
-                        transaction, cached_ref, json_response, page)
-
-                yield item
+            yield json_response
 
             if not "nextPageToken" in json_response:
                 break
             else:
                 page_token = json_response["nextPageToken"]
-                page += 1
+
+
+@firestore.async_transactional
+async def _write_to_cache(transaction, cached_ref, json_response, page):
+    if page == 0:
+        transaction.set(
+            cached_ref, {"etag": json_response["etag"]})
+
+    transaction.set(
+        cached_ref.collection("pages").document(page),
+        json_response)
 
 
 """
