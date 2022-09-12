@@ -50,7 +50,7 @@ class YoutubeAPI:
             "part": "snippet",
             "id": playlist_id
         }
-        return await self._request_one(url, params, playlist_id, False)
+        return await self._request_one(url, params, playlist_id)
 
     async def list_channelsection_playlist_ids(self, channel_id):
         url = "/channelSections"
@@ -58,7 +58,7 @@ class YoutubeAPI:
             "part": "contentDetails",
             "channelId": channel_id
         }
-        results = await self._request_many(url, params, channel_id, False)
+        results = await self._request_many(url, params, channel_id)
 
         async for item in results:
             details = item.get("contentDetails")
@@ -75,7 +75,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails",
             "channelId": channel_id
         }
-        results = await self._request_many(url, params, channel_id, False)
+        results = await self._request_many(url, params, channel_id)
         async for item in results:
             yield item["id"]
 
@@ -85,7 +85,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails,statistics",
             "id": youtube_id
         }
-        return await self._request_one(url, params, youtube_id, False)
+        return await self._request_one(url, params, youtube_id)
 
     async def list_playlist_items(self, playlist_id):
         url = "/playlistItems"
@@ -120,14 +120,14 @@ class YoutubeAPI:
             "part": "snippet,contentDetails,statistics",
             "id": channel_id
         }
-        return await self._request_one(url, params, channel_id, False)
+        return await self._request_one(url, params, channel_id)
 
 
 # ------- PRIVATE-------------------------------------------------------
 
     async def _request_one(self, url, params, id, use_cache=True):
-        transaction = self.db.transaction()
-        result = self._request(url, params, id, transaction, use_cache)
+
+        result = self._request(url, params, id, use_cache)
         try:
             item = await anext(result)
         except StopAsyncIteration:
@@ -135,11 +135,21 @@ class YoutubeAPI:
         return item
 
     async def _request_many(self, url, params, id, use_cache=True):
-        transaction = self.db.transaction()
-        results = self._request(url, params, id, transaction, use_cache)
+
+        results = self._request(url, params, id, use_cache)
         return results
 
+    @staticmethod
     @firestore.async_transactional
+    async def _write_cached_response(transaction, cached_ref, json_response, page):
+        if page == 0:
+            transaction.set(
+                cached_ref, {"etag": json_response["etag"]})
+
+        transaction.set(
+            cached_ref.collection("pages").document(page),
+            json_response)
+
     async def _request(self, url, params, id, transaction, use_cache=True):
 
         params["key"] = self.yt_key
@@ -147,11 +157,13 @@ class YoutubeAPI:
         page_token = None
 
         headers = {}
+        transaction = None
         cached = None
         cache_col = self.db.collection("cache")
         cached_ref = cache_col.document(id)
 
         if use_cache:
+            transaction = self.db.transaction()
             cached = await cached_ref.get(transaction=transaction)
             if cached.exists:
                 headers["If-None-Match"] = cached["etag"]
@@ -175,6 +187,7 @@ class YoutubeAPI:
             if response.status_code == 304:
                 logger.debug(
                     "Got 304 Not modified for id " + str(id))
+
                 if use_cache:
                     async for page in cached.collection("pages").stream():
                         for item in page["items"]:
@@ -190,12 +203,8 @@ class YoutubeAPI:
 
             for item in json_response["items"]:
                 if use_cache:
-                    if page == 0:
-                        transaction.set(
-                            cached_ref, {"etag": json_response["etag"]})
-                    transaction.set(
-                        cached_ref.collection("pages").document(page),
-                        json_response)
+                    YoutubeAPI._write_cached_response(
+                        transaction, cached_ref, json_response, page)
 
                 yield item
 

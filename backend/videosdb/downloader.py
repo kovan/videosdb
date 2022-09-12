@@ -270,8 +270,6 @@ class Downloader:
                 item["snippet"]["publishedAt"])
             if not last_updated or video_date > last_updated:
                 last_updated = video_date
-            # self.db.db.collection("playlists").document(
-            #     playlist["id"]).collection("items").document(item[id]).set(item)
 
         playlist["videosdb"] = dict()
         playlist["videosdb"]["slug"] = slugify(
