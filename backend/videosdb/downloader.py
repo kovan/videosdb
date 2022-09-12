@@ -441,12 +441,12 @@ class Downloader:
     async def _print_debug_info(self):
         while True:
             tasks = anyio.get_running_tasks()
-            print('Running tasks:' + str(len(tasks)))
-            pprint.pprint(tasks)
+            logger.debug('Running tasks:' + str(len(tasks)))
+            logger.debug(pprint.pformat(tasks))
 
             for stream in self.streams:
-                print(str(stream.statistics()))
+                logger.debug(str(stream.statistics()))
 
-            print(str(self.processed_videos_lock.statistics()))
+            logger.debug(str(self.processed_videos_lock.statistics()))
 
             await anyio.sleep(30)
