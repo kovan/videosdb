@@ -163,15 +163,18 @@ class YoutubeAPI:
         if status_code == 304:
             async for page in self.db.cached_ref.collection("pages").stream():
                 yield page
+
         elif status_code >= 200 and status_code < 300:
             page_n = 0
             for page in response_pages:
-                _write_to_cache(
+                await _write_to_cache(
                     transaction, cached_ref, page, page_n)
-                yield page
+                for item in page["items"]:
+                    yield item
                 page_n += 1
+        else:
+            raise Exception("this should never happen")
 
-    @staticmethod
     async def _request_decoupled(self, *args, **kwargs):
         response = self._request_base(*args, *kwargs)
         status_code = await anext(response)
