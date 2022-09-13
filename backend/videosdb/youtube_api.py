@@ -195,6 +195,7 @@ class YoutubeAPI:
                          str(response.status_code))
             if response.status_code == 403:
                 raise self.QuotaExceededError(
+                    response.status_code,
                     response.json())
             if not page_token:  # first page
                 yield response.status_code
