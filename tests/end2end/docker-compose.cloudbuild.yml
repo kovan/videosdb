@@ -3,6 +3,10 @@ services:
     backend:
         network_mode: "host"
         image: backend
+        depends_on:
+            - json-caching-proxy
+        environment:
+            - FIRESTORE_EMULATOR_HOST=
         build:
             context: ../../backend
             cache_from: gcr.io/${PROJECT_ID}/backend:latest
@@ -25,4 +29,4 @@ services:
             context: utils/json-caching-proxy
         ports:
             - 6001:6001
-        stop_signal: SIGKIL
+        stop_signal: SIGKILL
