@@ -237,10 +237,10 @@ class Downloader:
             video_id = item["snippet"]["resourceId"]["videoId"]
             async with self.video_ids.lock:
                 if video_id not in self.video_ids.d:
-                    self.video_ids.d["video_id"] = set()
+                    self.video_ids.d[video_id] = set()
                     new_video = True
                 if playlist:  # exclude dummy playlists
-                    self.video_ids.d["video_id"].add(playlist_id)
+                    self.video_ids.d[video_id].add(playlist_id)
 
             if new_video:
                 video = await self._create_video(video_id)
