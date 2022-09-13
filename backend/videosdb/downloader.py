@@ -87,7 +87,8 @@ class Downloader:
     # PUBLIC: -------------------------------------------------------------
     def __init__(self, exclude_transcripts=False):
         logger.debug("ENVIRONMENT:")
-        logger.debug(str(os.environ))
+        for k, v in os.environ.items():
+            logger.debug("- %s = %s" % (k, v))
         self.exclude_transcripts = exclude_transcripts
         if exclude_transcripts:
             logger.debug("Excluding transcripts")
