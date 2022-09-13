@@ -95,7 +95,7 @@ class Downloader:
         self.db = DB()
         self.api = YoutubeAPI()
         self.streams = []
-        self.video_ids = LockedDict()
+        self.video_ids = LockedDict()  # video_id -> set() of playlist_ids
 
     async def init(self):
         await self.db.init()
@@ -121,18 +121,19 @@ class Downloader:
                     logger.error(e)
                     return
 
-            video_ids = set()
             logger.debug("Final video iteration")
-            async for video in self.db.db.collection("videos").stream():
-                v = video.to_dict()
-                video_ids.add(v["id"])
-                if not self.exclude_transcripts:
-                    global_scope.start_soon(
-                        self._handle_transcript, video, name="Download transcript")
 
-            self.db.meta_ref().set({
-                "videoIds": list(video_ids)
-            })
+            async with self.video_ids.lock:
+                async for video in self.db.db.collection("videos").stream():
+                    await video.reference.set("videosdb.playlists",
+                                              list(self.video_ids.d[video["id"]]))
+                    if not self.exclude_transcripts:
+                        global_scope.start_soon(
+                            self._handle_transcript, video, name="Download transcript")
+
+                await self.db.meta_ref().set({
+                    "videoIds": list(self.video_ids.d.keys())
+                })
 
             await anyio.wait_all_tasks_blocked()
             await self.db.update_last_updated()
