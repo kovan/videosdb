@@ -122,42 +122,19 @@ function getDb(config) {
             authDomain: config.authDomain,
             projectId: config.projectId
         });
+        db = app.firestore();
+        console.debug(process.env)
+        if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
+            console.info("Using FIREBASE EMULATOR")
+            db.useEmulator(...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
+        } else {
+            console.info("Using LIVE database.")
+        }
     } else {
         app = firebase.apps[0]
-
+        db = app.firestore();
     }
-    db = app.firestore();
 
-
-    // try {
-    // db.enablePersistence()
-    // db.settings({
-    //     cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
-    //     synchronizeTabs: true,
-    //     merge: true
-    // })
-    //     .catch((err) => {
-    //         if (err.code == 'failed-precondition') {
-    //             console.error("Multiple tabs open, persistence can only be enabled in one tab at a a time.")
-    //         } else if (err.code == 'unimplemented') {
-    //             console.error("The current browser does not support all of the features required to enable persistence")
-    //         }
-    //     });
-
-    // try {
-    console.debug(process.env)
-    if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
-        console.info("Using FIREBASE EMULATOR")
-        db.useEmulator(...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
-    } else {
-        console.info("Using LIVE database.")
-    }
-    // } catch (e) {
-    //     if (e.name == "FirebaseError" && e.code == "failed-precondition")
-    //         console.debug(e)
-    //     else
-    //         throw e
-    // }
     return db;
 }
 
