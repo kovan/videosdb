@@ -1,3 +1,4 @@
+import anyio
 import argparse
 import logging.config
 import logging
@@ -25,7 +26,8 @@ def entrypoint():
     if options.check_for_new_videos:
         downloader = Downloader(
             exclude_transcripts=options.exclude_transcripts)
-        downloader.check_for_new_videos()
+
+        anyio.run(downloader.check_for_new_videos)
 
     if options.download_and_register_in_ipfs:
         ipfs = IPFS()

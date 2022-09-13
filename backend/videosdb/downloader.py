@@ -26,11 +26,11 @@ async def asyncgenerator(item):
     yield item
 
 
-def _filter_exceptions(group: anyio.ExceptionGroup, exception_type, handler_func):
+def _filter_exceptions(group: anyio.ExceptionGroup, exception_type):
     unhandled_exceptions = []
     for e in group.exceptions:
         if type(e) == exception_type:
-            handler_func(e)
+            return e
         else:
             unhandled_exceptions.append(e)
 
@@ -50,10 +50,6 @@ class DB:
         self.db = firestore.AsyncClient(project=project,
                                         credentials=service_account.Credentials.from_service_account_file(
                                             creds_json_path))
-        # client_info = {
-        #     "initial_ops_per_second": 10,
-        #     "max_ops_per_second": 10
-        # }
 
     def meta_ref(self):
         return self.db.collection("meta").document("meta")
@@ -79,33 +75,11 @@ class DB:
         else:
             return 0
 
-    class Doc:
 
-        def __init__(self, doc_ref):
-            self.doc_ref = doc_ref
-
-        async def __aenter__(self):
-            doc = await self.doc_ref.get()
-            self.dict = doc.to_dict()
-            return self.dict
-
-        async def __aexit__(self, exc_type, exc, tb):
-            await self.doc_ref.set(self.dict, merge=True)
-
-
-# async def _signal_handler(*streams):
-#     with anyio.open_signal_receiver(signal.SIGHUP, signal.SIGTERM) as signals:
-#         async for signum in signals:
-#             if signum == signal.SIGHUP:
-#                 _print_debug_info(streams)
-#             elif signum == signal.SIGTERM:
-#                 return
-
-
-class LockedSet:
+class LockedDict:
     def __init__(self):
         self.lock = anyio.Lock()
-        self.set = set()
+        self.d = dict()
 
 
 class Downloader:
@@ -121,33 +95,31 @@ class Downloader:
         self.db = DB()
         self.api = YoutubeAPI()
         self.streams = []
-        self.processed_videos = set()
-        self.processed_videos_lock = anyio.Lock()
-        self.video_ids_set = LockedSet()
+        self.video_ids = LockedDict()
 
     async def init(self):
         await self.db.init()
         self.api = YoutubeAPI(self.db.db)
 
-    def check_for_new_videos(self):
+    async def check_for_new_videos(self):
         logger.info("Sync start")
-        anyio.run(self.check_for_new_videos_async)
-        logger.info("Sync finished")
-
-    async def check_for_new_videos_async(self):
         async with anyio.create_task_group() as global_scope:
             await self.init()
             global_scope.start_soon(self._print_debug_info,
                                     name="Debug info")
 
             try:
-                await self._start()
+                await self._retrieve_all()
 
             except YoutubeAPI.QuotaExceededError as e:
                 logger.error(e)
+                return
             except anyio.ExceptionGroup as group:
-                _filter_exceptions(
-                    group, YoutubeAPI.QuotaExceededError, logger.error)
+                e = _filter_exceptions(
+                    group, YoutubeAPI.QuotaExceededError)
+                if e:
+                    logger.error(e)
+                    return
 
             video_ids = set()
             logger.debug("Final video iteration")
@@ -158,15 +130,17 @@ class Downloader:
                     global_scope.start_soon(
                         self._handle_transcript, video, name="Download transcript")
 
-            async with DB.Doc(self.db.meta_ref()) as meta:
-                meta["videoIds"] = list(video_ids)
+            self.db.meta_ref().set({
+                "videoIds": list(video_ids)
+            })
 
             await anyio.wait_all_tasks_blocked()
-            # await self.api.aclose()
             await self.db.update_last_updated()
             global_scope.cancel_scope.cancel()
 
-    async def _start(self):
+        logger.info("Sync finished")
+
+    async def _retrieve_all(self):
         logger.info("Currently there are %s videos in the DB",
                     await self.db.get_video_count())
 
@@ -181,10 +155,6 @@ class Downloader:
                                   playlist_sender, name="Playlist retriever")
             processors.start_soon(self._playlist_processor,
                                   playlist_receiver, name="Playlist receiver")
-
-        # if "DEBUG" not in os.environ:
-        #     # separate so that it uses remaining quota
-        #     await self._fill_related_videos()
 
     @traced
     async def _playlist_retriever(self, playlist_sender):
@@ -246,30 +216,41 @@ class Downloader:
         items = []
         result = await self.api.list_playlist_items(playlist_id)
 
-        async with anyio.create_task_group() as nursery:
-            async for item in result:
-                if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
-                    continue
-                video_id = item["snippet"]["resourceId"]["videoId"]
-                items.append(item)
+        async for item in result:
+            if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
+                continue
+            items.append(item)
 
-                nursery.start_soon(self._playlistitem_processor, video_id, playlist_id, nursery,
-                                   name="_playlistitem_processor with videoid: %s and playlist_id %s" % (video_id, playlist_id))
-
-        if playlist:
-            await self._create_playlist(playlist, items)
+        await self._create_playlist(playlist, playlist_id, items)
 
     @traced
-    async def _create_playlist(self, playlist, items):
+    async def _create_playlist(self, playlist, playlist_id, items):
         video_count = 0
         last_updated = None
 
         for item in items:
+            new_video = False
+            video_id = item["snippet"]["resourceId"]["videoId"]
+            async with self.video_ids.lock:
+                if video_id not in self.video_ids.d:
+                    self.video_ids.d["video_id"] = set()
+                    new_video = True
+                if playlist:  # exclude dummy playlists
+                    self.video_ids.d["video_id"].add(playlist_id)
+
+            if new_video:
+                video = await self._create_video(video_id)
+                if not video:
+                    continue
+
             video_count += 1
             video_date = isodate.parse_datetime(
                 item["snippet"]["publishedAt"])
             if not last_updated or video_date > last_updated:
                 last_updated = video_date
+
+        if not playlist:  # exclude dummy playlists
+            return
 
         playlist["videosdb"] = dict()
         playlist["videosdb"]["slug"] = slugify(
@@ -279,40 +260,6 @@ class Downloader:
 
         await self.db.db.collection("playlists").document(playlist["id"]).set(playlist, merge=True)
         logger.info("Created playlist: " + playlist["snippet"]["title"])
-
-    @traced
-    async def _playlistitem_processor(self, video_id, playlist_id, nursery):
-
-        logger.debug("Processing " +
-                     video_id + " " + playlist_id)
-
-        video = None
-
-        async with self.processed_videos_lock:
-            if video_id not in self.processed_videos:
-                self.processed_videos.add(video_id)
-                video = await self._create_video(video_id)
-
-        if not video:
-            return
-
-        if video:
-            nursery.start_soon(self._add_playlist_to_video,
-                               video_id, playlist_id, name="Adding playlist %s to video %s " % (playlist_id, video_id))
-
-    @traced
-    async def _add_playlist_to_video(self, video_id, playlist_id):
-
-        # doc = self.db.db.collection("videos").document(
-        #     video_id).collection("playlists").document(playlist_id)
-        # await doc.set(playlist_id)
-
-        await self.db.db.collection("videos").document(video_id).update({
-            "videosdb.playlists": firestore.ArrayUnion([playlist_id])
-        })
-
-        logger.debug("Wrote playlist %s info for video %s: " %
-                     (playlist_id, video_id))
 
     @traced
     async def _create_video(self, video_id):

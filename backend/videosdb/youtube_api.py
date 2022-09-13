@@ -158,7 +158,7 @@ class YoutubeAPI:
             headers["If-None-Match"] = cached["etag"]
 
         status_code, response_pages = self._request_decoupled(
-            url, params, id, headers)
+            url, params, id, headers=headers)
 
         if status_code == 304:
             async for page in self.db.cached_ref.collection("pages").stream():
