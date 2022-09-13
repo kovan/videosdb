@@ -108,8 +108,9 @@ class Downloader:
             global_scope.start_soon(self._print_debug_info,
                                     name="Debug info")
 
+            # retrieve playlists:
             try:
-                await self._retrieve_all()
+                await self._retrieve_playlists()
 
             except YoutubeAPI.QuotaExceededError as e:
                 logger.error(e)
@@ -119,18 +120,21 @@ class Downloader:
 
             logger.debug("Final video iteration")
 
-            async for video in self.db.db.collection("videos").stream():
+            # create videos
+            async with anyio.create_task_group() as video_creators:
                 async with self.video_ids.lock:
-                    if video.get("id") in self.video_ids.d:
-                        await video.reference.update({
-                            "videosdb.playlists":
-                            list(self.video_ids.d[video.get("id")])
-                        })
+                    for video_id, playlist_ids in self.video_ids.d:
+                        video_creators.start_soon(
+                            self._create_video(video_id, list(playlist_ids))
+                        )
 
-                if not self.exclude_transcripts:
+            # retrieve pending transcripts
+            if not self.exclude_transcripts:
+                async for video in self.db.db.collection("videos").stream():
                     global_scope.start_soon(
                         self._handle_transcript, video, name="Download transcript")
 
+            # update videoid list
             async with self.video_ids.lock:
                 await self.db.meta_ref().set({
                     "videoIds": list(self.video_ids.d.keys())
@@ -142,7 +146,7 @@ class Downloader:
 
         logger.info("Sync finished")
 
-    async def _retrieve_all(self):
+    async def _retrieve_playlists(self):
         logger.info("Currently there are %s videos in the DB",
                     await self.db.get_video_count())
 
@@ -240,11 +244,6 @@ class Downloader:
                 if playlist:  # exclude dummy playlists
                     self.video_ids.d[video_id].add(playlist_id)
 
-            if new_video:
-                video = await self._create_video(video_id)
-                if not video:
-                    continue
-
             video_count += 1
             video_date = isodate.parse_datetime(
                 item["snippet"]["publishedAt"])
@@ -264,7 +263,7 @@ class Downloader:
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     @traced
-    async def _create_video(self, video_id):
+    async def _create_video(self, video_id, playlist_ids):
         video = await self.api.get_video_info(video_id)
 
         if not video:
@@ -284,7 +283,7 @@ class Downloader:
             video["snippet"]["description"])
         custom_attrs["durationSeconds"] = isodate.parse_duration(
             video["contentDetails"]["duration"]).total_seconds()
-        custom_attrs["playlists"] = list()
+        custom_attrs["playlists"] = playlist_ids
 
         video["videosdb"] = custom_attrs
         video["snippet"]["publishedAt"] = isodate.parse_datetime(
