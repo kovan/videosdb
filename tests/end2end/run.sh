@@ -1,5 +1,5 @@
 #!/bin/sh
-sudo service docker start
+pgrep docker || sudo service docker start
 
 rm -fr ./dist
 
@@ -11,4 +11,4 @@ docker compose run --rm backend -c -e \
 && \
 docker compose run frontend generate-and-start\
 
-#docker compose down
+docker compose down
