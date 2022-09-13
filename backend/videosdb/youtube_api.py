@@ -1,4 +1,5 @@
 from google.cloud import firestore
+import hashlib
 import json
 import logging
 import os
@@ -124,28 +125,33 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
-    async def _request_one(self, url, params, id, use_cache=True):
+    async def _request_one(self, url, params, use_cache=True):
 
-        result = self._request_main(url, params, id, use_cache)
+        result = self._request_main(url, params, use_cache)
         try:
             item = await anext(result)
         except StopAsyncIteration:
             item = None
         return item
 
-    async def _request_main(self, url, params, id, use_cache=True):
+    async def _request_main(self, url, params, use_cache=True):
         if use_cache:
-            pages = self._request_with_cache(url, params, id)
+            pages = self._request_with_cache(url, params)
         else:
-            status_code, pages = self._request_decoupled(url, params, id)
+            status_code, pages = self._request_decoupled(url, params)
 
         async for page in pages:
             for item in page["items"]:
                 yield item
 
-    async def _request_with_cache(self, url, params, id):
+    async def _request_with_cache(self, url, params):
+        @staticmethod
+        def _key_func(url, params):
+            s = url + str(params)
+            return hashlib.sha256(s.encode('utf-8')).hexdigest()
+
         cache_col = self.db.collection("cache")
-        cached_ref = cache_col.document(id)
+        cached_ref = cache_col.document(_key_func(url, params))
         transaction = self.db.transaction()
         cached = await cached_ref.get()
         headers = {}
@@ -153,7 +159,7 @@ class YoutubeAPI:
             headers["If-None-Match"] = cached.get("etag")
 
         status_code, response_pages = await self._request_decoupled(
-            url, params, id, headers=headers)
+            url, params, headers=headers)
 
         if status_code == 304:
             async for page in cached_ref.collection("pages").stream():
@@ -176,7 +182,7 @@ class YoutubeAPI:
         status_code = await anext(response)
         return status_code, response
 
-    async def _request_base(self, url, params, id, headers=None):
+    async def _request_base(self, url, params, headers=None):
 
         params["key"] = self.yt_key
         url += "?" + urlencode(params)
@@ -202,7 +208,7 @@ class YoutubeAPI:
 
             if response.status_code == 304:
                 logger.debug(
-                    "Got 304 Not modified for id " + str(id))
+                    "Got 304 Not modified")
                 break
 
             response.raise_for_status()
