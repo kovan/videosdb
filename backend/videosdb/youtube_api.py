@@ -57,7 +57,7 @@ class YoutubeAPI:
             "part": "contentDetails",
             "channelId": channel_id
         }
-        results = await self._request_main(url, params, channel_id)
+        results = self._request_main(url, params, channel_id)
 
         async for item in results:
             details = item.get("contentDetails")
@@ -74,7 +74,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails",
             "channelId": channel_id
         }
-        results = await self._request_main(url, params, channel_id)
+        results = self._request_main(url, params, channel_id)
         async for item in results:
             yield item["id"]
 
@@ -92,7 +92,7 @@ class YoutubeAPI:
             "part": "snippet",
             "playlistId": playlist_id
         }
-        return await self._request_main(url, params, playlist_id)
+        return self._request_main(url, params, playlist_id)
 
     # async def get_related_videos(self, youtube_id):
     #     url = "/search"
@@ -124,10 +124,9 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
-
     async def _request_one(self, url, params, id, use_cache=True):
 
-        result = await self._request_main(url, params, id, use_cache)
+        result = self._request_main(url, params, id, use_cache)
         try:
             item = await anext(result)
         except StopAsyncIteration:
@@ -136,12 +135,9 @@ class YoutubeAPI:
 
     async def _request_main(self, url, params, id, use_cache=True):
         if use_cache:
-            return self._request_with_cache(url, params, id)
+            pages = self._request_with_cache(url, params, id)
         else:
-            return self._request_without_cache(url, params, id)
-
-    async def _request_without_cache(self, url, params, id):
-        status_code, pages = self._request_decoupled(url, params, id)
+            status_code, pages = self._request_decoupled(url, params, id)
 
         async for page in pages:
             for item in page["items"]:
@@ -160,19 +156,20 @@ class YoutubeAPI:
             url, params, id, headers=headers)
 
         if status_code == 304:
-            async for page in self.db.cached_ref.collection("pages").stream():
-                yield page
+            async for page in cached_ref.collection("pages").stream():
+                yield page.to_dict()
+            return
 
-        elif status_code >= 200 and status_code < 300:
+        if status_code >= 200 and status_code < 300:
             page_n = 0
             async for page in response_pages:
                 await _write_to_cache(
                     transaction, cached_ref, page, page_n)
-                for item in page["items"]:
-                    yield item
+                yield page
                 page_n += 1
-        else:
-            raise Exception("this should never happen")
+            return
+
+        raise Exception("this should never happen")
 
     async def _request_decoupled(self, *args, **kwargs):
         response = self._request_base(*args, **kwargs)
