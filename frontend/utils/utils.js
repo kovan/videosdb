@@ -144,20 +144,20 @@ function getDb(config) {
     //         }
     //     });
 
-    try {
-        console.debug(process.env)
-        if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
-            console.info("Using FIREBASE EMULATOR")
-            db.useEmulator(...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
-        } else {
-            console.info("Using LIVE database.")
-        }
-    } catch (e) {
-        if (e.name == "FirebaseError" && e.code == "failed-precondition")
-            console.debug(e)
-        else
-            throw e
+    // try {
+    console.debug(process.env)
+    if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
+        console.info("Using FIREBASE EMULATOR")
+        db.useEmulator(...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
+    } else {
+        console.info("Using LIVE database.")
     }
+    // } catch (e) {
+    //     if (e.name == "FirebaseError" && e.code == "failed-precondition")
+    //         console.debug(e)
+    //     else
+    //         throw e
+    // }
     return db;
 }
 
