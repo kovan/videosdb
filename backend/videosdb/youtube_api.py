@@ -4,7 +4,6 @@ import logging
 import os
 import re
 import httpx
-import youtube_transcript_api
 from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
@@ -128,21 +127,21 @@ class YoutubeAPI:
 
     async def _request_one(self, url, params, id, use_cache=True):
 
-        result = self._request_main(url, params, id)
+        result = await self._request_main(url, params, id, use_cache)
         try:
             item = await anext(result)
         except StopAsyncIteration:
             item = None
         return item
 
-    async def _request_main(self,  use_cache=True, *args, **kwargs):
+    async def _request_main(self, url, params, id, use_cache=True):
         if use_cache:
-            return self._request_with_cache(*args, **kwargs)
+            return self._request_with_cache(url, params, id)
         else:
-            return self._request_without_cache(*args, **kwargs)
+            return self._request_without_cache(url, params, id)
 
-    async def _request_without_cache(self, *args, **kwargs):
-        status_code, pages = self._request_decoupled(*args, **kwargs)
+    async def _request_without_cache(self, url, params, id):
+        status_code, pages = self._request_decoupled(url, params, id)
 
         async for page in pages:
             for item in page["items"]:
@@ -152,12 +151,12 @@ class YoutubeAPI:
         cache_col = self.db.collection("cache")
         cached_ref = cache_col.document(id)
         transaction = self.db.transaction()
-        cached = await cached_ref.get(transaction=transaction)
+        cached = await cached_ref.get()
         headers = {}
         if cached.exists:
-            headers["If-None-Match"] = cached["etag"]
+            headers["If-None-Match"] = cached.get("etag")
 
-        status_code, response_pages = self._request_decoupled(
+        status_code, response_pages = await self._request_decoupled(
             url, params, id, headers=headers)
 
         if status_code == 304:
@@ -166,7 +165,7 @@ class YoutubeAPI:
 
         elif status_code >= 200 and status_code < 300:
             page_n = 0
-            for page in response_pages:
+            async for page in response_pages:
                 await _write_to_cache(
                     transaction, cached_ref, page, page_n)
                 for item in page["items"]:
@@ -176,7 +175,7 @@ class YoutubeAPI:
             raise Exception("this should never happen")
 
     async def _request_decoupled(self, *args, **kwargs):
-        response = self._request_base(*args, *kwargs)
+        response = self._request_base(*args, **kwargs)
         status_code = await anext(response)
         return status_code, response
 
@@ -223,14 +222,14 @@ class YoutubeAPI:
                 page_token = json_response["nextPageToken"]
 
 
-@firestore.async_transactional
-async def _write_to_cache(transaction, cached_ref, json_response, page):
-    if page == 0:
+@ firestore.async_transactional
+async def _write_to_cache(transaction, cached_ref, json_response, page_n):
+    if page_n == 0:
         transaction.set(
             cached_ref, {"etag": json_response["etag"]})
 
     transaction.set(
-        cached_ref.collection("pages").document(page),
+        cached_ref.collection("pages").document("page_" + str(page_n)),
         json_response)
 
 

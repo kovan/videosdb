@@ -71,7 +71,7 @@ class DB:
     async def get_video_count(self):
         doc = await self.meta_ref().get()
         if doc.exists:
-            return len(doc.to_dict()["videoIds"])
+            return len(doc.get("videoIds"))
         else:
             return 0
 
@@ -93,7 +93,7 @@ class Downloader:
             logger.debug("Excluding transcripts")
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
         self.db = DB()
-        self.api = YoutubeAPI()
+        self.api = YoutubeAPI(self.db)
         self.streams = []
         self.video_ids = LockedDict()  # video_id -> set() of playlist_ids
 
@@ -123,13 +123,17 @@ class Downloader:
 
             logger.debug("Final video iteration")
 
+            async for video in self.db.db.collection("videos").stream():
+                if not self.exclude_transcripts:
+                    global_scope.start_soon(
+                        self._handle_transcript, video, name="Download transcript")
+
             async with self.video_ids.lock:
-                async for video in self.db.db.collection("videos").stream():
-                    await video.reference.set("videosdb.playlists",
-                                              list(self.video_ids.d[video["id"]]))
-                    if not self.exclude_transcripts:
-                        global_scope.start_soon(
-                            self._handle_transcript, video, name="Download transcript")
+                for video_id, playlist_ids in self.video_ids.d.items():
+                    doc_ref = self.db.db.collection(
+                        "videos").document(video_id)
+                    await doc_ref.set("videosdb.playlists",
+                                      list(playlist_ids))
 
                 await self.db.meta_ref().set({
                     "videoIds": list(self.video_ids.d.keys())
@@ -307,7 +311,7 @@ class Downloader:
 
         async with anyio.create_task_group():
             meta_doc = await self.db.meta_ref().get()
-            randomized_ids = meta_doc.to_dict()["videoIds"]
+            randomized_ids = meta_doc.get("videoIds")
             random.shuffle(randomized_ids)
             for video_id in randomized_ids:
                 related_videos = await self.api.get_related_videos(video_id)
@@ -393,6 +397,6 @@ class Downloader:
             for stream in self.streams:
                 logger.debug(str(stream.statistics()))
 
-            logger.debug(str(self.processed_videos_lock.statistics()))
+            logger.debug(str(self.video_ids.lock.statistics()))
 
             await anyio.sleep(30)
