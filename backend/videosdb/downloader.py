@@ -124,17 +124,18 @@ class Downloader:
             logger.debug("Final video iteration")
 
             async for video in self.db.db.collection("videos").stream():
+                async with self.video_ids.lock:
+                    if video.get("id") in self.video_ids.d:
+                        await video.reference.update({
+                            "videosdb.playlists":
+                            list(self.video_ids.d[video.get("id")])
+                        })
+
                 if not self.exclude_transcripts:
                     global_scope.start_soon(
                         self._handle_transcript, video, name="Download transcript")
 
             async with self.video_ids.lock:
-                for video_id, playlist_ids in self.video_ids.d.items():
-                    doc_ref = self.db.db.collection(
-                        "videos").document(video_id)
-                    await doc_ref.set("videosdb.playlists",
-                                      list(playlist_ids))
-
                 await self.db.meta_ref().set({
                     "videoIds": list(self.video_ids.d.keys())
                 })
