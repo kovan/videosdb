@@ -123,9 +123,9 @@ class Downloader:
             # create videos
             async with anyio.create_task_group() as video_creators:
                 async with self.video_ids.lock:
-                    for video_id, playlist_ids in self.video_ids.d:
+                    for video_id, playlist_ids in self.video_ids.d.items():
                         video_creators.start_soon(
-                            self._create_video(video_id, list(playlist_ids))
+                            self._create_video, video_id, list(playlist_ids)
                         )
 
             # retrieve pending transcripts
