@@ -113,13 +113,11 @@ class Downloader:
 
             except YoutubeAPI.QuotaExceededError as e:
                 logger.error(e)
-                return
             except anyio.ExceptionGroup as group:
                 e = _filter_exceptions(
                     group, YoutubeAPI.QuotaExceededError)
                 if e:
                     logger.error(e)
-                    return
 
             logger.debug("Final video iteration")
 
