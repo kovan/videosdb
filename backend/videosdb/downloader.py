@@ -26,11 +26,11 @@ async def asyncgenerator(item):
     yield item
 
 
-def _filter_exceptions(group: anyio.ExceptionGroup, exception_type):
+def _filter_exceptions(group: anyio.ExceptionGroup, exception_type, handler_func):
     unhandled_exceptions = []
     for e in group.exceptions:
         if type(e) == exception_type:
-            return e
+            handler_func(e)
         else:
             unhandled_exceptions.append(e)
 
@@ -114,10 +114,8 @@ class Downloader:
             except YoutubeAPI.QuotaExceededError as e:
                 logger.error(e)
             except anyio.ExceptionGroup as group:
-                e = _filter_exceptions(
-                    group, YoutubeAPI.QuotaExceededError)
-                if e:
-                    logger.error(e)
+                _filter_exceptions(
+                    group, YoutubeAPI.QuotaExceededError, logger.error)
 
             logger.debug("Final video iteration")
 
