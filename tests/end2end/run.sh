@@ -1,14 +1,21 @@
-#!/bin/sh
+#!/bin/bash
 pgrep docker || sudo service docker start
+
+if [[ -z "${PROJECT_ID}" ]]; then
+  compose_file="docker-compose.yml"
+else # we are in Google CLoud Builder
+  compose_file="docker-compose.cloudbuild.yml"
+fi
+
 
 rm -fr ./dist
 
-docker compose up --build --detach \
+docker compose -f $compose_file up --build --detach \
 && \
 until  nc -z localhost 8080; do sleep 1; done \
 && \
-docker compose run --rm backend -c -e \
+docker compose -f $compose_file run  --rm backend -c -e \
 && \
-docker compose run frontend generate-and-start\
+docker compose -f $compose_file run frontend generate-and-start\
 
-docker compose down
+docker compose -f $compose_file down

@@ -1,0 +1,28 @@
+version: "3"
+services:
+    backend:
+        network_mode: "host"
+        image: backend
+        build:
+            context: ../../backend
+            cache_from: gcr.io/${PROJECT_ID}/backend:latest
+        env_file: ../../common/env/testing.txt
+
+    frontend:
+        network_mode: "host"
+        image: frontend
+        env_file: ../../common/env/sadhguru.txt
+        build:
+            context: ../../frontend
+            cache_from: gcr.io/${PROJECT_ID}/frontend:latest
+
+        entrypoint: yarn
+
+    json-caching-proxy:
+        network_mode: "host"
+        image: json-caching-proxy
+        build:
+            context: utils/json-caching-proxy
+        ports:
+            - 6001:6001
+        stop_signal: SIGKIL

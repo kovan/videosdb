@@ -24,6 +24,16 @@ const firebase_nithyananda = {
     measurementId: "G-9FCP7M1VDV"
 };
 
+const firebase_testing = {
+    apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
+    authDomain: "worpdress-279321.firebaseapp.com",
+    projectId: "worpdress-279321",
+    storageBucket: "worpdress-279321.appspot.com",
+    messagingSenderId: "149555456673",
+    appId: "1:149555456673:web:bd1a8d45015dbc29b3dee0",
+    measurementId: "G-W96ZC6SQCN"
+};
+
 
 /**
  * Removes invalid XML characters from a string
@@ -65,6 +75,9 @@ async function getFirebaseSettings(config) {
             break
         case "sadhguru":
             settings = firebase_sadhguru
+            break
+        case "testing":
+            settings = firebase_testing
             break
     }
     return settings
