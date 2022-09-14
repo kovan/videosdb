@@ -1,39 +1,10 @@
 steps:
-  - name: docker/compose
-    dir: tests/end2end
-    env:
-      - REPO=gcr.io/worpdress-279321/
-    args:
-      - build
-  - name: docker/compose
-    dir: tests/end2end
-    env:
-      - REPO=gcr.io/worpdress-279321/
-    args:
-      - up
-      - '-d'
-  - name: docker/compose
-    dir: tests/end2end
-    env:
-      - REPO=gcr.io/worpdress-279321/
-    args:
-      - run
-      - backend
-      - poetry
-      - run
-      - python
-      - '-m'
-      - videosdb
-      - '--check-for-new-videos'
-      - '--exclude-transcripts'
-  - name: docker/compose
-    dir: tests/end2end
-    env:
-      - REPO=gcr.io/worpdress-279321/
-    args:
-      - run
-      - frontend
-      - yarn
-      - generate
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', 'echo $_DOCKER_PASSWORD | docker login --username eelis --password-stdin']
+
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'run.sh'
+
 
 timeout: 3600s
