@@ -6,6 +6,7 @@ import re
 import httpx
 from urllib.parse import urlencode
 import youtube_transcript_api
+from google.cloud import firestore
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class YoutubeAPI:
         return await self.http.aclose()
 
     def __init__(self, db, yt_key=None):
-        self.db = db
+        self.db: firestore.AsyncClient = db
         limits = httpx.Limits(max_connections=50)
         self.http = httpx.AsyncClient(limits=limits)
 
@@ -146,8 +147,8 @@ class YoutubeAPI:
 
     async def _request_with_cache(self, url, params):
         @staticmethod
-        def _key_func(url, params):
-            return url + "?" + urlencode(params)
+        def _key_func(url: str, params: dict):
+            return url.lstrip("/") + "?" + urlencode(params)
             #s = url + str(params)
             # return hashlib.sha256(s.encode('utf-8')).hexdigest()
 
