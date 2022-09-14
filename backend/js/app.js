@@ -10,7 +10,6 @@ import "path"
 class DB {
     constructor() {
 
-        let project = process.env["VIDEOSDB_FIREBASE_PROJECT"]
         let config = process.env["VIDEOSDB_CONFIG"]
         console.info("Current project: " + project)
         this.firestoreApp = initializeApp(firebase_sadhguru)
