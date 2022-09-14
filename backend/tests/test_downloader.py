@@ -1,69 +1,79 @@
-
-# @pytest.fixture
-# async def api():
-
-
-# def setup_module(module):
-#     logging.getLogger("videosdb.downloader").setLevel(logging.DEBUG)
-#     # os.environ.setdefault(
-#     #     "YOUTUBE_API_URL", "http://127.0.0.1:2000/youtube/v3")
-#     os.environ.setdefault(
-#         "YOUTUBE_API_KEY", "AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs")
-#     # os.environ.setdefault("DEBUG", "1")
-#     os.environ.setdefault("LOGLEVEL", "DEBUG")
-#     os.environ.setdefault("PYTHONDEVMODE", "1")
-#     #os.environ.setdefault("FIRESTORE_EMULATOR_HOST", "localhost:6001")
-#     """ os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "videosdb-firebase") """
+import os
+import pytest
+from videosdb import DB
 
 
-# """ @pytest.fixture
-# def db():
-#     yield firestore.AsyncClient()
-#  """
+def setup_module(module):
+    pass
 
 
-# @pytest.fixture
-# def downloader():
-#     yield Downloader()
+@pytest.fixture
+def db():
+    project = os.environ["FIREBASE_PROJECT"]
+    config = os.environ["VIDEOSDB_CONFIG"]
+    yield DB(project, config)
 
 
-# @pytest.fixture
-# async def api():
-#     yield await YoutubeAPI.create()
+@pytest.mark.asyncio
+async def test_cache(db):
+    async for cache_item in db.collection("playlists").stream():
+        assert cache_item.get("etag")
+        async for page in cache_item.reference.collection("pages").stream():
+            assert page
 
 
-# def test_downloader():
-#     downloader = Downloader()
-#     downloader.check_for_new_videos()
+@pytest.mark.asyncio
+async def test_channel_infos(db):
+    async for i in db.collection("channel_infos").stream():
+        assert i.to_dict()
+        assert i.get("kind") == "youtube#channel"
 
 
-# def test_not_array_too_large_to_be_used_in_query(db):
-#     query = db.collection('videos')
-#     query = query.where(
-#         'videosdb.playlists',
-#         'array-contains',
-#         this.category
-#     )
+@pytest.mark.asyncio
+async def test_meta(db):
+    doc = await db.collection("meta").document("meta").get()
+    assert doc.exists
+    assert doc.get("lastUpdated")
+    assert doc.get("videoIds")
+    assert len(doc.get("videoIds")) > 0
 
 
-# @pytest.mark.asyncio
-# async def test_download(db, downloader):
+@pytest.mark.asyncio
+async def test_videos(db):
+    DOC_ID = "0OWMAP1-NH4"
+    doc = await db.collection("videos").document(DOC_ID).get()
+    assert doc.exists
 
-#     async for pl in db.collection("playlists").stream():
-#         asyncio.create_task(pl.reference.delete())
-#     await gather_all_tasks()
+    d = doc.to_dict()
+    assert d
 
-#     await downloader.check_for_new_videos_async()
+    assert d.get("kind") == "youtube#video"
 
-#     async for pl in db.collection("playlists").stream():
-#         pl = pl.to_dict()
-#         assert pl["id"]
-#         assert pl["videosdb"]["lastUpdated"]
-#         assert pl["videosdb"]["slug"]
-#         assert pl["videosdb"]["videoCount"]
+    assert "contentDetails" in d
+    assert "id" in d
+    assert "snippet" in d
+    assert "statistics" in d
+    assert "videosdb" in d
+    v = d["videosdb"]
+    assert v.get("descriptionTrimmed")
+    assert v.get("durationSeconds") == 392
+    assert v.get("slug") == "gurdjieff-the-rascal-saint-sadhguru-exclusive"
+    assert "playlists" in v
+    assert v["playlists"]
+    assert v["playlists"][0] == "PL3uDtbb3OvDN6Od1Shk_X5TxibGQGbTVk"
 
 
-""" @pytest.mark.asyncio
-async def test_fill_related(db, downloader):
-    await downloader.init()
-    await downloader._fill_related_videos() """
+@pytest.mark.asyncio
+async def test_playlists(db):
+    DOC_ID = "PL3uDtbb3OvDPIrLWUeBG5SZ3VRP2wbEPP"
+    doc = await db.collection("playlists").document(DOC_ID).get()
+    assert doc.exists
+    d = doc.to_dict()
+    assert d
+    assert d.get("kind") == "youtube#playlist"
+    assert "snippet" in d
+    assert "videosdb" in d
+    v = d["videosdb"]
+    assert v.get("lastUpdated")
+    assert v.get("slug") == "sadhguru-exclusive"
+    assert v.get("videoCount") == 24

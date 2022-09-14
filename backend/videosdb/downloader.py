@@ -4,7 +4,6 @@ import os
 import pprint
 import re
 import random
-import sys
 from datetime import datetime
 import anyio
 import fnc
@@ -16,8 +15,7 @@ from google.oauth2 import service_account
 from slugify import slugify
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 import youtube_transcript_api
-
-BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -39,17 +37,21 @@ def _filter_exceptions(group: anyio.ExceptionGroup, exception_type, handler_func
 
 
 class DB:
-
-    def __init__(self):
-        project = os.environ["FIREBASE_PROJECT"]
-        config = os.environ["VIDEOSDB_CONFIG"]
+    @staticmethod
+    def setup(project, config):
+        BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
         creds_json_path = os.path.join(
             BASE_DIR, "keys/%s.json" % config.strip('"'))
 
         logger.info("Current project: " + project)
-        self.db = firestore.AsyncClient(project=project,
-                                        credentials=service_account.Credentials.from_service_account_file(
-                                            creds_json_path))
+        db = firestore.AsyncClient(project=project,
+                                   credentials=service_account.Credentials.from_service_account_file(
+                                       creds_json_path))
+
+    def __init__(self):
+        project = os.environ["FIREBASE_PROJECT"]
+        config = os.environ["VIDEOSDB_CONFIG"]
+        self.db = self.setup(project, config)
 
     def meta_ref(self):
         return self.db.collection("meta").document("meta")
