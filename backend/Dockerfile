@@ -7,10 +7,10 @@ RUN apt update
 RUN apt install -y git
 WORKDIR /root
 ADD poetry.lock pyproject.toml  ./
-RUN poetry install --no-dev
+RUN poetry install
 COPY  . .
 
 
 
-ENTRYPOINT ["poetry", "run", "python", "-O", "-m", "videosdb"]
+ENTRYPOINT ["poetry", "run"]
 

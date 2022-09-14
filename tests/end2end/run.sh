@@ -14,7 +14,9 @@ docker compose -f $compose_file up --build --detach \
 && \
 until  nc -z localhost 8080; do sleep 1; done \
 && \
-docker compose -f $compose_file run  --rm backend -c -e \
+docker compose -f $compose_file run  --rm backend python -O -m videosdb -c -e \
+&& \
+docker compose -f $compose_file run  --rm backend pytest \
 && \
 docker compose -f $compose_file run frontend generate-and-start\
 

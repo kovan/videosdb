@@ -10,6 +10,10 @@ steps:
       - --env-file
       - common/env/$_VIDEOSDB_CONFIG.txt
       - gcr.io/worpdress-279321/backend
+      - python
+      - -O
+      - -m
+      - videosdb
       - --check-for-new-videos
 
 
