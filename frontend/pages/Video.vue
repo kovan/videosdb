@@ -9,10 +9,12 @@ b-container.m-0.p-0.mx-auto
                     | Published: {{ $myFormatDate(this.video.snippet.publishedAt) }}.
                     | Duration: {{ new Date(this.video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
 
-            p(align='center')
+            p(align='center',
+                )
                 client-only
                     LazyYoutube(
-                        :src='`https://www.youtube.com/watch?v=${this.video.id}`'
+                        :src='`https://www.youtube.com/watch?v=${this.video.id}`',
+                        autoplay=true
                     )
         .my-4(v-if='this.video.videosdb.descriptionTrimmed')
             strong Description
@@ -131,6 +133,9 @@ export default {
     data() {
         return {
             video: {},
+            YouTubeiFrameAttributes: {
+                width: "1000px"
+            }
         }
     },
     computed: {

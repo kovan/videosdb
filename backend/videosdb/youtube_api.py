@@ -1,5 +1,4 @@
 from google.cloud import firestore
-import hashlib
 import json
 import logging
 import os
@@ -148,8 +147,9 @@ class YoutubeAPI:
     async def _request_with_cache(self, url, params):
         @staticmethod
         def _key_func(url, params):
-            s = url + str(params)
-            return hashlib.sha256(s.encode('utf-8')).hexdigest()
+            return url + "?" + urlencode(params)
+            #s = url + str(params)
+            # return hashlib.sha256(s.encode('utf-8')).hexdigest()
 
         cache_col = self.db.collection("cache")
         cached_ref = cache_col.document(_key_func(url, params))

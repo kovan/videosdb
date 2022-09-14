@@ -133,6 +133,7 @@ class Downloader:
                             self._create_video, video_id, list(playlist_ids)
                         )
 
+            logger.debug("Retrieving transcripts")
             # retrieve pending transcripts
             if not self.exclude_transcripts:
                 async for video in self.db.db.collection("videos").stream():
