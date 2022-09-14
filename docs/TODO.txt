@@ -1,4 +1,5 @@
-
+- las transacciones no se cancelarían adecuadamente
+- la cache no guarda bien
 
 - poner el contador de videos arriba y descripciones de los botones table/escritorio ()
 

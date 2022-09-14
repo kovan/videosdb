@@ -40,7 +40,7 @@
                     "LOGLEVEL": "DEBUG",
                     "PYTHONDEVMODE": "1",
                 },
-                "envFile": "${workspaceFolder}/utils/debug-env.txt",
+                "envFile": "${workspaceFolder}/common/env/testing.txt",
                 "args": [
                     "-c",
                     "-e"

@@ -6,6 +6,7 @@ import os
 import re
 import httpx
 from urllib.parse import urlencode
+import youtube_transcript_api
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +153,6 @@ class YoutubeAPI:
 
         cache_col = self.db.collection("cache")
         cached_ref = cache_col.document(_key_func(url, params))
-        transaction = self.db.transaction()
         cached = await cached_ref.get()
         headers = {}
         if cached.exists:
@@ -167,12 +167,14 @@ class YoutubeAPI:
             return
 
         if status_code >= 200 and status_code < 300:
+            transaction = self.db.transaction()
             page_n = 0
             async for page in response_pages:
                 await _write_to_cache(
                     transaction, cached_ref, page, page_n)
                 yield page
                 page_n += 1
+            transaction.commit()
             return
 
         raise Exception("this should never happen")
@@ -227,7 +229,9 @@ class YoutubeAPI:
 
 
 @ firestore.async_transactional
-async def _write_to_cache(transaction, cached_ref, json_response, page_n):
+async def _write_to_cache(transaction, cached_ref, json_response, page_n, should_raise=False):
+    if should_raise:
+        raise Exception()
     if page_n == 0:
         transaction.set(
             cached_ref, {"etag": json_response["etag"]})

@@ -87,20 +87,20 @@ class Downloader:
     # PUBLIC: -------------------------------------------------------------
     def __init__(self, exclude_transcripts=False):
         logger.debug("ENVIRONMENT:")
-        for k, v in os.environ.items():
-            logger.debug("- %s = %s" % (k, v))
+        # for k, v in os.environ.items():
+        #     logger.debug('- %s = "%s"' % (k, v))
+        logger.debug(pprint.pformat(os.environ))
         self.exclude_transcripts = exclude_transcripts
         if exclude_transcripts:
             logger.debug("Excluding transcripts")
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
         self.db = DB()
-        self.api = YoutubeAPI(self.db)
+        self.api = YoutubeAPI(self.db.db)
         self.streams = []
         self.video_ids = LockedDict()  # video_id -> set() of playlist_ids
 
     async def init(self):
         await self.db.init()
-        self.api = YoutubeAPI(self.db.db)
 
     async def check_for_new_videos(self):
         logger.info("Sync start")
@@ -141,6 +141,7 @@ class Downloader:
                     "videoIds": list(self.video_ids.d.keys())
                 })
 
+            await self.api.aclose()
             await anyio.wait_all_tasks_blocked()
             await self.db.update_last_updated()
             global_scope.cancel_scope.cancel()
