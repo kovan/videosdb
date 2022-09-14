@@ -41,7 +41,7 @@ def _filter_exceptions(group: anyio.ExceptionGroup, exception_type, handler_func
 class DB:
 
     def __init__(self):
-        project = os.environ["VIDEOSDB_FIREBASE_PROJECT"]
+        project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
         creds_json_path = os.path.join(
             BASE_DIR, "keys/%s.json" % config.strip('"'))
