@@ -174,7 +174,7 @@ class YoutubeAPI:
                     transaction, cached_ref, page, page_n)
                 yield page
                 page_n += 1
-            transaction.commit()
+            await transaction.commit()
             return
 
         raise Exception("this should never happen")

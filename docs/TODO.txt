@@ -1,18 +1,7 @@
-- las transacciones no se cancelarían adecuadamente
 
-
-- poner el contador de videos arriba y descripciones de los botones table/escritorio ()
+- poner descripciones de los botones table/escritorio ()
 
 - Las categorias en Video.vue no aparecen
-
-- pasar a js
-
-
-
-
-
-
-
 
 
 
