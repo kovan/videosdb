@@ -209,16 +209,16 @@ class YoutubeAPI:
                 yield response.status_code
 
             if response.status_code == 304:
-                logger.debug(
-                    "Got 304 Not modified")
                 break
 
             response.raise_for_status()
 
             json_response = response.json()
-            if "pageInfo" in json_response:
-                logger.debug(
-                    "Pages: " + str(json_response["pageInfo"]["totalResults"]))
+
+            if not page_token:  # first page
+                if "pageInfo" in json_response:
+                    logger.debug(
+                        "Total items: " + str(json_response["pageInfo"]["totalResults"]))
 
             yield json_response
 
