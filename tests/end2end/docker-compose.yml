@@ -5,7 +5,7 @@ services:
         image: backend
         build:
             context: ../../backend
-        env_file: ../../common/env/sadhguru.txt
+        env_file: ../../common/env/testing.txt
         depends_on:
             - json-caching-proxy
             - firestore-emulator
@@ -22,7 +22,7 @@ services:
     frontend:
         network_mode: "host"
         image: frontend
-        env_file: ../../common/env/sadhguru.txt
+        env_file: ../../common/env/testing.txt
         environment:
             - FIRESTORE_EMULATOR_HOST=localhost:8080
             - NODE_OPTIONS=--openssl-legacy-provider

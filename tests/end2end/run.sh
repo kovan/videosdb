@@ -1,5 +1,3 @@
-
-
 #!/bin/bash
 pgrep docker || sudo service docker start
 
@@ -20,4 +18,6 @@ docker compose -f $compose_file run  --rm backend -c -e \
 && \
 docker compose -f $compose_file run frontend generate-and-start\
 
-docker compose -f $compose_file down
+if [[ -z "${PROJECT_ID}" ]]; then
+    docker compose -f $compose_file down
+fi
