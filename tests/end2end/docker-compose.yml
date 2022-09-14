@@ -10,27 +10,19 @@ services:
             - json-caching-proxy
             - firestore-emulator
         environment:
-            - DEBUG=1
-            - PYTHONDEVMODE=1
-            - PYTHONASYNCIODEBUG=1
-            - FIRESTORE_EMULATOR_HOST=localhost:8080
-            - YOUTUBE_API_KEY=AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs
-            - YOUTUBE_API_URL=http://localhost:43783/youtube/v3
-            - LOGLEVEL=DEBUG
             - GOOGLE_CLOUD_PROJECT=videosdb-firebase
+            - DEBUG=1
 
     frontend:
         network_mode: "host"
         image: frontend
         env_file: ../../common/env/testing.txt
         environment:
-            - FIRESTORE_EMULATOR_HOST=localhost:8080
             - NODE_OPTIONS=--openssl-legacy-provider
         build:
             context: ../../frontend
         depends_on:
             - firestore-emulator
-        entrypoint: yarn
 
     json-caching-proxy:
         network_mode: "host"
@@ -38,7 +30,7 @@ services:
         build:
             context: utils/json-caching-proxy
         ports:
-            - 6001:6001
+            - 43783:43783
         stop_signal: SIGKILL
 
     firestore-emulator:
@@ -49,6 +41,8 @@ services:
             - ENABLE_UI=true
         volumes:
             - emulator-data:/firebase/baseline-data
+        ports:
+            - 8080:8080
 
 volumes:
     emulator-data:

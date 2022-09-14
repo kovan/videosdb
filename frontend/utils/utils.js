@@ -144,6 +144,7 @@ function getDb(config) {
             console.info("Using LIVE database.")
         }
     } else {
+        console.debug("Reusing app")
         app = firebase.apps[0]
         db = app.firestore();
     }

@@ -1,11 +1,10 @@
-DEBUG=1
 LOGLEVEL=DEBUG
 YOUTUBE_API_URL=http://127.0.0.1:43783/youtube/v3
 PYTHONDEVMODE=1
-FIRESTORE_EMULATOR_HOST=localhost:8080
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
 YOUTUBE_API_KEY=AIzaSyB4ssPNsGaIpFv8GNiBl-MbRWzRbuYV-MM
 
-VIDEOSDB_CONFIG=testing
+VIDEOSDB_CONFIG=sadhguru
 VIDEOSDB_TITLE="Test title"
 VIDEOSDB_SUBTITLE="Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more."
 VIDEOSDB_HOSTNAME=https://www.sadhguru.digital

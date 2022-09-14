@@ -68,11 +68,10 @@
                     "generate"
                 ],
                 "type": "node",
-                "envFile": "${workspaceFolder}/frontend/.env",
+                "envFile": "${workspaceFolder}/common/env/testing.txt",
                 "env": {
                     "DEBUG": "1",
                     "NODE_ENV": "development",
-                    "FIRESTORE_EMULATOR_HOST": "localhost:6001",
                 },
                 "cwd": "${workspaceFolder}/frontend",
                 "console": "integratedTerminal",

@@ -18,8 +18,8 @@ docker compose -f $compose_file run  --rm backend python -O -m videosdb -c -e \
 && \
 docker compose -f $compose_file run  --rm backend pytest \
 && \
-docker compose -f $compose_file run frontend generate-and-start\
+docker compose -f $compose_file run frontend yarn generate-and-start\
 
-if [[ -z "${PROJECT_ID}" ]]; then
-    docker compose -f $compose_file down
-fi
+# if [[ -z "${PROJECT_ID}" ]]; then
+#     docker compose -f $compose_file down
+# fi

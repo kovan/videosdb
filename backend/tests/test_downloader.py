@@ -2,6 +2,10 @@ import os
 import pytest
 from videosdb.downloader import DB
 
+# clear DB:
+# requests.delete(
+#     "http://localhost:8080/emulator/v1/projects/%s/databases/(default)/documents" % os.environ["FIREBASE_PROJECT"])
+
 
 def setup_module(module):
     pass
@@ -77,4 +81,4 @@ async def test_playlists(db):
     v = d["videosdb"]
     assert v.get("lastUpdated")
     assert v.get("slug") == "sadhguru-exclusive"
-    assert v.get("videoCount") == 24
+    assert v.get("videoCount") == 25
