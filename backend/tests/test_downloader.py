@@ -1,6 +1,6 @@
 import os
 import pytest
-from videosdb import DB
+from videosdb.downloader import DB
 
 
 def setup_module(module):
@@ -11,7 +11,8 @@ def setup_module(module):
 def db():
     project = os.environ["FIREBASE_PROJECT"]
     config = os.environ["VIDEOSDB_CONFIG"]
-    yield DB(project, config)
+
+    yield DB.setup(project, config)
 
 
 @pytest.mark.asyncio
@@ -65,7 +66,7 @@ async def test_videos(db):
 
 @pytest.mark.asyncio
 async def test_playlists(db):
-    DOC_ID = "PL3uDtbb3OvDPIrLWUeBG5SZ3VRP2wbEPP"
+    DOC_ID = "PL3uDtbb3OvDN6Od1Shk_X5TxibGQGbTVk"
     doc = await db.collection("playlists").document(DOC_ID).get()
     assert doc.exists
     d = doc.to_dict()

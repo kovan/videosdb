@@ -48,6 +48,8 @@ class DB:
                                    credentials=service_account.Credentials.from_service_account_file(
                                        creds_json_path))
 
+        return db
+
     def __init__(self):
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
