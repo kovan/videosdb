@@ -159,10 +159,11 @@ export default {
         }
 
         if ('playlists' in video.videosdb && video.videosdb.playlists.length) {
-            video.videosdb.playlists = await dereferenceDb(
+            let dereferenced = await dereferenceDb(
                 video.videosdb.playlists,
-                $db.collection('playlists')
-            )
+                $db.collection('playlists'))
+            video.videosdb.playlists = dereferenced
+
         }
 
         if (
