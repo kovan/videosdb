@@ -1,5 +1,6 @@
 import { getSitemap } from "./modules/mymodule.js"
 import { getVuexData, getDb, getFirebaseSettings } from "./utils/utils"
+import { defineNuxtConfig } from '@nuxt/bridge'
 
 let myConfig = {
 
@@ -12,7 +13,7 @@ let myConfig = {
     showTranscripts: process.env.VIDEOSDB_SHOW_TRANSCRIPTS
 }
 
-export default {
+export default defineNuxtConfig({
     ssr: true,
     target: "static",
     telemetry: false,
@@ -177,4 +178,4 @@ export default {
     googleAnalytics: {
         id: "UA-171658328-1",
     },
-};
+})
