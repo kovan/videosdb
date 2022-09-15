@@ -2,9 +2,6 @@
 
 - poner descripciones de los botones en caso de tablet/escritorio
 
-- Las categorias en Video.vue no aparecen
-
-- La cache en caso de fallo se queda escrita
 
 
 

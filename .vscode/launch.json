@@ -87,7 +87,6 @@
                 "type": "node",
                 "envFile": "${workspaceFolder}/common/env/testing.txt",
                 "env": {
-                    "DEBUG": "1",
                     "NODE_ENV": "development",
                 },
                 "cwd": "${workspaceFolder}/frontend",
