@@ -106,12 +106,12 @@ class Downloader:
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
         self.db = DB()
         self.api = YoutubeAPI(self.db.db)
-        self.capacity_limiter = anyio.CapacityLimiter(10)
         self.streams = []
         self.video_ids = LockedDict()  # video_id -> set() of playlist_ids
 
     async def init(self):
         await self.db.init()
+        self.capacity_limiter = anyio.CapacityLimiter(10)
 
     async def check_for_new_videos(self):
         logger.info("Sync start")
@@ -364,7 +364,7 @@ class Downloader:
         try:
             with anyio.fail_after(60):
                 transcript = await anyio.to_thread.run_sync(
-                    get_video_transcript, video_id, self.capacity_limiter)
+                    get_video_transcript, video_id, limiter=self.capacity_limiter)
 
             return transcript, "downloaded"
         except youtube_transcript_api.TooManyRequests as e:

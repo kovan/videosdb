@@ -16,7 +16,7 @@ docker compose -f $compose_file up --detach --remove-orphans \
 && \
 until  nc -z localhost 8080; do sleep 1; done \
 && \
-docker compose -f $compose_file run  --rm backend -O -m videosdb -c  \
+docker compose -f $compose_file run  --rm backend -O -m videosdb -c -e \
 && \
 docker compose -f $compose_file run  --rm backend -m pytest \
 && \
