@@ -21,7 +21,7 @@ def parse_youtube_id(string: str):
 class YoutubeAPI:
 
     class QuotaExceededError(Exception):
-        def __init__(self, status, json):
+        def __init__(self, status, json={}):
             self.status = status
             self.json = json
 
@@ -150,7 +150,7 @@ class YoutubeAPI:
         @staticmethod
         def _key_func(url: str, params: dict):
             return url.lstrip("/") + "?" + urlencode(params)
-            #s = url + str(params)
+            # s = url + str(params)
             # return hashlib.sha256(s.encode('utf-8')).hexdigest()
 
         cache_col = self.db.collection("cache")
@@ -169,14 +169,20 @@ class YoutubeAPI:
             return
 
         if status_code >= 200 and status_code < 300:
-            transaction = self.db.transaction()
             page_n = 0
-            async for page in response_pages:
-                await _write_to_cache(
-                    transaction, cached_ref, page, page_n)
-                yield page
-                page_n += 1
-            await transaction.commit()
+            try:
+                async for page in response_pages:
+                    if page_n == 0:
+                        await cached_ref.set({"etag": page["etag"]})
+                    await cached_ref.collection("pages").document(
+                        str(page_n)).set(page)
+                    yield page
+                    page_n += 1
+            except Exception as e:
+                # do not cache half-responses
+                self.db.recursive_delete(cached_ref)
+                raise e
+
             return
 
         raise Exception("this should never happen")
@@ -229,89 +235,6 @@ class YoutubeAPI:
                 break
             else:
                 page_token = json_response["nextPageToken"]
-
-
-@ firestore.async_transactional
-async def _write_to_cache(transaction, cached_ref, json_response, page_n, should_raise=False):
-    if should_raise:
-        raise Exception()
-    if page_n == 0:
-        transaction.set(
-            cached_ref, {"etag": json_response["etag"]})
-
-    transaction.set(
-        cached_ref.collection("pages").document("page_" + str(page_n)),
-        json_response)
-
-
-"""
-class YoutubeDL:
-    class UnavailableError(Exception):
-        def __init__(self, s):
-            self.s = s
-
-        def __repr__(self):
-            return self.s
-
-    def __init__(self):
-        # --limit-rate 1M "
-        self.BASE_CMD = "youtube-dl -f 'best[height<=720]'  --youtube-skip-dash-manifest --ignore-errors "
-
-    def download_video(self, _id, asynchronous=False):
-        filename_format = "%(uploader)s - %(title)s [%(id)s].%(ext)s"
-        cmd = self.BASE_CMD + \
-            "--external-downloader=aria2c --external-downloader-args '--min-split-size=1M --max-connection-per-server=16 --max-concurrent-downloads=16 --split=16' " +\
-            "--output '%s' %s" % (filename_format,
-                                  "http://www.youtube.com/watch?v=" + _id)
-        logger.info(cmd)
-        try:
-            # import ipdb
-            # ipdb.set_trace()
-
-            execute(cmd, asynchronous=asynchronous, silent=True)
-        except executor.ExternalCommandFailed as e:
-            raise self.UnavailableError(repr(e))
-        files = os.listdir(".")
-        if files:
-            filename = max(files, key=os.path.getctime)
-            return filename
-        return None
-
-    def download_thumbnail(self, _id):
-        execute(self.BASE_CMD +
-                "--write-thumbnail --skip-download http://www.youtube.com/watch?v=" + _id)
-        files = os.listdir(".")
-        filename = max(files, key=os.path.getctime)
-        return filename
-
-    def download_info(self, youtube_id):
-        cmd = self.BASE_CMD + \
-            "--write-info-json --skip-download --output '%(id)s' http://www.youtube.com/watch?v=" + \
-            youtube_id
-        try:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                os.chdir(tmpdir)
-                result = execute(cmd, capture=True, capture_stderr=True)
-                with io.open(youtube_id + ".info.json") as f:
-                    video_json = json.load(f)
-        except executor.ExternalCommandFailed as e:
-            out = str(e.command.stderr)
-            if "copyright" in out or \
-               "Unable to extract video title" in out or \
-               "available in your country" in out or \
-               "video is unavailable" in out:
-                raise self.UnavailableError(repr(e))
-            raise
-        return video_json
-
-    def list_videos(self, url):
-        result = execute(self.BASE_CMD + "--flat-playlist --playlist-random -j " +
-                         url, check=False, capture=True, capture_stderr=True)
-        videos = []
-        for video_json in result.splitlines():
-            video = json.loads(video_json)
-            videos.append(video)
-        return videos """
 
 
 def get_video_transcript(youtube_id):

@@ -1,8 +1,9 @@
-import pytest
 import os
-from videosdb.youtube_api import YoutubeAPI
-from videosdb.downloader import DB
+from unittest.mock import patch
+import pytest
 from dotenv import load_dotenv
+from videosdb.downloader import DB
+from videosdb.youtube_api import YoutubeAPI
 
 
 def setup_module():
@@ -24,22 +25,38 @@ def api(db):
 
 
 @pytest.mark.asyncio
-async def test_cache_exception(db:  DB, api: YoutubeAPI):
-
-    async for i in await api.list_playlist_items("PL3uDtbb3OvDOwkTziO4n6UscjbmUV0ABR"):
-        pass
-
+async def test_cache_exception_not_cached(db, api):
+    # mock = AsyncMock(side_effect=YoutubeAPI.QuotaExceededError(403))
+    # mock = create_autospec(httpx.Response(403))
     DOC_ID = "playlistItems?part=snippet&playlistId=PL3uDtbb3OvDOwkTziO4n6UscjbmUV0ABR"
-    doc = await db.collection("cache").document(DOC_ID).get()
+    doc_ref = db.collection("cache").document(DOC_ID)
+    await doc_ref.delete()
+
+    with patch("videosdb.youtube_api.YoutubeAPI._request_base", side_effect=YoutubeAPI.QuotaExceededError(403)):
+        try:
+            async for i in await api.list_playlist_items("PL3uDtbb3OvDOwkTziO4n6UscjbmUV0ABR"):
+                pass
+        except YoutubeAPI.QuotaExceededError:
+            pass
+
+    doc = await doc_ref.get()
 
     assert not doc.exists
 
 
-@pytest.mark.asyncio
+@ pytest.mark.asyncio
 async def test_cache_write(db, api):
-    pass
+    DOC_ID = "search?part=snippet&type=video&relatedToVideoId=hGxRl0h4jgE"
+    doc_ref = db.collection("cache").document(DOC_ID)
+    await doc_ref.delete()
+    result = await api._request_one("/search", {
+        "part": "snippet",
+        "type": "video",
+        "relatedToVideoId": "hGxRl0h4jgE"
+    })
 
+    doc = await doc_ref.get()
+    assert doc.exists
 
-@pytest.mark.asyncio
-async def test_cache_read(db, api):
-    pass
+    async for page in doc_ref.collection("pages").stream():
+        assert page.get("etag")
