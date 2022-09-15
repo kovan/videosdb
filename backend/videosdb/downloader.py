@@ -122,9 +122,11 @@ class Downloader:
 
             # retrieve playlists:
             try:
+                logger.info("Retrieving playlists")
                 await self._retrieve_playlists()
 
                 # create videos
+                logger.info("Creating videos")
                 async with anyio.create_task_group() as video_creators:
                     async with self.video_ids.lock:
                         for video_id, playlist_ids in self.video_ids.d.items():
@@ -140,7 +142,7 @@ class Downloader:
 
             # retrieve pending transcripts
             if not self.exclude_transcripts:
-                logger.debug("Retrieving transcripts")
+                logger.info("Retrieving transcripts")
                 async for video in self.db.db.collection("videos").stream():
                     global_scope.start_soon(
                         self._handle_transcript, video, name="Download transcript")
@@ -152,7 +154,6 @@ class Downloader:
                 })
 
             await anyio.wait_all_tasks_blocked()
-            await self.api.aclose()
             await self.db.update_last_updated()
             global_scope.cancel_scope.cancel()
 
