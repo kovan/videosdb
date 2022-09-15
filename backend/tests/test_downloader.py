@@ -1,14 +1,16 @@
 import os
 import pytest
 from videosdb.downloader import DB
+from dotenv import load_dotenv
+
+
+def setup_module():
+    load_dotenv("common/env/testing.txt")
+
 
 # clear DB:
 # requests.delete(
 #     "http://localhost:8080/emulator/v1/projects/%s/databases/(default)/documents" % os.environ["FIREBASE_PROJECT"])
-
-
-def setup_module(module):
-    pass
 
 
 @pytest.fixture
@@ -17,14 +19,6 @@ def db():
     config = os.environ["VIDEOSDB_CONFIG"]
 
     yield DB.setup(project, config)
-
-
-@pytest.mark.asyncio
-async def test_cache(db):
-    async for cache_item in db.collection("playlists").stream():
-        assert cache_item.get("etag")
-        async for page in cache_item.reference.collection("pages").stream():
-            assert page
 
 
 @pytest.mark.asyncio
@@ -82,3 +76,12 @@ async def test_playlists(db):
     assert v.get("lastUpdated")
     assert v.get("slug") == "sadhguru-exclusive"
     assert v.get("videoCount") == 25
+
+
+@pytest.mark.asyncio
+async def test_cache(db):
+
+    async for cache_item in db.collection("playlists").stream():
+        assert cache_item.get("etag")
+        async for page in cache_item.reference.collection("pages").stream():
+            assert page

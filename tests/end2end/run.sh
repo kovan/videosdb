@@ -18,7 +18,7 @@ until  nc -z localhost 8080; do sleep 1; done \
 && \
 docker compose -f $compose_file run  --rm backend -O -m videosdb -c -e \
 && \
-docker compose -f $compose_file run  --rm backend -m pytest \
+docker compose -f $compose_file run  --rm -e LOGLEVEL=TRACE backend -m pytest \
 && \
 docker compose -f $compose_file run frontend yarn generate-and-start\
 

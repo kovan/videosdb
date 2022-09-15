@@ -1,19 +1,45 @@
 import pytest
 import os
 from videosdb.youtube_api import YoutubeAPI
-
-YOUTUBE_KEY_TESTING = "AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs"
-
-
-# @pytest.fixture
-# async def api():
-#     os.environ.setdefault(
-#         "YOUTUBE_API_URL", "http://127.0.0.1:2000/youtube/v3")
-#     yield await YoutubeAPI.create(YOUTUBE_KEY_TESTING)
+from videosdb.downloader import DB
+from dotenv import load_dotenv
 
 
-# @pytest.mark.asyncio
-# async def test_list_playlist_items(api):
-#     items = api.list_playlist_items("UUcYzLCs3zrQIBVHYA1sK2sw")
-#     async for item in items:
-#         assert item is not None
+def setup_module():
+    load_dotenv("common/env/testing.txt")
+
+
+@pytest.fixture
+def db():
+    project = os.environ["FIREBASE_PROJECT"]
+    config = os.environ["VIDEOSDB_CONFIG"]
+
+    yield DB.setup(project, config)
+
+
+@pytest.fixture
+def api(db):
+    api = YoutubeAPI(db)
+    yield api
+
+
+@pytest.mark.asyncio
+async def test_cache_exception(db:  DB, api: YoutubeAPI):
+
+    async for i in await api.list_playlist_items("PL3uDtbb3OvDOwkTziO4n6UscjbmUV0ABR"):
+        pass
+
+    DOC_ID = "playlistItems?part=snippet&playlistId=PL3uDtbb3OvDOwkTziO4n6UscjbmUV0ABR"
+    doc = await db.collection("cache").document(DOC_ID).get()
+
+    assert not doc.exists
+
+
+@pytest.mark.asyncio
+async def test_cache_write(db, api):
+    pass
+
+
+@pytest.mark.asyncio
+async def test_cache_read(db, api):
+    pass
