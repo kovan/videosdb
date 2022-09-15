@@ -196,7 +196,6 @@ async function dereferenceDb(id_list, collection) {
         }
 
     }
-    console.log("DOC DATA: ", items)
     return items
 }
 
