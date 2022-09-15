@@ -90,9 +90,15 @@ class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
     def __init__(self, exclude_transcripts=False):
-        logger.debug("ENVIRONMENT:")
+
+        if "FIRESTORE_EMULATOR_HOST" in os.environ:
+            logger.info("USING EMULATOR")
+        else:
+            logger.info("USING LIVE DATABASE")
         # for k, v in os.environ.items():
         #     logger.debug('- %s = "%s"' % (k, v))
+
+        logger.debug("ENVIRONMENT:")
         logger.debug(pprint.pformat(os.environ))
         self.exclude_transcripts = exclude_transcripts
         if exclude_transcripts:
@@ -100,6 +106,7 @@ class Downloader:
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
         self.db = DB()
         self.api = YoutubeAPI(self.db.db)
+        self.capacity_limiter = anyio.CapacityLimiter(10)
         self.streams = []
         self.video_ids = LockedDict()  # video_id -> set() of playlist_ids
 
@@ -117,25 +124,23 @@ class Downloader:
             try:
                 await self._retrieve_playlists()
 
+                # create videos
+                async with anyio.create_task_group() as video_creators:
+                    async with self.video_ids.lock:
+                        for video_id, playlist_ids in self.video_ids.d.items():
+                            video_creators.start_soon(
+                                self._create_video, video_id, list(
+                                    playlist_ids)
+                            )
             except YoutubeAPI.QuotaExceededError as e:
                 logger.error(e)
             except anyio.ExceptionGroup as group:
                 _filter_exceptions(
                     group, YoutubeAPI.QuotaExceededError, logger.error)
 
-            logger.debug("Final video iteration")
-
-            # create videos
-            async with anyio.create_task_group() as video_creators:
-                async with self.video_ids.lock:
-                    for video_id, playlist_ids in self.video_ids.d.items():
-                        video_creators.start_soon(
-                            self._create_video, video_id, list(playlist_ids)
-                        )
-
-            logger.debug("Retrieving transcripts")
             # retrieve pending transcripts
             if not self.exclude_transcripts:
+                logger.debug("Retrieving transcripts")
                 async for video in self.db.db.collection("videos").stream():
                     global_scope.start_soon(
                         self._handle_transcript, video, name="Download transcript")
@@ -146,8 +151,8 @@ class Downloader:
                     "videoIds": list(self.video_ids.d.keys())
                 })
 
-            await self.api.aclose()
             await anyio.wait_all_tasks_blocked()
+            await self.api.aclose()
             await self.db.update_last_updated()
             global_scope.cancel_scope.cancel()
 
@@ -355,12 +360,11 @@ class Downloader:
         await self.db.db.collection("videos").document(
             v["id"]).set(new_data, merge=True)
 
-    @staticmethod
-    async def _download_transcript(video_id):
+    async def _download_transcript(self, video_id):
         try:
             with anyio.fail_after(60):
                 transcript = await anyio.to_thread.run_sync(
-                    get_video_transcript, video_id, limiter=anyio.CapacityLimiter(5))
+                    get_video_transcript, video_id, self.capacity_limiter)
 
             return transcript, "downloaded"
         except youtube_transcript_api.TooManyRequests as e:

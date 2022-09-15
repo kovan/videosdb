@@ -126,6 +126,7 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     async def _request_one(self, url, params, use_cache=True):
 
         result = self._request_main(url, params, use_cache)
@@ -200,8 +201,9 @@ class YoutubeAPI:
 
             response = await self.http.get(
                 self.root_url + final_url, timeout=30.0, headers=headers if headers else {})
-            logger.debug("Received response, code: " +
-                         str(response.status_code))
+            logger.debug("Received response for URL: %s code: %s" %
+                         (final_url, response.status_code))
+
             if response.status_code == 403:
                 raise self.QuotaExceededError(
                     response.status_code,

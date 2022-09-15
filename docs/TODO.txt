@@ -1,5 +1,5 @@
 
-- poner descripciones de los botones table/escritorio ()
+- poner descripciones de los botones en caso de tablet/escritorio
 
 - Las categorias en Video.vue no aparecen
 

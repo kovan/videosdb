@@ -12,5 +12,5 @@ COPY  . .
 
 
 
-ENTRYPOINT ["poetry", "run"]
+ENTRYPOINT ["poetry", "run", "python"]
 
