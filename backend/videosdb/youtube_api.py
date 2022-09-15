@@ -180,7 +180,8 @@ class YoutubeAPI:
                     page_n += 1
             except Exception as e:
                 # do not cache half-responses
-                self.db.recursive_delete(cached_ref)
+                logger.info("Deleting half-downloaded cache pages")
+                await self.db.recursive_delete(cached_ref)
                 raise e
 
             return
