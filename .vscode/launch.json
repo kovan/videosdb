@@ -102,7 +102,6 @@
                     "<node_internals>/**"
                 ],
                 "env": {
-                    "DEBUG": "1",
                     "NODE_ENV": "development",
                 },
                 "args": [
