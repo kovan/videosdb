@@ -1,7 +1,7 @@
 <template lang="pug">
 div
     b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle.justify-content-end
-        NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ this.$config.title }}&nbsp
+        NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ config.public.title }}&nbsp
 
         b-button.mx-1(
             squared,
@@ -29,7 +29,7 @@ div
             span.navbar-toggler-icon
 
     .p-1.px-2.mt-2.text-center
-        strong {{ this.$config.subtitle }}
+        strong {{ config.public.subtitle }}
         br
         small.align-middle  {{ this.$store.state.meta_data.videoIds.length }} videos in the database. Last updated: {{ format(last_updated) }}
     b-container
@@ -68,11 +68,12 @@ div
     footer.text-muted.text-center
         .my-3
             p For more resources visit:
-                a(:href="$config.website")
-                    | {{ $config.website }}
+                a(:href="config.public.website")
+                    | {{ config.public.website }}
 </template>
 
 <script>
+const config = useRuntimeConfig()
 function getRandomInt(max) {
     return Math.floor(Math.random() * max)
 }
@@ -97,8 +98,8 @@ export default {
             sidebar_visible: false,
             categories: [],
 
-            title: this.$config.title,
-            subtitle: this.$config.subtitle,
+            title: config.public.title,
+            subtitle: config.public.subtitle,
             last_updated: null,
             ordering_options: [
                 {

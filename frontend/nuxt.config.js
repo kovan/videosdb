@@ -12,14 +12,17 @@ let myConfig = {
     showTranscripts: process.env.VIDEOSDB_SHOW_TRANSCRIPTS
 }
 
-export default {
+export default defineNuxtConfig({
     ssr: true,
     target: "static",
     telemetry: false,
 
 
-    publicRuntimeConfig: { ...myConfig },
-
+    runtimeConfig: {
+        public: {
+            ...myConfig
+        }
+    },
 
     generate: {
         concurrency: 200,
@@ -37,23 +40,7 @@ export default {
         //asyncScripts: true,
     },
 
-    plugins: [{
-        src: "~/plugins/myplugin.js"
-    },
-    {
-        src: "~/plugins/vue-infinite-scroll.js",
-        mode: "client"
-    }, {
-        src: "~/plugins/vue-plugin-load-script.js",
-        mode: "client",
-    }, {
-        src: "~/plugins/vue-youtube.js",
-        mode: "client",
-    }, {
-        src: "~/plugins/vue-keep-scroll.js",
-        mode: "client",
-    }
-    ],
+    plugins: [],
 
     router: {
         prefetchLinks: false,
@@ -61,15 +48,15 @@ export default {
     },
     components: true,
 
-    buildModules: [
+    buildModules: [],
+
+    modules: [
         "@nuxtjs/google-analytics",
         "@nuxtjs/router-extras",
         "bootstrap-vue/nuxt",
         //'@nuxtjs/firebase',
         "@nuxtjs/sitemap",
         "~/modules/mymodule.js"],
-
-    modules: [],
 
     bootstrapVue: {
         bootstrapCSS: true,
@@ -177,4 +164,4 @@ export default {
     googleAnalytics: {
         id: "UA-171658328-1",
     },
-};
+})

@@ -9,10 +9,11 @@ b-container.p-0.m-0
 
 <script>
 definePageMeta({ layout: 'default' })
+const config = useRuntimeConfig()
 export default {
     head() {
         return {
-            title: this.$route.params.slug + ' - ' + this.$config.title,
+            title: this.$route.params.slug + ' - ' + config.public.title,
             meta: [
                 {
                     hid: 'description',
@@ -26,13 +27,17 @@ export default {
         return {
             tag: '',
         }
-    },
-    async asyncData({ payload, store }) {
-        if (payload) {
-            store.commit('setInitial', payload.vuex_data)
-        }
-    },
+    }
 }
+</script>
+<script setup>
+//async asyncData({ $db, params, payload, error, store }) {
+const { data, pending, error, refresh } = await useAsyncData(null,
+    async () => {
+        // if (payload) {
+        //     store.commit('setInitial', payload.vuex_data)
+        // }
+    })
 </script>
 
 <router>

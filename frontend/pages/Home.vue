@@ -6,6 +6,7 @@ b-container.p-0.m-0
 
 <script>
 definePageMeta({ layout: 'default' })
+const config = useRuntimeConfig()
 import Explorer from '~/components/Explorer.vue'
 export default {
     components: {
@@ -13,23 +14,29 @@ export default {
     },
     head() {
         return {
-            title: this.$config.title,
+            title: config.public.title,
             meta: [
                 {
                     hid: 'description',
                     name: 'description',
                     content:
-                        this.$config.subtitle,
+                        config.public.subtitle,
                 },
             ],
         }
-    },
-    async asyncData({ payload, store }) {
-        if (payload) {
-            store.commit('setInitial', payload.vuex_data)
-        }
-    },
+    }
 }
+</script>
+
+
+<script setup>
+//async asyncData({ $db, params, payload, error, store }) {
+const { data, pending, error, refresh } = await useAsyncData(null,
+    async () => {
+        // if (payload) {
+        //     store.commit('setInitial', payload.vuex_data)
+        // }
+    })
 </script>
 
 

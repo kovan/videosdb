@@ -9,11 +9,12 @@ b-container.p-0.m-0
 
 <script>
 definePageMeta({ layout: 'default' })
+const config = useRuntimeConfig()
 export default {
 
     head() {
         return {
-            title: this.category.snippet.title + ' - ' + this.$config.title,
+            title: this.category.snippet.title + ' - ' + config.public.title,
             meta: [
                 {
                     hid: 'description',
@@ -27,13 +28,18 @@ export default {
         return {
             category: {},
         }
-    },
+    }
+}
+</script>
 
-    async asyncData({ $db, params, payload, store, error }) {
-        if (payload) {
-            store.commit('setInitial', payload.vuex_data)
-            return { category: payload.obj }
-        }
+<script setup>
+//async asyncData({ $db, params, payload, error, store }) {
+const { data, pending, error, refresh } = await useAsyncData(null,
+    async () => {
+        // if (payload) {
+        //     store.commit('setInitial', payload.vuex_data)
+        //     return { category: payload.obj }
+        // }
 
         const q_category = await $db
             .collection('playlists')
@@ -41,10 +47,11 @@ export default {
             .get()
 
         let category = q_category.docs[0].data()
-        return { category }
-    },
-}
+        return category
+
+    })
 </script>
+
 
 <router>
   {

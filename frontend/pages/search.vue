@@ -7,6 +7,7 @@ div
 
 <script>
 definePageMeta({ layout: 'default' })
+const config = useRuntimeConfig()
 export default {
     data() {
         return {
@@ -14,18 +15,18 @@ export default {
         }
     },
     mounted() {
-        this.$loadScript(this.$config.cseUrl).then(() => {
+        this.$loadScript(config.public.cseUrl).then(() => {
             this.loaded = true
         })
     },
     destroyed() {
-        this.$unloadScript(this.$config.cseUrl).then(() => {
+        this.$unloadScript(config.public.cseUrl).then(() => {
             this.loaded = false
         })
     },
     head() {
         return {
-            title: 'Search' + ' - ' + this.$config.title,
+            title: 'Search' + ' - ' + config.public.title,
             meta: [
                 {
                     hid: 'description',
@@ -34,14 +35,20 @@ export default {
                 },
             ]
         }
-    },
-    async asyncData({ payload, store }) {
-        if (payload) {
-            store.commit('setInitial', payload.vuex_data)
-        }
-    },
+    }
 }
 </script>
+
+<script setup>
+//async asyncData({ $db, params, payload, error, store }) {
+const { data, pending, error, refresh } = await useAsyncData(null,
+    async () => {
+        // if (payload) {
+        //     store.commit('setInitial', payload.vuex_data)
+        // }
+    })
+</script>
+
 
 <style>
 

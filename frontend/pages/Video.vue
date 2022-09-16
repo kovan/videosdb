@@ -99,7 +99,7 @@ b-container.m-0.p-0.mx-auto
                     b-button.mt-2(size='sm', pill)
                         | {{ tag }}
 
-        .my-4(v-if='this.video.videosdb.transcript && this.$config.showTranscripts')
+        .my-4(v-if='this.video.videosdb.transcript && config.public.showTranscripts')
             p
                 strong Transcription:
             small(style='white-space: pre-line') {{ this.video.videosdb.transcript }}
@@ -107,6 +107,7 @@ b-container.m-0.p-0.mx-auto
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
 import { dereferenceDb, videoToStructuredData } from '~/utils/utils'
+const config = useRuntimeConfig()
 definePageMeta({ layout: 'default' })
 export default {
     components: {
@@ -114,7 +115,7 @@ export default {
     },
     head() {
         return {
-            title: this.video.snippet.title + ' - ' + this.$config.subtitle,
+            title: this.video.snippet.title + ' - ' + config.public.subtitle,
             meta: [
                 {
                     hid: 'description',
@@ -125,7 +126,7 @@ export default {
             link: [
                 {
                     rel: 'canonical',
-                    href: `${this.$config.hostname}/video/${this.video.videosdb.slug}`,
+                    href: `${config.public.hostname}/video/${this.video.videosdb.slug}`,
                 },
             ],
         }
@@ -143,20 +144,31 @@ export default {
             return videoToStructuredData(this.video)
         },
     },
-    methods: {},
-    async asyncData({ $db, params, payload, error, store }) {
-        let video = null
-        if (payload) {
-            video = payload.obj
-            store.commit('setInitial', payload.vuex_data)
-        } else {
-            const q = await $db
-                .collection('videos')
-                .where('videosdb.slug', '==', params.slug)
-                .get()
+    methods: {}
 
-            video = q.docs[0].data()
-        }
+}
+</script>
+
+
+<script setup>
+//async asyncData({ $db, params, payload, error, store }) {
+const { video, pending, error, refresh } = await useAsyncData(
+    null,
+    async () => {
+        let video = null
+        const q = await $db
+            .collection('videos')
+            .where('videosdb.slug', '==', params.slug)
+            .get()
+
+        video = q.docs[0].data()
+
+        // if (payload) {
+        //     video = payload.obj
+        //     store.commit('setInitial', payload.vuex_data)
+        // } else {
+
+        // }
 
         if ('playlists' in video.videosdb && video.videosdb.playlists.length) {
             let dereferenced = await dereferenceDb(
@@ -175,12 +187,16 @@ export default {
                 $db.collection('videos')
             )
         }
+        return video
+    }
+)
 
-        return { video }
-    },
-}
+
+
+return { video }
+
+
 </script>
-
 
 <router>
     {
