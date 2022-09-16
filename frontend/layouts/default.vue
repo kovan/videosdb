@@ -92,6 +92,7 @@ export default {
         LazyHydrate,
     },
     data() {
+        debugger
         return {
             search_input: '',
             sidebar_visible: false,

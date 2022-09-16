@@ -1,5 +1,7 @@
-// import firebase from 'firebase/app';
-// import { firestore } from 'firebase/firestore';
+import firebase from 'firebase/compat/app';
+
+import { firestore } from 'firebase/compat/firestore';
+
 import { formatISO, parseISO } from 'date-fns'
 // v9 compat packages are API compatible with v8 code
 

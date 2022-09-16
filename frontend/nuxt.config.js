@@ -38,24 +38,6 @@ export default defineNuxtConfig({
         //asyncScripts: true,
     },
 
-    plugins: [{
-        src: "~/plugins/myplugin.js"
-    },
-    {
-        src: "~/plugins/vue-infinite-scroll.js",
-        mode: "client"
-    }, {
-        src: "~/plugins/vue-plugin-load-script.js",
-        mode: "client",
-    }, {
-        src: "~/plugins/vue-youtube.js",
-        mode: "client",
-    }, {
-        src: "~/plugins/vue-keep-scroll.js",
-        mode: "client",
-    }
-    ],
-
     router: {
         prefetchLinks: false,
         prefetchPayloads: false,

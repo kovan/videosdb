@@ -145,6 +145,7 @@ export default {
     },
     methods: {},
     async asyncData({ $db, params, payload, error, store }) {
+        debugger
         let video = null
         if (payload) {
             video = payload.obj
