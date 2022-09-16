@@ -3,10 +3,8 @@ import firebase from 'firebase/compat/app';
 import { firestore } from 'firebase/compat/firestore';
 
 import { formatISO, parseISO } from 'date-fns'
-// v9 compat packages are API compatible with v8 code
 
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/firestore';
+
 
 const firebase_sadhguru = {
     apiKey: "AIzaSyAhKg1pGeJnL_ZyD1wv7ZPXwfZ6_7OBRa8",
