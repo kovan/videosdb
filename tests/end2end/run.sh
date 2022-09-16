@@ -1,5 +1,5 @@
 #!/bin/bash
-pgrep docker || sudo service docker start
+pgrep docker || (sleep 1; sudo service docker start)
 
 if [[ -z "${PROJECT_ID}" ]]; then
   compose_file="docker-compose.yml"
@@ -10,7 +10,7 @@ fi
 
 rm -fr ./dist
 
-docker compose -f $compose_file build -q \
+docker compose -f $compose_file build \
 && \
 docker compose -f $compose_file up --detach --remove-orphans \
 && \
