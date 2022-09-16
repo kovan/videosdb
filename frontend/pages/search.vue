@@ -6,7 +6,7 @@ div
 </template>
 
 <script>
-
+definePageMeta({ layout: 'default' })
 export default {
     data() {
         return {
@@ -44,6 +44,7 @@ export default {
 </script>
 
 <style>
+
 </style>
 
 <router>

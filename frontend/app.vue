@@ -142,7 +142,7 @@ export default {
 
             let video = video_doc.data()
 
-            this.$router.push('/video/' + video.videosdb.slug)
+            await navigateTo(('/video/' + video.videosdb.slug))
         },
         toggleSidebar() {
             this.sidebar_visible = !this.sidebar_visible
@@ -150,8 +150,8 @@ export default {
         hideSidebar(event) {
             this.sidebar_visible = false
         },
-        search() {
-            this.$router.push({
+        async search() {
+            await navigateTo({
                 path: '/search',
                 query: {
                     q: this.search_input,

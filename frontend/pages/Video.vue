@@ -107,7 +107,7 @@ b-container.m-0.p-0.mx-auto
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
 import { dereferenceDb, videoToStructuredData } from '~/utils/utils'
-
+definePageMeta({ layout: 'default' })
 export default {
     components: {
         LazyHydrate,
