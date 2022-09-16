@@ -96,24 +96,24 @@ class YoutubeAPI:
         }
         return self._request_main(url, params, playlist_id)
 
-    # async def get_related_videos(self, youtube_id):
-    #     url = "/search"
-    #     params = {
-    #         "part": "snippet",
-    #         "type": "video",
-    #         "relatedToVideoId": youtube_id
-    #     }
-    #     logger.info("getting related videos")
+    async def get_related_videos(self, youtube_id):
+        url = "/search"
+        params = {
+            "part": "snippet",
+            "type": "video",
+            "relatedToVideoId": youtube_id
+        }
+        logger.info("getting related videos")
 
-    #     results = await self._request_many(url, params, youtube_id)
+        results = self._request_main(url, params, youtube_id)
 
-    #     related_videos = dict()
-    #     async for video in results:
-    #         if video["id"]["videoId"] in related_videos:
-    #             continue
+        related_videos = dict()
+        async for video in results:
+            if video["id"]["videoId"] in related_videos:
+                continue
 
-    #         related_videos[video["id"]["videoId"]] = video
-    #     return related_videos.values()
+            related_videos[video["id"]["videoId"]] = video
+        return related_videos.values()
 
     async def get_channel_info(self, channel_id):
         url = "/channels"
