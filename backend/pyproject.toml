@@ -10,7 +10,7 @@ isodate = "^0.6.0"
 google-cloud-dns = "^0.32.1"
 aiostream = "^0.4"
 google-cloud-firestore = "^2.6"
-youtube-transcript-api = {git = "https://github.com/kovan/youtube-transcript-api", rev = "base_exception"}
+youtube-transcript-api = {git = "https://github.com/kovan/youtube-transcript-api", rev = "eaf6c194aba9c02cc05bc30d37be97ecaeaeadae"}
 python-slugify = "^5.0.2"
 anyio = "^3.6"
 async_generator = "^1.10"
