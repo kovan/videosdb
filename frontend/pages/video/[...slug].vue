@@ -42,11 +42,6 @@ b-container.m-0.p-0.mx-auto
                                         :alt='item.snippet.title',
                                         fluid
                                     )
-                                    b-popover(
-                                        :target='item.id',
-                                        triggers='hover focus',
-                                        :content='item.snippet.description'
-                                    )
                                 .card-body
                                     p.card-text
                                         NuxtLink(:to='"/category/" + item.videosdb.slug')
@@ -74,11 +69,11 @@ b-container.m-0.p-0.mx-auto
                                         :alt='related.snippet.title',
                                         fluid
                                     )
-                                    b-popover(
-                                        :target='related.id',
-                                        triggers='hover focus',
-                                        :content='related.snippet.description'
-                                    )
+                                    //- b-popover(
+                                    //-     :target='related.id',
+                                    //-     triggers='hover focus',
+                                    //-     :content='related.snippet.description'
+                                    //- )
                                 .card-body
                                     p.card-text
                                         NuxtLink(:to='"/video/" + related.videosdb.slug')

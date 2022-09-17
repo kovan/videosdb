@@ -9,12 +9,12 @@ LazyHydrate(when-visible)
             :id='this.video.id',
             :alt='this.video.snippet.title',
             fluid
-        )
-        b-popover(
-            :target='this.video.id',
-            triggers='hover focus',
-            :content='this.video.snippet.description'
-        )
+        //- )
+        //- b-popover(
+        //-     :target='this.video.id',
+        //-     triggers='hover focus',
+        //-     :content='this.video.snippet.description'
+        //- )
         .card-body
         p.card-text
             NuxtLink(:to='"/video/" + this.video.videosdb.slug')

@@ -32,11 +32,11 @@
                                     :alt='video.snippet.title',
                                     fluid
                                 )
-                                b-popover(
-                                    :target='video.id',
-                                    triggers='hover focus',
-                                    :content='video.snippet.description'
-                                )
+                                //- b-popover(
+                                //-     :target='video.id',
+                                //-     triggers='hover focus',
+                                //-     :content='video.snippet.description'
+                                //- )
                             .card-body
                                 p.card-text
                                     NuxtLink(:to='"/video/" + video.videosdb.slug')

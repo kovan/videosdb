@@ -81,17 +81,11 @@ import { parseISO } from 'date-fns'
 import { getVuexData } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
 import { orderBy } from 'lodash'
-import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue-3'
+
 
 export default {
     fetchKey: 'site-sidebar',
     scrollToTop: true,
-    components: {
-        BIcon,
-        BIconSearch,
-        BIconShuffle,
-        LazyHydrate,
-    },
     data() {
         return {
             search_input: '',
