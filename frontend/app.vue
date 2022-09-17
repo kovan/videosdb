@@ -73,7 +73,7 @@ div
 </template>
 
 <script>
-const config = useRuntimeConfig()
+
 function getRandomInt(max) {
     return Math.floor(Math.random() * max)
 }
@@ -81,6 +81,7 @@ import { parseISO } from 'date-fns'
 import { getVuexData } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
 import { orderBy } from 'lodash'
+import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue-3'
 
 export default {
     fetchKey: 'site-sidebar',
@@ -172,6 +173,10 @@ export default {
         this.last_updated = this.$store.state.meta_data.lastUpdated
     },
 }
+</script>
+
+<script setup>
+const config = useRuntimeConfig()
 </script>
 
 <style>

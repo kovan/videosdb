@@ -19,7 +19,7 @@
         "async-lock": "^1.3.0",
         "async-mutex": "^0.3.2",
         "axios": "^0.27.2",
-        "bootstrap": "^5.2.1",
+        "bootstrap": "git://github.com/kovan/bootstrap.git",
         "bootstrap-vue-3": "^0.3.3",
         "cacheable-lookup": "^6.0.1",
         "date-fns": "^2.26.0",

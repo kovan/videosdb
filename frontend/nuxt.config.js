@@ -48,7 +48,6 @@ export default defineNuxtConfig({
         prefetchLinks: false,
         prefetchPayloads: false,
     },
-    components: true,
 
     buildModules: [],
 
