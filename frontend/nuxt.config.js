@@ -1,5 +1,6 @@
 import { getSitemap } from "./modules/mymodule.js"
 import { getVuexData, getDb, getFirebaseSettings } from "./utils/utils"
+//import { defineNuxtConfig } from 'nuxt3'
 
 let myConfig = {
 
@@ -35,6 +36,7 @@ export default defineNuxtConfig({
     },
 
     //css: ["~/assets/scss/custom.scss"],
+    css: ["bootstrap/dist/css/bootstrap.css"],
     render: {
         resourceHints: false,
         //asyncScripts: true,
@@ -51,9 +53,9 @@ export default defineNuxtConfig({
     buildModules: [],
 
     modules: [
-        "@nuxtjs/google-analytics",
+        'bootstrap-vue-3/nuxt',
+        //"@nuxtjs/google-analytics",
         "@nuxtjs/router-extras",
-        "bootstrap-vue/nuxt",
         //'@nuxtjs/firebase',
         "@nuxtjs/sitemap",
         "~/modules/mymodule.js"],

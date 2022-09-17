@@ -1,14 +1,19 @@
 import axios from "axios"
 
 
+var myaxios = null
 
-export default function ({ app, config.public }, inject) {
-    let myaxios = axios.create({
-        baseURL: config.public.baseURL,
+export default defineNuxtPlugin((NuxtApp) => {
+    const config = useRuntimeConfig()
+    if (!myaxios) {
+        myaxios = axios.create({
+            baseURL: config.app.baseURL,
 
-    })
-    inject("axios", myaxios)
-
-
-}
-
+        })
+    }
+    return {
+        provide: {
+            axios: myaxios.default
+        }
+    }
+})

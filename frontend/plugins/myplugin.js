@@ -1,11 +1,11 @@
 import { getDb, formatDate, dateToISO, getFirebaseSettings } from '~/utils/utils'
-import { defineNuxtPlugin } from "@nuxt/bridge";
+
 
 var db = null
 
 export default defineNuxtPlugin(async (NuxtApp) => {
     //console.debug("executing plugin, db=", db, "$db=", context.$db)
-    debugger
+
     if (!db)
         db = getDb(await getFirebaseSettings(NuxtApp.payload.config.public))
 
