@@ -8,8 +8,7 @@ b-container.p-0.m-0
 </template>
 
 <script>
-definePageMeta({ layout: 'default' })
-const config = useRuntimeConfig()
+
 export default {
 
     head() {
@@ -33,6 +32,8 @@ export default {
 </script>
 
 <script setup>
+definePageMeta({ layout: 'default' })
+const config = useRuntimeConfig()
 //async asyncData({ $db, params, payload, error, store }) {
 const { data, pending, error, refresh } = await useAsyncData(null,
     async () => {

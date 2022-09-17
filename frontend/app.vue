@@ -80,7 +80,7 @@ function getRandomInt(max) {
 import { parseISO } from 'date-fns'
 import { getVuexData } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
-import { orderBy } from 'lodash'
+import { orderBy } from 'lodash-es'
 
 
 export default {

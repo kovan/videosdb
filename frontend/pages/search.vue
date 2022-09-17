@@ -6,8 +6,6 @@ div
 </template>
 
 <script>
-definePageMeta({ layout: 'default' })
-const config = useRuntimeConfig()
 export default {
     data() {
         return {
@@ -40,6 +38,8 @@ export default {
 </script>
 
 <script setup>
+definePageMeta({ layout: 'default' })
+const config = useRuntimeConfig()
 //async asyncData({ $db, params, payload, error, store }) {
 const { data, pending, error, refresh } = await useAsyncData(null,
     async () => {

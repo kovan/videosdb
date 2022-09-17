@@ -102,8 +102,6 @@ b-container.m-0.p-0.mx-auto
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
 import { dereferenceDb, videoToStructuredData } from '~/utils/utils'
-const config = useRuntimeConfig()
-definePageMeta({ layout: 'default' })
 export default {
     components: {
         LazyHydrate,
@@ -146,6 +144,8 @@ export default {
 
 
 <script setup>
+const config = useRuntimeConfig()
+definePageMeta({ layout: 'default' })
 //async asyncData({ $db, params, payload, error, store }) {
 const { video, pending, error, refresh } = await useAsyncData(
     null,
