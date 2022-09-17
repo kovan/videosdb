@@ -200,9 +200,9 @@ class Downloader:
 
             else:
                 playlist_ids = stream.merge(
-                    asyncgenerator(all_uploads_playlist_id),
                     self.api.list_channelsection_playlist_ids(channel_id),
-                    self.api.list_channel_playlist_ids(channel_id)
+                    self.api.list_channel_playlist_ids(channel_id),
+                    asyncgenerator(all_uploads_playlist_id),
                 )
 
             async with playlist_ids.stream() as streamer:
@@ -250,13 +250,13 @@ class Downloader:
         video_count = 0
         last_updated = None
 
+        video_ids = []
         for item in items:
-            new_video = False
             video_id = item["snippet"]["resourceId"]["videoId"]
             async with self.video_ids.lock:
                 if video_id not in self.video_ids.d:
                     self.video_ids.d[video_id] = set()
-                    new_video = True
+                    video_ids.append(video_id)
                 if playlist:  # exclude dummy playlists
                     self.video_ids.d[video_id].add(playlist_id)
 
@@ -274,6 +274,7 @@ class Downloader:
             playlist["snippet"]["title"])
         playlist["videosdb"]["videoCount"] = video_count
         playlist["videosdb"]["lastUpdated"] = last_updated
+        playlist["videosdb"]["videoIds"] = video_ids
 
         await self.db.db.collection("playlists").document(playlist["id"]).set(playlist, merge=True)
         logger.info("Created playlist: " + playlist["snippet"]["title"])
