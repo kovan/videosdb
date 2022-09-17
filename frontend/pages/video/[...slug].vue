@@ -1,6 +1,6 @@
 <template lang="pug">
 b-container.m-0.p-0.mx-auto
-    script(type='application/ld+json', v-html='this.video_json')
+    component(:is="'script'" type='application/ld+json', v-html='this.video_json')
     b-card.m-0.p-0
         .my-4
             h1 {{ this.video.snippet.title }}
