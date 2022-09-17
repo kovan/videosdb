@@ -54,8 +54,3 @@ const { data, pending, error, refresh } = await useAsyncData(null,
 
 </style>
 
-<router>
-  {
-    path: '/search'
-  }
-</router>

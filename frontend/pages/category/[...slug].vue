@@ -52,9 +52,3 @@ const { data, pending, error, refresh } = await useAsyncData(null,
     })
 </script>
 
-
-<router>
-  {
-    path: '/category/:slug'
-  }
-</router>

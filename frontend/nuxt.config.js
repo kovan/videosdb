@@ -54,7 +54,7 @@ export default defineNuxtConfig({
     modules: [
         'bootstrap-vue-3/nuxt',
         //"@nuxtjs/google-analytics",
-        "@nuxtjs/router-extras",
+        // "@nuxtjs/router-extras",
         //'@nuxtjs/firebase',
         "@nuxtjs/sitemap",
         "~/modules/mymodule.js"],

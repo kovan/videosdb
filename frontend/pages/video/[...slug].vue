@@ -193,14 +193,6 @@ const { video, pending, error, refresh } = await useAsyncData(
 
 
 
-return { video }
 
 
 </script>
-
-<router>
-    {
-        path: '/video/:slug',
-
-  }
-</router>

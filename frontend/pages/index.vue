@@ -1,35 +1,34 @@
 <template lang="pug">
 b-container.p-0.m-0
-    h1.text-center Tag: {{ this.$route.params.slug }}
-    Explorer(
-        :base_url='`/tag/${this.$route.params.slug}`',
-        :tag='this.$route.params.slug'
-    )
+    keep-alive
+        Explorer
 </template>
 
 <script>
 definePageMeta({ layout: 'default' })
 const config = useRuntimeConfig()
+import Explorer from '~/components/Explorer.vue'
 export default {
+    components: {
+        Explorer,
+    },
     head() {
         return {
-            title: this.$route.params.slug + ' - ' + config.public.title,
+            title: config.public.title,
             meta: [
                 {
                     hid: 'description',
                     name: 'description',
-                    content: 'Tag: ' + this.$route.params.slug,
+                    content:
+                        config.public.subtitle,
                 },
             ],
-        }
-    },
-    data: () => {
-        return {
-            tag: '',
         }
     }
 }
 </script>
+
+
 <script setup>
 //async asyncData({ $db, params, payload, error, store }) {
 const { data, pending, error, refresh } = await useAsyncData(null,
@@ -40,8 +39,3 @@ const { data, pending, error, refresh } = await useAsyncData(null,
     })
 </script>
 
-<router>
-  {
-    path: '/tag/:slug'
-  }
-</router>
