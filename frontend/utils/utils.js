@@ -1,6 +1,6 @@
-import firebase from 'firebase/app';
+import firebase from 'firebase/compat/app';
 //import 'firebase/firestore/memory';
-import { firestore } from 'firebase/firestore';
+import { firestore } from 'firebase/compat/firestore';
 import { formatISO, parseISO } from 'date-fns'
 import logger from '@nuxtjs/sitemap/lib/logger';
 

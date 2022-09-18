@@ -10,7 +10,7 @@ fi
 
 rm -fr ./dist
 
-docker compose -f $compose_file build -q \
+docker compose -f $compose_file build \
 && \
 docker compose -f $compose_file up --detach --remove-orphans \
 && \

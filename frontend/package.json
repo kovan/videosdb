@@ -3,16 +3,15 @@
     "version": "1.0.1",
     "private": true,
     "scripts": {
-        "dev": "nuxt",
-        "start": "nuxt start",
-        "build": "nuxt build",
-        "generate": "node --experimental-specifier-resolution=node node_modules/.bin/nuxt generate --fail-on-error",
+        "nuxi": "nuxi",
+        "dev": "nuxi dev",
+        "start": "nuxi preview",
+        "build": "nuxi build",
+        "generate": "nuxi generate --fail-on-error",
         "generate-and-start": "run-s generate start",
-        "test": "jest",
-        "dev-debug": "node node_modules/.bin/nuxt"
+        "test": "jest"
     },
     "dependencies": {
-        "@nuxtjs/google-analytics": "^2.4.0",
         "@nuxtjs/proxy": "^2.1.0",
         "@nuxtjs/router-extras": "^1.1.1",
         "@nuxtjs/sitemap": "^2.4.0",
@@ -22,12 +21,12 @@
         "bootstrap-vue": "^2",
         "cacheable-lookup": "^6.0.1",
         "date-fns": "^2.26.0",
-        "firebase": "8",
-        "lodash": "^4.17.21",
+        "firebase": "^9.10",
+        "lodash-es": "^4.17.21",
         "node-cache": "^5.1.2",
-        "nuxt": "^2.15",
+        "nuxt-edge": "latest",
+        "postcss-preset-env": "^7.8.2",
         "pug": "^3.0.0",
-        "pug-plain-loader": "^1.1.0",
         "vue-infinite-scroll": "^2.0.2",
         "vue-lazy-hydration": "^2.0.0-beta.4",
         "vue-lazytube": "^1.0.2",
@@ -35,12 +34,15 @@
         "vue-scroll-behavior": "^0.3.0"
     },
     "devDependencies": {
-        "@babel/runtime-corejs3": "^7.19.0",
-        "core-js": "3",
+        "@nuxt/bridge": "npm:@nuxt/bridge-edge",
+        "@vue/runtime-dom": "^3.2.39",
         "eslint-config-prettier": "^6.12.0",
         "eslint-plugin-prettier": "^3.1.4",
         "npm-run-all": "^4.1.5",
+        "nuxt-vite": "^0.3.5",
         "prettier": "^2.1.2",
-        "source-map": "^0.7.3"
+        "serve": "^14.0.1",
+        "source-map": "^0.7.3",
+        "vite-plugin-pug": "^0.3.1"
     }
 }
