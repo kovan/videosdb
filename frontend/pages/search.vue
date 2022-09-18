@@ -44,10 +44,6 @@ export default {
 </script>
 
 <style>
+
 </style>
 
-<router>
-  {
-    path: '/search'
-  }
-</router>

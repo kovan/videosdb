@@ -22,8 +22,12 @@ services:
             - NODE_OPTIONS=--openssl-legacy-provider
         build:
             context: ../../frontend
+            dockerfile: docker/Dockerfile
         depends_on:
             - firestore-emulator
+        volumes:
+            - yarn_cache:/yarn
+            - node_modules_cache:/app/node_modules
 
     json-caching-proxy:
         network_mode: "host"
@@ -48,3 +52,6 @@ services:
 volumes:
     emulator-data:
         name: emulator-data
+
+    yarn_cache:
+    node_modules_cache:

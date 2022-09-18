@@ -46,11 +46,11 @@ export default defineNuxtConfig({
     components: true,
 
     buildModules: [
-        "@nuxtjs/router-extras",
+        // "@nuxtjs/router-extras",
         "bootstrap-vue/nuxt",
         //'@nuxtjs/firebase',
         "@nuxtjs/sitemap",
-        "~/modules/mymodule.js",
+        // "~/modules/mymodule.js",
         'nuxt-vite'],
 
 
@@ -84,37 +84,7 @@ export default defineNuxtConfig({
         }
     },
 
-    build: {
-        extend(config, ctx) {
-            config.devtool = 'source-map';
-            if (ctx.isClient) {
-                config.optimization.splitChunks.maxSize = 250000;
-            }
-        },
-        loaders: {
-            vue: {
-                prettify: false,
-            },
-        },
-        optimizeCSS: true,
-        extractCSS: true,
-        //parallel: true,
-        //cache: true,
-        //hardSource: false
-        babel: {
-            compact: true,
-            presets(env, [preset, options]) {
-                return [
-                    ["@nuxt/babel-preset-app", {
-                        corejs: { version: 3 },
-                        targets: {
-                            chrome: "58",
-                        }
-                    }]
-                ]
-            }
-        }
-    },
+
 
     vue: {
         config: {
@@ -160,7 +130,6 @@ export default defineNuxtConfig({
     },
 
     bridge: {
-        vite: true,
         meta: true,
         nitro: true,
         capi: false,

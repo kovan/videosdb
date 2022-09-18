@@ -181,10 +181,3 @@ export default {
 }
 </script>
 
-
-<router>
-    {
-        path: '/video/:slug',
-
-  }
-</router>

@@ -80,7 +80,7 @@ import { parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
 import { getVuexData } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
-import { orderBy } from 'lodash'
+import { orderBy } from 'lodash-es'
 
 export default {
     fetchKey: 'site-sidebar',
