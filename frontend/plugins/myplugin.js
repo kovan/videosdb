@@ -7,7 +7,7 @@ export default defineNuxtPlugin(async (NuxtApp) => {
     //console.debug("executing plugin, db=", db, "$db=", context.$db)
 
     if (!db)
-        db = getDb(await getFirebaseSettings(NuxtApp.payload.config.public))
+        db = getDb(await getFirebaseSettings(NuxtApp.payload.$config))
 
 
     return {

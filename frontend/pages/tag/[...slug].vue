@@ -8,10 +8,10 @@ b-container.p-0.m-0
 </template>
 
 <script>
-export default {
+export default defineNuxtComponent({
     head() {
         return {
-            title: this.$route.params.slug + ' - ' + config.public.title,
+            title: this.$route.params.slug + ' - ' + this.$config.title,
             meta: [
                 {
                     hid: 'description',
@@ -25,17 +25,22 @@ export default {
         return {
             tag: '',
         }
-    }
-}
+    },
+    async asyncData({ payload, store }) {
+        if (payload) {
+            store.commit('setInitial', payload.vuex_data)
+        }
+    },
+})
 </script>
 <script setup>
 definePageMeta({ layout: 'default' })
 const config = useRuntimeConfig()
 //async asyncData({ $db, params, payload, error, store }) {
-const { data, pending, error, refresh } = await useAsyncData(null,
-    async () => {
-        // if (payload) {
-        //     store.commit('setInitial', payload.vuex_data)
-        // }
-    })
+// const { data, pending, error, refresh } = await useAsyncData(null,
+//     async () => {
+//         // if (payload) {
+//         //     store.commit('setInitial', payload.vuex_data)
+//         // }
+//     })
 </script>

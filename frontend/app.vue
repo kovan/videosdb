@@ -1,7 +1,7 @@
 <template lang="pug">
 div
     b-nav.navbar.navbar-dark.bg-dark.p-2.pl-3.d-flex.align-middle.justify-content-end
-        NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ config.public.title }}&nbsp
+        NuxtLink.mr-auto.h5.mt-1.text-white.align-middle(to='/') {{ $config.title }}&nbsp
 
         b-button.mx-1(
             squared,
@@ -29,7 +29,7 @@ div
             span.navbar-toggler-icon
 
     .p-1.px-2.mt-2.text-center
-        strong {{ config.public.subtitle }}
+        strong {{ $config.subtitle }}
         br
         small.align-middle  {{ this.$store.state.meta_data.videoIds.length }} videos in the database. Last updated: {{ format(last_updated) }}
     b-container
@@ -63,13 +63,13 @@ div
                                 | ({{ category.use_count }} videos)
 
             main.col-md-12.col-lg-12.ml-sm-auto.px-md-4.pt-4(role='main')
-                nuxt
+                slot
 
     footer.text-muted.text-center
         .my-3
             p For more resources visit:
-                a(:href="config.public.website")
-                    | {{ config.public.website }}
+                a(:href="$config.website")
+                    | {{ $config.website }}
 </template>
 
 <script>
@@ -83,7 +83,8 @@ import LazyHydrate from 'vue-lazy-hydration'
 import { orderBy } from 'lodash-es'
 
 
-export default {
+
+export default defineNuxtComponent({
     fetchKey: 'site-sidebar',
     scrollToTop: true,
     data() {
@@ -92,8 +93,8 @@ export default {
             sidebar_visible: false,
             categories: [],
 
-            title: config.public.title,
-            subtitle: config.public.subtitle,
+            title: this.$config.title,
+            subtitle: this.$config.subtitle,
             last_updated: null,
             ordering_options: [
                 {
@@ -165,8 +166,8 @@ export default {
 
         this.categories = [...this.$store.state.categories]
         this.last_updated = this.$store.state.meta_data.lastUpdated
-    },
-}
+    }
+})
 </script>
 
 <script setup>

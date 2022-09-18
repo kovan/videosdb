@@ -19,10 +19,8 @@ export default defineNuxtConfig({
     telemetry: false,
 
 
-    runtimeConfig: {
-        public: {
-            ...myConfig
-        }
+    publicRuntimeConfig: {
+        ...myConfig
     },
 
     generate: {

@@ -6,25 +6,25 @@ div
 </template>
 
 <script>
-export default {
+export default defineNuxtComponent({
     data() {
         return {
             loaded: false,
         }
     },
     mounted() {
-        this.$loadScript(config.public.cseUrl).then(() => {
+        this.$loadScript(this.$config.cseUrl).then(() => {
             this.loaded = true
         })
     },
     destroyed() {
-        this.$unloadScript(config.public.cseUrl).then(() => {
+        this.$unloadScript(this.$config.cseUrl).then(() => {
             this.loaded = false
         })
     },
     head() {
         return {
-            title: 'Search' + ' - ' + config.public.title,
+            title: 'Search' + ' - ' + this.$config.title,
             meta: [
                 {
                     hid: 'description',
@@ -33,20 +33,25 @@ export default {
                 },
             ]
         }
-    }
-}
+    },
+    async asyncData({ payload, store }) {
+        if (payload) {
+            store.commit('setInitial', payload.vuex_data)
+        }
+    },
+})
 </script>
 
 <script setup>
 definePageMeta({ layout: 'default' })
 const config = useRuntimeConfig()
-//async asyncData({ $db, params, payload, error, store }) {
-const { data, pending, error, refresh } = await useAsyncData(null,
-    async () => {
-        // if (payload) {
-        //     store.commit('setInitial', payload.vuex_data)
-        // }
-    })
+// //async asyncData({ $db, params, payload, error, store }) {
+// const { data, pending, error, refresh } = await useAsyncData(null,
+//     async () => {
+//         // if (payload) {
+//         //     store.commit('setInitial', payload.vuex_data)
+//         // }
+//     })
 </script>
 
 
