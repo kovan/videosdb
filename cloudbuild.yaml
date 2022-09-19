@@ -9,7 +9,7 @@ steps:
       - LOGLEVEL=$_LOGLEVEL
       - --env-file
       - common/env/$_VIDEOSDB_CONFIG.txt
-      - gcr.io/worpdress-279321/backend
+      - gcr.io/worpdress-279321/backend-$BRANCH_NAME
       - -O
       - -m
       - videosdb
@@ -24,7 +24,7 @@ steps:
       - generate
       - --env-file
       - common/env/$_VIDEOSDB_CONFIG.txt
-      - gcr.io/worpdress-279321/frontend
+      - gcr.io/worpdress-279321/frontend-$BRANCH_NAME
       - yarn
       - generate
 
