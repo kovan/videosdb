@@ -12,6 +12,7 @@ from aiostream import stream
 from autologging import traced
 from google.cloud import firestore
 from google.oauth2 import service_account
+from google.api_core.exceptions import ResourceExhausted
 from slugify import slugify
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 import youtube_transcript_api
@@ -20,10 +21,10 @@ import sys
 logger = logging.getLogger(__name__)
 
 
-def _filter_exceptions(group: anyio.ExceptionGroup, exception_type, handler_func):
+def _filter_exceptions(group: anyio.ExceptionGroup, exception_types, handler_func):
     unhandled_exceptions = []
     for e in group.exceptions:
-        if type(e) == exception_type:
+        if type(e) in exception_types:
             handler_func(e)
         else:
             unhandled_exceptions.append(e)
@@ -116,6 +117,7 @@ class Downloader:
 
                 channel_id = self.YT_CHANNEL_ID
                 channel_info = await self._retrieve_channel(channel_id)
+                all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
                 self.YT_CHANNEL_NAME = str(channel_info["snippet"]["title"])
 
                 if "DEBUG" in os.environ:
@@ -158,10 +160,9 @@ class Downloader:
                     last_playlist_id = playlist_id
 
                     playlist = await self._download_playlist(playlist_id)
-                    if not playlist:
-                        continue
 
-                    await self._create_playlist(playlist)
+                    if playlist_id != all_uploads_playlist_id:
+                        await self._create_playlist(playlist)
 
                     # create videos:
                     for video_id in playlist["videosdb"]["videoIds"]:
@@ -176,17 +177,15 @@ class Downloader:
                         )
                         processed_video_ids.add(video_id)
 
-                all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
-                playlist = await self._download_playlist(all_uploads_playlist_id)
-                for video_id in playlist["videosdb"]["videoIds"]:
-                    if video_id not in processed_video_ids:
-                        await self._create_video(video_id)
+                if self.options.fill_related_videos and "DEBUG" not in os.environ:
+                    # separate so that it uses remaining quota
+                    await self._fill_related_videos()
 
-            except YoutubeAPI.QuotaExceededError as e:
+            except (YoutubeAPI.QuotaExceededError, ResourceExhausted) as e:
                 logger.error(e)
             except anyio.ExceptionGroup as group:
                 _filter_exceptions(
-                    group, YoutubeAPI.QuotaExceededError, logger.error)
+                    group, [YoutubeAPI.QuotaExceededError, ResourceExhausted], logger.error)
 
             # retrieve pending transcripts
             if not self.options.exclude_transcripts:
@@ -195,20 +194,14 @@ class Downloader:
                     global_scope.start_soon(
                         self._handle_transcript, video, name="Download transcript")
 
-            # update videoid list
-
-            if self.options.fill_related_videos and "DEBUG" not in os.environ:
-                # separate so that it uses remaining quota
-                await self._fill_related_videos()
-
             await anyio.wait_all_tasks_blocked()
 
             await self.db.meta_ref().set({
-                    "lastUpdated": datetime.now().isoformat(),
-                    "lastPlaylistId": list(last_playlist_id),
-                    "videoIds":  list(processed_video_ids)
-                }, merge=True)
-            )
+                "lastUpdated": datetime.now().isoformat(),
+                "lastPlaylistId": list(last_playlist_id),
+                "videoIds":  list(processed_video_ids)
+            })
+
             global_scope.cancel_scope.cancel()
 
         logger.info("Sync finished")
@@ -216,17 +209,17 @@ class Downloader:
     @ traced
     async def _retrieve_channel(self, channel_id):
 
-        channel_info=await self.api.get_channel_info(channel_id)
+        channel_info = await self.api.get_channel_info(channel_id)
 
         logger.info("Processing channel: " +
                     str(channel_info["snippet"]["title"]))
 
-        await self.db.db.collection("channel_infos").document(channel_id).set(channel_info, merge = True)
+        await self.db.db.collection("channel_infos").document(channel_id).set(channel_info, merge=True)
         return channel_info
 
     @ traced
     async def _download_playlist(self, playlist_id):
-        playlist=await self.api.get_playlist_info(playlist_id)
+        playlist = await self.api.get_playlist_info(playlist_id)
 
         if not playlist:
             return
@@ -234,14 +227,11 @@ class Downloader:
         if playlist["snippet"]["channelTitle"] != self.YT_CHANNEL_NAME:
             return
 
-        if playlist["snippet"]["title"] != "Uploads from " + playlist["snippet"]["channelTitle"]:
-            return
+        result = await self.api.list_playlist_items(playlist_id)
 
-        result=await self.api.list_playlist_items(playlist_id)
-
-        video_count=0
-        last_updated=None
-        video_ids=[]
+        video_count = 0
+        last_updated = None
+        video_ids = []
 
         async for item in result:
             if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
