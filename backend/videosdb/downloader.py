@@ -20,10 +20,6 @@ import sys
 logger = logging.getLogger(__name__)
 
 
-async def asyncgenerator(item):
-    yield item
-
-
 def _filter_exceptions(group: anyio.ExceptionGroup, exception_type, handler_func):
     unhandled_exceptions = []
     for e in group.exceptions:
@@ -67,9 +63,10 @@ class DB:
             )
         return self
 
-    async def update_last_updated(self):
+    async def update_last_updated(self, playlist_id):
         return await self.meta_ref().set({
-            "lastUpdated": datetime.now().isoformat()
+            "lastUpdated": datetime.now().isoformat(),
+            "lastPlaylistId": playlist_id
         }, merge=True)
 
     async def get_video_count(self):
@@ -80,10 +77,10 @@ class DB:
             return 0
 
 
-class LockedDict:
-    def __init__(self):
+class LockedItem:
+    def __init__(self, item):
         self.lock = anyio.Lock()
-        self.d = dict()
+        self.i = item
 
 
 class Downloader:
@@ -106,8 +103,6 @@ class Downloader:
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
         self.db = DB()
         self.api = YoutubeAPI(self.db.db)
-        self.streams = []
-        self.video_ids = LockedDict()  # video_id -> set() of playlist_ids
 
     async def init(self):
         await self.db.init()
@@ -120,20 +115,78 @@ class Downloader:
             global_scope.start_soon(self._print_debug_info,
                                     name="Debug info")
 
-            # retrieve playlists:
+            meta_doc = await self.db.meta_ref().get()
+            last_playlist_id = None
             try:
-                logger.info("Retrieving playlists")
-                await self._retrieve_playlists()
 
-                # create videos
-                logger.info("Creating videos")
-                async with anyio.create_task_group() as video_creators:
-                    async with self.video_ids.lock:
-                        for video_id, playlist_ids in self.video_ids.d.items():
-                            video_creators.start_soon(
-                                self._create_video, video_id, list(
-                                    playlist_ids)
-                            )
+                channel_id = self.YT_CHANNEL_ID
+                channel_info = await self._retrieve_channel(channel_id)
+                self.YT_CHANNEL_NAME = str(channel_info["snippet"]["title"])
+
+                if "DEBUG" in os.environ:
+                    playlists_ids_stream = stream.iterate(
+                        self.api.list_channelsection_playlist_ids(channel_id)
+                    )
+                else:
+                    playlists_ids_stream = stream.merge(
+                        self.api.list_channelsection_playlist_ids(channel_id),
+                        self.api.list_channel_playlist_ids(channel_id)
+                    )
+
+                processed_playlist_ids = set()
+                processed_video_ids = set()
+
+                playlist_ids = set()
+                async with playlists_ids_stream.stream() as streamer:
+                    async for playlist_id in streamer:
+                        playlist_ids.add(playlist_id)
+
+                playlist_ids = list(playlist_ids)
+                playlist_ids.sort()
+
+                last_playlist_id = meta_doc.to_dict().get("lastPlaylistId")
+
+                # start from where we left it:
+                if last_playlist_id:
+                    try:
+                        i = playlist_ids.index(last_playlist_id)
+                        playlist_ids = playlist_ids[i:] + playlist_ids[:i]
+                    except ValueError:
+                        pass
+
+                # main iterations:
+                for playlist_id in playlist_ids:
+
+                    if playlist_id in processed_playlist_ids:
+                        continue
+                    processed_playlist_ids.add(playlist_id)
+                    last_playlist_id = playlist_id
+
+                    playlist = await self._download_playlist(playlist_id)
+                    if not playlist:
+                        continue
+
+                    await self._create_playlist(playlist)
+
+                    # create videos:
+                    for video_id in playlist["videosdb"]["videoIds"]:
+                        if video_id not in processed_video_ids:
+                            video = await self._create_video(video_id, [playlist_id])
+                            if not video:
+                                continue
+
+                        await self.db.db.collection("videos").document(video_id).update(
+                            "videosdb.playlists",
+                            firestore.ArrayUnion([playlist_id])
+                        )
+                        processed_video_ids.add(video_id)
+
+                all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
+                playlist = await self._download_playlist(all_uploads_playlist_id)
+                for video_id in playlist["videosdb"]["videoIds"]:
+                    if video_id not in processed_video_ids:
+                        await self._create_video(video_id)
+
             except YoutubeAPI.QuotaExceededError as e:
                 logger.error(e)
             except anyio.ExceptionGroup as group:
@@ -148,79 +201,30 @@ class Downloader:
                         self._handle_transcript, video, name="Download transcript")
 
             # update videoid list
-            async with self.video_ids.lock:
-                await self.db.meta_ref().set({
-                    "videoIds": list(self.video_ids.d.keys())
-                })
+
+            await self.db.meta_ref().set({
+                "videoIds": list(processed_video_ids)
+            })
 
             await anyio.wait_all_tasks_blocked()
-            await self.db.update_last_updated()
+            await self.db.update_last_updated(last_playlist_id)
             global_scope.cancel_scope.cancel()
 
         logger.info("Sync finished")
 
-    async def _retrieve_playlists(self):
-        logger.info("Currently there are %s videos in the DB",
-                    await self.db.get_video_count())
+    @ traced
+    async def _retrieve_channel(self, channel_id):
 
-        playlist_sender, playlist_receiver = anyio.create_memory_object_stream()
-        self.streams = [
-            playlist_receiver,
-            playlist_sender
-        ]
+        channel_info = await self.api.get_channel_info(channel_id)
 
-        async with anyio.create_task_group() as processors:
-            processors.start_soon(self._playlist_retriever,
-                                  playlist_sender, name="Playlist retriever")
-            processors.start_soon(self._playlist_processor,
-                                  playlist_receiver, name="Playlist receiver")
+        logger.info("Processing channel: " +
+                    str(channel_info["snippet"]["title"]))
 
-    @traced
-    async def _playlist_retriever(self, playlist_sender):
-        with playlist_sender:
+        await self.db.db.collection("channel_infos").document(channel_id).set(channel_info, merge=True)
+        return channel_info
 
-            channel_id = self.YT_CHANNEL_ID
-            channel_info = await self.api.get_channel_info(channel_id)
-
-            logger.info("Processing channel: " +
-                        str(channel_info["snippet"]["title"]))
-            self.YT_CHANNEL_NAME = str(channel_info["snippet"]["title"])
-
-            await self.db.db.collection("channel_infos").document(channel_id).set(channel_info, merge=True)
-
-            all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
-
-            if "DEBUG" in os.environ:
-                playlist_ids = stream.iterate(
-                    self.api.list_channelsection_playlist_ids(channel_id)
-                )
-
-            else:
-                playlist_ids = stream.merge(
-                    asyncgenerator(all_uploads_playlist_id),
-                    self.api.list_channelsection_playlist_ids(channel_id),
-                    self.api.list_channel_playlist_ids(channel_id)
-                )
-
-            async with playlist_ids.stream() as streamer:
-                async for playlist_id in streamer:
-                    await playlist_sender.send(playlist_id)
-
-    @traced
-    async def _playlist_processor(self, playlist_receiver):
-        processed_playlist_ids = set()
-
-        async with anyio.create_task_group() as nursery:
-            async for playlist_id in playlist_receiver:
-                if playlist_id in processed_playlist_ids:
-                    continue
-                nursery.start_soon(
-                    self._process_playlist, playlist_id, name="PL " + playlist_id)
-
-                processed_playlist_ids.add(playlist_id)
-
-    @traced
-    async def _process_playlist(self, playlist_id):
+    @ traced
+    async def _download_playlist(self, playlist_id):
         playlist = await self.api.get_playlist_info(playlist_id)
 
         if not playlist:
@@ -229,54 +233,48 @@ class Downloader:
         if playlist["snippet"]["channelTitle"] != self.YT_CHANNEL_NAME:
             return
 
-        playlist = playlist if playlist["snippet"]["title"] != "Uploads from " + \
-            playlist["snippet"]["channelTitle"] else None
+        if playlist["snippet"]["title"] != "Uploads from " + playlist["snippet"]["channelTitle"]:
+            return
 
-        items = []
         result = await self.api.list_playlist_items(playlist_id)
+
+        video_count = 0
+        last_updated = None
+        video_ids = []
 
         async for item in result:
             if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
                 continue
-            items.append(item)
-
-        await self._create_playlist(playlist, playlist_id, items)
-
-    @traced
-    async def _create_playlist(self, playlist, playlist_id, items):
-        video_count = 0
-        last_updated = None
-
-        for item in items:
-            new_video = False
-            video_id = item["snippet"]["resourceId"]["videoId"]
-            async with self.video_ids.lock:
-                if video_id not in self.video_ids.d:
-                    self.video_ids.d[video_id] = set()
-                    new_video = True
-                if playlist:  # exclude dummy playlists
-                    self.video_ids.d[video_id].add(playlist_id)
-
+            video_ids.append(
+                item["snippet"]["resourceId"]["videoId"])
             video_count += 1
             video_date = isodate.parse_datetime(
                 item["snippet"]["publishedAt"])
             if not last_updated or video_date > last_updated:
                 last_updated = video_date
 
-        if not playlist:  # exclude dummy playlists
-            return
+        playlist |= {
+            "videosdb": {
+                "slug": slugify(playlist["snippet"]["title"]),
+                "videoCount": video_count,
+                "lastUpdated": last_updated,
+                "lastRetrieved": datetime.now().isoformat(),
+                "videoIds": video_ids
+            }
+        }
 
-        playlist["videosdb"] = dict()
-        playlist["videosdb"]["slug"] = slugify(
-            playlist["snippet"]["title"])
-        playlist["videosdb"]["videoCount"] = video_count
-        playlist["videosdb"]["lastUpdated"] = last_updated
+        return playlist
+
+    @traced
+    async def _create_playlist(self, playlist):
+        if not playlist:
+            return
 
         await self.db.db.collection("playlists").document(playlist["id"]).set(playlist, merge=True)
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     @traced
-    async def _create_video(self, video_id, playlist_ids):
+    async def _create_video(self, video_id, playlist_ids=None):
         video = await self.api.get_video_info(video_id)
 
         if not video:
@@ -288,19 +286,20 @@ class Downloader:
         if video["snippet"]["channelId"] != self.YT_CHANNEL_ID:
             return
 
-        custom_attrs = dict()
+        video |= {
+            "videosdb": {
+                "slug":  slugify(video["snippet"]["title"]),
+                "descriptionTrimmed": bleach.linkify(video["snippet"]["description"]),
+                "durationSeconds": isodate.parse_duration(
+                    video["contentDetails"]["duration"]).total_seconds(),
+                "playlists": playlist_ids if playlist_ids else [],
+                "lastRetrieved": datetime.now().isoformat()
+            }
+        }
 
-        custom_attrs["slug"] = slugify(
-            video["snippet"]["title"])
-        custom_attrs["descriptionTrimmed"] = bleach.linkify(
-            video["snippet"]["description"])
-        custom_attrs["durationSeconds"] = isodate.parse_duration(
-            video["contentDetails"]["duration"]).total_seconds()
-        custom_attrs["playlists"] = playlist_ids
-
-        video["videosdb"] = custom_attrs
-        video["snippet"]["publishedAt"] = isodate.parse_datetime(
+        video["publishedAt"] = isodate.parse_datetime(
             video["snippet"]["publishedAt"])
+
         for stat, value in video["statistics"].items():
             video["statistics"][stat] = int(value)
 
@@ -401,10 +400,5 @@ class Downloader:
             tasks = anyio.get_running_tasks()
             logger.debug('Running tasks:' + str(len(tasks)))
             logger.debug(pprint.pformat(tasks))
-
-            for stream in self.streams:
-                logger.debug(str(stream.statistics()))
-
-            logger.debug(str(self.video_ids.lock.statistics()))
 
             await anyio.sleep(30)

@@ -12,7 +12,7 @@ services:
         environment:
             - GOOGLE_CLOUD_PROJECT=videosdb-firebase
             - DEBUG=1
-            - LOGLEVEL=INFO
+            - LOGLEVEL=DEBUG
 
     frontend:
         network_mode: "host"

@@ -103,21 +103,13 @@ export default {
 
     build: {
         extend(config, ctx) {
-            config.devtool = 'source-map';
             if (ctx.isClient) {
                 config.optimization.splitChunks.maxSize = 250000;
             }
+            if (ctx.isDev) {
+                config.devtool = ctx.isClient ? "source-map" : "inline-source-map";
+            }
         },
-        loaders: {
-            vue: {
-                prettify: false,
-            },
-        },
-        optimizeCSS: true,
-        extractCSS: true,
-        //parallel: true,
-        //cache: true,
-        //hardSource: false
         babel: {
             compact: true,
             presets(env, [preset, options]) {
@@ -130,7 +122,37 @@ export default {
                     }]
                 ]
             }
-        }
+        },
+
+
+        optimizeCSS: true,
+        extractCSS: true,
+        //parallel: true,
+        //cache: true,
+        //hardSource: false
+
+        analyze: false,
+        //parallel: true,
+        //cache: true,
+        hardSource: false,
+        splitChunks: {
+            layouts: false,
+            pages: false,
+            components: false,
+        },
+        html: {
+            minify: {
+                minifyCSS: false,
+                minifyJS: false
+            }
+        },
+        loaders: {
+            vue: {
+                prettify: false
+            }
+        },
+        transpile: ["@coreui/vue", "@coreui/utils", "@ag-grid-community/vue"],
+
     },
 
     vue: {

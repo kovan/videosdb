@@ -2,12 +2,19 @@
 
 - poner descripciones de los botones en caso de tablet/escritorio
 
+ALGORITMO:
+* Condiciiones de diseño:
+   - la DB debe quedar consistente en caso de 403.
+   - sucesivas llamadas al algoritmo van rellenando lo que falta.
+
+* pasos:
 - pillar todas las playlists
 - ordenar por lastRetrieved (mas viejo primero) (los videos tb deben tener lastRetrieved)
 - empezar a bajar
 - si hay que crear video, se crea un lock para ese video mientras tanto
-- las playlist se añaden
-- si Hay excepción de quota, se guarda la id de la playlist en proceso en el meta.
+- los videos se añaden a las playlists
+- por ultimo se mira la playlist de todos los videos y se añaden los que falten
+- si Hay excepción de quota, se guarda la id de la playlist y la posición en proceso en el meta.
 - la proxima vez se empieza desde esa playlist
 
 

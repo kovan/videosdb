@@ -225,10 +225,10 @@ class YoutubeAPI:
 
             json_response = response.json()
 
-            if not page_token:  # first page
-                if "pageInfo" in json_response:
-                    logger.debug(
-                        "Total items: " + str(json_response["pageInfo"]["totalResults"]))
+            # if not page_token:  # first page
+            #     if "pageInfo" in json_response:
+            #         logger.debug(
+            #             "Total items: " + str(json_response["pageInfo"]["totalResults"]))
 
             yield json_response
 
