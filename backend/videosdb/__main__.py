@@ -17,6 +17,7 @@ def entrypoint():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
     parser.add_argument("-e", "--exclude-transcripts", action="store_true")
+    parser.add_argument("-d", "--fill-related-videos", action="store_true")
     parser.add_argument("-u", "--update-dnslink", action="store_true")
     parser.add_argument(
         "-f", "--download-and-register-in-ipfs", action="store_true")
@@ -24,8 +25,7 @@ def entrypoint():
 
     options = parser.parse_args()
     if options.check_for_new_videos:
-        downloader = Downloader(
-            exclude_transcripts=options.exclude_transcripts)
+        downloader = Downloader(options)
 
         anyio.run(downloader.check_for_new_videos)
 

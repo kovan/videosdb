@@ -86,7 +86,7 @@ class LockedItem:
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
-    def __init__(self, exclude_transcripts=False):
+    def __init__(self, options):
 
         if "FIRESTORE_EMULATOR_HOST" in os.environ:
             logger.info("USING EMULATOR")
@@ -97,9 +97,8 @@ class Downloader:
 
         logger.debug("ENVIRONMENT:")
         logger.debug(pprint.pformat(os.environ))
-        self.exclude_transcripts = exclude_transcripts
-        if exclude_transcripts:
-            logger.debug("Excluding transcripts")
+        self.options = options
+
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
         self.db = DB()
         self.api = YoutubeAPI(self.db.db)
@@ -194,7 +193,7 @@ class Downloader:
                     group, YoutubeAPI.QuotaExceededError, logger.error)
 
             # retrieve pending transcripts
-            if not self.exclude_transcripts:
+            if not self.options.exclude_transcripts:
                 logger.info("Retrieving transcripts")
                 async for video in self.db.db.collection("videos").stream():
                     global_scope.start_soon(
@@ -205,6 +204,10 @@ class Downloader:
             await self.db.meta_ref().set({
                 "videoIds": list(processed_video_ids)
             })
+
+            if self.options.fill_related_videos and "DEBUG" not in os.environ:
+                # separate so that it uses remaining quota
+                await self._fill_related_videos()
 
             await anyio.wait_all_tasks_blocked()
             await self.db.update_last_updated(last_playlist_id)
