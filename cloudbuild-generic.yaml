@@ -15,4 +15,4 @@ steps:
             '--cache-from', 'gcr.io/worpdress-279321/$_IMAGE-$BRANCH_NAME:latest',
             '.'
         ]
-images: ['gcr.io/worpdress-279321/$_IMAGE:latest']
+images: ['gcr.io/worpdress-279321/$_IMAGE-$BRANCH_NAME:latest']
