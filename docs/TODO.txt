@@ -3,6 +3,22 @@
 - poner descripciones de los botones en caso de tablet/escritorio
 
 ALGORITMO:
+
+- lista a  rotar = playlist ids + video ids
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 * Condiciiones de diseño:
    - la DB debe quedar consistente en caso de 403.
    - sucesivas llamadas al algoritmo van rellenando lo que falta.

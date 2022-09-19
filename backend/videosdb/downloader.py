@@ -63,18 +63,14 @@ class DB:
             )
         return self
 
-    async def update_last_updated(self, playlist_id):
-        return await self.meta_ref().set({
-            "lastUpdated": datetime.now().isoformat(),
-            "lastPlaylistId": playlist_id
-        }, merge=True)
-
     async def get_video_count(self):
         doc = await self.meta_ref().get()
         if doc.exists:
             return len(doc.get("videoIds"))
         else:
             return 0
+
+            # google.api_core.exceptions.ResourceExhausted: 429 Quota exceeded. (en await cached_ref.set({"etag": page["etag"]}))
 
 
 class LockedItem:
@@ -201,16 +197,18 @@ class Downloader:
 
             # update videoid list
 
-            await self.db.meta_ref().set({
-                "videoIds": list(processed_video_ids)
-            })
-
             if self.options.fill_related_videos and "DEBUG" not in os.environ:
                 # separate so that it uses remaining quota
                 await self._fill_related_videos()
 
             await anyio.wait_all_tasks_blocked()
-            await self.db.update_last_updated(last_playlist_id)
+
+            await self.db.meta_ref().set({
+                    "lastUpdated": datetime.now().isoformat(),
+                    "lastPlaylistId": list(last_playlist_id),
+                    "videoIds":  list(processed_video_ids)
+                }, merge=True)
+            )
             global_scope.cancel_scope.cancel()
 
         logger.info("Sync finished")
@@ -218,17 +216,17 @@ class Downloader:
     @ traced
     async def _retrieve_channel(self, channel_id):
 
-        channel_info = await self.api.get_channel_info(channel_id)
+        channel_info=await self.api.get_channel_info(channel_id)
 
         logger.info("Processing channel: " +
                     str(channel_info["snippet"]["title"]))
 
-        await self.db.db.collection("channel_infos").document(channel_id).set(channel_info, merge=True)
+        await self.db.db.collection("channel_infos").document(channel_id).set(channel_info, merge = True)
         return channel_info
 
     @ traced
     async def _download_playlist(self, playlist_id):
-        playlist = await self.api.get_playlist_info(playlist_id)
+        playlist=await self.api.get_playlist_info(playlist_id)
 
         if not playlist:
             return
@@ -239,11 +237,11 @@ class Downloader:
         if playlist["snippet"]["title"] != "Uploads from " + playlist["snippet"]["channelTitle"]:
             return
 
-        result = await self.api.list_playlist_items(playlist_id)
+        result=await self.api.list_playlist_items(playlist_id)
 
-        video_count = 0
-        last_updated = None
-        video_ids = []
+        video_count=0
+        last_updated=None
+        video_ids=[]
 
         async for item in result:
             if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
