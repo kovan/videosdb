@@ -24,6 +24,8 @@ services:
             context: ../../frontend
         depends_on:
             - firestore-emulator
+        volumes:
+            - yarn_cache:/yarn
 
     json-caching-proxy:
         network_mode: "host"
@@ -48,3 +50,6 @@ services:
 volumes:
     emulator-data:
         name: emulator-data
+    yarn_cache:
+
+
