@@ -160,6 +160,8 @@ class Downloader:
                     last_playlist_id = playlist_id
 
                     playlist = await self._download_playlist(playlist_id)
+                    if not playlist:
+                        continue
 
                     if playlist_id != all_uploads_playlist_id:
                         await self._create_playlist(playlist)
