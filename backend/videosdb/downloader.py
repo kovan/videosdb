@@ -169,7 +169,9 @@ class Downloader:
                 if processed_video_ids:
                     new_meta["videoIds"] = firestore.ArrayUnion(
                         list(processed_video_ids))
-                await self.db.update("meta/meta", new_meta)
+
+                # use _db directly to bypass quota checks:
+                await self.db._db.document("meta/meta").update(new_meta)
 
             await anyio.wait_all_tasks_blocked()
 
