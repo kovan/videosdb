@@ -135,7 +135,7 @@ function getDb(config) {
             projectId: config.projectId
         });
         db = app.firestore();
-        console.debug(process.env)
+        console.log(process.env)
         if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
             console.info("Using FIREBASE EMULATOR")
             db.useEmulator(...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
