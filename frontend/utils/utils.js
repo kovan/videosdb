@@ -25,13 +25,12 @@ const firebase_nithyananda = {
 };
 
 const firebase_testing = {
-    apiKey: "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU",
-    authDomain: "worpdress-279321.firebaseapp.com",
-    projectId: "worpdress-279321",
-    storageBucket: "worpdress-279321.appspot.com",
-    messagingSenderId: "149555456673",
-    appId: "1:149555456673:web:bd1a8d45015dbc29b3dee0",
-    measurementId: "G-W96ZC6SQCN"
+    apiKey: "AIzaSyB4ssPNsGaIpFv8GNiBl-MbRWzRbuYV-MM",
+    authDomain: "videosdb-testing.firebaseapp.com",
+    projectId: "videosdb-testing",
+    storageBucket: "videosdb-testing.appspot.com",
+    messagingSenderId: "224322811272",
+    appId: "1:224322811272:web:82113e7ad6fa250915763d"
 };
 
 
