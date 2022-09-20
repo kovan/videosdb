@@ -29,7 +29,7 @@ class DB:
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
         self.write_count = 0
-        self.WRITE_LIMIT = 16000
+        self.WRITE_LIMIT = 20000
         self.read_count = 0
         self.READ_LIMIT = 40000
         self._db = self.setup(project, config)
