@@ -1,4 +1,3 @@
-from google.cloud import firestore
 import json
 import logging
 import os
@@ -6,7 +5,7 @@ import re
 import httpx
 from urllib.parse import urlencode
 import youtube_transcript_api
-from google.cloud import firestore
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ def parse_youtube_id(string: str):
 
 class YoutubeAPI:
 
-    class QuotaExceededError(Exception):
+    class QuotaExceeded(Exception):
         def __init__(self, status, json={}):
             self.status = status
             self.json = json
@@ -32,7 +31,7 @@ class YoutubeAPI:
         return await self.http.aclose()
 
     def __init__(self, db, yt_key=None):
-        self.db: firestore.AsyncClient = db
+        self.db = db
         limits = httpx.Limits(max_connections=50)
         self.http = httpx.AsyncClient(limits=limits)
 
@@ -126,7 +125,6 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
-
     async def _request_one(self, url, params, use_cache=True):
 
         result = self._request_main(url, params, use_cache)
@@ -153,9 +151,8 @@ class YoutubeAPI:
             # s = url + str(params)
             # return hashlib.sha256(s.encode('utf-8')).hexdigest()
 
-        cache_col = self.db.collection("cache")
-        cached_ref = cache_col.document(_key_func(url, params))
-        cached = await cached_ref.get()
+        cache_id = _key_func(url, params)
+        cached = await self.db.get("cache/" + cache_id)
         headers = {}
         if cached.exists:
             headers["If-None-Match"] = cached.get("etag")
@@ -164,7 +161,7 @@ class YoutubeAPI:
             url, params, headers=headers)
 
         if status_code == 304:
-            async for page in cached_ref.collection("pages").stream():
+            async for page in self.db.stream("cache/%s/pages" % cache_id):
                 yield page.to_dict()
             return
 
@@ -173,15 +170,14 @@ class YoutubeAPI:
             try:
                 async for page in response_pages:
                     if page_n == 0:
-                        await cached_ref.set({"etag": page["etag"]})
-                    await cached_ref.collection("pages").document(
-                        str(page_n)).set(page)
+                        await self.db.set("cache/" + cache_id, {"etag": page["etag"]})
+                    await self.db.set("cache/%s/pages/%s" % (cache_id, page_n), page)
                     yield page
                     page_n += 1
             except Exception as e:
                 # do not cache half-responses
                 logger.info("Deleting half-downloaded cache pages")
-                await self.db.recursive_delete(cached_ref)
+                await self.db.recursive_delete("cache/" + cache_id)
                 raise e
 
             return
@@ -212,7 +208,7 @@ class YoutubeAPI:
                          (final_url, response.status_code))
 
             if response.status_code == 403:
-                raise self.QuotaExceededError(
+                raise self.QuotaExceeded(
                     response.status_code,
                     response.json())
             if not page_token:  # first page

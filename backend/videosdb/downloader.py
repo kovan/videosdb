@@ -2,6 +2,7 @@ import logging
 import bleach
 import os
 import pprint
+from google.cloud import firestore
 import re
 import random
 from datetime import datetime
@@ -10,13 +11,12 @@ import fnc
 import isodate
 from aiostream import stream
 from autologging import traced
-from google.cloud import firestore
-from google.oauth2 import service_account
-from google.api_core.exceptions import ResourceExhausted
+import google.api_core.exceptions
 from slugify import slugify
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
+from videosdb.db import DB
 import youtube_transcript_api
-import sys
+
 
 logger = logging.getLogger(__name__)
 
@@ -31,53 +31,6 @@ def _filter_exceptions(group: anyio.ExceptionGroup, exception_types, handler_fun
 
     if unhandled_exceptions:
         raise anyio.ExceptionGroup(unhandled_exceptions)
-
-
-class DB:
-    @staticmethod
-    def setup(project, config):
-        BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
-        creds_json_path = os.path.join(
-            BASE_DIR, "keys/%s.json" % config.strip('"'))
-
-        logger.info("Current project: " + project)
-        db = firestore.AsyncClient(project=project,
-                                   credentials=service_account.Credentials.from_service_account_file(
-                                       creds_json_path))
-
-        return db
-
-    def __init__(self):
-        project = os.environ["FIREBASE_PROJECT"]
-        config = os.environ["VIDEOSDB_CONFIG"]
-        self.db = self.setup(project, config)
-
-    def meta_ref(self):
-        return self.db.collection("meta").document("meta")
-
-    async def init(self):
-        # initialize meta table:
-        doc = await self.meta_ref().get()
-        if not doc.exists or "videoIds" not in doc.to_dict():
-            await self.meta_ref().set(
-                {"videoIds": list()}
-            )
-        return self
-
-    async def get_video_count(self):
-        doc = await self.meta_ref().get()
-        if doc.exists:
-            return len(doc.get("videoIds"))
-        else:
-            return 0
-
-            # google.api_core.exceptions.ResourceExhausted: 429 Quota exceeded. (en await cached_ref.set({"etag": page["etag"]}))
-
-
-class LockedItem:
-    def __init__(self, item):
-        self.lock = anyio.Lock()
-        self.i = item
 
 
 class Downloader:
@@ -98,7 +51,12 @@ class Downloader:
 
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
         self.db = DB()
-        self.api = YoutubeAPI(self.db.db)
+        self.api = YoutubeAPI(self.db)
+        self.QUOTA_EXCEPTIONS = (
+            DB.QuotaExceeded,
+            YoutubeAPI.QuotaExceeded,
+            google.api_core.exceptions.ResourceExhausted
+        )
 
     async def init(self):
         await self.db.init()
@@ -111,7 +69,7 @@ class Downloader:
             global_scope.start_soon(self._print_debug_info,
                                     name="Debug info")
 
-            meta_doc = await self.db.meta_ref().get()
+            meta_doc = await self.db.get("meta/meta")
             last_playlist_id = None
             try:
 
@@ -169,38 +127,38 @@ class Downloader:
                     # create videos:
                     for video_id in playlist["videosdb"]["videoIds"]:
                         if video_id not in processed_video_ids:
+                            processed_video_ids.add(video_id)
                             video = await self._create_video(video_id, [playlist_id])
                             if not video:
                                 continue
 
-                        await self.db.db.collection("videos").document(video_id).update({
-                            "videosdb.playlists",
+                        await self.db.update("videos/" + video_id, {
+                            "videosdb.playlists":
                             firestore.ArrayUnion([playlist_id])
                         })
-                        processed_video_ids.add(video_id)
 
                 if self.options.fill_related_videos and "DEBUG" not in os.environ:
                     # separate so that it uses remaining quota
                     await self._fill_related_videos()
 
-            except (YoutubeAPI.QuotaExceededError, ResourceExhausted) as e:
+            except self.QUOTA_EXCEPTIONS as e:
                 logger.error(e)
             except anyio.ExceptionGroup as group:
                 _filter_exceptions(
-                    group, [YoutubeAPI.QuotaExceededError, ResourceExhausted], logger.error)
+                    group, self.QUOTA_EXCEPTIONS, logger.error)
 
             # retrieve pending transcripts
             if not self.options.exclude_transcripts:
                 logger.info("Retrieving transcripts")
-                async for video in self.db.db.collection("videos").stream():
+                async for video in self.db.stream("videos"):
                     global_scope.start_soon(
                         self._handle_transcript, video, name="Download transcript")
 
             await anyio.wait_all_tasks_blocked()
 
-            await self.db.meta_ref().set({
+            await self.db.set("meta/meta", {
                 "lastUpdated": datetime.now().isoformat(),
-                "lastPlaylistId": list(last_playlist_id),
+                "lastPlaylistId": last_playlist_id,
                 "videoIds":  list(processed_video_ids)
             })
 
@@ -216,7 +174,7 @@ class Downloader:
         logger.info("Processing channel: " +
                     str(channel_info["snippet"]["title"]))
 
-        await self.db.db.collection("channel_infos").document(channel_id).set(channel_info, merge=True)
+        await self.db.set("channel_infos/" + channel_id, channel_info, merge=True)
         return channel_info
 
     @ traced
@@ -263,7 +221,7 @@ class Downloader:
         if not playlist:
             return
 
-        await self.db.db.collection("playlists").document(playlist["id"]).set(playlist, merge=True)
+        await self.db.set("playlists/" + playlist["id"], playlist, merge=True)
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
     @traced
@@ -296,8 +254,7 @@ class Downloader:
         for stat, value in video["statistics"].items():
             video["statistics"][stat] = int(value)
 
-        await self.db.db.collection("videos").document(
-            video_id).set(video, merge=True)
+        await self.db.set("videos/" + video_id, video, merge=True)
 
         logger.info("Created video: %s (%s)" %
                     (video_id, video["snippet"]["title"]))
@@ -311,7 +268,7 @@ class Downloader:
         logger.info("Filling related videos info.")
 
         async with anyio.create_task_group():
-            meta_doc = await self.db.meta_ref().get()
+            meta_doc = await self.db.get("meta/meta")
             randomized_ids = meta_doc.get("videoIds")
             random.shuffle(randomized_ids)
             for video_id in randomized_ids:
@@ -323,7 +280,7 @@ class Downloader:
                             != self.YT_CHANNEL_ID:
                         continue
 
-                    await self.db.db.collection("videos").document(video_id).update({
+                    await self.db.update("videos/" + video_id, {
                         "videosdb.related_videos": firestore.ArrayUnion([related["id"]["videoId"]])
                     })
 
@@ -350,8 +307,7 @@ class Downloader:
                 "transcript": transcript
             }
         }
-        await self.db.db.collection("videos").document(
-            v["id"]).set(new_data, merge=True)
+        await self.db.set("videos/" + v["id"], new_data, merge=True)
 
     async def _download_transcript(self, video_id):
         try:
