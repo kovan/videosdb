@@ -90,6 +90,7 @@ class Downloader:
 
                 processed_playlist_ids = set()
                 processed_video_ids = set()
+                excluded_video_ids = set()
 
                 playlist_ids = set()
                 async with playlists_ids_stream.stream() as streamer:
@@ -130,7 +131,11 @@ class Downloader:
                             processed_video_ids.add(video_id)
                             video = await self._create_video(video_id, [playlist_id])
                             if not video:
+                                excluded_video_ids.add(video_id)
                                 continue
+
+                        if video_id in excluded_video_ids:
+                            continue
 
                         await self.db.update("videos/" + video_id, {
                             "videosdb.playlists":
