@@ -29,7 +29,7 @@ class DB:
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
         self.write_count = 0
-        self.WRITE_LIMIT = 16000
+        self.WRITE_LIMIT = 20000
         self.read_count = 0
         self.READ_LIMIT = 40000
         self._db = self.setup(project, config)
@@ -78,11 +78,11 @@ class DB:
         return await self._db.document(path).update(*args, **kwargs)
 
     def stream(self, collection_name):
-        return self.Streamer(self._db, collection_name)
+        return self.Streamer(self, collection_name)
 
-    def recursive_delete(self, path):
+    async def recursive_delete(self, path):
         ref = self._db.document(path)
-        self._db.recursive_delete(path)
+        return await self._db.recursive_delete(ref)
 
     class Streamer:
         def __init__(self, db, collection_name):
@@ -92,8 +92,8 @@ class DB:
         def __aiter__(self):
             self.generator = self.db._db.collection(
                 self.collection_name).stream()
-            return self.stream_generator
+            return self.generator
 
         async def __anext__(self):
             self.db._write_inc()
-            yield anext(self.stream_generator)
+            yield anext(self.generator)

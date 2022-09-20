@@ -36,7 +36,7 @@ def _filter_exceptions(group: anyio.ExceptionGroup, exception_types, handler_fun
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
-    def __init__(self, options):
+    def __init__(self, options=None):
 
         if "FIRESTORE_EMULATOR_HOST" in os.environ:
             logger.info("USING EMULATOR")
@@ -71,12 +71,13 @@ class Downloader:
 
             meta_doc = await self.db.get("meta/meta")
             last_playlist_id = None
+            processed_video_ids = set()
             try:
 
                 channel_id = self.YT_CHANNEL_ID
                 channel_info = await self._retrieve_channel(channel_id)
                 all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
-                self.YT_CHANNEL_NAME = str(channel_info["snippet"]["title"])
+                channel_name = str(channel_info["snippet"]["title"])
 
                 if "DEBUG" in os.environ:
                     playlists_ids_stream = stream.iterate(
@@ -89,7 +90,7 @@ class Downloader:
                     )
 
                 processed_playlist_ids = set()
-                processed_video_ids = set()
+                excluded_video_ids = set()
 
                 playlist_ids = set()
                 async with playlists_ids_stream.stream() as streamer:
@@ -117,7 +118,7 @@ class Downloader:
                     processed_playlist_ids.add(playlist_id)
                     last_playlist_id = playlist_id
 
-                    playlist = await self._download_playlist(playlist_id)
+                    playlist = await self._download_playlist(playlist_id, channel_name)
                     if not playlist:
                         continue
 
@@ -130,7 +131,11 @@ class Downloader:
                             processed_video_ids.add(video_id)
                             video = await self._create_video(video_id, [playlist_id])
                             if not video:
+                                excluded_video_ids.add(video_id)
                                 continue
+
+                        if video_id in excluded_video_ids:
+                            continue
 
                         await self.db.update("videos/" + video_id, {
                             "videosdb.playlists":
@@ -141,26 +146,29 @@ class Downloader:
                     # separate so that it uses remaining quota
                     await self._fill_related_videos()
 
-            except self.QUOTA_EXCEPTIONS as e:
-                logger.error(e)
+                # retrieve pending transcripts
+                if not self.options.exclude_transcripts:
+                    logger.info("Retrieving transcripts")
+                    async for video in self.db.stream("videos"):
+                        global_scope.start_soon(
+                            self._handle_transcript, video, name="Download transcript")
+
+            except Exception as e:
+                if type(e) in self.QUOTA_EXCEPTIONS:
+                    logger.error(e)
+                else:
+                    raise e
             except anyio.ExceptionGroup as group:
                 _filter_exceptions(
                     group, self.QUOTA_EXCEPTIONS, logger.error)
-
-            # retrieve pending transcripts
-            if not self.options.exclude_transcripts:
-                logger.info("Retrieving transcripts")
-                async for video in self.db.stream("videos"):
-                    global_scope.start_soon(
-                        self._handle_transcript, video, name="Download transcript")
+            finally:
+                await self.db.set("meta/meta", {
+                    "lastUpdated": datetime.now().isoformat(),
+                    "lastPlaylistId": last_playlist_id,
+                    "videoIds":  firestore.ArrayUnion(list(processed_video_ids))
+                })
 
             await anyio.wait_all_tasks_blocked()
-
-            await self.db.set("meta/meta", {
-                "lastUpdated": datetime.now().isoformat(),
-                "lastPlaylistId": last_playlist_id,
-                "videoIds":  list(processed_video_ids)
-            })
 
             global_scope.cancel_scope.cancel()
 
@@ -178,13 +186,13 @@ class Downloader:
         return channel_info
 
     @ traced
-    async def _download_playlist(self, playlist_id):
+    async def _download_playlist(self, playlist_id, channel_name):
         playlist = await self.api.get_playlist_info(playlist_id)
 
         if not playlist:
             return
 
-        if playlist["snippet"]["channelTitle"] != self.YT_CHANNEL_NAME:
+        if playlist["snippet"]["channelTitle"] != channel_name:
             return
 
         result = await self.api.list_playlist_items(playlist_id)

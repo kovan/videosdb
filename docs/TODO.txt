@@ -2,21 +2,12 @@
 
 - poner descripciones de los botones en caso de tablet/escritorio
 
+
+
+
+
+
 ALGORITMO:
-
-- lista a  rotar = playlist ids + video ids
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 * Condiciiones de diseño:
