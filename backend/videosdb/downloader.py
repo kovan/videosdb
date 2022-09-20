@@ -173,10 +173,10 @@ class Downloader:
                             if not video:
                                 continue
 
-                        await self.db.db.collection("videos").document(video_id).update(
+                        await self.db.db.collection("videos").document(video_id).update({
                             "videosdb.playlists",
                             firestore.ArrayUnion([playlist_id])
-                        )
+                        })
                         processed_video_ids.add(video_id)
 
                 if self.options.fill_related_videos and "DEBUG" not in os.environ:
