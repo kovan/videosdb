@@ -32,11 +32,11 @@ async def test_cache_exception_not_cached(db, api):
     doc_ref = db.collection("cache").document(DOC_ID)
     await doc_ref.delete()
 
-    with patch("videosdb.youtube_api.YoutubeAPI._request_base", side_effect=YoutubeAPI.QuotaExceededError(403)):
+    with patch("videosdb.youtube_api.YoutubeAPI._request_base", side_effect=YoutubeAPI.QuotaExceeded(403)):
         try:
             async for i in await api.list_playlist_items("PL3uDtbb3OvDOwkTziO4n6UscjbmUV0ABR"):
                 pass
-        except YoutubeAPI.QuotaExceededError:
+        except YoutubeAPI.QuotaExceeded:
             pass
 
     doc = await doc_ref.get()
