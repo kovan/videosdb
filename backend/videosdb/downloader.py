@@ -147,7 +147,7 @@ class Downloader:
                     await self._fill_related_videos()
 
             except Exception as e:
-                if e in self.QUOTA_EXCEPTIONS:
+                if type(e) in self.QUOTA_EXCEPTIONS:
                     logger.error(e)
                 else:
                     raise e
