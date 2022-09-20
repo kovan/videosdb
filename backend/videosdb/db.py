@@ -78,7 +78,7 @@ class DB:
         return await self._db.document(path).update(*args, **kwargs)
 
     def stream(self, collection_name):
-        return self.Streamer(self, collection_name)
+        return self.Streamer(self._db, collection_name)
 
     def recursive_delete(self, path):
         ref = self._db.document(path)
@@ -90,7 +90,8 @@ class DB:
             self.collection_name = collection_name
 
         def __aiter__(self):
-            self.generator = self.db.collection(self.collection_name).stream()
+            self.generator = self.db._db.collection(
+                self.collection_name).stream()
             return self.stream_generator
 
         async def __anext__(self):
