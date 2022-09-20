@@ -162,11 +162,14 @@ class Downloader:
                 _filter_exceptions(
                     group, self.QUOTA_EXCEPTIONS, logger.error)
             finally:
-                await self.db.set("meta/meta", {
+                new_meta = {
                     "lastUpdated": datetime.now().isoformat(),
                     "lastPlaylistId": last_playlist_id,
-                    "videoIds":  firestore.ArrayUnion(list(processed_video_ids))
-                })
+                }
+                if processed_video_ids:
+                    new_meta["videoIds"] = firestore.ArrayUnion(
+                        list(processed_video_ids))
+                await self.db.update("meta/meta", new_meta)
 
             await anyio.wait_all_tasks_blocked()
 
