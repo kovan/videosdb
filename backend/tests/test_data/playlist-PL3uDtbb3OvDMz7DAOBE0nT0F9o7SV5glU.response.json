@@ -1,0 +1,53 @@
+{
+  "kind": "youtube#playlistListResponse",
+  "etag": "X__yK2SU6jNRm-XT4mSymuY8FkI",
+  "pageInfo": {
+    "totalResults": 1,
+    "resultsPerPage": 5
+  },
+  "items": [
+    {
+      "kind": "youtube#playlist",
+      "etag": "rHP5wVr55yv9jBoCVyLjW4U6ryw",
+      "id": "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU",
+      "snippet": {
+        "publishedAt": "2022-07-06T08:07:44Z",
+        "channelId": "UCcYzLCs3zrQIBVHYA1sK2sw",
+        "title": "How To Be Really Successful? | Sadhguru Answers",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/ZhI-stDIlCE/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/ZhI-stDIlCE/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/ZhI-stDIlCE/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/ZhI-stDIlCE/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/ZhI-stDIlCE/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Sadhguru",
+        "localized": {
+          "title": "How To Be Really Successful? | Sadhguru Answers",
+          "description": ""
+        }
+      }
+    }
+  ]
+}

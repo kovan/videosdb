@@ -1,6 +1,7 @@
 import os
 import pytest
-from videosdb.downloader import DB
+from unittest.mock import patch
+from videosdb.downloader import DB, Downloader
 from dotenv import load_dotenv
 
 
@@ -8,6 +9,7 @@ def setup_module():
     load_dotenv("common/env/testing.txt")
 
 
+DATA_DIR = "backend/tests/test_data/"
 # clear DB:
 # requests.delete(
 #     "http://localhost:8080/emulator/v1/projects/%s/databases/(default)/documents" % os.environ["FIREBASE_PROJECT"])
@@ -85,3 +87,18 @@ async def test_cache(db):
         assert cache_item.get("etag")
         async for page in cache_item.reference.collection("pages").stream():
             assert page
+
+
+@pytest.mark.asyncio
+async def test_download_playlist(db):
+    plid = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+    downloader = Downloader()
+    with open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json") as f:
+        with patch("downloader.http.get") as mock:
+
+            mock.return_value = f.read()
+
+            playlist = await downloader._download_playlist(plid, "Sadhguru")
+            assert playlist == {
+
+            }
