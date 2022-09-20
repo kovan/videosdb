@@ -22,7 +22,7 @@ export default {
 
 
     generate: {
-        //concurrency: 200,
+        concurrency: 200,
         fallback: true,
         crawler: false,
         devtools: true,
@@ -150,8 +150,7 @@ export default {
             vue: {
                 prettify: false
             }
-        },
-        transpile: ["@coreui/vue", "@coreui/utils", "@ag-grid-community/vue"],
+        }
 
     },
 
