@@ -78,7 +78,7 @@ class DB:
         return await self._db.document(path).update(*args, **kwargs)
 
     def stream(self, collection_name):
-        return self.Streamer(self._db, collection_name)
+        return self.Streamer(self, collection_name)
 
     def recursive_delete(self, path):
         ref = self._db.document(path)
