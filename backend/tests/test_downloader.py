@@ -1,6 +1,9 @@
+import os
+import pytest
+
 from dotenv import load_dotenv
 from videosdb.downloader import DB, Downloader
-from videosdb.downloader import DB
+
 import os
 import httpx
 from unittest.mock import MagicMock
@@ -13,6 +16,7 @@ def setup_module():
     load_dotenv("common/env/testing.txt")
 
 
+DATA_DIR = "backend/tests/test_data/"
 # clear DB:
 # requests.delete(
 #     "http://localhost:8080/emulator/v1/projects/%s/databases/(default)/documents" % os.environ["FIREBASE_PROJECT"])
