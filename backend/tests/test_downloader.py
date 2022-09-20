@@ -1,7 +1,12 @@
-import os
-import pytest
-from videosdb.downloader import DB
 from dotenv import load_dotenv
+from videosdb.downloader import DB, Downloader
+from videosdb.downloader import DB
+import os
+import httpx
+from unittest.mock import MagicMock
+import pytest
+
+DATA_DIR = "backend/tests/test_data"
 
 
 def setup_module():
@@ -85,3 +90,18 @@ async def test_cache(db):
         assert cache_item.get("etag")
         async for page in cache_item.reference.collection("pages").stream():
             assert page
+
+
+@pytest.mark.asyncio
+async def test_download_playlist(db, monkeypatch):
+    plid = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+    response = None
+    with open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json") as f:
+        response = f.read()
+
+    monkeypatch.setattr(httpx, "get", MagicMock())
+    downloader = Downloader()
+    playlist = await downloader._download_playlist(plid, "Sadhguru")
+    assert playlist == {
+
+    }
