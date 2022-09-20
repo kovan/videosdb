@@ -71,6 +71,7 @@ class Downloader:
 
             meta_doc = await self.db.get("meta/meta")
             last_playlist_id = None
+            processed_video_ids = set()
             try:
 
                 channel_id = self.YT_CHANNEL_ID
@@ -89,7 +90,6 @@ class Downloader:
                     )
 
                 processed_playlist_ids = set()
-                processed_video_ids = set()
                 excluded_video_ids = set()
 
                 playlist_ids = set()
@@ -165,7 +165,7 @@ class Downloader:
                 await self.db.set("meta/meta", {
                     "lastUpdated": datetime.now().isoformat(),
                     "lastPlaylistId": last_playlist_id,
-                    "videoIds":  list(processed_video_ids)
+                    "videoIds":  firestore.ArrayUnion(list(processed_video_ids))
                 })
 
             await anyio.wait_all_tasks_blocked()
