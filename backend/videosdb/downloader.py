@@ -146,6 +146,13 @@ class Downloader:
                     # separate so that it uses remaining quota
                     await self._fill_related_videos()
 
+                # retrieve pending transcripts
+                if not self.options.exclude_transcripts:
+                    logger.info("Retrieving transcripts")
+                    async for video in self.db.stream("videos"):
+                        global_scope.start_soon(
+                            self._handle_transcript, video, name="Download transcript")
+
             except Exception as e:
                 if type(e) in self.QUOTA_EXCEPTIONS:
                     logger.error(e)
@@ -154,21 +161,14 @@ class Downloader:
             except anyio.ExceptionGroup as group:
                 _filter_exceptions(
                     group, self.QUOTA_EXCEPTIONS, logger.error)
-
-            # retrieve pending transcripts
-            if not self.options.exclude_transcripts:
-                logger.info("Retrieving transcripts")
-                async for video in self.db.stream("videos"):
-                    global_scope.start_soon(
-                        self._handle_transcript, video, name="Download transcript")
+            finally:
+                await self.db.set("meta/meta", {
+                    "lastUpdated": datetime.now().isoformat(),
+                    "lastPlaylistId": last_playlist_id,
+                    "videoIds":  list(processed_video_ids)
+                })
 
             await anyio.wait_all_tasks_blocked()
-
-            await self.db.set("meta/meta", {
-                "lastUpdated": datetime.now().isoformat(),
-                "lastPlaylistId": last_playlist_id,
-                "videoIds":  list(processed_video_ids)
-            })
 
             global_scope.cancel_scope.cancel()
 
