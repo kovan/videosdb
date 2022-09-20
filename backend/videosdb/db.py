@@ -29,9 +29,9 @@ class DB:
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
         self.write_count = 0
-        self.WRITE_LIMIT = 20000
+        self.WRITE_LIMIT = 19500
         self.read_count = 0
-        self.READ_LIMIT = 40000
+        self.READ_LIMIT = 42000
         self._db = self.setup(project, config)
 
     def _meta_ref(self):
@@ -57,7 +57,7 @@ class DB:
 
     def _read_inc(self):
         self.read_count += 1
-        if self.write_count > self.READ_LIMIT:
+        if self.read_count > self.READ_LIMIT:
             raise self.QuotaExceeded()
 
     def _write_inc(self):
@@ -95,5 +95,5 @@ class DB:
             return self.generator
 
         async def __anext__(self):
-            self.db._write_inc()
+            self.db._read_inc()
             yield anext(self.generator)

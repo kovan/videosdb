@@ -162,11 +162,16 @@ class Downloader:
                 _filter_exceptions(
                     group, self.QUOTA_EXCEPTIONS, logger.error)
             finally:
-                await self.db.set("meta/meta", {
+                new_meta = {
                     "lastUpdated": datetime.now().isoformat(),
                     "lastPlaylistId": last_playlist_id,
-                    "videoIds":  firestore.ArrayUnion(list(processed_video_ids))
-                })
+                }
+                if processed_video_ids:
+                    new_meta["videoIds"] = firestore.ArrayUnion(
+                        list(processed_video_ids))
+
+                # use _db directly to bypass quota checks:
+                await self.db._db.document("meta/meta").update(new_meta)
 
             await anyio.wait_all_tasks_blocked()
 
