@@ -80,9 +80,9 @@ class DB:
     def stream(self, collection_name):
         return self.Streamer(self, collection_name)
 
-    def recursive_delete(self, path):
+    async def recursive_delete(self, path):
         ref = self._db.document(path)
-        self._db.recursive_delete(path)
+        return await self._db.recursive_delete(path)
 
     class Streamer:
         def __init__(self, db, collection_name):
