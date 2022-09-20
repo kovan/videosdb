@@ -92,8 +92,8 @@ class DB:
         def __aiter__(self):
             self.generator = self.db._db.collection(
                 self.collection_name).stream()
-            return self.stream_generator
+            return self.generator
 
         async def __anext__(self):
             self.db._write_inc()
-            yield anext(self.stream_generator)
+            yield anext(self.generator)
