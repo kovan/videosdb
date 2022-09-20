@@ -32,7 +32,7 @@ steps:
     name: docker
     args:
       - cp
-      - generate:/src/dist
+      - generate:/app/dist
       - frontend/
 
 
