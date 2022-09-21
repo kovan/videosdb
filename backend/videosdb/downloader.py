@@ -142,7 +142,7 @@ class Downloader:
                                         "lastVideoId": video_id
                                     }
                                 }
-                                self.db.noquota_set(
+                                await self.db.noquota_set(
                                     "playlists/" + playlist_id, playlist, merge=True)
                             raise e
 
@@ -153,7 +153,7 @@ class Downloader:
                                     "lastPlaylistId": playlist_id
                                 }
                             }
-                            self.db.noquota_set(
+                            await self.db.noquota_set(
                                 "channel_infos/" + channel_id, channel, merge=True)
                         raise e
 
