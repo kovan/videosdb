@@ -29,9 +29,9 @@ class DB:
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
         self.write_count = 0
-        self.WRITE_LIMIT = 19500
+        self.WRITE_LIMIT = 19500  # leave 500 for state writes
         self.read_count = 0
-        self.READ_LIMIT = 42000
+        self.READ_LIMIT = 35000  # leave 15000 for yarn generate
         self._db = self.setup(project, config)
 
     def _meta_ref(self):
