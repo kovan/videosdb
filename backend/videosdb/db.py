@@ -28,10 +28,12 @@ class DB:
     def __init__(self):
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
+        self.WRITE_QUOTA = 20000
+        self.READ_QUOTA = 50000
         self.write_count = 0
-        self.WRITE_LIMIT = 19500  # leave 500 for state writes
+        self.write_limit = self.READ_QUOTA - 500  # leave 500 for state writes
         self.read_count = 0
-        self.READ_LIMIT = 35000  # leave 15000 for yarn generate
+        self.read_limit = self.READ_QUOTA - 5000  # start with this
         self._db = self.setup(project, config)
 
     def _meta_ref(self):
@@ -57,12 +59,12 @@ class DB:
 
     def _read_inc(self):
         self.read_count += 1
-        if self.read_count > self.READ_LIMIT:
+        if self.read_count > self.read_limit:
             raise self.QuotaExceeded()
 
     def _write_inc(self):
         self.write_count += 1
-        if self.write_count > self.WRITE_LIMIT:
+        if self.write_count > self.write_limit:
             raise self.QuotaExceeded()
 
     async def set(self, path, *args, **kwargs):

@@ -123,6 +123,11 @@ class Downloader:
                                         excluded_video_ids.add(video_id)
                                         continue
 
+                                    # update limits, leaving quota for yarn generate and visitors
+                                    self.db.read_limit = self.db.READ_QUOTA - \
+                                        len(processed_playlist_ids) - \
+                                        len(processed_video_ids) - 5000
+
                                 if video_id in excluded_video_ids:
                                     continue
 
