@@ -72,10 +72,10 @@ async function generateCache(dbOptions) {
 
         }
 
-        async function download(db, type, startAfter = null) {
+        async function download(db, type, startAfterParam = null) {
             let q = query(collection(db, type), limit(PAGE_SIZE))
-            if (startAfter)
-                q = query(q, startAfter(startAfter))
+            if (startAfterParam)
+                q = query(q, startAfter(startAfterParam))
             let q_results = await getDocs(q)
 
             q_results.forEach((item) => {

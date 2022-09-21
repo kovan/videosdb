@@ -96,7 +96,8 @@ b-container.m-0.p-0.mx-auto
                     v-for='tag in this.video.snippet.tags',
                     :key='tag'
                 )
-                    b-button.mt-2(size='sm', pill)
+                    b-badge(variant="light")
+
                         | {{ tag }}
 
         .my-4(v-if='this.video.videosdb.transcript && this.$config.showTranscripts')
