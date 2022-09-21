@@ -47,7 +47,7 @@ export default {
 
 
         const q_category = query(collection($db, "playlists"), where('videosdb.slug', '==', params.slug))
-        let result = await getDocs(q)
+        let result = await getDocs(q_category)
         let category = result.docs[0].data()
         return { category }
     },

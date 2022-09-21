@@ -1,7 +1,7 @@
 // import firebase from 'firebase/compat/app';
 // //import 'firebase/firestore/memory';
 // import { firestore } from 'firebase/compat/firestore';
-// import { formatISO, parseISO } from 'date-fns'
+import { formatISO, parseISO } from 'date-fns'
 
 // import { initializeApp } from "firebase/compat/app";
 
@@ -13,7 +13,8 @@ import {
     orderBy,
     doc,
     connectFirestoreEmulator,
-    query, collection
+    query, collection,
+    Timestamp
 } from 'firebase/firestore/lite';
 
 const firebase_sadhguru = {
@@ -161,11 +162,11 @@ function getDb(config) {
 function formatDate(date) {
 
     let result = null
-    //console.log("DATE IS " + JSON.stringify(date))
-    if (date instanceof firebase.firestore.Timestamp) {
+
+    if (date instanceof Timestamp) {
         result = date.toDate()
     } else if (typeof date == "object" || date instanceof Object) {
-        result = new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate()
+        result = new Timestamp(date.seconds, date.nanoseconds).toDate()
     } else if (typeof date == "string" || date instanceof String) {
         result = parseISO(date)
     }
@@ -181,10 +182,10 @@ function dateToISO(date) {
         return date
     if (date instanceof Date)
         return formatISO(date)
-    if (date instanceof firebase.firestore.Timestamp)
+    if (date instanceof Timestamp)
         return formatISO(date.toDate())
     if (date instanceof Object)
-        return formatISO(new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate())
+        return formatISO(new Timestamp(date.seconds, date.nanoseconds).toDate())
 
     throw TypeError()
 

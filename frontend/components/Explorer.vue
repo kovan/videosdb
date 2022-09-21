@@ -261,7 +261,7 @@ export default {
                 // this.logs.push('--- doQuery ---- inside lock')
                 //try {
 
-                let q = query(collection(self.db, 'videos'))
+                let q = query(collection(self.$db, 'videos'))
                 if (self.ordering)
                     q = query(q, orderBy(self.ordering.field, self.ordering.direction))
 
