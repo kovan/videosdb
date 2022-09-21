@@ -80,7 +80,18 @@ import { parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
 import { getVuexData } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
-import { orderBy } from 'lodash'
+import { orderBy as lodashOrderBy } from 'lodash'
+import {
+    getDoc,
+    getDocs,
+    limit,
+    orderBy,
+    where,
+    startAfter,
+    doc,
+    query, collection
+} from 'firebase/firestore/lite'
+
 
 export default {
     fetchKey: 'site-sidebar',
@@ -125,7 +136,7 @@ export default {
                 use_count: 'desc',
                 last_updated: 'desc',
             }
-            this.categories = orderBy(
+            this.categories = lodashOrderBy(
                 this.categories,
                 [this.ordering],
                 [directions[this.ordering]]
@@ -138,7 +149,7 @@ export default {
             const video_ids = this.$store.state.meta_data.videoIds
 
             let video_id = video_ids[Math.floor(Math.random() * video_ids.length)]
-            const video_doc = await this.$db.collection('videos').doc(video_id).get()
+            const video_doc = await getDoc(doc(this.$db, "videos/" + video_id))
 
             let video = video_doc.data()
 

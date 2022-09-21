@@ -1,16 +1,19 @@
-import firebase from 'firebase/compat/app';
-//import 'firebase/firestore/memory';
-import { firestore } from 'firebase/compat/firestore';
-import { formatISO, parseISO } from 'date-fns'
+// import firebase from 'firebase/compat/app';
+// //import 'firebase/firestore/memory';
+// import { firestore } from 'firebase/compat/firestore';
+// import { formatISO, parseISO } from 'date-fns'
 
-import { initializeApp } from "firebase/compat/app";
+// import { initializeApp } from "firebase/compat/app";
+
+import { initializeApp, getApp } from "firebase/app";
 import {
     getFirestore,
     getDoc,
-    query,
-    orderBy,
     getDocs,
-    doc
+    orderBy,
+    doc,
+    connectFirestoreEmulator,
+    query, collection
 } from 'firebase/firestore/lite';
 
 const firebase_sadhguru = {
@@ -94,7 +97,7 @@ async function getFirebaseSettings(config) {
 
 
 
-var db = null
+
 var vuex_data = null
 
 async function getVuexData(db) {
@@ -102,12 +105,12 @@ async function getVuexData(db) {
         return vuex_data
 
     console.log("getting vuex data")
-    const query = query(db, orderBy('videosdb.lastUpdated', 'desc'))
+    const q = query(collection(db, "playlists"), orderBy('videosdb.lastUpdated', 'desc'))
     const meta_query = doc(db, "meta/meta")
 
     let [results, meta_results] = await Promise.all([
-        getDocs(query),
-        getDocs(meta_query),
+        getDocs(q),
+        getDoc(meta_query),
     ])
     let categories = []
     results.forEach((doc) => {
@@ -129,29 +132,27 @@ async function getVuexData(db) {
     return vuex_data
 }
 
+var db = null
+
+
 function getDb(config) {
     if (db)
         return db
 
     let app = null
-    if (firebase.apps.length == 0) {
-        app = firebase.initializeApp({
-            apiKey: config.apiKey,
-            authDomain: config.authDomain,
-            projectId: config.projectId
-        });
-        db = app.firestore();
+    try {
+        app = getApp()
+        db = getFirestore()
+    } catch {
+        app = initializeApp(config)
+        db = getFirestore()
         console.log(process.env)
         if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
             console.info("Using FIREBASE EMULATOR")
-            db.useEmulator(...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
+            connectFirestoreEmulator(db, ...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
         } else {
             console.info("Using LIVE database.")
         }
-    } else {
-        console.debug("Reusing app")
-        app = firebase.apps[0]
-        db = app.firestore();
     }
 
     return db;
@@ -195,9 +196,9 @@ async function dereferenceDb(db, id_list, collection) {
 
     for (let _id of id_list) {
         let doc_ref = doc(db, `${collection}/${_id}`)
-        let doc = await getDoc(doc_ref)
-        if (doc.exists) {
-            items.push(doc.data())
+        let doc_snapshot = await getDoc(doc_ref)
+        if (doc_snapshot.exists) {
+            items.push(doc_snapshot.data())
         }
 
     }
