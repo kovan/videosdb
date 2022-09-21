@@ -21,16 +21,30 @@ import youtube_transcript_api
 logger = logging.getLogger(__name__)
 
 
-def _filter_exceptions(group: anyio.ExceptionGroup, exception_types, handler_func):
-    unhandled_exceptions = []
-    for e in group.exceptions:
-        if type(e) in exception_types:
-            handler_func(e)
-        else:
-            unhandled_exceptions.append(e)
+def _contains_exceptions(exception_types, exception):
+    if type(exception) == anyio.ExceptionGroup:
+        for e in exception.exceptions:
+            if type(e) in exception_types:
+                return True
+    elif type(exception) in exception_types:
+        return True
 
-    if unhandled_exceptions:
-        raise anyio.ExceptionGroup(unhandled_exceptions)
+    return False
+
+
+def continue_from_item(seq, item):
+    seq.sort()
+    if not item:
+        return seq
+
+    # start from where we left +1:
+    try:
+        i = seq.index(item)
+        i += 1
+        seq = seq[i:] + seq[:i]
+    except ValueError:
+        logger.warn("Item %s not in list %s" % (item, seq))
+    return seq
 
 
 class Downloader:
@@ -69,78 +83,74 @@ class Downloader:
             global_scope.start_soon(self._print_debug_info,
                                     name="Debug info")
 
-            meta_doc = await self.db.get("meta/meta")
-            last_playlist_id = None
             processed_video_ids = set()
             try:
 
                 channel_id = self.YT_CHANNEL_ID
-                channel_info = await self._retrieve_channel(channel_id)
-                all_uploads_playlist_id = channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
-                channel_name = str(channel_info["snippet"]["title"])
+                channel = await self._retrieve_channel(channel_id)
+                all_uploads_playlist_id = channel["contentDetails"]["relatedPlaylists"]["uploads"]
+                channel_name = str(channel["snippet"]["title"])
 
-                if "DEBUG" in os.environ:
-                    playlists_ids_stream = stream.iterate(
-                        self.api.list_channelsection_playlist_ids(channel_id)
-                    )
-                else:
-                    playlists_ids_stream = stream.merge(
-                        self.api.list_channelsection_playlist_ids(channel_id),
-                        self.api.list_channel_playlist_ids(channel_id)
-                    )
-
+                last_playlist_id = channel.get("lastPlaylistId")
                 processed_playlist_ids = set()
                 excluded_video_ids = set()
-
-                playlist_ids = set()
-                async with playlists_ids_stream.stream() as streamer:
-                    async for playlist_id in streamer:
-                        playlist_ids.add(playlist_id)
-
-                playlist_ids = list(playlist_ids)
-                playlist_ids.sort()
-
-                last_playlist_id = meta_doc.to_dict().get("lastPlaylistId")
-
-                # start from where we left it:
-                if last_playlist_id:
-                    try:
-                        i = playlist_ids.index(last_playlist_id)
-                        playlist_ids = playlist_ids[i:] + playlist_ids[:i]
-                    except ValueError:
-                        pass
+                playlist_ids = await self._retrieve_playlist_ids(channel_id)
 
                 # main iterations:
-                for playlist_id in playlist_ids:
+                for playlist_id in continue_from_item(playlist_ids, last_playlist_id):
 
                     if playlist_id in processed_playlist_ids:
                         continue
                     processed_playlist_ids.add(playlist_id)
-                    last_playlist_id = playlist_id
 
-                    playlist = await self._download_playlist(playlist_id, channel_name)
-                    if not playlist:
-                        continue
-
-                    if playlist_id != all_uploads_playlist_id:
-                        await self._create_playlist(playlist)
-
-                    # create videos:
-                    for video_id in playlist["videosdb"]["videoIds"]:
-                        if video_id not in processed_video_ids:
-                            processed_video_ids.add(video_id)
-                            video = await self._create_video(video_id, [playlist_id])
-                            if not video:
-                                excluded_video_ids.add(video_id)
-                                continue
-
-                        if video_id in excluded_video_ids:
+                    try:
+                        playlist = await self._download_playlist(playlist_id, channel_name)
+                        if not playlist:
                             continue
 
-                        await self.db.update("videos/" + video_id, {
-                            "videosdb.playlists":
-                            firestore.ArrayUnion([playlist_id])
-                        })
+                        if playlist_id != all_uploads_playlist_id:
+                            await self._create_playlist(playlist)
+
+                        # create videos:
+
+                        try:
+                            last_video_id = playlist.get("lastVideoId")
+                            for video_id in continue_from_item(playlist["videosdb"]["videoIds"], last_video_id):
+                                if video_id not in processed_video_ids:
+                                    processed_video_ids.add(video_id)
+                                    video = await self._create_video(video_id, [playlist_id])
+                                    if not video:
+                                        excluded_video_ids.add(video_id)
+                                        continue
+
+                                if video_id in excluded_video_ids:
+                                    continue
+
+                                await self.db.update("videos/" + video_id, {
+                                    "videosdb.playlists":
+                                    firestore.ArrayUnion([playlist_id])
+                                })
+                        except Exception as e:
+                            if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
+                                playlist |= {
+                                    "videosdb": {
+                                        "lastVideoId": video_id
+                                    }
+                                }
+                                self.db.noquota_set(
+                                    "playlists/" + playlist_id, playlist, merge=True)
+                            raise e
+
+                    except Exception as e:
+                        if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
+                            channel |= {
+                                "videosdb": {
+                                    "lastPlaylistId": playlist_id
+                                }
+                            }
+                            self.db.noquota_set(
+                                "channel_infos/" + channel_id, channel, merge=True)
+                        raise e
 
                 if self.options.fill_related_videos and "DEBUG" not in os.environ:
                     # separate so that it uses remaining quota
@@ -154,30 +164,44 @@ class Downloader:
                             self._handle_transcript, video, name="Download transcript")
 
             except Exception as e:
-                if type(e) in self.QUOTA_EXCEPTIONS:
+                if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
                     logger.error(e)
                 else:
                     raise e
-            except anyio.ExceptionGroup as group:
-                _filter_exceptions(
-                    group, self.QUOTA_EXCEPTIONS, logger.error)
             finally:
                 new_meta = {
-                    "lastUpdated": datetime.now().isoformat(),
-                    "lastPlaylistId": last_playlist_id,
+                    "lastUpdated": datetime.now().isoformat()
                 }
                 if processed_video_ids:
                     new_meta["videoIds"] = firestore.ArrayUnion(
                         list(processed_video_ids))
 
-                # use _db directly to bypass quota checks:
-                await self.db._db.document("meta/meta").update(new_meta)
+                await self.db.noquota_update("meta/meta", new_meta)
 
             await anyio.wait_all_tasks_blocked()
 
             global_scope.cancel_scope.cancel()
 
         logger.info("Sync finished")
+
+    @traced
+    async def _retrieve_playlist_ids(self, channel_id):
+        if "DEBUG" in os.environ:
+            playlists_ids_stream = stream.iterate(
+                self.api.list_channelsection_playlist_ids(channel_id)
+            )
+        else:
+            playlists_ids_stream = stream.merge(
+                self.api.list_channelsection_playlist_ids(channel_id),
+                self.api.list_channel_playlist_ids(channel_id)
+            )
+
+        playlist_ids = set()
+        async with playlists_ids_stream.stream() as streamer:
+            async for playlist_id in streamer:
+                playlist_ids.add(playlist_id)
+
+        return list(playlist_ids)
 
     @ traced
     async def _retrieve_channel(self, channel_id):
@@ -223,7 +247,8 @@ class Downloader:
                 "videoCount": video_count,
                 "lastUpdated": last_updated,
                 "lastRetrieved": datetime.now().isoformat(),
-                "videoIds": video_ids
+                "videoIds": video_ids,
+                "lastVideoRetrieved": None
             }
         }
 

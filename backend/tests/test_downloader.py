@@ -102,8 +102,9 @@ async def test_download_playlist(db, monkeypatch):
     response = None
     with open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json") as f:
         response = f.read()
-
-    monkeypatch.setattr(httpx, "get", MagicMock())
+    mock = MagicMock()
+    mock.return_value = response
+    monkeypatch.setattr(httpx, "get", mock)
     downloader = Downloader()
     playlist = await downloader._download_playlist(plid, "Sadhguru")
     assert playlist == {

@@ -97,3 +97,9 @@ class DB:
         async def __anext__(self):
             self.db._read_inc()
             yield anext(self.generator)
+
+    async def noquota_set(self, path, *args, **kwargs):
+        return await self._db.document(path).set(*args, **kwargs)
+
+    async def noquota_update(self, path, *args, **kwargs):
+        return await self._db.document(path).update(*args, **kwargs)
