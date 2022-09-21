@@ -31,7 +31,7 @@ div
     .p-1.px-2.mt-2.text-center
         strong {{ this.$config.subtitle }}
         br
-        small.align-middle  {{ this.$store.state.meta_data.videoIds.length }} videos in the database. Last updated: {{ format(last_updated) }}
+        small.align-middle  {{video_count }} videos in the database. Last updated: {{ format(last_updated) }}
     b-container
         .row
             LazyHydrate(when-visible)
@@ -76,11 +76,24 @@ div
 function getRandomInt(max) {
     return Math.floor(Math.random() * max)
 }
+import {
+    getDoc,
+    getDocs,
+    limit,
+    orderBy,
+    where,
+    startAfter,
+    doc,
+    query, collection
+} from 'firebase/firestore/lite'
+import { initializeApp, getApp } from "firebase/app";
 import { parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
 import { getVuexData } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
-import { orderBy } from 'lodash'
+import { orderBy as lodashOrderBy } from 'lodash'
+
+
 
 export default {
     fetchKey: 'site-sidebar',
@@ -100,6 +113,7 @@ export default {
             title: this.$config.title,
             subtitle: this.$config.subtitle,
             last_updated: null,
+            video_count: 0,
             ordering_options: [
                 {
                     text: 'Last updated',
@@ -125,7 +139,7 @@ export default {
                 use_count: 'desc',
                 last_updated: 'desc',
             }
-            this.categories = orderBy(
+            this.categories = lodashOrderBy(
                 this.categories,
                 [this.ordering],
                 [directions[this.ordering]]
@@ -138,7 +152,7 @@ export default {
             const video_ids = this.$store.state.meta_data.videoIds
 
             let video_id = video_ids[Math.floor(Math.random() * video_ids.length)]
-            const video_doc = await this.$db.collection('videos').doc(video_id).get()
+            const video_doc = await getDoc(doc(this.$db, "videos/" + video_id))
 
             let video = video_doc.data()
 
@@ -160,6 +174,7 @@ export default {
         },
     },
     async fetch() {
+
         if (
             typeof this.$store.state.categories == 'undefined' ||
             typeof this.$store.state.meta_data.lastUpdated == 'undefined'
@@ -170,6 +185,7 @@ export default {
 
         this.categories = [...this.$store.state.categories]
         this.last_updated = this.$store.state.meta_data.lastUpdated
+        this.video_count = this.$store.state.meta_data.videoIds.length
     },
 }
 </script>

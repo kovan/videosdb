@@ -6,6 +6,7 @@
    - quitar la fecha de actualización de los videos y listas.
    - sacar las IDs de las ultimas playlist y videos descargados a una nueva tabla "state" (dict plid -> vid)
    - quizá ordenar listas de categorias, videoids y playlisids para que los payload.js generados sean siempre iguales.
+- docker tag not working?
 
 
 

@@ -76,6 +76,7 @@ export default {
         bootstrapVueCSS: true,
         componentPlugins: [
             "LayoutPlugin",
+            "BadgePlugin",
             "FormSelectPlugin",
             "FormInputPlugin",
             "ImagePlugin",

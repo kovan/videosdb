@@ -1,8 +1,21 @@
-import firebase from 'firebase/app';
-//import 'firebase/firestore/memory';
-import { firestore } from 'firebase/firestore';
+// import firebase from 'firebase/compat/app';
+// //import 'firebase/firestore/memory';
+// import { firestore } from 'firebase/compat/firestore';
 import { formatISO, parseISO } from 'date-fns'
-import logger from '@nuxtjs/sitemap/lib/logger';
+
+// import { initializeApp } from "firebase/compat/app";
+
+import { initializeApp, getApp } from "firebase/app";
+import {
+    getFirestore,
+    getDoc,
+    getDocs,
+    orderBy,
+    doc,
+    connectFirestoreEmulator,
+    query, collection,
+    Timestamp
+} from 'firebase/firestore/lite';
 
 const firebase_sadhguru = {
     apiKey: "AIzaSyAhKg1pGeJnL_ZyD1wv7ZPXwfZ6_7OBRa8",
@@ -85,7 +98,7 @@ async function getFirebaseSettings(config) {
 
 
 
-var db = null
+
 var vuex_data = null
 
 async function getVuexData(db) {
@@ -93,15 +106,12 @@ async function getVuexData(db) {
         return vuex_data
 
     console.log("getting vuex data")
-    const query = db
-        .collection('playlists')
-        .orderBy('videosdb.lastUpdated', 'desc')
-
-    const meta_query = db.collection('meta').doc('meta')
+    const q = query(collection(db, "playlists"), orderBy('videosdb.lastUpdated', 'desc'))
+    const meta_query = doc(db, "meta/meta")
 
     let [results, meta_results] = await Promise.all([
-        query.get(),
-        meta_query.get(),
+        getDocs(q),
+        getDoc(meta_query),
     ])
     let categories = []
     results.forEach((doc) => {
@@ -123,29 +133,27 @@ async function getVuexData(db) {
     return vuex_data
 }
 
+var db = null
+
+
 function getDb(config) {
     if (db)
         return db
 
     let app = null
-    if (firebase.apps.length == 0) {
-        app = firebase.initializeApp({
-            apiKey: config.apiKey,
-            authDomain: config.authDomain,
-            projectId: config.projectId
-        });
-        db = app.firestore();
+    try {
+        app = getApp()
+        db = getFirestore()
+    } catch {
+        app = initializeApp(config)
+        db = getFirestore()
         console.log(process.env)
         if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
             console.info("Using FIREBASE EMULATOR")
-            db.useEmulator(...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
+            connectFirestoreEmulator(db, ...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
         } else {
             console.info("Using LIVE database.")
         }
-    } else {
-        console.debug("Reusing app")
-        app = firebase.apps[0]
-        db = app.firestore();
     }
 
     return db;
@@ -154,11 +162,11 @@ function getDb(config) {
 function formatDate(date) {
 
     let result = null
-    //console.log("DATE IS " + JSON.stringify(date))
-    if (date instanceof firebase.firestore.Timestamp) {
+
+    if (date instanceof Timestamp) {
         result = date.toDate()
     } else if (typeof date == "object" || date instanceof Object) {
-        result = new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate()
+        result = new Timestamp(date.seconds, date.nanoseconds).toDate()
     } else if (typeof date == "string" || date instanceof String) {
         result = parseISO(date)
     }
@@ -174,24 +182,24 @@ function dateToISO(date) {
         return date
     if (date instanceof Date)
         return formatISO(date)
-    if (date instanceof firebase.firestore.Timestamp)
+    if (date instanceof Timestamp)
         return formatISO(date.toDate())
     if (date instanceof Object)
-        return formatISO(new firebase.firestore.Timestamp(date.seconds, date.nanoseconds).toDate())
+        return formatISO(new Timestamp(date.seconds, date.nanoseconds).toDate())
 
     throw TypeError()
 
 }
 
 
-async function dereferenceDb(id_list, collection) {
+async function dereferenceDb(db, id_list, collection) {
     let items = []
 
     for (let _id of id_list) {
-        let doc_ref = collection.doc(_id)
-        let doc = await doc_ref.get()
-        if (doc.exists) {
-            items.push(doc.data())
+        let doc_ref = doc(db, `${collection}/${_id}`)
+        let doc_snapshot = await getDoc(doc_ref)
+        if (doc_snapshot.exists) {
+            items.push(doc_snapshot.data())
         }
 
     }

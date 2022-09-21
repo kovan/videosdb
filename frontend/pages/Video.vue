@@ -96,7 +96,8 @@ b-container.m-0.p-0.mx-auto
                     v-for='tag in this.video.snippet.tags',
                     :key='tag'
                 )
-                    b-button.mt-2(size='sm', pill)
+                    b-badge(variant="light")
+
                         | {{ tag }}
 
         .my-4(v-if='this.video.videosdb.transcript && this.$config.showTranscripts')
@@ -107,6 +108,16 @@ b-container.m-0.p-0.mx-auto
 <script>
 import LazyHydrate from 'vue-lazy-hydration'
 import { dereferenceDb, videoToStructuredData } from '~/utils/utils'
+import {
+    getDoc,
+    getDocs,
+    limit,
+    orderBy,
+    where,
+    startAfter,
+    doc,
+    query, collection
+} from 'firebase/firestore/lite'
 
 export default {
     components: {
@@ -149,19 +160,18 @@ export default {
         if (payload) {
             video = payload.obj
             store.commit('setInitial', payload.vuex_data)
-        } else {
-            const q = await $db
-                .collection('videos')
-                .where('videosdb.slug', '==', params.slug)
-                .get()
 
-            video = q.docs[0].data()
+        } else {
+
+            const q = query(collection($db, "videos"), where('videosdb.slug', '==', params.slug))
+            let result = await getDocs(q)
+            video = result.docs[0].data()
         }
 
         if ('playlists' in video.videosdb && video.videosdb.playlists.length) {
-            let dereferenced = await dereferenceDb(
+            let dereferenced = await dereferenceDb($db,
                 video.videosdb.playlists,
-                $db.collection('playlists'))
+                "playlists")
             video.videosdb.playlists = dereferenced
 
         }
@@ -170,9 +180,9 @@ export default {
             'related_videos' in video.videosdb &&
             video.videosdb.related_videos.length
         ) {
-            video.videosdb.related_videos = await dereferenceDb(
+            video.videosdb.related_videos = await dereferenceDb($db,
                 video.videosdb.related_videos,
-                $db.collection('videos')
+                "videos"
             )
         }
 

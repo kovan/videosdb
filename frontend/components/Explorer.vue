@@ -53,6 +53,16 @@
 import LazyHydrate from 'vue-lazy-hydration'
 import Loading from '~/components/Loading.vue'
 import { Mutex } from 'async-mutex'
+import {
+    getDoc,
+    getDocs,
+    limit,
+    orderBy,
+    where,
+    startAfter,
+    doc,
+    query, collection
+} from 'firebase/firestore/lite'
 
 export default {
     name: 'Explorer',
@@ -251,16 +261,16 @@ export default {
                 // this.logs.push('--- doQuery ---- inside lock')
                 //try {
 
-                let query = self.$db.collection('videos')
+                let q = query(collection(self.$db, 'videos'))
                 if (self.ordering)
-                    query = query.orderBy(self.ordering.field, self.ordering.direction)
+                    q = query(q, orderBy(self.ordering.field, self.ordering.direction))
 
                 if (self.category) {
-                    query = query.where(
+                    q = query(q, where(
                         'videosdb.playlists',
                         'array-contains',
                         self.category['id']
-                    )
+                    ))
                 }
 
                 // if (this.start_date) {
@@ -268,23 +278,23 @@ export default {
                 // }
 
                 if (self.tag)
-                    query = query.where('snippet.tags', 'array-contains', self.tag)
+                    q = query(q, where('snippet.tags', 'array-contains', self.tag))
 
                 let video_count = Object.keys(self.videos).length
                 if (!self.query_cursor && video_count) {
-                    let limit = video_count + PAGE_SIZE
-                    query = query.limit(limit)
+                    let max_count = video_count + PAGE_SIZE
+                    q = query(q, limit(max_count))
                     // this.logs.push('querying for ', limit)
                 } else {
-                    query = query.limit(PAGE_SIZE)
+                    q = query(q, limit(PAGE_SIZE))
                 }
 
                 if (self.query_cursor) {
-                    query = query.startAfter(self.query_cursor)
+                    q = query(q, startAfter(self.query_cursor))
                     // this.logs.push('aplying cursor')
                 }
 
-                let results = await query.get()
+                let results = await getDocs(q)
 
                 //  Nuxt cant serialize the resulting objects
                 if (process.server) {
