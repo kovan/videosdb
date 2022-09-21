@@ -1,8 +1,17 @@
-import firebase from 'firebase/app';
+import firebase from 'firebase/compat/app';
 //import 'firebase/firestore/memory';
-import { firestore } from 'firebase/firestore';
+import { firestore } from 'firebase/compat/firestore';
 import { formatISO, parseISO } from 'date-fns'
-import logger from '@nuxtjs/sitemap/lib/logger';
+
+import { initializeApp } from "firebase/compat/app";
+import {
+    getFirestore,
+    getDoc,
+    query,
+    orderBy,
+    getDocs,
+    doc
+} from 'firebase/firestore/lite';
 
 const firebase_sadhguru = {
     apiKey: "AIzaSyAhKg1pGeJnL_ZyD1wv7ZPXwfZ6_7OBRa8",
@@ -93,15 +102,12 @@ async function getVuexData(db) {
         return vuex_data
 
     console.log("getting vuex data")
-    const query = db
-        .collection('playlists')
-        .orderBy('videosdb.lastUpdated', 'desc')
-
-    const meta_query = db.collection('meta').doc('meta')
+    const query = query(db, orderBy('videosdb.lastUpdated', 'desc'))
+    const meta_query = doc(db, "meta/meta")
 
     let [results, meta_results] = await Promise.all([
-        query.get(),
-        meta_query.get(),
+        getDocs(query),
+        getDocs(meta_query),
     ])
     let categories = []
     results.forEach((doc) => {
@@ -184,12 +190,12 @@ function dateToISO(date) {
 }
 
 
-async function dereferenceDb(id_list, collection) {
+async function dereferenceDb(db, id_list, collection) {
     let items = []
 
     for (let _id of id_list) {
-        let doc_ref = collection.doc(_id)
-        let doc = await doc_ref.get()
+        let doc_ref = doc(db, `${collection}/${_id}`)
+        let doc = await getDoc(doc_ref)
         if (doc.exists) {
             items.push(doc.data())
         }

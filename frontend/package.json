@@ -22,7 +22,7 @@
         "bootstrap-vue": "^2",
         "cacheable-lookup": "^6.0.1",
         "date-fns": "^2.26.0",
-        "firebase": "8",
+        "firebase": "^9.10",
         "lodash": "^4.17.21",
         "node-cache": "^5.1.2",
         "nuxt": "^2.15",
