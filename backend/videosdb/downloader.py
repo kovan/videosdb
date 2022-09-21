@@ -175,6 +175,9 @@ class Downloader:
                 if processed_video_ids:
                     new_meta["videoIds"] = firestore.ArrayUnion(
                         list(processed_video_ids))
+                if processed_playlist_ids:
+                    new_meta["playlistIds"] = firestore.ArrayUnion(
+                        list(processed_playlist_ids))
 
                 await self.db.noquota_update("meta/meta", new_meta)
 

@@ -5,14 +5,18 @@ steps:
 
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
-  args: ['-c', 'docker pull gcr.io/worpdress-279321/$_IMAGE-$BRANCH_NAME:latest || exit 0']
+  args: ['-c', 'docker pull gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest || exit 0']
 
 - name: 'gcr.io/cloud-builders/docker'
   dir: "$_IMAGE"
   args: [
             'build',
-            '-t', 'gcr.io/worpdress-279321/$_IMAGE-$BRANCH_NAME:latest',
-            '--cache-from', 'gcr.io/worpdress-279321/$_IMAGE-$BRANCH_NAME:latest',
+            '-t', 'gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:$COMMIT_SHA',
+            '--cache-from', 'gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest',
             '.'
         ]
-images: ['gcr.io/worpdress-279321/$_IMAGE-$BRANCH_NAME:latest']
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['-t', 'docker pull gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:$COMMIT_SHA gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest']
+
+images: ['gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest']
