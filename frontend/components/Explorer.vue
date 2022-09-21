@@ -282,8 +282,8 @@ export default {
 
                 let video_count = Object.keys(self.videos).length
                 if (!self.query_cursor && video_count) {
-                    let limit = video_count + PAGE_SIZE
-                    q = query(q, limit(limit))
+                    let max_count = video_count + PAGE_SIZE
+                    q = query(q, limit(max_count))
                     // this.logs.push('querying for ', limit)
                 } else {
                     q = query(q, limit(PAGE_SIZE))
