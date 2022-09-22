@@ -53,12 +53,14 @@ class DB:
     def _read_inc(self):
         self.read_count += 1
         if self.read_count > self.read_limit:
-            raise self.QuotaExceeded()
+            raise self.QuotaExceeded(
+                "Surpassed READ ops limit of %s" % self.read_limit)
 
     def _write_inc(self):
         self.write_count += 1
         if self.write_count > self.write_limit:
-            raise self.QuotaExceeded()
+            raise self.QuotaExceeded(
+                "Surpassed WRITE ops limit of %s" % self.write_limit)
 
     async def set(self, path, *args, **kwargs):
         self._write_inc()
