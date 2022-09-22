@@ -1,7 +1,8 @@
 {
   "projects": {
-    "default": "videosdb-nithyananda",
-    "nithyananda": "videosdb-nithyananda"
+    "default": "videosdb-testing",
+    "nithyananda": "videosdb-nithyananda",
+    "sadhguru": "videosdb-firebase"
   },
   "targets": {},
   "etags": {}
