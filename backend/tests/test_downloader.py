@@ -124,7 +124,7 @@ async def test_download_playlist(mock_get):
 
 @pytest.mark.asyncio
 @patch("videosdb.youtube_api.httpx.get")
-async def test_create_video(mock_get):
+async def test_create_video(mock_get, db):
     video_id = "HADeWBBb1so"
     with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
         response = json.load(f)
@@ -139,3 +139,6 @@ async def test_create_video(mock_get):
 
     assert video["kind"] == "youtube#video"
     assert video["id"] == video_id
+
+    doc = await db.document("videos/" + video_id).get()
+    assert doc.exists
