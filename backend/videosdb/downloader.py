@@ -86,7 +86,6 @@ class Downloader:
 
                 channel_id = self.YT_CHANNEL_ID
                 channel = await self._retrieve_channel(channel_id)
-                all_uploads_playlist_id = channel["contentDetails"]["relatedPlaylists"]["uploads"]
                 channel_name = str(channel["snippet"]["title"])
 
                 processed_playlist_ids = set()

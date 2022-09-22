@@ -1,0 +1,94 @@
+{
+  "kind": "youtube#videoListResponse",
+  "etag": "o8KUba_Sl4cPt_C6vs84o6mpbCY",
+  "items": [
+    {
+      "kind": "youtube#video",
+      "etag": "_OsJhhnhASr1pYgSKB0XC2BGthg",
+      "id": "HADeWBBb1so",
+      "snippet": {
+        "publishedAt": "2022-04-15T11:30:07Z",
+        "channelId": "UCcYzLCs3zrQIBVHYA1sK2sw",
+        "title": "Fate, God, Luck or Effort What Decides Your Success? | Sadhguru",
+        "description": "A seeker asks Sadhguru whether luck, fate and God decide our success. Sadhguru tells us that whether they play a role in being successful or not is not something we need to bother about. It is more important to focus on making an incisive effort.\n\nTo Watch this video in Tamil - https://youtu.be/SaaNVVjY1lI\n\n#Sadhguru\nYogi, mystic and visionary, Sadhguru is a spiritual master with a difference. An arresting blend of profundity and pragmatism, his life and work serves as a reminder that yoga is a contemporary science, vitally relevant to our times. \n\nInner Engineering Online Program\n🌼 http://isha.co/IEO-YT (Register Now)\n\n⚡ Sadhguru Exclusive\nStart Your 7 Day Trial for Free*\n Only On Sadhguru App\n*T&C Applied\nhttp://isha.co/ex-yt (Register Now)\n\n'Karma: A Yogi's Guide to Crafting Destiny.' - A book by Sadhguru\nThe New York Times Best Seller\nOrder Now: https://sadhguru.org/karma\n\n🙏 Isha Life products for everyday health and well-being. Buy online at http://ishalife.com\n\nSadhguru App (Download)\n📱 http://onelink.to/sadhguru__app\n\nOfficial Sadhguru Website \n🌎 http://isha.sadhguru.org \n\nOfferings from Sadhguru in Challenging Times \n🌼 https://isha.sadhguru.org/sadhana-support\n\nGuided Yoga & Meditations by Sadhguru (Free Online)\n🌼 http://isha.sadhguru.org/5-min-practices\n🌼 http://isha.sadhguru.org/IshaKriya\n\nOfficial Social Profiles of Sadhguru  (Subscribe)\n🌐 https://youtube.com/sadhguru?sub_confirmation=1\n🌐 https://facebook.com/sadhguru\n🌐 https://instagram.com/sadhguru\n🌐 https://twitter.com/SadhguruJV\n🌐 https://www.kooapp.com/profile/SadhguruJV\n🌐 https://t.me/Sadhguru\n🌐https://www.quora.com/q/sadhguru",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/HADeWBBb1so/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/HADeWBBb1so/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/HADeWBBb1so/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/HADeWBBb1so/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/HADeWBBb1so/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Sadhguru",
+        "tags": [
+          "Sadhguru",
+          "sadhguru 2020",
+          "wisdom",
+          "sadhguru interview",
+          "sadhguru quotes",
+          "sadhguru meditation",
+          "sadguru speech in english",
+          "sadhguru latest",
+          "sadhguru videos",
+          "sadhguru jaggi vasudev",
+          "sadguru",
+          "sadguru speeches",
+          "satguru",
+          "sadhguru english",
+          "#sadhguru",
+          "guru",
+          "spiritual master",
+          "indian yogi",
+          "sadhguru 2021",
+          "sadhguru 2022"
+        ],
+        "categoryId": "26",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "en",
+        "localized": {
+          "title": "Fate, God, Luck or Effort What Decides Your Success? | Sadhguru",
+          "description": "A seeker asks Sadhguru whether luck, fate and God decide our success. Sadhguru tells us that whether they play a role in being successful or not is not something we need to bother about. It is more important to focus on making an incisive effort.\n\nTo Watch this video in Tamil - https://youtu.be/SaaNVVjY1lI\n\n#Sadhguru\nYogi, mystic and visionary, Sadhguru is a spiritual master with a difference. An arresting blend of profundity and pragmatism, his life and work serves as a reminder that yoga is a contemporary science, vitally relevant to our times. \n\nInner Engineering Online Program\n🌼 http://isha.co/IEO-YT (Register Now)\n\n⚡ Sadhguru Exclusive\nStart Your 7 Day Trial for Free*\n Only On Sadhguru App\n*T&C Applied\nhttp://isha.co/ex-yt (Register Now)\n\n'Karma: A Yogi's Guide to Crafting Destiny.' - A book by Sadhguru\nThe New York Times Best Seller\nOrder Now: https://sadhguru.org/karma\n\n🙏 Isha Life products for everyday health and well-being. Buy online at http://ishalife.com\n\nSadhguru App (Download)\n📱 http://onelink.to/sadhguru__app\n\nOfficial Sadhguru Website \n🌎 http://isha.sadhguru.org \n\nOfferings from Sadhguru in Challenging Times \n🌼 https://isha.sadhguru.org/sadhana-support\n\nGuided Yoga & Meditations by Sadhguru (Free Online)\n🌼 http://isha.sadhguru.org/5-min-practices\n🌼 http://isha.sadhguru.org/IshaKriya\n\nOfficial Social Profiles of Sadhguru  (Subscribe)\n🌐 https://youtube.com/sadhguru?sub_confirmation=1\n🌐 https://facebook.com/sadhguru\n🌐 https://instagram.com/sadhguru\n🌐 https://twitter.com/SadhguruJV\n🌐 https://www.kooapp.com/profile/SadhguruJV\n🌐 https://t.me/Sadhguru\n🌐https://www.quora.com/q/sadhguru"
+        },
+        "defaultAudioLanguage": "en"
+      },
+      "contentDetails": {
+        "duration": "PT7M50S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "true",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "235841",
+        "likeCount": "9636",
+        "favoriteCount": "0",
+        "commentCount": "219"
+      }
+    }
+  ],
+  "pageInfo": {
+    "totalResults": 1,
+    "resultsPerPage": 1
+  }
+}
