@@ -1,12 +1,12 @@
 import os
+import json
 import pytest
 
 from dotenv import load_dotenv
 from videosdb.downloader import DB, Downloader
 
 import os
-import httpx
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, patch
 import pytest
 
 DATA_DIR = "backend/tests/test_data"
@@ -97,14 +97,18 @@ async def test_cache(db):
 
 
 @pytest.mark.asyncio
-async def test_download_playlist(db, monkeypatch):
+@patch("videosdb.youtube_api.httpx", AsyncMock())
+async def test_download_playlist(mock_httpx, db):
     plid = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
-    response = None
+
     with open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json") as f:
-        response = f.read()
-    mock = MagicMock()
-    mock.return_value = response
-    monkeypatch.setattr(httpx, "get", mock)
+        response = json.load(f)
+    mock_response = AsyncMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = response
+
+    mock_httpx.get.return_value = mock_response
+    # monkeypatch.setattr(httpx, "get", mock)
     downloader = Downloader()
     playlist = await downloader._download_playlist(plid, "Sadhguru")
     assert playlist == {
