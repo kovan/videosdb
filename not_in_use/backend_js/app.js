@@ -1,6 +1,6 @@
 import { google, GoogleApis } from 'googleapis'
 import { initializeApp } from 'firebase/app'
-import { getFirestore, collection, getDoc, doc } from 'firebase/firestore/lite'
+import { getFirestore, collection, getDoc, doc } from 'firebase/firestore'
 import { main, createQueue, spawn, all } from 'effection';
 import { firebase_sadhguru } from './firebase-settings.js'
 import "path"

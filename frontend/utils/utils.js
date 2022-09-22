@@ -15,7 +15,7 @@ import {
     connectFirestoreEmulator,
     query, collection,
     Timestamp
-} from 'firebase/firestore/lite';
+} from 'firebase/firestore';
 
 const firebase_sadhguru = {
     apiKey: "AIzaSyAhKg1pGeJnL_ZyD1wv7ZPXwfZ6_7OBRa8",

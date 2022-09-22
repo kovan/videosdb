@@ -117,7 +117,7 @@ import {
     startAfter,
     doc,
     query, collection
-} from 'firebase/firestore/lite'
+} from 'firebase/firestore'
 
 export default {
     components: {

@@ -85,7 +85,7 @@ import {
     startAfter,
     doc,
     query, collection
-} from 'firebase/firestore/lite'
+} from 'firebase/firestore'
 import { initializeApp, getApp } from "firebase/app";
 import { parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
