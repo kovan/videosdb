@@ -3,9 +3,9 @@ process.on('unhandledRejection', (error) => {
 });
 
 
-import { videoToSitemapEntry } from "../utils/utils"
-import { getFirebaseSettings } from "../utils/firestore-common"
-import { getDb } from "../utils/firestore"
+
+var AsyncLock = require('async-lock');
+import { getDb, videoToSitemapEntry, getFirebaseSettings } from "../utils/utils"
 import {
     getDoc,
     getDocs,
@@ -15,11 +15,7 @@ import {
     startAfter,
     doc,
     query, collection
-} from 'firebase/firestore'
-
-var AsyncLock = require('async-lock');
-
-
+} from 'firebase/firestore/lite'
 
 
 var lock = new AsyncLock();

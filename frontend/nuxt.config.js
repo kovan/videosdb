@@ -1,7 +1,5 @@
 import { getSitemap } from "./modules/mymodule.js"
-import { getVuexData } from "./utils/utils"
-import { getDb } from "./utils/firestore"
-import { getFirebaseSettings } from "./utils/firestore-common"
+import { getVuexData, getDb, getFirebaseSettings } from "./utils/utils"
 
 let myConfig = {
 
@@ -40,9 +38,7 @@ export default {
     },
 
     plugins: [{
-        src: "~/plugins/myplugin.client.js"
-    }, {
-        src: "~/plugins/myplugin.server.js"
+        src: "~/plugins/myplugin.js"
     },
     {
         src: "~/plugins/vue-infinite-scroll.js",

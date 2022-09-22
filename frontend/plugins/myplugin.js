@@ -1,6 +1,4 @@
-import { formatDate } from '~/utils/utils'
-import { getFirebaseSettings } from "~/utils/firestore-common"
-import { getDb } from "~/utils/firestore"
+import { getDb, formatDate, dateToISO, getFirebaseSettings } from '~/utils/utils'
 
 
 var db = null
@@ -11,6 +9,8 @@ export default async function (context, inject) { // real args are: context and 
         db = getDb(await getFirebaseSettings(context.$config))
 
     inject("db", db)
+    inject("myLog", console.log)
+    inject("myDebugger", function () { debugger })
     inject("myFormatDate", formatDate)
-
+    inject("myDateToISO", dateToISO)
 }
