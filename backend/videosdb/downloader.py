@@ -139,11 +139,6 @@ class Downloader:
                             "videosdb.playlists":
                             firestore.ArrayUnion([playlist_id])
                         })
-                    new_state = {
-                        "lastPlaylistId": playlist_id,
-                        "lastVideoId": video_id
-                    }
-                    await self.db.noquota_set("meta/state", new_state)
 
                 new_state = {
                     "lastPlaylistId": None,
