@@ -9,8 +9,10 @@ from videosdb.downloader import DB, Downloader
 import os
 from unittest.mock import AsyncMock, patch
 import pytest
+import sys
 
-DATA_DIR = "backend/tests/test_data"
+BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
+DATA_DIR = BASE_DIR + "/test_data"
 
 
 def setup_module():
