@@ -108,8 +108,7 @@ class Downloader:
                     if not playlist:
                         continue
 
-                    if playlist_id != all_uploads_playlist_id:
-                        await self._create_playlist(playlist)
+                    await self._create_playlist(playlist)
 
                     # create videos:
 
