@@ -139,8 +139,17 @@ class Downloader:
                             "videosdb.playlists":
                             firestore.ArrayUnion([playlist_id])
                         })
-
+                    new_state = {
+                        "lastPlaylistId": playlist_id,
+                        "lastVideoId": video_id
+                    }
                     await self.db.noquota_set("meta/state", new_state)
+
+                new_state = {
+                    "lastPlaylistId": None,
+                    "lastVideoId": None
+                }
+                await self.db.noquota_set("meta/state", new_state)
 
                 if self.options.fill_related_videos and "DEBUG" not in os.environ:
                     # separate so that it uses remaining quota
@@ -152,13 +161,6 @@ class Downloader:
                     async for video in self.db.stream("videos"):
                         global_scope.start_soon(
                             self._handle_transcript, video, name="Download transcript")
-
-                # probably execution will never get here:
-                new_state = {
-                    "lastPlaylistId": None,
-                    "lastVideoId": None
-                }
-                await self.db.noquota_set("meta/state", new_state)
 
             except Exception as e:
                 if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
