@@ -31,7 +31,7 @@ div
     .p-1.px-2.mt-2.text-center
         strong {{ this.$config.subtitle }}
         br
-        small.align-middle  {{video_count }} videos in the database. Last updated: {{ format(last_updated) }}
+        small.align-middle  {{video_count }} videos in the database.
     b-container
         .row
             LazyHydrate(when-visible)
@@ -184,7 +184,6 @@ export default {
         }
 
         this.categories = [...this.$store.state.categories]
-        this.last_updated = this.$store.state.meta_data.lastUpdated
         this.video_count = this.$store.state.meta_data.videoIds.length
     },
 }

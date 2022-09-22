@@ -5,7 +5,6 @@ import pprint
 from google.cloud import firestore
 import re
 import random
-from datetime import datetime
 import anyio
 import fnc
 import isodate
@@ -32,10 +31,8 @@ def _contains_exceptions(exception_types, exception):
     return False
 
 
-def continue_from_item(seq, item):
+def put_item_at_front(seq, item):
     seq.sort()
-    if not item:
-        return seq
 
     # start from where we left +1:
     try:
@@ -83,6 +80,7 @@ class Downloader:
             global_scope.start_soon(self._print_debug_info,
                                     name="Debug info")
 
+            state = (await self.db.get("meta/state")).to_dict()
             processed_video_ids = set()
             try:
 
@@ -91,71 +89,58 @@ class Downloader:
                 all_uploads_playlist_id = channel["contentDetails"]["relatedPlaylists"]["uploads"]
                 channel_name = str(channel["snippet"]["title"])
 
-                last_playlist_id = channel.get("lastPlaylistId")
                 processed_playlist_ids = set()
                 excluded_video_ids = set()
                 playlist_ids = await self._retrieve_playlist_ids(channel_id)
+                last_playlist_id = state.get("lastPlaylistId")
+                if last_playlist_id:
+                    playlist_ids = put_item_at_front(
+                        playlist_ids, last_playlist_id)
 
                 # main iterations:
-                for playlist_id in continue_from_item(playlist_ids, last_playlist_id):
+                for playlist_id in playlist_ids:
 
                     if playlist_id in processed_playlist_ids:
                         continue
                     processed_playlist_ids.add(playlist_id)
 
-                    try:
-                        playlist = await self._download_playlist(playlist_id, channel_name)
-                        if not playlist:
+                    playlist = await self._download_playlist(playlist_id, channel_name)
+                    if not playlist:
+                        continue
+
+                    if playlist_id != all_uploads_playlist_id:
+                        await self._create_playlist(playlist)
+
+                    # create videos:
+
+                    last_video_id = state.get("lastVideoId")
+                    video_ids = playlist["videosdb"]["videoIds"]
+                    if last_video_id:
+                        video_ids = put_item_at_front(
+                            video_ids, last_video_id)
+
+                    for video_id in video_ids:
+                        if video_id not in processed_video_ids:
+                            processed_video_ids.add(video_id)
+                            video = await self._create_video(video_id, [playlist_id])
+                            if not video:
+                                excluded_video_ids.add(video_id)
+                                continue
+
+                            # update limits, leaving quota for yarn generate and visitors
+                            self.db.read_limit = self.db.READ_QUOTA - \
+                                len(processed_playlist_ids) - \
+                                len(processed_video_ids) - 5000
+
+                        if video_id in excluded_video_ids:
                             continue
 
-                        if playlist_id != all_uploads_playlist_id:
-                            await self._create_playlist(playlist)
+                        await self.db.update("videos/" + video_id, {
+                            "videosdb.playlists":
+                            firestore.ArrayUnion([playlist_id])
+                        })
 
-                        # create videos:
-
-                        try:
-                            last_video_id = playlist.get("lastVideoId")
-                            for video_id in continue_from_item(playlist["videosdb"]["videoIds"], last_video_id):
-                                if video_id not in processed_video_ids:
-                                    processed_video_ids.add(video_id)
-                                    video = await self._create_video(video_id, [playlist_id])
-                                    if not video:
-                                        excluded_video_ids.add(video_id)
-                                        continue
-
-                                    # update limits, leaving quota for yarn generate and visitors
-                                    self.db.read_limit = self.db.READ_QUOTA - \
-                                        len(processed_playlist_ids) - \
-                                        len(processed_video_ids) - 5000
-
-                                if video_id in excluded_video_ids:
-                                    continue
-
-                                await self.db.update("videos/" + video_id, {
-                                    "videosdb.playlists":
-                                    firestore.ArrayUnion([playlist_id])
-                                })
-                        except Exception as e:
-                            if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
-                                playlist |= {
-                                    "videosdb": {
-                                        "lastVideoId": video_id
-                                    }
-                                }
-                                await self.db.noquota_set(
-                                    "playlists/" + playlist_id, playlist, merge=True)
-                            raise e
-
-                    except Exception as e:
-                        if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
-                            channel |= {
-                                "videosdb": {
-                                    "lastPlaylistId": playlist_id
-                                }
-                            }
-                            await self.db.noquota_set(
-                                "channel_infos/" + channel_id, channel, merge=True)
-                        raise e
+                    await self.db.noquota_set("meta/state", new_state)
 
                 if self.options.fill_related_videos and "DEBUG" not in os.environ:
                     # separate so that it uses remaining quota
@@ -168,23 +153,30 @@ class Downloader:
                         global_scope.start_soon(
                             self._handle_transcript, video, name="Download transcript")
 
+                # probably execution will never get here:
+                new_state = {
+                    "lastPlaylistId": None,
+                    "lastVideoId": None
+                }
+                await self.db.noquota_set("meta/state", new_state)
+
             except Exception as e:
                 if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
                     logger.error(e)
+                    new_state = {
+                        "lastPlaylistId": playlist_id,
+                        "lastVideoId": video_id
+                    }
+                    await self.db.noquota_set("meta/state", new_state)
                 else:
                     raise e
             finally:
-                new_meta = {
-                    "lastUpdated": datetime.now().isoformat()
-                }
                 if processed_video_ids:
-                    new_meta["videoIds"] = firestore.ArrayUnion(
-                        list(processed_video_ids))
-                if processed_playlist_ids:
-                    new_meta["playlistIds"] = firestore.ArrayUnion(
-                        list(processed_playlist_ids))
-
-                await self.db.noquota_update("meta/meta", new_meta)
+                    ids = list(processed_video_ids)
+                    ids.sort()
+                    await self.db.noquota_update("meta/meta", {
+                        "videoIds": firestore.ArrayUnion(ids)
+                    })
 
             await anyio.wait_all_tasks_blocked()
 
@@ -249,14 +241,14 @@ class Downloader:
             if not last_updated or video_date > last_updated:
                 last_updated = video_date
 
+        video_ids.sort()
+
         playlist |= {
             "videosdb": {
                 "slug": slugify(playlist["snippet"]["title"]),
                 "videoCount": video_count,
                 "lastUpdated": last_updated,
-                "lastRetrieved": datetime.now().isoformat(),
-                "videoIds": video_ids,
-                "lastVideoRetrieved": None
+                "videoIds": video_ids
             }
         }
 
@@ -283,14 +275,16 @@ class Downloader:
         if video["snippet"]["channelId"] != self.YT_CHANNEL_ID:
             return
 
+        playlist_ids = playlist_ids if playlist_ids else []
+        playlist_ids.sort()
+
         video |= {
             "videosdb": {
                 "slug":  slugify(video["snippet"]["title"]),
                 "descriptionTrimmed": bleach.linkify(video["snippet"]["description"]),
                 "durationSeconds": isodate.parse_duration(
                     video["contentDetails"]["duration"]).total_seconds(),
-                "playlists": playlist_ids if playlist_ids else [],
-                "lastRetrieved": datetime.now().isoformat()
+                "playlists": playlist_ids
             }
         }
 

@@ -123,6 +123,7 @@ async function getVuexData(db) {
         }
         categories.push(category)
     })
+    categories.sort()
 
     let meta_data = meta_results.data()
     vuex_data = {
@@ -147,7 +148,7 @@ function getDb(config) {
     } catch {
         app = initializeApp(config)
         db = getFirestore()
-        console.log(process.env)
+        console.debug(process.env)
         if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
             console.info("Using FIREBASE EMULATOR")
             connectFirestoreEmulator(db, ...process.env.FIRESTORE_EMULATOR_HOST.split(":"));

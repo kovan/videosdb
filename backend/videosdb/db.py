@@ -36,24 +36,17 @@ class DB:
         self.read_limit = self.READ_QUOTA - 5000  # start with this
         self._db = self.setup(project, config)
 
-    def _meta_ref(self):
-        return self._db.collection("meta").document("meta")
-
     async def init(self):
         # initialize meta table:
-        doc = await self._meta_ref().get()
+        doc = await self._db.document("meta/meta").get()
         if not doc.exists or "videoIds" not in doc.to_dict():
-            await self._meta_ref().set(
+            await doc.reference.set(
                 {"videoIds": list()}
             )
+        doc = await self._db.document("meta/state").get()
+        if not doc.exists:
+            await doc.reference.set({})
         return self
-
-    async def get_video_count(self):
-        doc = await self._meta_ref().get()
-        if doc.exists:
-            return len(doc.get("videoIds"))
-        else:
-            return 0
 
     # google.api_core.exceptions.ResourceExhausted: 429 Quota exceeded.
 
