@@ -1,50 +1,10 @@
-// import firebase from 'firebase/compat/app';
-// //import 'firebase/firestore/memory';
-// import { firestore } from 'firebase/compat/firestore';
+
 import { formatISO, parseISO } from 'date-fns'
-
-// import { initializeApp } from "firebase/compat/app";
-
-import { initializeApp, getApp } from "firebase/app";
 import {
-    getFirestore,
-    getDoc,
-    getDocs,
-    orderBy,
-    doc,
-    connectFirestoreEmulator,
-    query, collection,
-    Timestamp
-} from 'firebase/firestore/lite';
-
-const firebase_sadhguru = {
-    apiKey: "AIzaSyAhKg1pGeJnL_ZyD1wv7ZPXwfZ6_7OBRa8",
-    authDomain: "videosdb-firebase.firebaseapp.com",
-    projectId: "videosdb-firebase",
-    storageBucket: "videosdb-firebase.appspot.com",
-    messagingSenderId: "136865344383",
-    appId: "1:136865344383:web:2d9764597f98be41c7884a"
-}
+    query, collection, orderBy, getDoc, getDocs, doc, Timestamp
+} from 'firebase/firestore';
 
 
-const firebase_nithyananda = {
-    apiKey: "AIzaSyAokazNFM0aCatQ2HLQI2EmsL_fJvTUWyQ",
-    authDomain: "videosdb-nithyananda.firebaseapp.com",
-    projectId: "videosdb-nithyananda",
-    storageBucket: "videosdb-nithyananda.appspot.com",
-    messagingSenderId: "550038984532",
-    appId: "1:550038984532:web:c69ab834dc3da08481dac1",
-    measurementId: "G-9FCP7M1VDV"
-};
-
-const firebase_testing = {
-    apiKey: "AIzaSyB4ssPNsGaIpFv8GNiBl-MbRWzRbuYV-MM",
-    authDomain: "videosdb-testing.firebaseapp.com",
-    projectId: "videosdb-testing",
-    storageBucket: "videosdb-testing.appspot.com",
-    messagingSenderId: "224322811272",
-    appId: "1:224322811272:web:82113e7ad6fa250915763d"
-};
 
 
 /**
@@ -76,26 +36,6 @@ function removeXMLInvalidChars(string, removeDiscouragedChars = true) {
 }
 
 
-async function getFirebaseSettings(config) {
-
-
-    let current_config = config ? config.config : process.env.VIDEOSDB_CONFIG
-    let settings = null
-    switch (current_config) {
-        case "nithyananda":
-            settings = firebase_nithyananda
-            break
-        case "sadhguru":
-            settings = firebase_sadhguru
-            break
-        case "testing":
-            settings = firebase_testing
-            break
-    }
-    return settings
-}
-
-
 
 
 
@@ -104,6 +44,7 @@ var vuex_data = null
 async function getVuexData(db) {
     if (vuex_data)
         return vuex_data
+
 
     console.log("getting vuex data")
     const q = query(collection(db, "playlists"), orderBy('videosdb.lastUpdated', 'desc'))
@@ -134,31 +75,7 @@ async function getVuexData(db) {
     return vuex_data
 }
 
-var db = null
 
-
-function getDb(config) {
-    if (db)
-        return db
-
-    let app = null
-    try {
-        app = getApp()
-        db = getFirestore()
-    } catch {
-        app = initializeApp(config)
-        db = getFirestore()
-        console.debug(process.env)
-        if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
-            console.info("Using FIREBASE EMULATOR")
-            connectFirestoreEmulator(db, ...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
-        } else {
-            console.info("Using LIVE database.")
-        }
-    }
-
-    return db;
-}
 
 function formatDate(date) {
 
@@ -275,13 +192,12 @@ function videoToStructuredData(video) {
 
 
 export {
-    getDb,
+
     formatDate,
     getVuexData,
     dereferenceDb,
     dateToISO,
     videoToStructuredData,
     videoToSitemapEntry,
-    getFirebaseSettings
 }
 
