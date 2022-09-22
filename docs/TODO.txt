@@ -4,6 +4,7 @@
 
 - poner descripciones de los botones en caso de tablet/escritorio
 - docker tag not working?
+- tests
 
 
 
@@ -150,30 +151,3 @@ truth
 wisdom
 
 
-
-
-Step #1 - "generate":
-Step #1 - "generate":  ERROR  Request failed with error: Too Many Requests
-Step #1 - "generate":
-Step #1 - "generate":
-Step #1 - "generate":
-Step #1 - "generate":
-Step #1 - "generate":  WARN  [2022-09-22T11:37:55.599Z]  @firebase/firestore: Firestore (9.10.0_lite): RestConnection RunQuery failed with error:  [FirebaseError: Request failed with error: Too Many Requests] {
-Step #1 - "generate":   code: 'resource-exhausted',
-Step #1 - "generate":   customData: undefined,
-Step #1 - "generate":   toString: [Function (anonymous)]
-Step #1 - "generate": } url:  https://firestore.googleapis.com/v1/projects/videosdb-testing/databases/(default)/documents:runQuery request: {
-Step #1 - "generate":   structuredQuery: {
-Step #1 - "generate":     from: [ { collectionId: 'playlists' } ],
-Step #1 - "generate":     orderBy: [ { field: { fieldPath: '__name__' }, direction: 'ASCENDING' } ],
-Step #1 - "generate":     limit: 20,
-Step #1 - "generate":     startAt: {
-Step #1 - "generate":       before: false,
-Step #1 - "generate":       values: [
-Step #1 - "generate":         {
-Step #1 - "generate":           referenceValue: 'projects/videosdb-testing/databases/(default)/documents/playlists/PL3uDtbb3OvDMzTai_NwtIp99ibBZwPY26'
-Step #1 - "generate":         }
-Step #1 - "generate":       ]
-Step #1 - "generate":     }
-Step #1 - "generate":   }
-Step #1 - "generate": }

@@ -1,4 +1,5 @@
 import os
+import isodate
 import json
 import pytest
 
@@ -97,20 +98,27 @@ async def test_cache(db):
 
 
 @pytest.mark.asyncio
-@patch("videosdb.youtube_api.httpx", AsyncMock())
-async def test_download_playlist(mock_httpx, db):
+@patch("videosdb.youtube_api.httpx.get", new_callable=AsyncMock)
+async def test_download_playlist(mock_get, db):
     plid = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
 
     with open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json") as f:
         response = json.load(f)
+
     mock_response = AsyncMock()
     mock_response.status_code = 200
     mock_response.json.return_value = response
 
-    mock_httpx.get.return_value = mock_response
-    # monkeypatch.setattr(httpx, "get", mock)
+    mock_get.return_value = mock_response
     downloader = Downloader()
     playlist = await downloader._download_playlist(plid, "Sadhguru")
-    assert playlist == {
 
+    assert playlist["kind"] == "youtube#playlist"
+    assert playlist["id"] == "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+
+    assert playlist["videosdb"] == {
+        'slug': 'how-to-be-really-successful-sadhguru-answers',
+        'videoCount': 7,
+        'lastUpdated': isodate.parse_datetime("2022-07-06T12:18:45+00:00"),
+        'videoIds': ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw', 'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
     }
