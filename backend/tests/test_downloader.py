@@ -7,6 +7,7 @@ import json
 
 import requests
 from dotenv import load_dotenv
+from videosdb.youtube_api import YoutubeAPI
 from videosdb.downloader import DB, Downloader, put_item_at_front
 
 import os
@@ -127,6 +128,17 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         for video in vids:
             self.assertEqual([self.PLAYLIST_ID],
                              video.get("videosdb.playlists"))
+
+    @patch("videosdb.youtube_api.httpx.get")
+    async def test_process_playlist_list_PAUSE(self, mock_get):
+        mock_get.side_effect = YoutubeAPI.QuotaExceeded(403)
+        new_state = await self.downloader._process_playlist_list(
+            [self.PLAYLIST_ID], {}, "Sadhguru")
+
+        self.assertEquals(new_state, {
+            "lastPlaylistId": None,
+            "lastVideoId": None
+        })
 
 
 # @pytest.mark.asyncio
