@@ -112,11 +112,15 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         doc = await self.db.document("videos/" + video_id).get()
         self.assertTrue(doc.exists)
 
-        docs = [doc.get("id") async for doc in self.db.collection("playlists").stream()]
-        self.assertEqual(docs[0], self.PLAYLIST_ID)
+        pls = [doc.get("id") async for doc in self.db.collection("playlists").stream()]
+        self.assertEqual(len(pls), 1)
+        self.assertEqual(pls[0], self.PLAYLIST_ID)
 
-        docsv = [doc.get("id") async for doc in self.db.collection("videos").stream()]
-        self.assertEqual(docsv, self.VIDEO_IDS)
+        vids = [doc async for doc in self.db.collection("videos").stream()]
+        self.assertEqual(len(vids), len(self.VIDEO_IDS))
+        for video in vids:
+            self.assertEquals([self.PLAYLIST_ID],
+                              video.get("videosdb.playlists"))
 
 
 # @pytest.mark.asyncio
