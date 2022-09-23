@@ -44,5 +44,6 @@ steps:
       - --project
       - $_FIREBASE_PROJECT
       - --only=hosting
+      - --debug
 
 timeout: 7200s
