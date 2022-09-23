@@ -1,4 +1,7 @@
+import asyncio
 import os
+import unittest
+import aiounittest
 import isodate
 import json
 
@@ -9,7 +12,6 @@ from videosdb.downloader import DB, Downloader, put_item_at_front
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import aiounittest
 import sys
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
@@ -32,6 +34,10 @@ def mock_httpx_responses_from_files(filenames):
 
 
 class DownloaderTest(aiounittest.AsyncTestCase):
+    def get_event_loop(self):
+        self.my_loop = asyncio.get_event_loop()
+        return self.my_loop
+
     @classmethod
     def setUpClass(cls):
         load_dotenv("common/env/testing.txt")
@@ -119,8 +125,8 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         vids = [doc async for doc in self.db.collection("videos").stream()]
         self.assertEqual(len(vids), len(self.VIDEO_IDS))
         for video in vids:
-            self.assertEquals([self.PLAYLIST_ID],
-                              video.get("videosdb.playlists"))
+            self.assertEqual([self.PLAYLIST_ID],
+                             video.get("videosdb.playlists"))
 
 
 # @pytest.mark.asyncio
@@ -187,3 +193,7 @@ class DownloaderTest(aiounittest.AsyncTestCase):
 #         self.assertEqual(cache_item.get("etag")
 #         async for page in cache_item.reference.collection("pages").stream():
 #             self.assertEqual(page
+
+
+if __name__ == "__main__":
+    unittest.main()
