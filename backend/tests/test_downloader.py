@@ -37,8 +37,10 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         load_dotenv("common/env/testing.txt")
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
-
         cls.db = DB.setup(project, config)
+        cls.VIDEO_IDS = ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw',
+                         'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
+        cls.PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
 
     def setUp(self):
         # clear DB:
@@ -49,7 +51,6 @@ class DownloaderTest(aiounittest.AsyncTestCase):
 
     @patch("videosdb.youtube_api.httpx.AsyncClient.get")
     async def test_download_playlist(self, mock_get):
-        playlist_id = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
 
         mock_get.return_value = mock_httpx_responses_from_files(
             ["playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json",
@@ -57,19 +58,19 @@ class DownloaderTest(aiounittest.AsyncTestCase):
              "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json"
              ])
 
-        playlist = await self.downloader._download_playlist(playlist_id, "Sadhguru")
+        playlist = await self.downloader._download_playlist(self.PLAYLIST_ID, "Sadhguru")
 
         self.assertEqual(playlist["kind"], "youtube#playlist")
-        self.assertEqual(playlist["id"], playlist_id)
+        self.assertEqual(playlist["id"], self.PLAYLIST_ID)
 
         self.assertEqual(playlist["videosdb"], {
             'slug': 'how-to-be-really-successful-sadhguru-answers',
             'videoCount': 7,
             'lastUpdated': isodate.parse_datetime("2022-07-06T12:18:45+00:00"),
-            'videoIds': ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw', 'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
+            'videoIds': self.VIDEO_IDS
         })
 
-        doc = await self.db.document("playlists/" + playlist_id).get()
+        doc = await self.db.document("playlists/" + self.PLAYLIST_ID).get()
         self.assertTrue(doc.exists)
 
     @patch("videosdb.youtube_api.httpx.get")
@@ -93,7 +94,6 @@ class DownloaderTest(aiounittest.AsyncTestCase):
 
     @patch("videosdb.youtube_api.httpx.get")
     async def test_process_playlist_list(self, mock_get):
-        playlist_id = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
         video_id = "HADeWBBb1so"
         mock_get.return_value = mock_httpx_responses_from_files(
             ["playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json",
@@ -102,13 +102,21 @@ class DownloaderTest(aiounittest.AsyncTestCase):
              ])
 
         new_state = await self.downloader._process_playlist_list(
-            [playlist_id], {}, "Sadhguru")
+            [self.PLAYLIST_ID], {}, "Sadhguru")
+
+        self.assertEqual(new_state, {
+            "lastPlaylistId": None,
+            "lastVideoId": None
+        })
 
         doc = await self.db.document("videos/" + video_id).get()
         self.assertTrue(doc.exists)
 
-        doc = await self.db.document("playlists/" + playlist_id).get()
-        self.assertTrue(doc.exists)
+        docs = [doc.get("id") async for doc in self.db.collection("playlists").stream()]
+        self.assertEqual(docs[0], self.PLAYLIST_ID)
+
+        docsv = [doc.get("id") async for doc in self.db.collection("videos").stream()]
+        self.assertEqual(docsv, self.VIDEO_IDS)
 
 
 # @pytest.mark.asyncio
