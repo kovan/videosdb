@@ -337,9 +337,8 @@ class Downloader:
 
     async def _download_transcript(self, video_id):
         try:
-            with anyio.fail_after(60):
-                transcript = await anyio.to_thread.run_sync(
-                    get_video_transcript, video_id, limiter=self.capacity_limiter)
+            transcript = await anyio.to_thread.run_sync(
+                get_video_transcript, video_id, limiter=self.capacity_limiter)
 
             return transcript, "downloaded"
         except youtube_transcript_api.TooManyRequests as e:
