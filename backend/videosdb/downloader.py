@@ -114,8 +114,6 @@ class Downloader:
                 if not playlist:
                     continue
 
-                await self._create_playlist(playlist)
-
                 # create videos:
 
                 last_video_id = state.get("lastVideoId")
@@ -246,15 +244,10 @@ class Downloader:
             }
         }
 
-        return playlist
-
-    @traced
-    async def _create_playlist(self, playlist):
-        if not playlist:
-            return
-
         await self.db.set("playlists/" + playlist["id"], playlist, merge=True)
         logger.info("Created playlist: " + playlist["snippet"]["title"])
+
+        return playlist
 
     @traced
     async def _create_video(self, video_id, playlist_ids=None):

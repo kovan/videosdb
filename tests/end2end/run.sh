@@ -15,10 +15,10 @@ docker compose -f $compose_file build \
 && \
 docker compose -f $compose_file up --detach --remove-orphans \
 && \
-until  nc -z localhost 8080; do sleep 1; done
-# && \
-# docker compose -f $compose_file run  --rm -e LOGLEVEL=TRACE backend -m pytest \
-# && \
+until  nc -z localhost 8080; do sleep 1; done \
+&& \
+docker compose -f $compose_file run  --rm -e LOGLEVEL=TRACE backend -m unittest \
+&& \
 docker compose -f $compose_file run  -e LOGLEVEL=DEBUG --rm backend -O -m videosdb -c -e \
 && \
 docker compose -f $compose_file run frontend yarn generate-and-start\

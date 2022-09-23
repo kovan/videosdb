@@ -16,12 +16,18 @@ BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 DATA_DIR = BASE_DIR + "/test_data"
 
 
-def mock_httpx_response_from_file(filename, code=200):
-    with open(DATA_DIR + "/" + filename) as f:
-        response = json.load(f)
+def mock_httpx_responses_from_files(filenames):
+
+    retvals = []
+    for f in filenames:
+        with open(DATA_DIR + "/" + f) as ff:
+            retvals.append(json.load(ff))
+
     mock_response = AsyncMock()
-    mock_response.status_code = code
-    mock_response.json = MagicMock(return_value=response)
+    mock_response.status_code = 200
+    mock_response.json = MagicMock(side_effect=retvals)
+    mock_response.raise_for_status = MagicMock(return_value=None)
+
     return mock_response
 
 
@@ -42,8 +48,11 @@ class DownloaderTest(aiounittest.AsyncTestCase):
     async def test_download_playlist(self, mock_get):
         playlist_id = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
 
-        mock_get.return_value = mock_httpx_response_from_file(
-            "playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json")
+        mock_get.return_value = mock_httpx_responses_from_files(
+            ["playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json",
+             "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json",
+             "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json"
+             ])
 
         downloader = Downloader()
         playlist = await downloader._download_playlist(playlist_id, "Sadhguru")
@@ -58,12 +67,15 @@ class DownloaderTest(aiounittest.AsyncTestCase):
             'videoIds': ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw', 'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
         }
 
+        doc = await self.db.document("playlists/" + playlist_id).get()
+        assert doc.exists
+
     @patch("videosdb.youtube_api.httpx.get")
     async def test_create_video(self, mock_get):
         video_id = "HADeWBBb1so"
 
-        mock_get.return_value = mock_httpx_response_from_file(
-            "video-HADeWBBb1so.response.json")
+        mock_get.return_value = mock_httpx_responses_from_files(
+            ["video-HADeWBBb1so.response.json"])
 
         downloader = Downloader()
         video = await downloader._create_video(video_id)
@@ -79,7 +91,7 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         assert put_item_at_front(s, 6) == [8, 1, 3, 5, 6]
 
     @patch("videosdb.youtube_api.httpx.get")
-    async def test_process_playlist_list(self, mock_get, db):
+    async def test_process_playlist_list(self, mock_get):
         pass
 
 
