@@ -30,8 +30,6 @@ div
 
     .p-1.px-2.mt-2.text-center
         strong {{ this.$config.subtitle }}
-        br
-        small.align-middle  {{video_count }} videos in the database.
     b-container
         .row
             LazyHydrate(when-visible)
@@ -149,7 +147,8 @@ export default {
             return parseISO(iso_date).toLocaleDateString()
         },
         async randomVideo() {
-            const video_ids = this.$store.state.meta_data.videoIds
+            const video_ids_doc = await getDoc(doc(this.$db, "meta/videoIds"))
+            const video_ids = video_ids_doc.data().videoIds
 
             let video_id = video_ids[Math.floor(Math.random() * video_ids.length)]
             const video_doc = await getDoc(doc(this.$db, "videos/" + video_id))
@@ -184,7 +183,6 @@ export default {
         }
 
         this.categories = [...this.$store.state.categories]
-        this.video_count = this.$store.state.meta_data.videoIds.length
     },
 }
 </script>

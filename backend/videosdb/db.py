@@ -38,7 +38,7 @@ class DB:
 
     async def init(self):
         # initialize meta table:
-        doc = await self._db.document("meta/meta").get()
+        doc = await self._db.document("meta/video_ids").get()
         if not doc.exists or "videoIds" not in doc.to_dict():
             await doc.reference.set(
                 {"videoIds": list()}

@@ -107,11 +107,9 @@ async function getVuexData(db) {
 
     console.log("getting vuex data")
     const q = query(collection(db, "playlists"), orderBy('videosdb.lastUpdated', 'desc'))
-    const meta_query = doc(db, "meta/meta")
 
-    let [results, meta_results] = await Promise.all([
-        getDocs(q),
-        getDoc(meta_query),
+    let [results] = await Promise.all([
+        getDocs(q)
     ])
     let categories = []
     results.forEach((doc) => {
@@ -125,10 +123,8 @@ async function getVuexData(db) {
     })
     categories.sort()
 
-    let meta_data = meta_results.data()
     vuex_data = {
-        categories,
-        meta_data
+        categories
     }
 
     return vuex_data

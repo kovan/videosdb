@@ -175,7 +175,7 @@ class Downloader:
             if processed_video_ids:
                 ids = list(processed_video_ids)
                 ids.sort()
-                await self.db.noquota_update("meta/meta", {
+                await self.db.noquota_update("meta/video_ids", {
                     "videoIds": firestore.ArrayUnion(ids)
                 })
 
@@ -309,8 +309,8 @@ class Downloader:
         logger.info("Filling related videos info.")
 
         async with anyio.create_task_group():
-            meta_doc = await self.db.get("meta/meta")
-            randomized_ids = meta_doc.get("videoIds")
+            doc = await self.db.get("meta/video_ids")
+            randomized_ids = doc.get("videoIds")
             random.shuffle(randomized_ids)
             for video_id in randomized_ids:
                 related_videos = await self.api.get_related_videos(video_id)
