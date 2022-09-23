@@ -80,19 +80,12 @@ class Downloader:
             global_scope.start_soon(self._print_debug_info,
                                     name="Debug info")
 
+            channel = await self._retrieve_channel(self.YT_CHANNEL_ID)
+            playlist_ids = await self._retrieve_playlist_ids(self.YT_CHANNEL_ID)
             state = (await self.db.get("meta/state")).to_dict()
-
-            channel_id = self.YT_CHANNEL_ID
-            channel = await self._retrieve_channel(channel_id)
-            channel_name = str(channel["snippet"]["title"])
-
-            playlist_ids = await self._retrieve_playlist_ids(channel_id)
-            state = await self.db.get("meta/state")
-            new_state = await self._process_playlist_list(playlist_ids, state, channel_name)
+            new_state = await self._process_playlist_list(playlist_ids, state, channel["snippet"]["title"])
             await self.db.noquota_set("meta/state", new_state)
-
             await anyio.wait_all_tasks_blocked()
-
             global_scope.cancel_scope.cancel()
 
         logger.info("Sync finished")
