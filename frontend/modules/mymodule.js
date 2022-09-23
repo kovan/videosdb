@@ -1,11 +1,7 @@
-process.on('unhandledRejection', (error) => {
-    console.trace(error);
-});
-
-
+installUnhandledExceptionHandlers()
 
 var AsyncLock = require('async-lock');
-import { getDb, videoToSitemapEntry, getFirebaseSettings } from "../utils/utils"
+import { getDb, videoToSitemapEntry, getFirebaseSettings, installUnhandledExceptionHandlers } from "../utils/utils"
 import {
     getDoc,
     getDocs,
@@ -108,15 +104,15 @@ async function generateRoutes(dbOptions) {
         }
         routes.push(route)
     })
-    if (process.env.DEBUG)
-        routes = [routes[0]]
+    // if (process.env.DEBUG)
+    //     routes = [routes[0]]
 
     return routes
 }
 
 export default function (moduleOptions) {
     this.nuxt.hook('generate:before', async (generator, generateOptions) => {
-
+        installUnhandledExceptionHandlers()
         generateOptions.routes = await generateRoutes(await getFirebaseSettings())
     })
 

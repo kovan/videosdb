@@ -144,7 +144,7 @@ function getDb(config) {
     } catch {
         app = initializeApp(config)
         db = getFirestore()
-        console.debug(process.env)
+        console.log(process.env)
         if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
             console.info("Using FIREBASE EMULATOR")
             connectFirestoreEmulator(db, ...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
@@ -269,6 +269,16 @@ function videoToStructuredData(video) {
     return string
 }
 
+function installUnhandledExceptionHandlers() {
+    process.on('unhandledRejection', (error) => {
+        console.trace(error);
+    });
+
+    process.on('uncaughtException', (error) => {
+        console.error(error)
+    })
+
+}
 
 export {
     getDb,
@@ -278,6 +288,7 @@ export {
     dateToISO,
     videoToStructuredData,
     videoToSitemapEntry,
-    getFirebaseSettings
+    getFirebaseSettings,
+    installUnhandledExceptionHandlers
 }
 

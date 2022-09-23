@@ -174,15 +174,18 @@ export default {
     },
     async fetch() {
 
-        if (
-            typeof this.$store.state.categories == 'undefined' ||
-            typeof this.$store.state.meta_data.lastUpdated == 'undefined'
-        ) {
-            let vuex_data = await getVuexData(this.$db)
-            this.$store.commit('setInitial', vuex_data)
-        }
+        try {
+            if (
+                typeof this.$store.state.categories == 'undefined'
+            ) {
+                let vuex_data = await getVuexData(this.$db)
+                this.$store.commit('setInitial', vuex_data)
+            }
 
-        this.categories = [...this.$store.state.categories]
+            this.categories = [...this.$store.state.categories]
+        } catch (error) {
+            console.error(error)
+        }
     },
 }
 </script>

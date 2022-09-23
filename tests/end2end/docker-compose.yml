@@ -40,7 +40,7 @@ services:
         network_mode: "host"
         image: spine3/firebase-emulator
         environment:
-            - GCP_PROJECT=videosdb-firebase
+            - GCP_PROJECT=videosdb-testing
             - ENABLE_UI=true
         volumes:
             - emulator-data:/firebase/baseline-data

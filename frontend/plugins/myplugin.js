@@ -1,6 +1,8 @@
 import { getDb, formatDate, dateToISO, getFirebaseSettings } from '~/utils/utils'
 
 
+
+
 var db = null
 
 export default async function (context, inject) { // real args are: context and inject
