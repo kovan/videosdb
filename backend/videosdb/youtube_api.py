@@ -50,7 +50,7 @@ class YoutubeAPI:
             "part": "snippet",
             "id": playlist_id
         }
-        return await self._request_one(url, params, playlist_id)
+        return await self._request_one(url, params)
 
     async def list_channelsection_playlist_ids(self, channel_id):
         url = "/channelSections"
@@ -58,7 +58,7 @@ class YoutubeAPI:
             "part": "contentDetails",
             "channelId": channel_id
         }
-        results = self._request_main(url, params, channel_id)
+        results = self._request_main(url, params)
 
         async for item in results:
             details = item.get("contentDetails")
@@ -75,7 +75,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails",
             "channelId": channel_id
         }
-        results = self._request_main(url, params, channel_id)
+        results = self._request_main(url, params)
         async for item in results:
             yield item["id"]
 
@@ -85,7 +85,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails,statistics",
             "id": youtube_id
         }
-        return await self._request_one(url, params, youtube_id)
+        return await self._request_one(url, params)
 
     async def list_playlist_items(self, playlist_id):
         url = "/playlistItems"
@@ -93,7 +93,7 @@ class YoutubeAPI:
             "part": "snippet",
             "playlistId": playlist_id
         }
-        return self._request_main(url, params, playlist_id)
+        return self._request_main(url, params)
 
     async def get_related_videos(self, youtube_id):
         url = "/search"
@@ -104,7 +104,7 @@ class YoutubeAPI:
         }
         logger.info("getting related videos")
 
-        results = self._request_main(url, params, youtube_id)
+        results = self._request_main(url, params)
 
         related_videos = dict()
         async for video in results:
@@ -120,7 +120,7 @@ class YoutubeAPI:
             "part": "snippet,contentDetails,statistics",
             "id": channel_id
         }
-        return await self._request_one(url, params, channel_id)
+        return await self._request_one(url, params)
 
 
 # ------- PRIVATE-------------------------------------------------------
