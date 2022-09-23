@@ -180,12 +180,12 @@ export default {
             'related_videos' in video.videosdb &&
             video.videosdb.related_videos.length
         ) {
-            video.videosdb.related_videos = await dereferenceDb($db,
+            let dereferenced = await dereferenceDb($db,
                 video.videosdb.related_videos,
                 "videos"
             )
+            video.videosdb.related_videos = dereferenced
         }
-
         return { video }
     },
 }

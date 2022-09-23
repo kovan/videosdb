@@ -195,7 +195,7 @@ async function dereferenceDb(db, id_list, collection) {
     for (let _id of id_list) {
         let doc_ref = doc(db, `${collection}/${_id}`)
         let doc_snapshot = await getDoc(doc_ref)
-        if (doc_snapshot.exists) {
+        if (doc_snapshot.exists()) {
             items.push(doc_snapshot.data())
         }
 

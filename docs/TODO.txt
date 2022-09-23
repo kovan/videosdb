@@ -4,6 +4,7 @@
 
 - poner descripciones de los botones en caso de tablet/escritorio
 - docker tag not working?
+- habilitar retrieval de related videos
 - tests
 
 
