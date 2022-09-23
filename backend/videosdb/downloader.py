@@ -99,6 +99,7 @@ class Downloader:
         try:
 
             if state:
+                logger.info("Resuming from state: %s", state)
                 playlist_ids = put_item_at_front(
                     playlist_ids, state.get("lastPlaylistId"))
 
@@ -165,7 +166,7 @@ class Downloader:
             if processed_video_ids:
                 ids = list(processed_video_ids)
                 ids.sort()
-                await self.db.noquota_update("meta/video_ids", {
+                await self.db.noquota_set("meta/video_ids", {
                     "videoIds": firestore.ArrayUnion(ids)
                 })
 
