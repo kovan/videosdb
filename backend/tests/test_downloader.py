@@ -1,34 +1,86 @@
 import os
 import isodate
 import json
-import pytest
+
 import requests
 from dotenv import load_dotenv
-from videosdb.downloader import DB, Downloader
+from videosdb.downloader import DB, Downloader, put_item_at_front
 
 import os
-from unittest.mock import AsyncMock, patch
-import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import aiounittest
 import sys
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 DATA_DIR = BASE_DIR + "/test_data"
 
 
-def setup_module():
-    load_dotenv("common/env/testing.txt")
-    # clear DB:
+def mock_httpx_response_from_file(filename, code=200):
+    with open(DATA_DIR + "/" + filename) as f:
+        response = json.load(f)
+    mock_response = AsyncMock()
+    mock_response.status_code = code
+    mock_response.json = MagicMock(return_value=response)
+    return mock_response
 
-    requests.delete(
-        "http://localhost:8080/emulator/v1/projects/%s/databases/(default)/documents" % os.environ["FIREBASE_PROJECT"])
 
+class DownloaderTest(aiounittest.AsyncTestCase):
 
-@pytest.fixture
-def db():
-    project = os.environ["FIREBASE_PROJECT"]
-    config = os.environ["VIDEOSDB_CONFIG"]
+    def setUp(self):
+        load_dotenv("common/env/testing.txt")
+        # clear DB:
 
-    yield DB.setup(project, config)
+        requests.delete(
+            "http://localhost:8080/emulator/v1/projects/%s/databases/(default)/documents" % os.environ["FIREBASE_PROJECT"])
+        project = os.environ["FIREBASE_PROJECT"]
+        config = os.environ["VIDEOSDB_CONFIG"]
+
+        self.db = DB.setup(project, config)
+
+    @patch("videosdb.youtube_api.httpx.AsyncClient.get")
+    async def test_download_playlist(self, mock_get):
+        playlist_id = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+
+        mock_get.return_value = mock_httpx_response_from_file(
+            "playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json")
+
+        downloader = Downloader()
+        playlist = await downloader._download_playlist(playlist_id, "Sadhguru")
+
+        assert playlist["kind"] == "youtube#playlist"
+        assert playlist["id"] == playlist_id
+
+        assert playlist["videosdb"] == {
+            'slug': 'how-to-be-really-successful-sadhguru-answers',
+            'videoCount': 7,
+            'lastUpdated': isodate.parse_datetime("2022-07-06T12:18:45+00:00"),
+            'videoIds': ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw', 'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
+        }
+
+    @patch("videosdb.youtube_api.httpx.get")
+    async def test_create_video(self, mock_get):
+        video_id = "HADeWBBb1so"
+
+        mock_get.return_value = mock_httpx_response_from_file(
+            "video-HADeWBBb1so.response.json")
+
+        downloader = Downloader()
+        video = await downloader._create_video(video_id)
+
+        assert video["kind"] == "youtube#video"
+        assert video["id"] == video_id
+
+        doc = await self.db.document("videos/" + video_id).get()
+        assert doc.exists
+
+    def test_put_item_at_front(self):
+        s = [3, 5, 6, 8, 1]
+        assert put_item_at_front(s, 6) == [8, 1, 3, 5, 6]
+
+    @patch("videosdb.youtube_api.httpx.get")
+    async def test_process_playlist_list(self, mock_get, db):
+        pass
 
 
 # @pytest.mark.asyncio
@@ -88,59 +140,10 @@ def db():
 #     assert v.get("videoCount") == 25
 
 
-@pytest.mark.asyncio
-async def test_cache(db):
+# @pytest.mark.asyncio
+# async def test_cache(db):
 
-    async for cache_item in db.collection("playlists").stream():
-        assert cache_item.get("etag")
-        async for page in cache_item.reference.collection("pages").stream():
-            assert page
-
-
-@pytest.mark.asyncio
-@patch("videosdb.youtube_api.httpx.get")
-async def test_download_playlist(mock_get):
-    playlist_id = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
-
-    with open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json") as f:
-        response = json.load(f)
-
-    mock_response = AsyncMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = response
-    mock_get.return_value = mock_response
-
-    downloader = Downloader()
-    playlist = await downloader._download_playlist(playlist_id, "Sadhguru")
-
-    assert playlist["kind"] == "youtube#playlist"
-    assert playlist["id"] == playlist_id
-
-    assert playlist["videosdb"] == {
-        'slug': 'how-to-be-really-successful-sadhguru-answers',
-        'videoCount': 7,
-        'lastUpdated': isodate.parse_datetime("2022-07-06T12:18:45+00:00"),
-        'videoIds': ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw', 'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
-    }
-
-
-@pytest.mark.asyncio
-@patch("videosdb.youtube_api.httpx.get")
-async def test_create_video(mock_get, db):
-    video_id = "HADeWBBb1so"
-    with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
-        response = json.load(f)
-
-    mock_response = AsyncMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = response
-    mock_get.return_value = mock_response
-
-    downloader = Downloader()
-    video = await downloader._create_video(video_id)
-
-    assert video["kind"] == "youtube#video"
-    assert video["id"] == video_id
-
-    doc = await db.document("videos/" + video_id).get()
-    assert doc.exists
+#     async for cache_item in db.collection("playlists").stream():
+#         assert cache_item.get("etag")
+#         async for page in cache_item.reference.collection("pages").stream():
+#             assert page
