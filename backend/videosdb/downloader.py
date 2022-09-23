@@ -129,9 +129,10 @@ class Downloader:
                             continue
 
                         # update limits, leaving quota for yarn generate and visitors
-                        self.db.read_limit = self.db.READ_QUOTA - \
-                            len(processed_playlist_ids) - \
-                            len(processed_video_ids) - 5000
+                        lengths = len(processed_playlist_ids) + \
+                            len(processed_video_ids)
+
+                        self.db.reserve_read_quota(lengths)
 
                     if video_id in excluded_video_ids:
                         continue

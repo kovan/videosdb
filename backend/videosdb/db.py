@@ -28,12 +28,12 @@ class DB:
     def __init__(self):
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
-        self.WRITE_QUOTA = 20000
-        self.READ_QUOTA = 50000
+        self.FREE_TIER_WRITE_QUOTA = 20000
+        self.FREE_TIER_READ_QUOTA = 50000
         self.write_count = 0
-        self.write_limit = self.READ_QUOTA - 500  # leave 500 for state writes
+        self.write_limit = self.FREE_TIER_WRITE_QUOTA - 500  # leave 500 for state writes
         self.read_count = 0
-        self.read_limit = self.READ_QUOTA - 5000  # start with this
+        self.read_limit = self.FREE_TIER_READ_QUOTA - 5000  # start with this
         self._db = self.setup(project, config)
 
     async def init(self):
@@ -61,6 +61,8 @@ class DB:
         if self.write_count > self.write_limit:
             raise self.QuotaExceeded(
                 "Surpassed WRITE ops limit of %s" % self.write_limit)
+
+    # ---------------------- PUBLIC -------------------------------
 
     async def set(self, path, *args, **kwargs):
         self._write_inc()
@@ -100,3 +102,6 @@ class DB:
 
     async def noquota_update(self, path, *args, **kwargs):
         return await self._db.document(path).update(*args, **kwargs)
+
+    def reserve_read_quota(self, quota):
+        self.read_limit = self.FREE_TIER_READ_QUOTA - quota - 5000
