@@ -26,7 +26,7 @@ def mock_httpx_responses_from_files(filenames):
     mock_response = AsyncMock()
     mock_response.status_code = 200
     mock_response.json = MagicMock(side_effect=retvals)
-    mock_response.raise_for_status = MagicMock(return_value=None)
+    mock_response.raise_for_status = MagicMock()
 
     return mock_response
 
@@ -90,9 +90,26 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         s = [3, 5, 6, 8, 1]
         assert put_item_at_front(s, 6) == [8, 1, 3, 5, 6]
 
-    @patch("videosdb.youtube_api.httpx.get")
-    async def test_process_playlist_list(self, mock_get):
-        pass
+    # @patch("videosdb.youtube_api.httpx.get")
+    # async def test_process_playlist_list(self, mock_get):
+    #     playlist_id = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+    #     video_id = "HADeWBBb1so"
+    #     mock_get.return_value = mock_httpx_responses_from_files(
+    #         ["playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json",
+    #          "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json",
+    #          "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json"
+    #          ])
+
+    #     downloader = Downloader()
+
+    #     new_state = downloader._process_playlist_list(
+    #         [playlist_id], {}, "Sadhguru")
+
+    #     doc = await self.db.document("videos/" + video_id).get()
+    #     assert doc.exists
+
+    #     doc = await self.db.document("playlists/" + playlist_id).get()
+    #     assert doc.exists
 
 
 # @pytest.mark.asyncio
