@@ -4,6 +4,7 @@ pgrep docker || sudo service docker start
 if [[ -z "${PROJECT_ID}" ]]; then
   compose_file="docker-compose.yml"
 else # we are in Google CLoud Builder
+  echo "USING GOOGLE CLOUD BUILD docker-compose file"
   compose_file="docker-compose.cloudbuild.yml"
 fi
 
