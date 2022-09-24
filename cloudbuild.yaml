@@ -1,4 +1,19 @@
 steps:
+  - id: unit-tests
+    name: docker
+    args:
+      - run
+      - --rm
+      - -e
+      - LOGLEVEL=$_LOGLEVEL
+      - --env-file
+      - common/env/$_VIDEOSDB_CONFIG.txt
+      - gcr.io/worpdress-279321/backend-$BRANCH_NAME
+      - -O
+      - -m
+      - videosdb
+      - --check-for-new-videos
+
 
   - id: check-for-new-videos
     name: docker
@@ -44,6 +59,5 @@ steps:
       - --project
       - $_FIREBASE_PROJECT
       - --only=hosting
-      - --debug
 
 timeout: 7200s
