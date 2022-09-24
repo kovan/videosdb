@@ -2,7 +2,7 @@ version: "3"
 services:
     backend:
         network_mode: "host"
-        image: gcr.io/worpdress-279321/backend:latest
+        image: gcr.io/worpdress-279321/backend-master:latest
         env_file: ../../common/env/testing.txt
         depends_on:
             - json-caching-proxy
@@ -14,13 +14,13 @@ services:
 
     frontend:
         network_mode: "host"
-        image: gcr.io/worpdress-279321/frontend:latest
+        image: gcr.io/worpdress-279321/frontend-master:latest
         env_file: ../../common/env/testing.txt
         entrypoint: yarn
 
     json-caching-proxy:
         network_mode: "host"
-        image: gcr.io/worpdress-279321/frontend:latest
+        image: gcr.io/worpdress-279321/json-caching-proxy:latest
         ports:
             - 43783:43783
         stop_signal: SIGKILL

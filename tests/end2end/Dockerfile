@@ -1,4 +1,3 @@
 FROM gcr.io/cloud-builders/docker
-RUN apt install nc
-COPY . .
-CMD ./run.sh
+RUN apt install netcat -y
+ENTRYPOINT ["./run.sh"]
