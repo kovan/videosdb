@@ -14,6 +14,7 @@ import google.api_core.exceptions
 from slugify import slugify
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 from videosdb.db import DB
+
 import youtube_transcript_api
 
 
@@ -34,7 +35,7 @@ def _contains_exceptions(exception_types, exception):
 def put_item_at_front(seq, item):
     if not item:
         return seq
-    # start from where we left +1:
+    # start from where we left:
     try:
         i = seq.index(item)
         seq = seq[i:] + seq[:i]
@@ -152,7 +153,7 @@ class Downloader:
                     })
 
             # retrieve pending transcripts
-            if not self.options.exclude_transcripts:
+            if self.options and not self.options.exclude_transcripts:
                 logger.info("Retrieving transcripts")
 
                 async with anyio.create_task_group() as transcript_downloaders:
