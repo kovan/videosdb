@@ -2,6 +2,7 @@
 pgrep docker || sudo service docker start
 
 if [[ -z "${PROJECT_ID}" ]]; then
+  echo "USING LOCAL docker-compose file"
   compose_file="docker-compose.yml"
 else # we are in Google CLoud Builder
   echo "USING GOOGLE CLOUD BUILD docker-compose file"
@@ -24,6 +25,6 @@ docker compose -f $compose_file run  -e LOGLEVEL=DEBUG --rm backend -O -m videos
 && \
 docker compose -f $compose_file run frontend yarn generate-and-start\
 
-# if [[ -z "${PROJECT_ID}" ]]; then
-#     docker compose -f $compose_file down
-# fi
+if [[ -z "${PROJECT_ID}" ]]; then
+    docker compose -f $compose_file down
+fi

@@ -10,7 +10,7 @@ services:
             - json-caching-proxy
             - firestore-emulator
         environment:
-            - GOOGLE_CLOUD_PROJECT=videosdb-firebase
+            - GOOGLE_CLOUD_PROJECT=videosdb-testing
             - DEBUG=1
             - LOGLEVEL=DEBUG
 

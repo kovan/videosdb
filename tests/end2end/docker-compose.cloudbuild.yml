@@ -2,31 +2,42 @@ version: "3"
 services:
     backend:
         network_mode: "host"
-        image: backend
-        depends_on:
-            - json-caching-proxy
-        environment:
-            - FIRESTORE_EMULATOR_HOST=
+        image: gcr.io/worpdress-279321/backend:latest
         build:
             context: ../../backend
-            cache_from: gcr.io/${PROJECT_ID}/backend:latest
         env_file: ../../common/env/testing.txt
+        depends_on:
+            - json-caching-proxy
+            - firestore-emulator
+        environment:
+            - GOOGLE_CLOUD_PROJECT=videosdb-testing
+            - DEBUG=1
+            - LOGLEVEL=DEBUG
 
     frontend:
         network_mode: "host"
-        image: frontend
-        env_file: ../../common/env/sadhguru.txt
-        build:
-            context: ../../frontend
-            cache_from: gcr.io/${PROJECT_ID}/frontend:latest
-
+        image: gcr.io/worpdress-279321/frontend:latest
+        env_file: ../../common/env/testing.txt
         entrypoint: yarn
 
     json-caching-proxy:
         network_mode: "host"
-        image: json-caching-proxy
-        build:
-            context: utils/json-caching-proxy
+        image: gcr.io/worpdress-279321/frontend:latest
         ports:
-            - 6001:6001
+            - 43783:43783
         stop_signal: SIGKILL
+
+    firestore-emulator:
+        network_mode: "host"
+        image: spine3/firebase-emulator
+        environment:
+            - GCP_PROJECT=videosdb-testing
+            - ENABLE_UI=true
+        volumes:
+            - emulator-data:/firebase/baseline-data
+        ports:
+            - 8080:8080
+volumes:
+    emulator-data:
+        name: emulator-data
+    yarn_cache:
