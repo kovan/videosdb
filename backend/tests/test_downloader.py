@@ -19,7 +19,7 @@ BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 DATA_DIR = BASE_DIR + "/test_data"
 
 
-def create_mock_response(filename, status_code=200):
+def create_mock_httpx_response(filename, status_code=200):
 
     with open(DATA_DIR + "/" + filename) as ff:
         content = json.load(ff)
@@ -32,8 +32,27 @@ def create_mock_response(filename, status_code=200):
     return mock_response
 
 
+def create_mock_api_response(files, one=False):
+    async def async_generator(items):
+        for i in items:
+            yield i
+    items = []
+    for file in files:
+        with open(DATA_DIR + "/" + file) as f:
+            content = json.load(f)
+            items += content["items"]
+
+    if one:
+        if items:
+            return items[0]
+        else:
+            return None
+    return async_generator(items)
+
+
+@patch("videosdb.youtube_api.httpx.AsyncClient.get", side_effect=NotImplementedError)
 class DownloaderTest(aiounittest.AsyncTestCase):
-    def get_event_loop(self):
+    def get_event_loop(self):  # workaround for bug
         self.my_loop = asyncio.get_event_loop()
         return self.my_loop
 
@@ -46,6 +65,12 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         cls.VIDEO_IDS = ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw',
                          'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
         cls.PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+        cls.get_playlist_info_response = create_mock_api_response(
+            ["playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json"], True)
+        cls.list_playlist_items_response = create_mock_api_response([
+            "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json",
+            "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json"
+        ])
 
     def setUp(self):
         # clear DB:
@@ -54,17 +79,11 @@ class DownloaderTest(aiounittest.AsyncTestCase):
 
         self.downloader = Downloader(MagicMock())
 
-    @patch("videosdb.youtube_api.httpx.AsyncClient.get")
-    async def test_download_playlist(self, mock_get):
-
-        mock_get.side_effect = [
-            create_mock_response(
-                "playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json"),
-            create_mock_response(
-                "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json"),
-            create_mock_response(
-                "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json")
-        ]
+    @patch.object(YoutubeAPI, "get_playlist_info")
+    @patch.object(YoutubeAPI, "list_playlist_items")
+    async def test_download_playlist(self, list_playlist_items, get_playlist_info, httpx_get):
+        get_playlist_info.return_value = self.get_playlist_info_response
+        list_playlist_items.return_value = self.list_playlist_items_response
 
         playlist = await self.downloader._download_playlist(self.PLAYLIST_ID, "Sadhguru")
 
@@ -81,13 +100,12 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         doc = await self.db.document("playlists/" + self.PLAYLIST_ID).get()
         self.assertTrue(doc.exists)
 
-    @patch("videosdb.youtube_api.httpx.AsyncClient.get")
-    async def test_create_video(self, mock_get):
+    @patch.object(YoutubeAPI, "get_video_info")
+    async def test_create_video(self, mock, httpx_get):
         video_id = "HADeWBBb1so"
-        mock_get.side_effect = [
-            create_mock_response(
-                "video-HADeWBBb1so.response.json")
-        ]
+
+        mock.return_value = create_mock_api_response(
+            ["video-%s.response.json" % video_id], True)
 
         video = await self.downloader._create_video(video_id)
 
@@ -97,12 +115,12 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         doc = await self.db.document("videos/" + video_id).get()
         self.assertTrue(doc.exists)
 
-    def test_put_item_at_front(self):
+    def test_put_item_at_front(self, httpx_get):
         s = [3, 5, 6, 8, 1]
         self.assertEqual(put_item_at_front(s, 6), [8, 1, 3, 5, 6])
 
     @patch("videosdb.youtube_api.httpx.AsyncClient.get")
-    async def test_process_playlist_list(self, mock_get):
+    async def test_process_playlist_list(self, mock_get, httpx_get):
         video_id = "HADeWBBb1so"
         mock_get.side_effect = [
             create_mock_response(
@@ -135,7 +153,7 @@ class DownloaderTest(aiounittest.AsyncTestCase):
                              video.get("videosdb.playlists"))
 
     @patch("videosdb.youtube_api.httpx.AsyncClient.get")
-    async def test_process_playlist_list_PAUSE(self, mock_get):
+    async def test_process_playlist_list_PAUSE(self, mock_get, httpx_get):
         mock_get.side_effect = [
             create_mock_response(
                 "playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json"),
@@ -153,7 +171,7 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         })
 
     @patch("videosdb.downloader.Downloader._create_video", side_effect=YoutubeAPI.QuotaExceeded(403))
-    async def test_process_playlist_list_PAUSE2(self, mock_get):
+    async def test_process_playlist_list_PAUSE2(self, mock_get, httpx_get):
 
         new_state = await self.downloader._process_playlist_list(
             [self.PLAYLIST_ID], {}, "Sadhguru")
@@ -162,8 +180,8 @@ class DownloaderTest(aiounittest.AsyncTestCase):
                          'lastPlaylistId': 'PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU',
                          'lastVideoId': "FBYoZ-FgC84"})
 
-    @patch("videosdb.youtube_api.httpx.get")
-    async def test_process_playlist_list_RESUME(self, mock_get):
+    @patch("videosdb.youtube_api.httpx.AsyncClient.get")
+    async def test_process_playlist_list_RESUME(self, mock_get, httpx_get):
         mock_get.side_effect = [
             create_mock_response(
                 "playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json"),
@@ -181,75 +199,9 @@ class DownloaderTest(aiounittest.AsyncTestCase):
             "Sadhguru")
 
         self.assertEqual(new_state, {
-            "lastPlaylistId": None,
-            "lastVideoId": None
+            "lastPlaylistId": "TODO",
+            "lastVideoId": "TODO"
         })
-
-
-# @pytest.mark.asyncio
-# async def test_channel_infos(db):
-#     async for i in db.collection("channel_infos").stream():
-#         self.assertEqual(i.to_dict()
-#         self.assertEqual(i.get("kind") == "youtube#channel"
-
-
-# @pytest.mark.asyncio
-# async def test_meta(db):
-#     doc = await db.collection("meta").document("meta").get()
-#     self.assertEqual(doc.exists
-#     self.assertEqual(doc.get("lastUpdated")
-#     self.assertEqual(doc.get("videoIds")
-#     self.assertEqual(len(doc.get("videoIds")) > 0
-
-
-# @pytest.mark.asyncio
-# async def test_videos(db):
-#     DOC_ID = "0OWMAP1-NH4"
-#     doc = await db.collection("videos").document(DOC_ID).get()
-#     self.assertEqual(doc.exists
-
-#     d = doc.to_dict()
-#     self.assertEqual(d
-
-#     self.assertEqual(d.get("kind") == "youtube#video"
-
-#     self.assertEqual("contentDetails" in d
-#     self.assertEqual("id" in d
-#     self.assertEqual("snippet" in d
-#     self.assertEqual("statistics" in d
-#     self.assertEqual("videosdb" in d
-#     v = d["videosdb"]
-#     self.assertEqual(v.get("descriptionTrimmed")
-#     self.assertEqual(v.get("durationSeconds") == 392
-#     self.assertEqual(v.get("slug") == "gurdjieff-the-rascal-saint-sadhguru-exclusive"
-#     self.assertEqual("playlists" in v
-#     self.assertEqual(v["playlists"]
-#     self.assertEqual(v["playlists"][0] == "PL3uDtbb3OvDN6Od1Shk_X5TxibGQGbTVk"
-
-
-# @pytest.mark.asyncio
-# async def test_playlists(db):
-#     DOC_ID = "PL3uDtbb3OvDN6Od1Shk_X5TxibGQGbTVk"
-#     doc = await db.collection("playlists").document(DOC_ID).get()
-#     self.assertEqual(doc.exists
-#     d = doc.to_dict()
-#     self.assertEqual(d
-#     self.assertEqual(d.get("kind") == "youtube#playlist"
-#     self.assertEqual("snippet" in d
-#     self.assertEqual("videosdb" in d
-#     v = d["videosdb"]
-#     self.assertEqual(v.get("lastUpdated")
-#     self.assertEqual(v.get("slug") == "sadhguru-exclusive"
-#     self.assertEqual(v.get("videoCount") == 25
-
-
-# @pytest.mark.asyncio
-# async def test_cache(db):
-
-#     async for cache_item in db.collection("playlists").stream():
-#         self.assertEqual(cache_item.get("etag")
-#         async for page in cache_item.reference.collection("pages").stream():
-#             self.assertEqual(page
 
 
 if __name__ == "__main__":
