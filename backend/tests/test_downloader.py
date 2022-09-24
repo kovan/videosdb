@@ -117,9 +117,9 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         self.assertTrue(doc.exists)
 
     def test_put_item_at_front(self, httpx_get):
-        s = [3, 5, 6, 8, 1]
-        self.assertEqual(put_item_at_front(s, 6), [8, 1, 3, 5, 6])
-        self.assertEqual(put_item_at_front(s, 3), [5, 6, 8, 1, 3])
+        s = [3, 5, 6, 8]
+        self.assertEqual(put_item_at_front(s, 6), [6, 8, 3, 5])
+        self.assertEqual(put_item_at_front(s, 8), [8, 3, 5, 6])
         self.assertEqual(put_item_at_front(s, 123), s)
         self.assertEqual(put_item_at_front(s, None), s)
 

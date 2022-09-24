@@ -37,7 +37,6 @@ def put_item_at_front(seq, item):
     # start from where we left +1:
     try:
         i = seq.index(item)
-        i += 1
         seq = seq[i:] + seq[:i]
     except ValueError:
         pass
