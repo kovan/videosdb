@@ -11,7 +11,7 @@ from videosdb.youtube_api import YoutubeAPI
 from videosdb.downloader import DB, Downloader, put_item_at_front
 
 import os
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import sys
 
@@ -19,16 +19,14 @@ BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 DATA_DIR = BASE_DIR + "/test_data"
 
 
-def mock_httpx_responses_from_files(filenames):
+def create_mock_response(filename, status_code=200):
 
-    retvals = []
-    for f in filenames:
-        with open(DATA_DIR + "/" + f) as ff:
-            retvals.append(json.load(ff))
+    with open(DATA_DIR + "/" + filename) as ff:
+        content = json.load(ff)
 
-    mock_response = AsyncMock()
-    mock_response.status_code = 200
-    mock_response.json = MagicMock(side_effect=retvals)
+    mock_response = MagicMock()
+    mock_response.status_code = status_code
+    mock_response.json = MagicMock(return_value=content)
     mock_response.raise_for_status = MagicMock()
 
     return mock_response
@@ -59,11 +57,14 @@ class DownloaderTest(aiounittest.AsyncTestCase):
     @patch("videosdb.youtube_api.httpx.AsyncClient.get")
     async def test_download_playlist(self, mock_get):
 
-        mock_get.return_value = mock_httpx_responses_from_files(
-            ["playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json",
-             "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json",
-             "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json"
-             ])
+        mock_get.side_effect = [
+            create_mock_response(
+                "playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json"),
+            create_mock_response(
+                "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json"),
+            create_mock_response(
+                "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json")
+        ]
 
         playlist = await self.downloader._download_playlist(self.PLAYLIST_ID, "Sadhguru")
 
@@ -80,12 +81,13 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         doc = await self.db.document("playlists/" + self.PLAYLIST_ID).get()
         self.assertTrue(doc.exists)
 
-    @patch("videosdb.youtube_api.httpx.get")
+    @patch("videosdb.youtube_api.httpx.AsyncClient.get")
     async def test_create_video(self, mock_get):
         video_id = "HADeWBBb1so"
-
-        mock_get.return_value = mock_httpx_responses_from_files(
-            ["video-HADeWBBb1so.response.json"])
+        mock_get.side_effect = [
+            create_mock_response(
+                "video-HADeWBBb1so.response.json")
+        ]
 
         video = await self.downloader._create_video(video_id)
 
@@ -99,14 +101,17 @@ class DownloaderTest(aiounittest.AsyncTestCase):
         s = [3, 5, 6, 8, 1]
         self.assertEqual(put_item_at_front(s, 6), [8, 1, 3, 5, 6])
 
-    @patch("videosdb.youtube_api.httpx.get")
+    @patch("videosdb.youtube_api.httpx.AsyncClient.get")
     async def test_process_playlist_list(self, mock_get):
         video_id = "HADeWBBb1so"
-        mock_get.return_value = mock_httpx_responses_from_files(
-            ["playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json",
-             "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json",
-             "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json"
-             ])
+        mock_get.side_effect = [
+            create_mock_response(
+                "playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json"),
+            create_mock_response(
+                "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json"),
+            create_mock_response(
+                "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json")
+        ]
 
         new_state = await self.downloader._process_playlist_list(
             [self.PLAYLIST_ID], {}, "Sadhguru")
@@ -129,13 +134,53 @@ class DownloaderTest(aiounittest.AsyncTestCase):
             self.assertEqual([self.PLAYLIST_ID],
                              video.get("videosdb.playlists"))
 
-    @patch("videosdb.youtube_api.httpx.get")
+    @patch("videosdb.youtube_api.httpx.AsyncClient.get")
     async def test_process_playlist_list_PAUSE(self, mock_get):
-        mock_get.side_effect = YoutubeAPI.QuotaExceeded(403)
+        mock_get.side_effect = [
+            create_mock_response(
+                "playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json"),
+            create_mock_response(
+                "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json"),
+            create_mock_response(
+                "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json", 403)
+        ]
         new_state = await self.downloader._process_playlist_list(
             [self.PLAYLIST_ID], {}, "Sadhguru")
 
-        self.assertEquals(new_state, {
+        self.assertEqual(new_state, {
+            "lastPlaylistId": "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU",
+            "lastVideoId": None
+        })
+
+    @patch("videosdb.downloader.Downloader._create_video", side_effect=YoutubeAPI.QuotaExceeded(403))
+    async def test_process_playlist_list_PAUSE2(self, mock_get):
+
+        new_state = await self.downloader._process_playlist_list(
+            [self.PLAYLIST_ID], {}, "Sadhguru")
+
+        self.assertEqual(new_state, {
+                         'lastPlaylistId': 'PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU',
+                         'lastVideoId': "FBYoZ-FgC84"})
+
+    @patch("videosdb.youtube_api.httpx.get")
+    async def test_process_playlist_list_RESUME(self, mock_get):
+        mock_get.side_effect = [
+            create_mock_response(
+                "playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json"),
+            create_mock_response(
+                "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json"),
+            create_mock_response(
+                "playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json", 403)
+        ]
+
+        new_state = await self.downloader._process_playlist_list(
+            [self.PLAYLIST_ID], {
+                "lastPlaylistId": "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU",
+                "lastVideoId": "HADeWBBb1so"
+            },
+            "Sadhguru")
+
+        self.assertEqual(new_state, {
             "lastPlaylistId": None,
             "lastVideoId": None
         })

@@ -32,15 +32,15 @@ def _contains_exceptions(exception_types, exception):
 
 
 def put_item_at_front(seq, item):
-    seq.sort()
-
+    if not item:
+        return seq
     # start from where we left +1:
     try:
         i = seq.index(item)
         i += 1
         seq = seq[i:] + seq[:i]
     except ValueError:
-        logger.warn("Item %s not in list %s" % (item, seq))
+        pass
     return seq
 
 
@@ -95,16 +95,17 @@ class Downloader:
         processed_video_ids = set()
         processed_playlist_ids = set()
         excluded_video_ids = set()
-
+        last_playlist_id = None
+        last_video_id = None
         try:
-
-            if state:
-                logger.info("Resuming from state: %s", state)
-                playlist_ids = put_item_at_front(
-                    playlist_ids, state.get("lastPlaylistId"))
+            last_playlist_id = state.get("lastPlaylistId")
+            playlist_ids.sort()
+            playlist_ids = put_item_at_front(
+                playlist_ids, last_playlist_id)
 
             # main iterations:
             for playlist_id in playlist_ids:
+                last_playlist_id = playlist_id
 
                 if playlist_id in processed_playlist_ids:
                     continue
@@ -116,12 +117,16 @@ class Downloader:
 
                 # create videos:
                 video_ids = playlist["videosdb"]["videoIds"]
+                video_ids.sort()
 
-                if state and playlist_id == state.get("lastPlaylistId"):
+                last_video_id = state.get("lastVideoId")
+                if playlist_id == last_playlist_id:
                     video_ids = put_item_at_front(
-                        video_ids, state.get("lastVideoId"))
+                        video_ids, last_video_id)
 
                 for video_id in video_ids:
+                    last_video_id = video_id
+
                     if video_id not in processed_video_ids:
                         processed_video_ids.add(video_id)
                         video = await self._create_video(video_id, [playlist_id])
@@ -156,8 +161,8 @@ class Downloader:
             if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
                 logger.error(e)
                 new_state = {
-                    "lastPlaylistId": playlist_id,
-                    "lastVideoId": video_id
+                    "lastPlaylistId": last_playlist_id,
+                    "lastVideoId": last_video_id
                 }
                 return new_state
             else:
