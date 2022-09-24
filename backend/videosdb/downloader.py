@@ -98,12 +98,12 @@ class Downloader:
         last_playlist_id = None
         last_video_id = None
         try:
-            last_playlist_id = state.get("lastPlaylistId")
-            if last_playlist_id:
-                logger.info("Resuming from playlist %s", last_playlist_id)
+            if state.get("lastPlaylistId"):
+                logger.info("Resuming from playlist %s",
+                            state.get("lastPlaylistId"))
             playlist_ids.sort()
             playlist_ids = put_item_at_front(
-                playlist_ids, last_playlist_id)
+                playlist_ids,  state.get("lastPlaylistId"))
 
             # main iterations:
             for playlist_id in playlist_ids:
@@ -121,12 +121,12 @@ class Downloader:
                 video_ids = playlist["videosdb"]["videoIds"]
                 video_ids.sort()
 
-                last_video_id = state.get("lastVideoId")
-                if playlist_id == last_playlist_id:
-                    if last_video_id:
-                        logger.info("Resuming from video %s", last_video_id)
+                if playlist_id == state.get("lastPlaylistId"):
+                    if state.get("lastVideoId"):
+                        logger.info("Resuming from video %s",
+                                    state.get("lastVideoId"))
                     video_ids = put_item_at_front(
-                        video_ids, last_video_id)
+                        video_ids,  state.get("lastVideoId"))
 
                 for video_id in video_ids:
                     last_video_id = video_id
