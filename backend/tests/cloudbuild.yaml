@@ -4,11 +4,6 @@ steps:
     args: ['-c', 'echo $_DOCKER_PASSWORD | docker login --username eelis --password-stdin']
 
   - name: 'gcr.io/cloud-builders/docker'
-    id: "up"
-    dir: "backend/tests"
-    args: ["compose", "up", "--detach"]
-
-  - name: 'gcr.io/cloud-builders/docker'
     dir: "backend/tests"
     args: ["compose", "run", "backend", "-m", "unittest"]
 
