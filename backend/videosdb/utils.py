@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def wait_for_port(port: int, host: str = 'localhost', timeout: float = 5.0):
+def wait_for_port(port: int, host: str = 'localhost', timeout: float = 30.0):
     """Wait until a port starts accepting TCP connections.
     Args:
         port: Port number.
