@@ -3,7 +3,7 @@ services:
     backend:
         network_mode: "host"
         image: gcr.io/worpdress-279321/backend-$BRANCH_NAME:latest
-        env_file: /common/env/$VIDEOSDB_CONFIG.txt
+        env_file: common/env/$VIDEOSDB_CONFIG.txt
         depends_on:
             - firestore-emulator
         environment:
@@ -22,7 +22,7 @@ services:
     frontend:
         network_mode: "host"
         image: gcr.io/worpdress-279321/frontend-$BRANCH_NAME:latest
-        env_file: /common/env/$VIDEOSDB_CONFIG.txt
+        env_file: common/env/$VIDEOSDB_CONFIG.txt
         environment:
             - NODE_OPTIONS=--openssl-legacy-provider
         depends_on:
