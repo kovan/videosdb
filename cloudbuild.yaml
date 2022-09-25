@@ -1,3 +1,8 @@
+options:
+    envs:
+        - FIREBASE_PROJECT=$_FIREBASE_PROJECT
+        - VIDEOSDB_CONFIG=$_VIDEOSDB_CONFIG
+        - BRANCH_NAME=$BRANCH_NAME
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
