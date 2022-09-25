@@ -27,8 +27,6 @@ services:
             - NODE_OPTIONS=--openssl-legacy-provider
         depends_on:
             - firestore-emulator
-        volumes:
-            - yarn_cache:/yarn
 
     json-caching-proxy:
         network_mode: "host"
