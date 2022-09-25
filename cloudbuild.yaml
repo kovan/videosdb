@@ -13,9 +13,9 @@ steps:
     dir: "tests/end2end"
     args: ["compose", "-f", "docker-compose.cloudbuild.yml", "pull", "-q"]
 
-  - name: 'gcr.io/cloud-builders/docker'
-    dir: "tests/end2end"
-    args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "backend", "-m", "unittest"]
+#   - name: 'gcr.io/cloud-builders/docker'
+    # dir: "tests/end2end"
+    # args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "backend", "-m", "unittest"]
 
   - name: 'gcr.io/cloud-builders/docker'
     dir: "tests/end2end"
