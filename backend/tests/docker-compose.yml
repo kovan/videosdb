@@ -2,7 +2,7 @@ version: "3"
 services:
     backend:
         network_mode: "host"
-        image: gcr.io/$PROJECT_ID/backend-master:latest
+        image: gcr.io/worpdress-279321/backend-master:latest
         env_file: ../../common/env/testing.txt
         depends_on:
             - firestore-emulator
