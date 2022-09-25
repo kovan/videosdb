@@ -4,7 +4,7 @@ import os
 import re
 import httpx
 from urllib.parse import urlencode
-from videosdb.downloader import wait_for_port
+from videosdb.utils import wait_for_port
 import youtube_transcript_api
 from urllib.parse import urlparse
 
