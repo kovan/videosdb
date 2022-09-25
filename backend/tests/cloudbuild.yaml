@@ -5,11 +5,11 @@ steps:
 
   - name: 'gcr.io/cloud-builders/docker'
     dir: "backend/tests"
-    args: ["compose", "run", "backend", "-m", "unittest"]
+    args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "backend", "-m", "unittest"]
 
   - name: 'gcr.io/cloud-builders/docker'
     dir: "backend/tests"
-    args: ["compose", "down"]
+    args: ["compose", "-f", "docker-compose.cloudbuild.yml", "down"]
 
 
 timeout: 3600s
