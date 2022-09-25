@@ -9,14 +9,8 @@ steps:
     args: ["compose", "up", "--detach"]
 
   - name: 'gcr.io/cloud-builders/docker'
-    entrypoint: "bash"
-    id: "up-completed"
-    args: ["-c", "sleep 5"]
-
-  - name: 'gcr.io/cloud-builders/docker'
     dir: "backend/tests"
     args: ["compose", "run", "backend", "-m", "unittest"]
-    waitFor: "up-completed"
 
   - name: 'gcr.io/cloud-builders/docker'
     dir: "backend/tests"
