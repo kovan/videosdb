@@ -7,6 +7,7 @@ services:
         depends_on:
             - firestore-emulator
         environment:
+            - DEBUG=1
             - GOOGLE_CLOUD_PROJECT=$FIREBASE_PROJECT
             - LOGLEVEL=DEBUG
             - YOUTUBE_API_URL=http://127.0.0.1:43783/youtube/v3
@@ -27,6 +28,7 @@ services:
         image: gcr.io/worpdress-279321/frontend-$BRANCH_NAME:latest
         env_file: ../../common/env/$VIDEOSDB_CONFIG.txt
         environment:
+            - DEBUG=1
             - NODE_OPTIONS=--openssl-legacy-provider
             - FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
         depends_on:
