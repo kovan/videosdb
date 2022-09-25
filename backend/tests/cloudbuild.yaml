@@ -5,12 +5,17 @@ steps:
 
 - name: 'gcr.io/cloud-builders/docker'
   id: "up"
-  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "up", "--detach"]
+  dir: "backend/tests"
+  args: ["compose", "up", "--detach"]
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run",
-        "backend", "-m", "unittest"]
+  dir: "backend/tests"
+  args: ["compose", "run", "backend", "-m", "unittest"]
   waitFor: "up"
+
+- name: 'gcr.io/cloud-builders/docker'
+  dir: "backend/tests"
+  args: ["compose", "down"]
 
 
 timeout: 3600s

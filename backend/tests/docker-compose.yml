@@ -10,7 +10,6 @@ services:
             - GOOGLE_CLOUD_PROJECT=videosdb-testing
             - DEBUG=1
             - LOGLEVEL=DEBUG
-        cmd: [ "-m", "unittest" ]
 
     firestore-emulator:
         network_mode: "host"
