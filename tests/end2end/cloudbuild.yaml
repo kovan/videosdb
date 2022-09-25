@@ -1,13 +1,13 @@
 steps:
-- name: 'docker'
+- name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
   args: ['-c', 'echo $_DOCKER_PASSWORD | docker login --username eelis --password-stdin']
 
-- name: 'docker'
+- name: 'gcr.io/cloud-builders/docker'
   id: "up"
   args: ["compose", "-f", "docker-compose.cloudbuild.yml", "up", "--detach"]
 
-- name: "docker"
+- name: 'gcr.io/cloud-builders/docker'
   args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run",
         "backend", "-m", "unittest"]
   waitFor: "up"
