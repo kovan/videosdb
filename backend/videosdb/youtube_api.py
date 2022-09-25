@@ -4,8 +4,9 @@ import os
 import re
 import httpx
 from urllib.parse import urlencode
+from videosdb.downloader import wait_for_port
 import youtube_transcript_api
-
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class YoutubeAPI:
         self.root_url = os.environ.get(
             "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
 
+        wait_for_port(urlparse(os.environ["YOUTUBE_API_URL"]).port)
         logger.debug("Pointing at URL: " + self.root_url)
 
     async def get_playlist_info(self, playlist_id):

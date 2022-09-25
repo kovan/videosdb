@@ -32,6 +32,7 @@ def wait_for_port(port: int, host: str = 'localhost', timeout: float = 5.0):
     Raises:
         TimeoutError: The port isn't accepting connection after time specified in `timeout`.
     """
+    logger.debug("waiting for port %s:%s to be open", port, host)
     start_time = time.perf_counter()
     while True:
         try:
