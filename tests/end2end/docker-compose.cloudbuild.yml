@@ -28,6 +28,7 @@ services:
         env_file: ../../common/env/$VIDEOSDB_CONFIG.txt
         environment:
             - NODE_OPTIONS=--openssl-legacy-provider
+            - FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
         depends_on:
             - firestore-emulator
 
