@@ -6,6 +6,7 @@ services:
         env_file: ../../common/env/$VIDEOSDB_CONFIG.txt
         depends_on:
             - firestore-emulator
+            - json-caching-proxy
         environment:
             - DEBUG=1
             - GOOGLE_CLOUD_PROJECT=$FIREBASE_PROJECT
