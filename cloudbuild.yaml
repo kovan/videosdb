@@ -1,3 +1,4 @@
+timeout: 7200s
 options:
     env:
         - FIREBASE_PROJECT=$_FIREBASE_PROJECT
@@ -70,4 +71,3 @@ steps:
       - $_FIREBASE_PROJECT
       - --only=hosting
 
-timeout: 7200s
