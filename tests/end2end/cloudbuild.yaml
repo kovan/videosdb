@@ -1,10 +1,16 @@
 steps:
-- name: 'gcr.io/cloud-builders/docker'
+- name: 'docker'
   entrypoint: 'bash'
   args: ['-c', 'echo $_DOCKER_PASSWORD | docker login --username eelis --password-stdin']
 
-- name: 'gcr.io/cloud-builders/docker'
-  entrypoint: 'run.sh'
+- name: 'docker'
+  id: "up"
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "up", "--detach"]
+
+- name: "docker"
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run",
+        "backend", "-m", "unittest"]
+  waitFor: "up"
 
 
 timeout: 3600s

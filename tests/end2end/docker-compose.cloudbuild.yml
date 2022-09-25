@@ -5,25 +5,11 @@ services:
         image: gcr.io/worpdress-279321/backend-master:latest
         env_file: ../../common/env/testing.txt
         depends_on:
-            - json-caching-proxy
             - firestore-emulator
         environment:
             - GOOGLE_CLOUD_PROJECT=videosdb-testing
             - DEBUG=1
             - LOGLEVEL=DEBUG
-
-    frontend:
-        network_mode: "host"
-        image: gcr.io/worpdress-279321/frontend-master:latest
-        env_file: ../../common/env/testing.txt
-        entrypoint: yarn
-
-    json-caching-proxy:
-        network_mode: "host"
-        image: gcr.io/worpdress-279321/json-caching-proxy:latest
-        ports:
-            - 43783:43783
-        stop_signal: SIGKILL
 
     firestore-emulator:
         network_mode: "host"
