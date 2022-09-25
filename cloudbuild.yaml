@@ -11,7 +11,7 @@ steps:
 
   - name: 'gcr.io/cloud-builders/docker'
     dir: "tests/end2end"
-    args: ["compose", "-f", "docker-compose.cloudbuild.yml", "up", "--quiet-pull"]
+    args: ["compose", "-f", "docker-compose.cloudbuild.yml", "up", "--quiet-pull", "--detach"]
 
   - name: 'gcr.io/cloud-builders/docker'
     dir: "tests/end2end"
