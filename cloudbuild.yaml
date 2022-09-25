@@ -11,6 +11,10 @@ steps:
 
   - name: 'gcr.io/cloud-builders/docker'
     dir: "tests/end2end"
+    args: ["compose", "-f", "docker-compose.cloudbuild.yml", "up", "--quiet-pull"]
+
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: "tests/end2end"
     args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "--quiet-pull", "backend", "-m", "unittest"]
 
   - name: 'gcr.io/cloud-builders/docker'
