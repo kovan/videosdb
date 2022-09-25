@@ -36,5 +36,3 @@ services:
         ports:
             - 43783:43783
         stop_signal: SIGKILL
-
-timeout: 1800s
