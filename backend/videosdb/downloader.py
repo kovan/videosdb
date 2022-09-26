@@ -63,6 +63,7 @@ class Downloader:
             playlist_ids = await self._retrieve_playlist_ids(self.YT_CHANNEL_ID)
             state = (await self.db.get("meta/state")).to_dict()
             new_state = await self._process_playlist_list(playlist_ids, state, channel["snippet"]["title"])
+            logger.info("Saving state %s", new_state)
             await self.db.noquota_set("meta/state", new_state)
             await anyio.wait_all_tasks_blocked()
             global_scope.cancel_scope.cancel()
