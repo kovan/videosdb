@@ -1,0 +1,41 @@
+options:
+    env:
+        - BRANCH_NAME=$BRANCH_NAME
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', 'echo $_DOCKER_PASSWORD | docker login --username eelis --password-stdin']
+
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', 'docker pull gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest || exit 0']
+
+- name: 'gcr.io/cloud-builders/docker'
+  dir: "$_IMAGE"
+  args: [
+            'build',
+            '-t', 'gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:$COMMIT_SHA',
+            '-t', 'gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest',
+            '--cache-from', 'gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest',
+            '.'
+        ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  dir: "tests/end2end"
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "pull", "-q"]
+
+- name: 'gcr.io/cloud-builders/docker'
+  dir: "tests/end2end"
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "backend", "-m", "videosdb", "-c", "-e"]
+
+- name: 'gcr.io/cloud-builders/docker'
+  dir: "tests/end2end"
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "frontend", "yarn", "generate"]
+
+- name: 'gcr.io/cloud-builders/docker'
+  dir: "tests/end2end"
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "down"]
+
+
+timeout: 3600s
+images: ['gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest', "gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:$COMMIT_SHA"]
