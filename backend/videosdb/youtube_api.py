@@ -40,9 +40,7 @@ class YoutubeAPI:
         if not self.yt_key:
             self.yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
 
-        # self.root_url = os.environ.get(
-        #     "YOUTUBE_API_URL", "https://www.googleapis.com/youtube/v3")
-        self.root_url = "https://www.googleapis.com/youtube/v3"
+        self.root_url = os.environ["YOUTUBE_API_URL"]
         parsed_ytapi_url = urlparse(self.root_url)
         if parsed_ytapi_url.port:
             wait_for_port(parsed_ytapi_url.port)
