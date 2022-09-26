@@ -186,8 +186,6 @@ class YoutubeAPI:
 
             return
 
-        raise Exception("this should never happen")
-
     async def _request_decoupled(self, *args, **kwargs):
         response = self._request_base(*args, **kwargs)
         status_code = await anext(response)
