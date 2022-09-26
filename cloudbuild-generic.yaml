@@ -19,13 +19,13 @@ steps:
             '--cache-from', 'gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest',
             '.'
         ]
-  - name: 'gcr.io/cloud-builders/docker'
-    dir: "backend/tests"
-    args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "--quiet-pull", "backend", "-m", "unittest"]
+- name: 'gcr.io/cloud-builders/docker'
+  dir: "backend/tests"
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "--quiet-pull", "backend", "-m", "unittest"]
 
-  - name: 'gcr.io/cloud-builders/docker'
-    dir: "backend/tests"
-    args: ["compose", "-f", "docker-compose.cloudbuild.yml", "down"]
+- name: 'gcr.io/cloud-builders/docker'
+  dir: "backend/tests"
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "down"]
 
 
 timeout: 3600s
