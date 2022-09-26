@@ -10,10 +10,11 @@ import requests
 from dotenv import load_dotenv
 from videosdb.downloader import Downloader, put_item_at_front
 from videosdb.db import DB
-
 import os
 
 import sys
+
+from videosdb.youtube_api import YT_API_ROOT_URL
 
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
@@ -42,7 +43,7 @@ class MockedAPIMixin:
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
         cls.db = DB.setup(project, config)
-        cls.mocked_api = respx.mock(base_url=os.environ["YOUTUBE_API_URL"],
+        cls.mocked_api = respx.mock(base_url=YT_API_ROOT_URL,
                                     assert_all_called=False)
         cls.createMocks()
 
