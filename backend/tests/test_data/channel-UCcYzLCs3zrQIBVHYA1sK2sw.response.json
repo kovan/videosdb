@@ -1,0 +1,55 @@
+{
+  "kind": "youtube#channelListResponse",
+  "etag": "KHlTlsX85zlkkPtF9Stq676FQC8",
+  "pageInfo": {
+    "totalResults": 1,
+    "resultsPerPage": 5
+  },
+  "items": [
+    {
+      "kind": "youtube#channel",
+      "etag": "M8LtoVspedUPHLmNT3cfSEPY0MQ",
+      "id": "UCcYzLCs3zrQIBVHYA1sK2sw",
+      "snippet": {
+        "title": "Sadhguru",
+        "description": "Official YouTube Channel of Sadhguru.\n\nConsidered among India’s 50 most influential people, Sadhguru is a yogi, mystic, bestselling\nauthor, and poet. Absolute clarity of perception places him in a unique space, not only in\nmatters spiritual but in business, environmental and international affairs, and opens a new\ndoor on all that he touches.\n\n⚡ Full Moon Flirtations ⚡ \nSadhguru Satsang Every Purnima\nRegister For Free at isha.co/FMF-YT-ANT\n\n⚡ Sadhguru Exclusive\nStart Your 7 Day Trial for Free*\n Only On Sadhguru App\n*T&C Applied\n⚡ http://isha.co/ex-yt (Register Now)\n\n'Karma: A Yogi's Guide to Crafting Destiny.' - A book by Sadhguru\n\nPre-order Now: https://sadhguru.org/karma\n\nAvailable everywhere: April 27, 2021\n\n#CauveryCalling Action Now to Save Cauvery!\nSupport Farmers To Plant 242 Crore Trees At http://isha.co/cauvery-calling-yt\n\nSadhguru App (Download)\n📱 http://onelink.to/sadhguru__app\n\nOfficial Sadhguru Website \n🌎 http://isha.sadhguru.org \n\n\n",
+        "customUrl": "@sadhguru",
+        "publishedAt": "2007-03-28T06:45:46Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://yt3.ggpht.com/jBfoRxDyDktypbBYYra8woH5YUM9C89E7bDEE2c6qcEjjbGDRXYJEJZd0oyBpMGalKk5Nz8F6Jo=s88-c-k-c0x00ffffff-no-rj",
+            "width": 88,
+            "height": 88
+          },
+          "medium": {
+            "url": "https://yt3.ggpht.com/jBfoRxDyDktypbBYYra8woH5YUM9C89E7bDEE2c6qcEjjbGDRXYJEJZd0oyBpMGalKk5Nz8F6Jo=s240-c-k-c0x00ffffff-no-rj",
+            "width": 240,
+            "height": 240
+          },
+          "high": {
+            "url": "https://yt3.ggpht.com/jBfoRxDyDktypbBYYra8woH5YUM9C89E7bDEE2c6qcEjjbGDRXYJEJZd0oyBpMGalKk5Nz8F6Jo=s800-c-k-c0x00ffffff-no-rj",
+            "width": 800,
+            "height": 800
+          }
+        },
+        "localized": {
+          "title": "Sadhguru",
+          "description": "Official YouTube Channel of Sadhguru.\n\nConsidered among India’s 50 most influential people, Sadhguru is a yogi, mystic, bestselling\nauthor, and poet. Absolute clarity of perception places him in a unique space, not only in\nmatters spiritual but in business, environmental and international affairs, and opens a new\ndoor on all that he touches.\n\n⚡ Full Moon Flirtations ⚡ \nSadhguru Satsang Every Purnima\nRegister For Free at isha.co/FMF-YT-ANT\n\n⚡ Sadhguru Exclusive\nStart Your 7 Day Trial for Free*\n Only On Sadhguru App\n*T&C Applied\n⚡ http://isha.co/ex-yt (Register Now)\n\n'Karma: A Yogi's Guide to Crafting Destiny.' - A book by Sadhguru\n\nPre-order Now: https://sadhguru.org/karma\n\nAvailable everywhere: April 27, 2021\n\n#CauveryCalling Action Now to Save Cauvery!\nSupport Farmers To Plant 242 Crore Trees At http://isha.co/cauvery-calling-yt\n\nSadhguru App (Download)\n📱 http://onelink.to/sadhguru__app\n\nOfficial Sadhguru Website \n🌎 http://isha.sadhguru.org \n\n\n"
+        },
+        "country": "IN"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUcYzLCs3zrQIBVHYA1sK2sw"
+        }
+      },
+      "statistics": {
+        "viewCount": "1314932001",
+        "subscriberCount": "10500000",
+        "hiddenSubscriberCount": false,
+        "videoCount": "2615"
+      }
+    }
+  ]
+}

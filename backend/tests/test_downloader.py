@@ -14,7 +14,7 @@ import os
 
 import sys
 
-from videosdb.youtube_api import YT_API_ROOT_URL, YoutubeAPI
+from videosdb.youtube_api import get_root_url, YoutubeAPI
 
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
@@ -45,28 +45,29 @@ class MockedAPIMixin:
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
         cls.db = DB.setup(project, config)
-        cls.mocked_api = respx.mock(base_url=YT_API_ROOT_URL,
+        cls.mocked_api = respx.mock(base_url=get_root_url(),
                                     assert_all_called=False)
         cls.createMocks()
 
     @classmethod
     def createMocks(cls):
         playlists = cls.mocked_api.get(path="/playlists", name="playlists")
-        playlists.return_value = Response(200, json=json.load(
-            open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json")))
+        with open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json") as f:
+            playlists.return_value = Response(200, json=json.load(f))
 
         playlistItems = cls.mocked_api.get(
             path="/playlistItems", name="playlistItems")
-        playlistItems.side_effect = [
-            Response(200, json=json.load(
-                open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json"))),
-            Response(200, json=json.load(
-                open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json"))),
-        ]
+
+        side_effects = []
+        with open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json") as f:
+            side_effects.append(Response(200, json=json.load(f)))
+        with open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json") as f:
+            side_effects.append(Response(200, json=json.load(f)))
+        playlistItems.side_effect = side_effects
 
         videos = cls.mocked_api.get(path="/videos",  name="videos")
-        videos.return_value = Response(200, json=json.load(
-            open(DATA_DIR + "/video-HADeWBBb1so.response.json")))
+        with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
+            videos.return_value = Response(200, json=json.load(f))
 
 
 class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
