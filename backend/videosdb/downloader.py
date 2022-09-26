@@ -12,7 +12,7 @@ from aiostream import stream
 from autologging import traced
 import google.api_core.exceptions
 from slugify import slugify
-from videosdb.utils import _contains_exceptions, put_item_at_front, wait_for_port
+from videosdb.utils import _contains_exceptions, put_item_at_front
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 from videosdb.db import DB
 
@@ -29,7 +29,6 @@ class Downloader:
 
         if "FIRESTORE_EMULATOR_HOST" in os.environ:
             logger.info("USING EMULATOR")
-            wait_for_port(os.environ["FIRESTORE_EMULATOR_HOST"].split(":")[1])
         else:
             logger.info("USING LIVE DATABASE")
         # for k, v in os.environ.items():

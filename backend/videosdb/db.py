@@ -5,12 +5,18 @@ import os
 import logging
 import sys
 
+from videosdb.utils import wait_for_port
 logger = logging.getLogger(__name__)
 
 
 class DB:
     class QuotaExceeded(Exception):
         pass
+
+    @staticmethod
+    def wait_for_port():
+        if "FIRESTORE_EMULATOR_HOST" in os.environ:
+            wait_for_port(os.environ["FIRESTORE_EMULATOR_HOST"].split(":")[1])
 
     @staticmethod
     def setup(project, config):

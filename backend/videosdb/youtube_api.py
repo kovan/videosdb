@@ -18,14 +18,16 @@ def parse_youtube_id(string: str):
     return match.group(1)
 
 
-YT_API_ROOT_URL = "https://www.googleapis.com/youtube/v3"
-
-
-def get_root_url():
-    return os.environ.get("YOUTUBE_API_URL", YT_API_ROOT_URL)
-
-
 class YoutubeAPI:
+    @staticmethod
+    def get_root_url():
+        return os.environ.get("YOUTUBE_API_URL",  "https://www.googleapis.com/youtube/v3")
+
+    @staticmethod
+    def wait_for_port():
+        parsed_ytapi_url = urlparse(YoutubeAPI.get_root_url())
+        if parsed_ytapi_url.port:
+            wait_for_port(parsed_ytapi_url.port)
 
     class QuotaExceeded(Exception):
         def __init__(self, status, json={}):
@@ -47,11 +49,8 @@ class YoutubeAPI:
         if not self.yt_key:
             self.yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"
 
-        self.root_url = get_root_url()
+        self.root_url = YoutubeAPI.get_root_url()
 
-        parsed_ytapi_url = urlparse(self.root_url)
-        if parsed_ytapi_url.port:
-            wait_for_port(parsed_ytapi_url.port)
         logger.debug("Pointing at URL: " + self.root_url)
 
     async def get_playlist_info(self, playlist_id):

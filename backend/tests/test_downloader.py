@@ -14,7 +14,7 @@ import os
 
 import sys
 
-from videosdb.youtube_api import get_root_url, YoutubeAPI
+from videosdb.youtube_api import YoutubeAPI
 
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
@@ -45,7 +45,7 @@ class MockedAPIMixin:
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
         cls.db = DB.setup(project, config)
-        cls.mocked_api = respx.mock(base_url=get_root_url(),
+        cls.mocked_api = respx.mock(base_url=YoutubeAPI.get_root_url(),
                                     assert_all_called=False)
         cls.createMocks()
 

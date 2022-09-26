@@ -4,8 +4,10 @@ import logging.config
 import logging
 import os
 from videosdb.downloader import Downloader
+from videosdb.db import DB
 from videosdb.settings import LOGGING
 from autologging import TRACE
+from videosdb.youtube_api import YoutubeAPI
 
 
 def entrypoint():
@@ -25,6 +27,8 @@ def entrypoint():
 
     options = parser.parse_args()
     if options.check_for_new_videos:
+        DB.wait_for_port()
+        YoutubeAPI.wait_for_port()
         downloader = Downloader(options)
 
         anyio.run(downloader.check_for_new_videos)
