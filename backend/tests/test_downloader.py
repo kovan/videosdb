@@ -26,7 +26,9 @@ class MockedAPIMixin:
     def setUp(self):
         # clear DB:
         requests.delete(
-            "http://localhost:8080/emulator/v1/projects/%s/databases/(default)/documents" % os.environ["FIREBASE_PROJECT"])
+            "http://%s/emulator/v1/projects/%s/databases/(default)/documents" % (
+                os.environ["FIRESTORE_EMULATOR_HOST"],
+                os.environ["FIREBASE_PROJECT"]))
 
         self.mocked_api.start()
         self.addCleanup(self.mocked_api.stop)
