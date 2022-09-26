@@ -1,3 +1,6 @@
+options:
+    env:
+        - BRANCH_NAME=$BRANCH_NAME
 steps:
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
@@ -16,5 +19,14 @@ steps:
             '--cache-from', 'gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest',
             '.'
         ]
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: "backend/tests"
+    args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "--quiet-pull", "backend", "-m", "unittest"]
 
-images: ['gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest']
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: "backend/tests"
+    args: ["compose", "-f", "docker-compose.cloudbuild.yml", "down"]
+
+
+timeout: 3600s
+images: ['gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest', "gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:$COMMIT_SHA"]
