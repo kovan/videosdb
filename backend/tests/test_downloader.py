@@ -21,36 +21,6 @@ DATA_DIR = BASE_DIR + "/test_data"
 
 
 class MockedAPIMixin:
-    @classmethod
-    def setUpClass(cls):
-        load_dotenv("common/env/testing.txt")
-        project = os.environ["FIREBASE_PROJECT"]
-        config = os.environ["VIDEOSDB_CONFIG"]
-        cls.db = DB.setup(project, config)
-        cls.mocked_api = respx.mock(base_url="https://www.googleapis.com/youtube/v3",
-                                    assert_all_called=False)
-
-        playlists = cls.mocked_api.get(path="/playlists", name="playlists")
-        playlists.return_value = Response(200, json=json.load(
-            open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json")))
-
-        playlistItems = cls.mocked_api.get(
-            path="/playlistItems", name="playlistItems")
-        playlistItems.side_effect = [
-            Response(200, json=json.load(
-                open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json"))),
-            Response(200, json=json.load(
-                open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json"))),
-        ]
-
-        videos = cls.mocked_api.route(
-            method="GET", path="/videos",  name="videos")
-        videos.return_value = Response(200, json=json.load(
-            open(DATA_DIR + "/video-HADeWBBb1so.response.json")))
-
-        cls.VIDEO_IDS = ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw',
-                         'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
-        cls.PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
 
     def setUp(self):
         # clear DB:
@@ -64,8 +34,44 @@ class MockedAPIMixin:
         self.my_loop = asyncio.get_event_loop()
         return self.my_loop
 
+    @classmethod
+    def setUpClass(cls):
+
+        load_dotenv("common/env/testing.txt")
+
+        project = os.environ["FIREBASE_PROJECT"]
+        config = os.environ["VIDEOSDB_CONFIG"]
+        cls.db = DB.setup(project, config)
+
+        cls.mocked_api = respx.mock(base_url="https://www.googleapis.com/youtube/v3",
+                                    assert_all_called=False)
+        cls.createMocks()
+
+    @classmethod
+    def createMocks(cls):
+        playlists = cls.mocked_api.get(path="/playlists", name="playlists")
+        playlists.return_value = Response(200, json=json.load(
+            open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json")))
+
+        playlistItems = cls.mocked_api.get(
+            path="/playlistItems", name="playlistItems")
+        playlistItems.side_effect = [
+            Response(200, json=json.load(
+                open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json"))),
+            Response(200, json=json.load(
+                open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json"))),
+        ]
+
+        videos = cls.mocked_api.get(path="/videos",  name="videos")
+        videos.return_value = Response(200, json=json.load(
+            open(DATA_DIR + "/video-HADeWBBb1so.response.json")))
+
 
 class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
+    VIDEO_IDS = ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw',
+                 'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
+    PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+
     def test_put_item_at_front(self):
         s = [3, 5, 6, 8]
         self.assertEqual(put_item_at_front(s, 6), [6, 8, 3, 5])
@@ -77,13 +83,9 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
     async def test_create_video(self):
         video_id = "HADeWBBb1so"
 
-        # mock.return_value = create_mock_api_response(
-        #     ["video-%s.response.json" % video_id], True)
-
         video = await Downloader()._create_video(video_id, [self.PLAYLIST_ID])
 
-        mock = self.mocked_api["videos"]
-        self.assertEqual(mock.call_count, 1)
+        self.assertEqual(self.mocked_api["videos"].call_count, 1)
 
         self.assertEqual(video["kind"], "youtube#video")
         self.assertEqual(video["id"], video_id)
@@ -117,3 +119,31 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
 
         doc = await self.db.document("playlists/" + self.PLAYLIST_ID).get()
         self.assertTrue(doc.exists)
+
+    @respx.mock
+    async def test_process_playlist_list(self):
+        video_id = "HADeWBBb1so"
+
+        new_state = await Downloader()._process_playlist_list(
+            [self.PLAYLIST_ID], {}, "Sadhguru")
+
+        self.assertEqual(self.mocked_api["playlists"].call_count, 1)
+        self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
+
+        self.assertEqual(new_state, {
+            "lastPlaylistId": None,
+            "lastVideoId": None
+        })
+
+        doc = await self.db.document("videos/" + video_id).get()
+        self.assertTrue(doc.exists)
+
+        pls = [doc.get("id") async for doc in self.db.collection("playlists").stream()]
+        self.assertEqual(len(pls), 1)
+        self.assertEqual(pls[0], self.PLAYLIST_ID)
+
+        vids = [doc async for doc in self.db.collection("videos").stream()]
+        self.assertEqual(len(vids), len(self.VIDEO_IDS))
+        for video in vids:
+            self.assertEqual([self.PLAYLIST_ID],
+                             video.get("videosdb.playlists"))
