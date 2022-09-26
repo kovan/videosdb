@@ -19,22 +19,17 @@ steps:
             '--cache-from', 'gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest',
             '.'
         ]
-
-- name: 'gcr.io/cloud-builders/docker'
-  dir: "tests/end2end"
-  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "pull", "-q"]
-
 - name: 'gcr.io/cloud-builders/docker'
   dir: "backend/tests"
-  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "backend", "-m", "unittest"]
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "--quiet-pull", "backend", "-m", "unittest"]
 
 - name: 'gcr.io/cloud-builders/docker'
   dir: "tests/end2end"
-  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "backend", "-m", "videosdb", "-c", "-e"]
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run",  "--quiet-pull","backend", "-m", "videosdb", "-c", "-e"]
 
 - name: 'gcr.io/cloud-builders/docker'
   dir: "tests/end2end"
-  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "frontend", "yarn", "generate"]
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run",  "--quiet-pull","frontend", "yarn", "generate"]
 
 - name: 'gcr.io/cloud-builders/docker'
   dir: "tests/end2end"

@@ -22,15 +22,11 @@ steps:
 
 - name: 'gcr.io/cloud-builders/docker'
   dir: "tests/end2end"
-  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "pull", "-q"]
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "--quiet-pull", "backend", "-m", "videosdb", "-c", "-e"]
 
 - name: 'gcr.io/cloud-builders/docker'
   dir: "tests/end2end"
-  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "backend", "-m", "videosdb", "-c", "-e"]
-
-- name: 'gcr.io/cloud-builders/docker'
-  dir: "tests/end2end"
-  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "frontend", "yarn", "generate"]
+  args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "--quiet-pull", "frontend", "yarn", "generate"]
 
 - name: 'gcr.io/cloud-builders/docker'
   dir: "tests/end2end"
