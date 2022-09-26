@@ -14,7 +14,7 @@ import os
 
 import sys
 
-from videosdb.youtube_api import YT_API_ROOT_URL
+from videosdb.youtube_api import YT_API_ROOT_URL, YoutubeAPI
 
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
@@ -149,3 +149,38 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         for video in vids:
             self.assertEqual([self.PLAYLIST_ID],
                              video.get("videosdb.playlists"))
+
+    @respx.mock
+    async def test_process_playlist_list_PAUSE(self):
+        self.mocked_api["playlistItems"].side_effect = YoutubeAPI.QuotaExceeded(
+            403)
+
+        new_state = await Downloader()._process_playlist_list(
+            [self.PLAYLIST_ID], {}, "Sadhguru")
+
+        self.assertEqual(new_state, {
+            "lastPlaylistId": "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU",
+            "lastVideoId": None
+        })
+
+        for v in self.VIDEO_IDS:
+            doc = await self.db.document("videos/" + v).get()
+            self.assertFalse(doc.exists)
+
+    @respx.mock
+    async def test_process_playlist_list_RESUME(self):
+        state = {
+            "lastPlaylistId": self.PLAYLIST_ID,
+            "lastVideoId": "ed7pFle2yM8"  # this is in first page
+        }
+        new_state = await Downloader()._process_playlist_list(
+            [self.PLAYLIST_ID], state, "Sadhguru")
+
+        self.assertEqual(new_state, {
+            "lastPlaylistId": None,
+            "lastVideoId": None
+        })
+
+        for v in self.VIDEO_IDS:
+            doc = await self.db.document("videos/" + v).get()
+            self.assertTrue(doc.exists)
