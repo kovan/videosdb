@@ -42,8 +42,8 @@ class MockedAPIMixin:
     @classmethod
     def setUpClass(cls):
         load_dotenv("common/env/testing.txt")
-        logger.info("ENVIRONMENT:")
-        logger.info(pprint.pformat(os.environ))
+
+        print(pprint.pformat(os.environ))
 
         DB.wait_for_port()
 
