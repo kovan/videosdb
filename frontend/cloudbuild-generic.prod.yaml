@@ -22,11 +22,10 @@ steps:
 
 - id: unittests
   name: docker
-  dir: "$_IMAGE"
   args:
     - run
     - --env-file
-    - ../common/env/testing.txt
+    - common/env/testing.txt
     - gcr.io/worpdress-279321/frontend-$BRANCH_NAME
     - yarn
     - test
