@@ -20,6 +20,16 @@ steps:
             '.'
         ]
 
+- id: unittests
+  name: docker
+  args:
+    - run
+    - --env-file
+    - ../common/env/testing.txt
+    - gcr.io/worpdress-279321/frontend-$BRANCH_NAME
+    - yarn
+    - test
+
 - name: 'gcr.io/cloud-builders/docker'
   dir: "tests/end2end"
   args: ["compose", "-f", "docker-compose.cloudbuild.yml", "run", "--quiet-pull", "backend", "-m", "videosdb", "-c", "-e"]

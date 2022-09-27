@@ -20,15 +20,15 @@ steps:
             '.'
         ]
 
-  - id: unittests
-    name: docker
-    args:
-      - run
-      - --env-file
-      - ../common/env/testing.txt
-      - gcr.io/worpdress-279321/frontend-$BRANCH_NAME
-      - yarn
-      - test
+- id: unittests
+  name: docker
+  args:
+    - run
+    - --env-file
+    - ../common/env/testing.txt
+    - gcr.io/worpdress-279321/frontend-$BRANCH_NAME
+    - yarn
+    - test
 
 timeout: 3600s
 images: ['gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:latest', "gcr.io/$PROJECT_ID/$_IMAGE-$BRANCH_NAME:$COMMIT_SHA"]
