@@ -1,4 +1,5 @@
 import asyncio
+import pprint
 from httpx import Response
 import respx
 import os
@@ -11,11 +12,12 @@ from dotenv import load_dotenv
 from videosdb.downloader import Downloader, put_item_at_front
 from videosdb.db import DB
 import os
-
+import logging
 import sys
 
 from videosdb.youtube_api import YoutubeAPI
 
+logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 DATA_DIR = BASE_DIR + "/test_data"
@@ -40,6 +42,9 @@ class MockedAPIMixin:
     @classmethod
     def setUpClass(cls):
         load_dotenv("common/env/testing.txt")
+        logger.debug("ENVIRONMENT:")
+        logger.debug(pprint.pformat(os.environ))
+
         DB.wait_for_port()
 
         project = os.environ["FIREBASE_PROJECT"]
