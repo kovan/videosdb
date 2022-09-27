@@ -20,12 +20,12 @@ steps:
             '.'
         ]
 
-  - id: generate
+  - id: unittests
     name: docker
     args:
       - run
       - --env-file
-      - common/env/testing.txt
+      - ../common/env/testing.txt
       - gcr.io/worpdress-279321/frontend-$BRANCH_NAME
       - yarn
       - test
