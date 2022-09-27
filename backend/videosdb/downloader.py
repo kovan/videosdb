@@ -131,13 +131,6 @@ class Downloader:
                         firestore.ArrayUnion([playlist_id])
                     })
 
-            if processed_video_ids:
-                ids = list(processed_video_ids)
-                ids.sort()
-                await self.db.set("meta/video_ids", {
-                    "videoIds": firestore.ArrayUnion(ids)
-                })
-
             # retrieve pending transcripts
             if self.options and not self.options.exclude_transcripts:
                 logger.info("Retrieving transcripts")
@@ -157,6 +150,13 @@ class Downloader:
                 return new_state
             else:
                 raise e
+
+        if processed_video_ids:
+            ids = list(processed_video_ids)
+            ids.sort()
+            await self.db.noquota_set("meta/video_ids", {
+                "videoIds": firestore.ArrayUnion(ids)
+            })
 
         new_state = {
             "lastPlaylistId": None,
