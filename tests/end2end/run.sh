@@ -7,13 +7,13 @@ rm -fr ./dist
 
 docker compose build \
 && \
-docker compose up --detach --remove-orphans \
+docker compose --profile tests run backend-tests \
 && \
-docker compose run  --rm -e LOGLEVEL=TRACE backend -m unittest \
+docker compose --profile tests run frontend-tests \
 && \
-docker compose run  -e LOGLEVEL=DEBUG --rm backend -O -m videosdb -c -e \
+docker compose --profile end2end-tests run backend \
 && \
-docker compose run frontend yarn generate-and-start\
+docker compose --profile end2end-tests run frontend\
 
 
 #docker compose down

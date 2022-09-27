@@ -1,3 +1,5 @@
+#!env poetry run python3
+
 import anyio
 import argparse
 import logging.config
@@ -13,7 +15,7 @@ from videosdb.youtube_api import YoutubeAPI
 def entrypoint():
 
     logging.config.dictConfig(LOGGING)
-    if os.environ["LOGLEVEL"] == "TRACE":
+    if os.environ.get("LOGLEVEL") == "TRACE":
         logging.getLogger("videosdb").setLevel(TRACE)
 
     parser = argparse.ArgumentParser()

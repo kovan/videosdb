@@ -40,3 +40,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 env_files  = "common/env/testing.txt"
+
+
+[tool.poetry.scripts]
+main = "run:entrypoint"

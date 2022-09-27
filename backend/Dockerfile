@@ -32,7 +32,7 @@ ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 
 ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
-RUN /home/appuser/.local/bin/poetry install
+RUN /home/appuser/.local/bin/poetry install  --no-interaction
 
 
 COPY --chown=appuser:appuser . .
@@ -40,5 +40,5 @@ COPY --chown=appuser:appuser . .
 
 
 
-ENTRYPOINT ["poetry", "run", "python"]
+ENTRYPOINT ["poetry", "run"]
 
