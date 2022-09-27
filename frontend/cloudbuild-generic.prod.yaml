@@ -22,6 +22,7 @@ steps:
 
 - id: unittests
   name: docker
+  dir: "$_IMAGE"
   args:
     - run
     - --env-file
