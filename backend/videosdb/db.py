@@ -17,7 +17,7 @@ class DB:
     def wait_for_port():
         if "FIRESTORE_EMULATOR_HOST" in os.environ:
             host, port = os.environ["FIRESTORE_EMULATOR_HOST"].split(":")
-            wait_for_port(host, port, 60.0)
+            wait_for_port(port, host,  60.0)
 
     @staticmethod
     def setup(project, config):
