@@ -39,8 +39,8 @@ class MockedAPIMixin:
 
     @classmethod
     def setUpClass(cls):
-
         load_dotenv("common/env/testing.txt")
+        DB.wait_for_port()
 
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
