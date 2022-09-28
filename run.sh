@@ -43,15 +43,19 @@ while getopts "gfbeh" option; do
     case $option in
         g) Generate
         exit;;
-        f) docker compose --profile tests run frontend yarn test || exit -1
+        f) docker compose build frontend
+            docker compose --profile tests run frontend yarn test || exit -1
         exit;;
-        b) docker-compose --profile tests up || exit -1
-            docker compose --profile tests -e FIRESTORE_EMULATOR_HOST=localhost:8080 \
-            run backend run python -m unittest || exit -1
+        b)
+            docker compose build backend
+            docker-compose --profile tests up --build -d || exit -1
+            docker compose --profile tests run -e FIRESTORE_EMULATOR_HOST=localhost:8080 \
+            backend run python -m unittest || exit -1
         exit;;
-        e) docker-compose --profile end2end-tests up || exit -1
-            docker compose --profile end2end-tests run backend || exit -1
-            docker compose --profile end2end-tests run frontend || exit -1
+        e) docker compose build backend frontend || exit -1
+            docker compose --profile end2end-tests up --build -d || exit -1
+            docker compose run backend || exit -1
+            docker compose run frontend || exit -1
         exit;;
         h) Help
         exit;;

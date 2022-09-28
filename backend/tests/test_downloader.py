@@ -1,6 +1,5 @@
 import asyncio
 import pprint
-import time
 from httpx import Response
 import respx
 import os
@@ -8,7 +7,6 @@ import aiounittest
 import isodate
 import json
 
-import requests
 from dotenv import load_dotenv
 from videosdb.downloader import Downloader, put_item_at_front
 from videosdb.db import DB
@@ -26,13 +24,15 @@ DATA_DIR = BASE_DIR + "/test_data"
 
 class MockedAPIMixin:
 
-    def setUp(self):
+    async def setUp(self):
         # clear DB:
-        requests.delete(
-            "http://%s/emulator/v1/projects/%s/databases/(default)/documents" % (
-                os.environ["FIRESTORE_EMULATOR_HOST"],
-                os.environ["FIREBASE_PROJECT"]))
-        time.sleep(0.1)
+        async for col in self.db.list_collections():
+            await self.db.recursive_delete(col)
+        # requests.delete(
+        #     "http://%s/emulator/v1/projects/%s/databases/(default)/documents" % (
+        #         os.environ["FIRESTORE_EMULATOR_HOST"],
+        #         os.environ["FIREBASE_PROJECT"]))
+        # time.sleep(0.1)
 
         self.mocked_api.start()
         self.addCleanup(self.mocked_api.stop)
