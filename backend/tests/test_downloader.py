@@ -1,5 +1,6 @@
 import asyncio
 import pprint
+import time
 from httpx import Response
 import respx
 import os
@@ -31,6 +32,7 @@ class MockedAPIMixin:
             "http://%s/emulator/v1/projects/%s/databases/(default)/documents" % (
                 os.environ["FIRESTORE_EMULATOR_HOST"],
                 os.environ["FIREBASE_PROJECT"]))
+        time.sleep(0.1)
 
         self.mocked_api.start()
         self.addCleanup(self.mocked_api.stop)

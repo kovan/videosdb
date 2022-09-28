@@ -7,23 +7,10 @@ services:
             context: backend
         env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
         environment:
-            - GOOGLE_CLOUD_PROJECT=videosdb-testing
+            - GOOGLE_CLOUD_PROJECT=${PROJECT-worpdress-279321}
         profiles:
-            - generate
-            - end2end-tests
+            - none
         command: run main -c -e
-
-    backend-tests:
-        network_mode: "host"
-        image: ${REPO-}backend
-        env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
-        environment:
-            - FIRESTORE_EMULATOR_HOST=localhost:8080
-        command: run python -m unittest
-        depends_on:
-            - firebase-emulator
-        profiles:
-            - tests
 
     frontend:
         network_mode: "host"
@@ -36,15 +23,8 @@ services:
         volumes:
             - yarn_cache:/yarn
         profiles:
-            - generate
-            - end2end-tests
+            - none
         command: yarn generate
-
-    frontend-tests:
-        image: ${REPO-}frontend
-        command: yarn test
-        profiles:
-            - tests
 
     # tests-end2end:
     #     depends_on:
@@ -61,13 +41,13 @@ services:
             - 43783:43783
         stop_signal: SIGKILL
         profiles:
-            - "end2end-tests"
+            - end2end-tests
 
     firebase-emulator:
         network_mode: "host"
         image: ${REPO-}firebase-emulator
         environment:
-            - GCP_PROJECT=videosdb-testing
+            - GCP_PROJECT=${FIREBASE_PROJECT-firebase-testing}
             - ENABLE_UI=true
         volumes:
             - emulator-data:/firebase/baseline-data
@@ -81,7 +61,7 @@ services:
         image: ${REPO-}firebase
         command: deploy --project ${FIREBASE_PROJECT-firebase-testing} --only=hosting
         profiles:
-            - generate
+            - none
 
 volumes:
     emulator-data:

@@ -1,71 +1,62 @@
 #!/bin/bash
 
-
-help()
+Help()
 {
-         echo -g: generate deploy webpage
-         echo -t: run tests
+    echo -g: generate deploy webpage
+    echo -t: run tests
 
 }
 
-Common() {
+SetUp() {
 
-    PROJECT=worpdress-279321
+    REPO_PROJECT=worpdress-279321
 
     if  ! [[ -z "$BRANCH_NAME" ]] # we are in GCP
     then
-        REPO=grc.io/$PROJECT/$BRANCH_NAME/
-        docker-compose pull frontend backend
+        REPO=grc.io/$REPO_PROJECT/$BRANCH_NAME/
+
     else
         pgrep docker > /dev/null || sudo service docker start
     fi
+
+    docker compose build  --pull || exit -1
+
     rm -fr ./dist
-
-
 }
 
-Generate() {
-    Common
-    docker compose --profile generate run backend run main -c \
-    && \
-    docker compose --profile generate run frontend yarn\
-    && \
-    docker compose cp frontend:/app/dist ./frontend \
-    || exit -1
-    # && \
-    # docker compose --profile generate run firebase\
-
-}
-
-RunTests() {
-    Common
-
-    docker compose build \
-    && \
-    docker compose --profile tests run backend-tests \
-    && \
-    docker compose --profile tests run frontend-tests \
-    && \
-    docker compose --profile end2end-tests run backend \
-    && \
-    docker compose --profile end2end-tests run frontend\
-    || exit -1
-
+TearDown() {
+    docker compose push
     docker compose down
 }
 
-while getopts ":hgt" option; do
-   case $option in
-      g) Generate
-         exit;;
-      t) RunTests
-         exit;;
-      h) help
-         exit;;
-     \?) # Invalid option
-         echo "Error: Invalid option"
-         exit;;
-   esac
+Generate() {
+    docker compose run backend run main -c || exit -1
+    docker compose run frontend yarn generate|| exit -1
+    docker compose cp frontend:/app/dist ./frontend || exit -1
+    # docker compose run firebase || exit -1
+}
+
+
+
+while getopts "gfbeh" option; do
+    SetUp
+    case $option in
+        g) Generate
+        exit;;
+        f) docker compose --profile tests run frontend yarn test || exit -1
+        exit;;
+        b) docker-compose --profile tests up || exit -1
+            docker compose --profile tests -e FIRESTORE_EMULATOR_HOST=localhost:8080 \
+            run backend run python -m unittest || exit -1
+        exit;;
+        e) docker-compose --profile end2end-tests up || exit -1
+            docker compose --profile end2end-tests run backend || exit -1
+            docker compose --profile end2end-tests run frontend || exit -1
+        exit;;
+        h) Help
+        exit;;
+    esac
+    TearDown
 done
 
 
