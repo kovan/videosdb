@@ -2,7 +2,7 @@ version: "3"
 services:
     backend:
         network_mode: "host"
-        image: ${REPO-}backend
+        image: ${REPO-}backend:${BRANCH_NAME-latest}
         build:
             context: backend
         env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
@@ -11,7 +11,7 @@ services:
         profiles:
             - generate
             - end2end-tests
-        command: "main -c -e"
+        command: run main -c -e
 
     backend-tests:
         network_mode: "host"
@@ -19,7 +19,7 @@ services:
         env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
         environment:
             - FIRESTORE_EMULATOR_HOST=localhost:8080
-        command: python -m unittest
+        command: run python -m unittest
         depends_on:
             - firestore-emulator
         profiles:
@@ -38,8 +38,7 @@ services:
         profiles:
             - generate
             - end2end-tests
-        command:
-            - yarn generate-and-start
+        command: yarn generate
 
     frontend-tests:
         image: ${REPO-}frontend
@@ -77,6 +76,12 @@ services:
         profiles:
             - tests
             - end2end-tests
+
+    firebase:
+        image: gcr.io/worpdress-279321/firebase
+        command: deploy --project ${FIREBASE_PROJECT-testing} --only=hosting
+        profiles:
+            - generate
 
 volumes:
     emulator-data:

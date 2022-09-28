@@ -1,20 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 pgrep docker || sudo service docker start
 
-
+if [[ -z "$BRANCH_NAME" ]]
+then
+    export REPO=grc.io/$PROJECT_NAME/$BRANCH_NAME/
+    docker-compose pull
+fi
 
 rm -fr ./dist
 
-docker compose build \
-&& \
-docker compose --profile tests run backend-tests \
-&& \
-docker compose --profile tests run frontend-tests \
-&& \
-docker compose --profile end2end-tests run backend \
-&& \
-docker compose --profile end2end-tests run frontend\
 
 
-#docker compose down
 

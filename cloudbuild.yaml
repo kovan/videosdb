@@ -14,8 +14,8 @@ steps:
       - --env-file
       - common/env/$_VIDEOSDB_CONFIG.txt
       - gcr.io/worpdress-279321/backend-$BRANCH_NAME
+      - run
       - python
-      - -O
       - -m
       - videosdb
       - --check-for-new-videos

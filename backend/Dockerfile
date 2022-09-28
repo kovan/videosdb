@@ -40,5 +40,5 @@ COPY --chown=appuser:appuser . .
 
 
 
-ENTRYPOINT ["poetry", "run"]
+ENTRYPOINT ["poetry"]
 
