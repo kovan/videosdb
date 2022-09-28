@@ -1,12 +1,11 @@
-
-FROM python:3.10.7-bullseye
+FROM python:3.10-bullseye
 RUN echo 'root:toor' | chpasswd
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt update
 RUN apt install -y python3-dev
 RUN apt install -y python3-venv
-RUN apt install -y rustc
+#RUN apt install -y rustc
 RUN apt install -y wget
 RUN apt install -y git
 RUN apt install -y libssl-dev

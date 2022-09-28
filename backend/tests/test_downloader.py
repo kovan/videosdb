@@ -1,9 +1,8 @@
-import asyncio
 import pprint
 from httpx import Response
 import respx
 import os
-import aiounittest
+import asynctest
 import isodate
 import json
 
@@ -22,12 +21,19 @@ BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 DATA_DIR = BASE_DIR + "/test_data"
 
 
-class MockedAPIMixin:
+class TestDownloader(asynctest.TestCase):
+    VIDEO_IDS = ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw',
+                 'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
+    PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+
+    async def _clear_db(self):
+        async for col in self.db.collections():
+            await self.db.recursive_delete(col)
 
     async def setUp(self):
+        await self._clear_db()
+        # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         # clear DB:
-        async for col in self.db.list_collections():
-            await self.db.recursive_delete(col)
         # requests.delete(
         #     "http://%s/emulator/v1/projects/%s/databases/(default)/documents" % (
         #         os.environ["FIRESTORE_EMULATOR_HOST"],
@@ -37,9 +43,9 @@ class MockedAPIMixin:
         self.mocked_api.start()
         self.addCleanup(self.mocked_api.stop)
 
-    def get_event_loop(self):  # workaround for bug
-        self.my_loop = asyncio.get_event_loop()
-        return self.my_loop
+    # def get_event_loop(self):  # workaround for bug
+    #     self.my_loop = asyncio.get_event_loop()
+    #     return self.my_loop
 
     @classmethod
     def setUpClass(cls):
@@ -75,12 +81,6 @@ class MockedAPIMixin:
         videos = cls.mocked_api.get(path="/videos",  name="videos")
         with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
             videos.return_value = Response(200, json=json.load(f))
-
-
-class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
-    VIDEO_IDS = ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw',
-                 'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
-    PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
 
     def test_put_item_at_front(self):
         s = [3, 5, 6, 8]
