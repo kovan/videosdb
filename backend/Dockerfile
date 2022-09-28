@@ -1,4 +1,4 @@
-FROM python:3.10-bullseye
+FROM python:3.10
 RUN echo 'root:toor' | chpasswd
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
