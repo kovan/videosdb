@@ -8,24 +8,27 @@ help()
 
 }
 
-common() {
+Common() {
 
-    if  ! [[ -z "$BRANCH_NAME" ]]
+    PROJECT=worpdress-279321
+
+    if  ! [[ -z "$BRANCH_NAME" ]] # we are in GCP
     then
-        export REPO=grc.io/$PROJECT_NAME/$BRANCH_NAME/
+        REPO=grc.io/$PROJECT/$BRANCH_NAME/
         docker-compose pull frontend backend
     else
         pgrep docker > /dev/null || sudo service docker start
     fi
     rm -fr ./dist
 
+
 }
 
-generate() {
-    common
+Generate() {
+    Common
     docker compose --profile generate run backend run main -c \
     && \
-    docker compose --profile generate run frontend \
+    docker compose --profile generate run frontend yarn\
     && \
     docker compose cp frontend:/app/dist ./frontend \
     || exit -1
@@ -34,8 +37,8 @@ generate() {
 
 }
 
-runtests() {
-    common
+RunTests() {
+    Common
 
     docker compose build \
     && \
@@ -53,9 +56,9 @@ runtests() {
 
 while getopts ":hgt" option; do
    case $option in
-      g) generate
+      g) Generate
          exit;;
-      t) runtests
+      t) RunTests
          exit;;
       h) help
          exit;;

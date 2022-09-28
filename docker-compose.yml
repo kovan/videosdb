@@ -2,7 +2,7 @@ version: "3"
 services:
     backend:
         network_mode: "host"
-        image: ${REPO-}backend:${BRANCH_NAME-latest}
+        image: ${REPO-}backend
         build:
             context: backend
         env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
@@ -21,7 +21,7 @@ services:
             - FIRESTORE_EMULATOR_HOST=localhost:8080
         command: run python -m unittest
         depends_on:
-            - firestore-emulator
+            - firebase-emulator
         profiles:
             - tests
 
@@ -32,7 +32,7 @@ services:
         build:
             context: frontend
         depends_on:
-            - firestore-emulator
+            - firebase-emulator
         volumes:
             - yarn_cache:/yarn
         profiles:
@@ -48,7 +48,7 @@ services:
 
     # tests-end2end:
     #     depends_on:
-    #         - firestore-emulator
+    #         - firebase-emulator
     #         - json-caching-proxy
     #     command: "true"
 
@@ -63,9 +63,9 @@ services:
         profiles:
             - "end2end-tests"
 
-    firestore-emulator:
+    firebase-emulator:
         network_mode: "host"
-        image: spine3/firebase-emulator
+        image: ${REPO-}firebase-emulator
         environment:
             - GCP_PROJECT=videosdb-testing
             - ENABLE_UI=true
@@ -78,8 +78,8 @@ services:
             - end2end-tests
 
     firebase:
-        image: gcr.io/worpdress-279321/firebase
-        command: deploy --project ${FIREBASE_PROJECT-testing} --only=hosting
+        image: ${REPO-}firebase
+        command: deploy --project ${FIREBASE_PROJECT-firebase-testing} --only=hosting
         profiles:
             - generate
 
