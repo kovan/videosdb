@@ -13,6 +13,7 @@ tasks:
     init-gcp:
         cmds:
             - echo $DOCKER_PASSWORD | docker login --username eelis --password-stdin
+            - docker login gcr.io
 
     echo-repo: echo {{.REPO}}
 
