@@ -12,8 +12,6 @@ tasks:
     init-gcp:
         cmds:
             - echo $DOCKER_PASSWORD | docker login --username eelis --password-stdin
-        preconditions:
-            - .REPO
 
     echo-repo: echo {{.REPO}}
 
