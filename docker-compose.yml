@@ -7,7 +7,7 @@ services:
             context: backend
         env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
         environment:
-            - GOOGLE_CLOUD_PROJECT=${PROJECT-worpdress-279321}
+            - GOOGLE_CLOUD_PROJECT=${REPO_PROJECT-worpdress-279321}
 
     frontend:
         network_mode: "host"

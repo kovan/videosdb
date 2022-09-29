@@ -20,8 +20,7 @@ tasks:
 
     firebase: docker compose build --pull firebase
 
-    test-servers:
-        internal: true
+    start-test-servers:
         cmds:
             - docker compose  build --pull firebase-emulator json-caching-proxy
             - docker compose up --detach firebase-emulator json-caching-proxy
@@ -33,30 +32,41 @@ tasks:
             - docker compose run frontend yarn test
 
     backend-unittests:
-        deps:  [test-servers, backend]
+        deps:  [start-test-servers, backend]
         cmds:
-            - docker compose  run -e FIRESTORE_EMULATOR_HOST=localhost:8080 backend run python -m unittest
+            - docker compose run
+                -e FIRESTORE_EMULATOR_HOST=localhost:8080
+                backend run python -m unittest
+
+    unittests:
+        deps: [backend-unittests, frontend-unittests]
 
     end2end-tests:
-        depends: [frontend-unittests, backend-unittests, test-servers]
+        depends: [frontend-unittests, backend-unittests, start-test-servers]
         cmds:
-            - docker compose  up json-caching-proxy firebase-emulator --detach
+            - docker compose up json-caching-proxy firebase-emulator --detach
             - docker compose run backend run main -c -e
             - docker compose run frontend yarn generate
+
 
     generate:
         deps: [frontend, backend, firebase]
         cmds:
-            - docker compose run backend run main -c
-            - docker compose run frontend yarn generate
-            - docker compose cp frontend:/app/dist ./frontend
-            - docker compose run firebase deploy --project ${FIREBASE_PROJECT} --only=hosting
+            - docker compose run backend run main --check-for-new-videos
+            - docker compose run --name generate frontend yarn generate
+            - docker cp generate:/app/dist frontend/
+            - docker compose run
+                -e GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/keys/$VIDEOSDB_CONFIG.json
+                firebase deploy
+                --project ${FIREBASE_PROJECT}
+                --only=hosting
 
     push:
         preconditions:
             - .REPO
         cmds:
              - docker compose push {{.IMAGE}}
+
 
 
 
