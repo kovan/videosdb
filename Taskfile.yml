@@ -4,16 +4,15 @@ env:
     REPO_PROJECT: worpdress-279321
     REPO: '{{if empty .BRANCH_NAME }}{{else}}grc.io/{{.REPO_PROJECT}}/{{.BRANCH_NAME}}/{{end}}'
 tasks:
-    setup:
-        internal: true
+    init-local:
         cmds:
             - pgrep docker > /dev/null || sudo service docker start
-            - rm -fr ./dist
-    docker-login:
+
+    init-gcp:
         cmds:
             - echo $DOCKER_PASSWORD | docker login --username eelis --password-stdin
-        silent: true
-
+        preconditions:
+            - .REPO
 
     backend: docker compose build --pull backend
 
@@ -21,10 +20,10 @@ tasks:
 
     firebase: docker compose build --pull firebase
 
-
     test-servers:
+        internal: true
         cmds:
-            - docker compose --profile test-servers build  --pull
+            - docker compose  build --pull firebase-emulator json-caching-proxy
             - docker compose up --detach firebase-emulator json-caching-proxy
 
 
@@ -36,15 +35,14 @@ tasks:
     backend-unittests:
         deps:  [test-servers, backend]
         cmds:
-            - docker compose  run -e FIRESTORE_EMULATOR_HOST=localhost:8080 \
-                backend run python -m unittest
+            - docker compose  run -e FIRESTORE_EMULATOR_HOST=localhost:8080 backend run python -m unittest
 
-    tests-end2end:
+    end2end-tests:
         depends: [frontend-unittests, backend-unittests, test-servers]
         cmds:
-            - docker compose --profile test-servers up --detach
+            - docker compose  up json-caching-proxy firebase-emulator --detach
             - docker compose run backend run main -c -e
-            - docker compose run frontend yarn generate-and-start
+            - docker compose run frontend yarn generate
 
     generate:
         deps: [frontend, backend, firebase]
@@ -54,22 +52,12 @@ tasks:
             - docker compose cp frontend:/app/dist ./frontend
             - docker compose run firebase deploy --project ${FIREBASE_PROJECT} --only=hosting
 
-    build-frontend:
-        deps: [frontend, frontend-unittests]
+    push:
+        preconditions:
+            - .REPO
         cmds:
-            - docker compose push frontend
+             - docker compose push {{.IMAGE}}
 
-    build-backend:
-        deps: [backend, backend-unittests]
-        cmds:
-            - docker compose push frontend
 
-    build-frontend-plus-end2end-tests:
-        deps: [frontend, frontend-unittests, tests-end2end]
-        cmds:
-            - docker compose push frontend
 
-    build-backend-plus-end2end-tests:
-        deps: [backend, backend-unittests, tests-end2end]
-        cmds:
-            - docker compose push backend
+

@@ -26,8 +26,6 @@ services:
         ports:
             - 43783:43783
         stop_signal: SIGKILL
-        profiles:
-            - test-servers
 
     firebase-emulator:
         network_mode: "host"
@@ -39,12 +37,9 @@ services:
             - emulator-data:/firebase/baseline-data
         ports:
             - 8080:8080
-        profiles:
-            - test-servers
 
     firebase:
         image: ${REPO-}firebase
-        command: deploy --project ${FIREBASE_PROJECT-firebase-testing} --only=hosting
 
 volumes:
     emulator-data:
