@@ -5,6 +5,7 @@ services:
         image: ${REPO-}backend
         build:
             context: backend
+            cache_from: ${REPO-}backend
         env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
         environment:
             - GOOGLE_CLOUD_PROJECT=${REPO_PROJECT-worpdress-279321}
@@ -15,6 +16,7 @@ services:
         env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
         build:
             context: frontend
+            cache_from: ${REPO-}frontend
         volumes:
             - yarn_cache:/yarn
 
@@ -23,6 +25,7 @@ services:
         image: ${REPO-}json-caching-proxy
         build:
             context: tests/end2end/utils/json-caching-proxy
+            cache_from: ${REPO-}json-caching-proxy
         ports:
             - 43783:43783
         stop_signal: SIGKILL
@@ -30,6 +33,8 @@ services:
     firebase-emulator:
         network_mode: "host"
         image: ${REPO-}firebase-emulator
+        build:
+            cache_from: spine3/firebase-emulator
         environment:
             - GCP_PROJECT=${FIREBASE_PROJECT-firebase-testing}
             - ENABLE_UI=true

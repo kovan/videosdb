@@ -3,41 +3,8 @@ options:
      env:
          - VIDEOSDB_CONFIG: $_VIDEOSDB_CONFIG
          - FIREBASE_PROJECT: $_FIREBASE_PROJECT
-         - BRANCH_NAME: $BRANCH_NAME
 steps:
-
-  - id: run
-    name: gcp.io/worpdress-279321/task
+  - name: gcp.io/worpdress-279321/task
     args:
-        - task generate
-
-
-  - id: generate
-    name: docker
-    args:
-      - run
-      - --name
-      - generate
-      - --env-file
-      - common/env/$_VIDEOSDB_CONFIG.txt
-      - gcr.io/worpdress-279321/frontend-$BRANCH_NAME
-      - yarn
-      - generate
-
-  - id: copy
-    name: docker
-    args:
-      - cp
-      - generate:/app/dist
-      - frontend/
-
-
-  - name: gcr.io/worpdress-279321/firebase
-    env:
-      - 'GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/keys/$_VIDEOSDB_CONFIG.json'
-    args:
-      - deploy
-      - --project
-      - $_FIREBASE_PROJECT
-      - --only=hosting
+        - generate
 
