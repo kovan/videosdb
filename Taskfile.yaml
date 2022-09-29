@@ -26,6 +26,7 @@ tasks:
     start-test-servers:
         cmds:
             - docker compose  build --pull $TEST_SERVERS
+            - docker compose push $TEST_SERVERS
             - docker compose up --detach $TEST_SERVERS
 
 
@@ -71,16 +72,12 @@ tasks:
 
     push-frontend:
         run: once
-        preconditions:
-            - .REPO
         cmds:
              - docker compose push frontend
 
 
     push-backend:
         run: once
-        preconditions:
-            - .REPO
         cmds:
              - docker compose push backend
 
