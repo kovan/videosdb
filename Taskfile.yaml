@@ -169,4 +169,8 @@ tasks:
     frontend-prod:
         deps: [init, build-frontend, unittests-frontend, end2end-tests, push-frontend]
 
+    tests-end2end-master:
+        deps: [init, end2end-tests]
 
+    tests-end2end-prod:
+        deps: [init, end2end-tests]
