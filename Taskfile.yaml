@@ -2,7 +2,8 @@ version: '3'
 env:
     DOCKER_PASSWORD: 5@fs@i@58Zp6wfiH
     REPO_PROJECT: worpdress-279321
-    REPO: '{{if empty .BRANCH_NAME }}{{else}}gcr.io/{{.REPO_PROJECT}}/{{.BRANCH_NAME}}/{{end}}'
+    REPO: '{{if empty .BUILD_ID }}{{else}}gcr.io/{{.REPO_PROJECT}}/{{.BRANCH_NAME}}/{{end}}'
+    TEST_SERVERS: firebase-emulator json-caching-proxy
 tasks:
     init-local:
         cmds:
@@ -14,6 +15,9 @@ tasks:
         preconditions:
             - .REPO
 
+    echo-repo: echo {{.REPO}}
+
+
     backend: docker compose build --pull backend
 
     frontend: docker compose build --pull frontend
@@ -22,16 +26,18 @@ tasks:
 
     start-test-servers:
         cmds:
-            - docker compose  build --pull firebase-emulator json-caching-proxy
-            - docker compose up --detach firebase-emulator json-caching-proxy
+            - docker compose  build --pull $TEST_SERVERS
+            - docker compose up --detach $TEST_SERVERS
 
 
-    frontend-unittests:
+    unittests-frontend:
+        run: once
         deps:  [frontend]
         cmds:
             - docker compose run frontend yarn test
 
-    backend-unittests:
+    unittests-unittests:
+        run: once
         deps:  [start-test-servers, backend]
         cmds:
             - docker compose run
@@ -39,17 +45,20 @@ tasks:
                 backend run python -m unittest
 
     unittests:
-        deps: [backend-unittests, frontend-unittests]
+        run: once
+        deps: [unittests-unittests, unittests-frontend]
 
     end2end-tests:
-        depends: [frontend-unittests, backend-unittests, start-test-servers]
+        run: once
+        deps: [unittests-frontend, unittests-unittests, start-test-servers]
         cmds:
-            - docker compose up json-caching-proxy firebase-emulator --detach
+            - task: start-test-servers
             - docker compose run backend run main -c -e
             - docker compose run frontend yarn generate
 
 
     generate:
+        run: once
         deps: [frontend, backend, firebase]
         cmds:
             - docker compose run backend run main --check-for-new-videos
@@ -61,13 +70,20 @@ tasks:
                 --project ${FIREBASE_PROJECT}
                 --only=hosting
 
-    push:
+    push-frontend:
+        run: once
         preconditions:
             - .REPO
         cmds:
-             - docker compose push {{.IMAGE}}
+             - docker compose push frontend
 
 
+    push-backend:
+        run: once
+        preconditions:
+            - .REPO
+        cmds:
+             - docker compose push backend
 
 
 
