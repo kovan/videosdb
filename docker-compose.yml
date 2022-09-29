@@ -1,34 +1,13 @@
 version: "3"
 services:
-    backend:
-        network_mode: "host"
-        image: ${REPO-}backend
-        build:
-            context: backend
-            cache_from:
-                - ${REPO-}backend
-        env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
-        environment:
-            - GOOGLE_CLOUD_PROJECT=${REPO_PROJECT-worpdress-279321}
-
-    frontend:
-        network_mode: "host"
-        image: ${REPO-}frontend
-        env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
-        build:
-            context: frontend
-            cache_from:
-                - ${REPO-}frontend
-        volumes:
-            - yarn_cache:/yarn
 
     json-caching-proxy:
         network_mode: "host"
-        image: ${TOOLS_REPO-}json-caching-proxy
+        image: ${REPO-}json-caching-proxy
         build:
             context: tests/end2end/utils/json-caching-proxy
             cache_from:
-                - ${TOOLS_REPO-}json-caching-proxy
+                - ${REPO-}json-caching-proxy
         ports:
             - 43783:43783
         stop_signal: SIGKILL
@@ -44,12 +23,6 @@ services:
         ports:
             - 8080:8080
 
-    firebase:
-        image: ${TOOLS_REPO-}firebase
-
 volumes:
     emulator-data:
         name: emulator-data
-    yarn_cache:
-
-

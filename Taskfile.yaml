@@ -2,9 +2,13 @@ version: '3'
 env:
     DOCKER_PASSWORD: 5@fs@i@58Zp6wfiH
     REPO_PROJECT: worpdress-279321
-    REPO: '{{if empty .BUILD_ID }}{{else}}gcr.io/{{.REPO_PROJECT}}/{{.BRANCH_NAME}}/{{end}}'
-    TOOLS_REPO: '{{if empty .BUILD_ID }}{{else}}gcr.io/{{.REPO_PROJECT}}/tools/{{end}}'
-    TEST_SERVERS: firebase-emulator json-caching-proxy
+    REPO: '{{if .BUILD_ID }}gcr.io/{{.REPO_PROJECT}}/{{end}}'
+    BRANCH:
+        sh: git branch --show-current
+    COMMIT_SHA:
+        sh: git rev-parse HEAD
+    ENV_FILE: 'common/env/{{default "testing" .VIDEOSDB_CONFIG}}.txt'
+
 tasks:
     init-local:
         cmds:
@@ -12,47 +16,65 @@ tasks:
 
     init-gcp:
         cmds:
-            - echo $DOCKER_PASSWORD | docker login --username eelis --password-stdin
+            - echo {{.DOCKER_PASSWORD}} | docker login --username eelis --password-stdin
             - docker login gcr.io
 
-    echo-repo: echo {{.REPO}}
+    build:
+        internal: true
+        cmds:
+            - cmd: '{{if .BUILD_ID }} docker pull {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest{{end}}'
+              ignore_errors: true
+
+            - docker build
+                -t {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.COMMIT_SHA}}
+                -t {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
+                --cache-from {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
+                {{.IMAGE}}
+
+    run:
+        internal: true
+        cmds:
+            - docker run --network host --env-file {{.ENV_FILE}} {{.NAME}} {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
 
 
-    backend:
+    build-backend:
         run: once
         cmds:
-            - docker compose build --pull backend
+            - task: build
+              vars:
+                IMAGE: backend
 
-    frontend:
+    build-frontend:
         run: once
         cmds:
-            - docker compose build --pull frontend
-
-    firebase:
-        run: once
-        cmds:
-            - docker compose build --pull firebase
+            - task: build
+              vars:
+                IMAGE: frontend
 
     start-test-servers:
+        run: once
         cmds:
-            - docker compose  build --pull $TEST_SERVERS
-            - docker compose push $TEST_SERVERS --ignore-push-failures
-            - docker compose up --detach $TEST_SERVERS
+            - docker compose build --pull
+            - docker compose up --detach
 
 
     unittests-frontend:
         run: once
-        deps:  [frontend]
+        deps:  [build-frontend]
         cmds:
-            - docker compose run frontend yarn test
+            - task: run
+              vars:
+                IMAGE: frontend
+                ARGS: yarn test
 
     unittests-backend:
         run: once
-        deps:  [start-test-servers, backend]
+        deps:  [start-test-servers, build-backend]
         cmds:
-            - docker compose run
-                -e FIRESTORE_EMULATOR_HOST=localhost:8080
-                backend run python -m unittest
+            - task: run
+              vars:
+                IMAGE: backend
+                ARGS: run python -m unittest
 
     unittests:
         run: once
@@ -60,36 +82,60 @@ tasks:
 
     end2end-tests:
         run: once
-        deps: [frontend, backend, start-test-servers]
+        deps: [build-frontend, build-backend, start-test-servers]
         cmds:
             - task: start-test-servers
-            - docker compose run backend run main -c -e
-            - docker compose run frontend yarn generate
+            - task: run
+              vars:
+                IMAGE: backend
+                ARGS: run main -c -e
+            - task: run
+              vars:
+                IMAGE: frontend
+                ARGS: yarn generate
 
 
     generate:
         run: once
-        deps: [frontend, backend, firebase]
+        deps: [build-frontend, build-backend, build-firebase]
         cmds:
-            - docker compose run backend run main --check-for-new-videos
-            - docker compose run --name generate frontend yarn generate
+            - task: run
+              vars:
+                IMAGE: backend
+                ARGS: run main -c
+            - task: run
+              vars:
+                IMAGE: frontend
+                NAME: generate
+                ARGS: yarn generate
             - docker cp generate:/app/dist frontend/
-            - docker compose run
-                -e GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/keys/$VIDEOSDB_CONFIG.json
-                firebase deploy
-                --project ${FIREBASE_PROJECT}
+            - docker run
+                -e GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/keys/{{.VIDEOSDB_CONFIG}}.json
+                {{.REPO}}firebase deploy
+                --project {{.FIREBASE_PROJECT}}
                 --only=hosting
+
+    push:
+        internal: true
+        cmds:
+            - docker push {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.COMMIT_SHA}}
+            - docker push {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
+
 
     push-frontend:
         run: once
         cmds:
-             - docker compose push frontend
+            - task: push
+              vars:
+                IMAGE: frontend
 
 
     push-backend:
         run: once
         cmds:
-             - docker compose push backend
+            - task: push
+              vars:
+                IMAGE: backend
 
 
 
