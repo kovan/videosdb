@@ -5,7 +5,7 @@ env:
     REPO: '{{if .BUILD_ID }}gcr.io/{{.REPO_PROJECT}}/{{end}}'
     BRANCH:
         sh: git branch --show-current
-    COMMIT_SHA:
+    REVISION_ID:
         sh: git rev-parse HEAD
     ENV_FILE: 'common/env/{{default "testing" .VIDEOSDB_CONFIG}}.txt'
 
@@ -22,11 +22,12 @@ tasks:
     build:
         internal: true
         cmds:
+            # pull an image to --cache-from
             - cmd: '{{if .BUILD_ID }} docker pull {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest{{end}}'
               ignore_errors: true
 
             - docker build
-                -t {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.COMMIT_SHA}}
+                -t {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.REVISION_ID}}
                 -t {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
                 --cache-from {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
                 {{.IMAGE}}
@@ -34,7 +35,7 @@ tasks:
     run:
         internal: true
         cmds:
-            - docker run --network host --env-file {{.ENV_FILE}} {{.NAME}} {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
+            - docker run --network host --env-file common/env/{{.ENV_FILE}}.txt {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
 
 
     build-backend:
@@ -65,6 +66,7 @@ tasks:
             - task: run
               vars:
                 IMAGE: frontend
+                ENV_FILE: testing
                 ARGS: yarn test
 
     unittests-backend:
@@ -74,6 +76,7 @@ tasks:
             - task: run
               vars:
                 IMAGE: backend
+                ENV_FILE: testing
                 ARGS: run python -m unittest
 
     unittests:
@@ -88,27 +91,31 @@ tasks:
             - task: run
               vars:
                 IMAGE: backend
+                ENV_FILE: testing
                 ARGS: run main -c -e
             - task: run
               vars:
                 IMAGE: frontend
+                ENV_FILE: testing
                 ARGS: yarn generate
 
 
     generate:
         run: once
-        deps: [build-frontend, build-backend, build-firebase]
+        deps: [build-frontend, build-backend]
         cmds:
-            - task: run
-              vars:
-                IMAGE: backend
-                ARGS: run main -c
-            - task: run
-              vars:
-                IMAGE: frontend
-                NAME: generate
-                ARGS: yarn generate
-            - docker cp generate:/app/dist frontend/
+            - docker run
+                --name downloader
+                --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
+                {{.REPO}}frontend-{{.BRANCH}}:latest
+                run main -c
+            - docker run
+                --name generate
+                --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
+                {{.REPO}}backend-{{.BRANCH}}:latest
+                yarn generate
+            - docker cp
+                generate:/app/dist frontend/
             - docker run
                 -e GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/keys/{{.VIDEOSDB_CONFIG}}.json
                 {{.REPO}}firebase deploy
@@ -118,11 +125,12 @@ tasks:
     push:
         internal: true
         cmds:
-            - docker push {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.COMMIT_SHA}}
+            - docker push {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.REVISION_ID}}
             - docker push {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
 
 
     push-frontend:
+        deps: [build-frontend]
         run: once
         cmds:
             - task: push
@@ -131,6 +139,7 @@ tasks:
 
 
     push-backend:
+        deps: [build-backend]
         run: once
         cmds:
             - task: push
