@@ -2,7 +2,7 @@ version: '3'
 env:
     DOCKER_PASSWORD: 5@fs@i@58Zp6wfiH
     REPO_PROJECT: worpdress-279321
-    REPO: '{{if empty .BRANCH_NAME }}{{else}}grc.io/{{.REPO_PROJECT}}/{{.BRANCH_NAME}}/{{end}}'
+    REPO: '{{if empty .BRANCH_NAME }}{{else}}gcr.io/{{.REPO_PROJECT}}/{{.BRANCH_NAME}}/{{end}}'
 tasks:
     init-local:
         cmds:
