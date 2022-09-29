@@ -17,16 +17,25 @@ tasks:
     echo-repo: echo {{.REPO}}
 
 
-    backend: docker compose build --pull backend
+    backend:
+        run: once
+        cmds:
+            - docker compose build --pull backend
 
-    frontend: docker compose build --pull frontend
+    frontend:
+        run: once
+        cmds:
+            - docker compose build --pull frontend
 
-    firebase: docker compose build --pull firebase
+    firebase:
+        run: once
+        cmds:
+            - docker compose build --pull firebase
 
     start-test-servers:
         cmds:
             - docker compose  build --pull $TEST_SERVERS
-            - docker compose push $TEST_SERVERS
+            - docker compose push $TEST_SERVERS --ignore-push-failures
             - docker compose up --detach $TEST_SERVERS
 
 
