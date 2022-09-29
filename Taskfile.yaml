@@ -10,14 +10,17 @@ env:
     ENV_FILE: 'common/env/{{default "testing" .VIDEOSDB_CONFIG}}.txt'
 
 tasks:
-    init-local:
+    init:
+        internal: true
+        run: once
         cmds:
-            - pgrep docker > /dev/null || sudo service docker start
-
-    init-gcp:
-        cmds:
-            - echo {{.DOCKER_PASSWORD}} | docker login --username eelis --password-stdin
-            - docker login gcr.io
+            - cmd:
+                '{{if .BUILD_ID }}
+                    echo {{.DOCKER_PASSWORD}} | docker login --username eelis --password-stdin;
+                    docker login gcr.io
+                {{else}}
+                    pgrep docker > /dev/null || sudo service docker start
+                {{end}}'
 
     build:
         internal: true
@@ -39,6 +42,7 @@ tasks:
 
 
     build-backend:
+        deps: [init]
         run: once
         cmds:
             - task: build
@@ -46,6 +50,7 @@ tasks:
                 IMAGE: backend
 
     build-frontend:
+        deps: [init]
         run: once
         cmds:
             - task: build
@@ -53,6 +58,7 @@ tasks:
                 IMAGE: frontend
 
     start-test-servers:
+        deps: [init]
         run: once
         cmds:
             - docker compose build --pull
@@ -61,7 +67,7 @@ tasks:
 
     unittests-frontend:
         run: once
-        deps:  [build-frontend]
+        deps:  [init, build-frontend]
         cmds:
             - task: run
               vars:
@@ -71,7 +77,7 @@ tasks:
 
     unittests-backend:
         run: once
-        deps:  [start-test-servers, build-backend]
+        deps: [init, start-test-servers, build-backend]
         cmds:
             - task: run
               vars:
@@ -81,11 +87,11 @@ tasks:
 
     unittests:
         run: once
-        deps: [unittests-backend, unittests-frontend]
+        deps: [init, unittests-backend, unittests-frontend]
 
     end2end-tests:
         run: once
-        deps: [build-frontend, build-backend, start-test-servers]
+        deps: [init, build-frontend, build-backend, start-test-servers]
         cmds:
             - task: start-test-servers
             - task: run
@@ -102,7 +108,7 @@ tasks:
 
     generate:
         run: once
-        deps: [build-frontend, build-backend]
+        deps: [init, build-frontend, build-backend]
         cmds:
             - docker run
                 --name downloader
@@ -123,6 +129,7 @@ tasks:
                 --only=hosting
 
     push:
+        deps: [init]
         internal: true
         cmds:
             - docker push {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.REVISION_ID}}
@@ -146,5 +153,20 @@ tasks:
               vars:
                 IMAGE: backend
 
+
+
+# cloud build trigger tasks. Task names match with the trigger names in the GCP console
+
+    backend-master:
+        deps: [init, build-backend, unittests-backend, push-backend]
+
+    backend-prod:
+        deps: [init, build-backend, unittests-backend, end2end-tests, push-backend]
+
+    frontend-master:
+        deps: [init, build-frontend, unittests-frontend, push-frontend]
+
+    frontend-prod:
+        deps: [init, build-frontend, unittests-frontend, end2end-tests, push-frontend]
 
 

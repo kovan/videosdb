@@ -1,10 +1,10 @@
-timeout: 7200s
-options:
-     env:
-         - VIDEOSDB_CONFIG: $_VIDEOSDB_CONFIG
-         - FIREBASE_PROJECT: $_FIREBASE_PROJECT
 steps:
-  - name: gcp.io/worpdress-279321/task
+  - name: gcr.io/worpdress-279321/task
+    env:
+        - 'BUILD_ID=$BUILD_ID'
+        - 'FIREBASE_PROJECT=$_FIREBASE_PROJECT'
+        - 'VIDEOSDB_CONFIG=$_VIDEOSDB_CONFIG'
     args:
-        - generate
+        - --verbose
+        - $TRIGGER_NAME
 
