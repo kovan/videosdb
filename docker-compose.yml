@@ -8,9 +8,6 @@ services:
         env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
         environment:
             - GOOGLE_CLOUD_PROJECT=${PROJECT-worpdress-279321}
-        profiles:
-            - none
-        command: run main -c -e
 
     frontend:
         network_mode: "host"
@@ -18,19 +15,8 @@ services:
         env_file: common/env/${VIDEOSDB_CONFIG-testing}.txt
         build:
             context: frontend
-        depends_on:
-            - firebase-emulator
         volumes:
             - yarn_cache:/yarn
-        profiles:
-            - none
-        command: yarn generate
-
-    # tests-end2end:
-    #     depends_on:
-    #         - firebase-emulator
-    #         - json-caching-proxy
-    #     command: "true"
 
     json-caching-proxy:
         network_mode: "host"
@@ -41,7 +27,7 @@ services:
             - 43783:43783
         stop_signal: SIGKILL
         profiles:
-            - end2end-tests
+            - test-servers
 
     firebase-emulator:
         network_mode: "host"
@@ -54,14 +40,11 @@ services:
         ports:
             - 8080:8080
         profiles:
-            - tests
-            - end2end-tests
+            - test-servers
 
     firebase:
         image: ${REPO-}firebase
         command: deploy --project ${FIREBASE_PROJECT-firebase-testing} --only=hosting
-        profiles:
-            - none
 
 volumes:
     emulator-data:
