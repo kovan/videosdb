@@ -24,18 +24,18 @@ services:
 
     json-caching-proxy:
         network_mode: "host"
-        image: ${REPO-}json-caching-proxy
+        image: ${TOOLS_REPO-}json-caching-proxy
         build:
             context: tests/end2end/utils/json-caching-proxy
             cache_from:
-                - ${REPO-}json-caching-proxy
+                - ${TOOLS_REPO-}json-caching-proxy
         ports:
             - 43783:43783
         stop_signal: SIGKILL
 
     firebase-emulator:
         network_mode: "host"
-        image: ${REPO-}firebase-emulator
+        image: spine3/firebase-emulator
         environment:
             - GCP_PROJECT=${FIREBASE_PROJECT-firebase-testing}
             - ENABLE_UI=true
