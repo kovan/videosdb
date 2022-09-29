@@ -36,7 +36,7 @@ tasks:
         cmds:
             - docker compose run frontend yarn test
 
-    unittests-unittests:
+    unittests-backend:
         run: once
         deps:  [start-test-servers, backend]
         cmds:
@@ -46,11 +46,11 @@ tasks:
 
     unittests:
         run: once
-        deps: [unittests-unittests, unittests-frontend]
+        deps: [unittests-backend, unittests-frontend]
 
     end2end-tests:
         run: once
-        deps: [unittests-frontend, unittests-unittests, start-test-servers]
+        deps: [frontend, backend, start-test-servers]
         cmds:
             - task: start-test-servers
             - docker compose run backend run main -c -e
