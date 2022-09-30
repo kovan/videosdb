@@ -107,6 +107,15 @@ tasks:
                 ARGS: yarn generate
 
 
+    deploy:
+        deps: [init]
+        cmds:
+            - docker run
+                -e GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/keys/{{.VIDEOSDB_CONFIG}}.json
+                {{.REPO}}firebase:latest deploy
+                --project {{.FIREBASE_PROJECT}}
+                --only=hosting
+
     generate:
         run: once
         deps: [init, build-frontend, build-backend]
@@ -115,18 +124,13 @@ tasks:
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main -c
-            - rm -fr dist/
+            - rm -fr frontend/dist/
             - docker run
                 -v $(pwd)/frontend/dist/:/app/dist
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 yarn generate
-
-            - docker run
-                -e GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/keys/{{.VIDEOSDB_CONFIG}}.json
-                {{.REPO}}firebase deploy
-                --project {{.FIREBASE_PROJECT}}
-                --only=hosting
+            - task: deploy
 
     generate-test:
         deps: [start-test-servers]
