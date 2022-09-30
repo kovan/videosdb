@@ -1,7 +1,7 @@
 
 
-
-
+- mirar lo del error de conection reset by peer del test-end2end-master (igual con el emulador mi no pasa?)
+- hacer mi propia imagen docker del emulador para ver si funciona generate-test, con la ultima version
 - poner descripciones de los botones en caso de tablet/escritorio
 - docker tag not working?
 - habilitar retrieval de related videos

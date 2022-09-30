@@ -61,7 +61,7 @@ tasks:
         run: once
         cmds:
             - docker compose build --pull -q
-            - docker compose up --detach
+            - docker compose restart || docker compose up --detach
 
 
     unittests-frontend:
@@ -114,20 +114,26 @@ tasks:
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main -c
-
+            - rm -fr dist/
             - docker run
-                -v dist:/app/dist
+                -v ./dist/:/app/dist
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 yarn generate
 
             - docker run
-                -v dist:/tmp/dist
                 -e GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/keys/{{.VIDEOSDB_CONFIG}}.json
                 {{.REPO}}firebase deploy
                 --project {{.FIREBASE_PROJECT}}
                 --only=hosting
-                --public=/tmp/dist
+
+    generate-test:
+        deps: [start-test-servers]
+        cmds:
+            - task: generate
+              vars:
+                VIDEOSDB_CONFIG: testing
+
 
     push:
         deps: [init]
