@@ -117,7 +117,7 @@ tasks:
                 run main -c
             - rm -fr dist/
             - docker run
-                -v ./frontend/dist/:/app/dist
+                -v $(pwd)/frontend/dist/:/app/dist
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 yarn generate
@@ -223,3 +223,4 @@ tasks:
               vars:
                 VIDEOSDB_CONFIG: nithyananda
                 FIREBASE_PROJECT: videosdb-nithyananda
+
