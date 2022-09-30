@@ -37,7 +37,7 @@ tasks:
     run:
         internal: true
         cmds:
-            - docker run --network host --env-file common/env/{{.ENV_FILE}}.txt {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
+            - docker run --env-file common/env/{{.ENV_FILE}}.txt {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
 
 
     build-backend:
@@ -61,6 +61,7 @@ tasks:
         run: once
         cmds:
             - docker compose build --pull
+            - '{{if .BUILD_ID }} docker compose push {{end}}'
             - docker compose restart || docker compose up --detach
 
 

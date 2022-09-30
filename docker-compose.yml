@@ -2,18 +2,16 @@ version: "3"
 services:
 
     json-caching-proxy:
-        network_mode: "host"
         image: ${REPO-}json-caching-proxy
         build:
             context: tests/end2end/utils/json-caching-proxy
             cache_from:
                 - ${REPO-}json-caching-proxy
-        # ports:
-        #     - 43783:43783
+        ports:
+            - 43783:43783
         stop_signal: SIGKILL
 
     firebase-emulator:
-        network_mode: "host"
         image: ${REPO-}firebase-emulator
         build:
             context: tests/end2end/utils/firebase-emulator
@@ -24,8 +22,8 @@ services:
             - ENABLE_UI=true
         volumes:
             - emulator-data:/firebase/baseline-data
-        # ports:
-        #     - 46456:46456
+        ports:
+            - 46456:46456
 
 volumes:
     emulator-data:
