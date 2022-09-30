@@ -111,22 +111,23 @@ tasks:
         deps: [init, build-frontend, build-backend]
         cmds:
             - docker run
-                --name downloader
-                --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
-                {{.REPO}}frontend-{{.BRANCH}}:latest
-                run main -c
-            - docker run
-                --name generate
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
-                yarn generate
-            - docker cp
-                generate:/app/dist frontend/
+                run main -c
+
             - docker run
+                -v dist:/app/dist
+                --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
+                {{.REPO}}frontend-{{.BRANCH}}:latest
+                yarn generate
+
+            - docker run
+                -v dist:/tmp/dist
                 -e GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/keys/{{.VIDEOSDB_CONFIG}}.json
                 {{.REPO}}firebase deploy
                 --project {{.FIREBASE_PROJECT}}
                 --only=hosting
+                --public=/tmp/dist
 
     push:
         deps: [init]
@@ -188,7 +189,11 @@ tasks:
             - task: push-frontend
 
     tests-end2end-master:
-        deps: [init, end2end-tests]
+        deps: [init]
+        cmds:
+            - task: end2end-tests
 
     tests-end2end-prod:
-        deps: [init, end2end-tests]
+        deps: [init]
+        cmds:
+            - task: end2end-tests
