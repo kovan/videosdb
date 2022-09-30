@@ -207,15 +207,18 @@ tasks:
             - task: generate
               vars:
                 VIDEOSDB_CONFIG: testing-cloudbuild
+                FIREBASE_PROJECT: videosdb-testing
 
     generate-sadhguru:
         cmds:
             - task: generate
               vars:
                 VIDEOSDB_CONFIG: sadhguru
+                FIREBASE_PROJECT: videosdb-firebase
 
     generate-nithyananda:
         cmds:
             - task: generate
               vars:
                 VIDEOSDB_CONFIG: nithyananda
+                FIREBASE_PROJECT: videosdb-nithyananda
