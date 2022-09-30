@@ -2,6 +2,7 @@ version: "3"
 services:
 
     json-caching-proxy:
+        network_mode: "host"
         image: ${REPO-}json-caching-proxy
         build:
             context: tests/end2end/utils/json-caching-proxy
@@ -12,6 +13,7 @@ services:
         stop_signal: SIGKILL
 
     firebase-emulator:
+        network_mode: "host"
         image: ${REPO-}firebase-emulator
         build:
             context: tests/end2end/utils/firebase-emulator
@@ -20,6 +22,7 @@ services:
         environment:
             - GCP_PROJECT=${FIREBASE_PROJECT-firebase-testing}
             - ENABLE_UI=true
+            - WSL_DISTRO_NAME=ubuntu
         volumes:
             - emulator-data:/firebase/baseline-data
         ports:

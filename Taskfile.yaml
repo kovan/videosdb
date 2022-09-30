@@ -37,7 +37,7 @@ tasks:
     run:
         internal: true
         cmds:
-            - docker run --env-file common/env/{{.ENV_FILE}}.txt {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
+            - docker run --network host --env-file common/env/{{.ENV_FILE}}.txt {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
 
 
     build-backend:
@@ -62,7 +62,7 @@ tasks:
         cmds:
             - docker compose build --pull
             - '{{if .BUILD_ID }} docker compose push {{end}}'
-            - docker compose restart || docker compose up --detach
+            - docker compose up --detach
 
 
     unittests-frontend:
@@ -93,7 +93,6 @@ tasks:
         run: once
         deps: [init, build-frontend, build-backend, start-test-servers]
         cmds:
-            - task: start-test-servers
             - defer: docker compose logs -t
             - task: run
               vars:
