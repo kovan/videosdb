@@ -7,7 +7,6 @@ env:
         sh: git branch --show-current
     REVISION_ID:
         sh: git rev-parse HEAD
-    ENV_FILE: 'common/env/{{default "testing" .VIDEOSDB_CONFIG}}.txt'
 
 tasks:
     init:
