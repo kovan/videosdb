@@ -14,6 +14,7 @@ services:
 
     firebase-emulator:
         network_mode: "host"
+        image: ${REPO-}firebase-emulator
         build:
             context: tests/end2end/utils/firebase-emulator
             cache_from:
