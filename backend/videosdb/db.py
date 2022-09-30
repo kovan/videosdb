@@ -4,7 +4,7 @@ from google.oauth2 import service_account
 import os
 import logging
 import sys
-
+from google.api_core.retry import Retry
 from videosdb.utils import wait_for_port
 logger = logging.getLogger(__name__)
 
@@ -71,14 +71,17 @@ class DB:
 
     # ---------------------- PUBLIC -------------------------------
 
+    @Retry()
     async def set(self, path, *args, **kwargs):
         self._write_inc()
         return await self._db.document(path).set(*args, **kwargs)
 
+    @Retry()
     async def get(self, path, *args, **kwargs):
         self._read_inc()
         return await self._db.document(path).get(*args, **kwargs)
 
+    @Retry()
     async def update(self, path, *args, **kwargs):
         self._write_inc()
         return await self._db.document(path).update(*args, **kwargs)
@@ -86,6 +89,7 @@ class DB:
     def stream(self, collection_name):
         return self.Streamer(self, collection_name)
 
+    @Retry()
     async def recursive_delete(self, path):
         ref = self._db.document(path)
         return await self._db.recursive_delete(ref)
@@ -100,13 +104,16 @@ class DB:
                 self.collection_name).stream()
             return self.generator
 
+        @Retry()
         async def __anext__(self):
             self.db._read_inc()
             yield anext(self.generator)
 
+    @Retry()
     async def noquota_set(self, path, *args, **kwargs):
         return await self._db.document(path).set(*args, **kwargs)
 
+    @Retry()
     async def noquota_update(self, path, *args, **kwargs):
         return await self._db.document(path).update(*args, **kwargs)
 
