@@ -14,10 +14,10 @@ class DB:
         pass
 
     @staticmethod
-    def wait_for_port():
+    def wait_for_port(timeout=30.0):
         if "FIRESTORE_EMULATOR_HOST" in os.environ:
             host, port = os.environ["FIRESTORE_EMULATOR_HOST"].split(":")
-            wait_for_port(port, host,  30.0)
+            wait_for_port(port, host, timeout)
 
     @staticmethod
     def setup(project, config):

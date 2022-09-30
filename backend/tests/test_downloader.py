@@ -46,7 +46,7 @@ class MockedAPIMixin:
 
         logger.debug(pprint.pformat(os.environ))
 
-        DB.wait_for_port()
+        DB.wait_for_port(60.0)
 
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
