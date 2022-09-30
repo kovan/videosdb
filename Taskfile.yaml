@@ -195,26 +195,27 @@ tasks:
             - task: push-frontend
 
     tests-end2end-master:
-        deps: [init]
         cmds:
             - task: end2end-tests
 
     tests-end2end-prod:
-        deps: [init]
         cmds:
             - task: end2end-tests
 
     generate-testing:
-        deps: [init]
         cmds:
             - task: generate
+              vars:
+                VIDEOSDB_CONFIG: testing-cloudbuild
 
     generate-sadhguru:
-        deps: [init]
         cmds:
             - task: generate
+              vars:
+                VIDEOSDB_CONFIG: sadhguru
 
     generate-nithyananda:
-        deps: [init]
         cmds:
             - task: generate
+              vars:
+                VIDEOSDB_CONFIG: nithyananda

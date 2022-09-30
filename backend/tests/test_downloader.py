@@ -1,10 +1,11 @@
+import datetime
+from google.api_core.datetime_helpers import DatetimeWithNanoseconds
 import asyncio
 import pprint
 from httpx import Response
 import respx
 import os
 import aiounittest
-import isodate
 import json
 from google.cloud import firestore
 from dotenv import load_dotenv
@@ -76,60 +77,12 @@ class MockedAPIMixin:
 
 
 class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
-    VIDEO_IDS = ['FBYoZ-FgC84', 'HADeWBBb1so', 'J-1WVf5hFIk', 'QEkHcPt-Vpw',
-                 'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
+    VIDEO_IDS = ['ZhI-stDIlCE', 'ed7pFle2yM8', 'J-1WVf5hFIk',
+                 'FBYoZ-FgC84', 'QEkHcPt-Vpw', 'HADeWBBb1so', 'gavq4LM8XK0']
     PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
 
-    # def test_put_item_at_front(self):
-    #     s = [3, 5, 6, 8]
-    #     self.assertEqual(put_item_at_front(s, 6), [6, 8, 3, 5])
-    #     self.assertEqual(put_item_at_front(s, 8), [8, 3, 5, 6])
-    #     self.assertEqual(put_item_at_front(s, 123), s)
-    #     self.assertEqual(put_item_at_front(s, None), s)
-
     @respx.mock
-    async def test_create_video(self):
-        video_id = "HADeWBBb1so"
-
-        video = await Downloader()._create_video(video_id, [self.PLAYLIST_ID])
-
-        self.assertEqual(self.mocked_api["videos"].call_count, 1)
-
-        self.assertEqual(video["kind"], "youtube#video")
-        self.assertEqual(video["id"], video_id)
-        self.assertEqual(video["videosdb"]["playlists"], [self.PLAYLIST_ID])
-        self.assertEqual(video["videosdb"]["slug"],
-                         "fate-god-luck-or-effort-what-decides-your-success-sadhguru")
-        self.assertIn("descriptionTrimmed", video["videosdb"])
-        self.assertEqual(video["videosdb"]["durationSeconds"], 470.0)
-        self.assertIn("statistics", video)
-
-        doc = await self.db.document("videos/" + video_id).get()
-        self.assertTrue(doc.exists)
-
-    @respx.mock
-    async def test_download_playlist(self):
-
-        playlist = await Downloader()._get_playlist_items(self.PLAYLIST_ID, "Sadhguru")
-
-        self.assertEqual(self.mocked_api["playlists"].call_count, 1)
-        self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
-
-        self.assertEqual(playlist["kind"], "youtube#playlist")
-        self.assertEqual(playlist["id"], self.PLAYLIST_ID)
-
-        self.assertEqual(playlist["videosdb"], {
-            'slug': 'how-to-be-really-successful-sadhguru-answers',
-            'videoCount': 7,
-            'lastUpdated': isodate.parse_datetime("2022-07-06T12:18:45+00:00"),
-            'videoIds': self.VIDEO_IDS
-        })
-
-        doc = await self.db.document("playlists/" + self.PLAYLIST_ID).get()
-        self.assertTrue(doc.exists)
-
-    @respx.mock
-    async def test__process_playlist_ids(self):
+    async def test_process_playlist_ids(self):
         video_id = "HADeWBBb1so"
 
         await Downloader()._process_playlist_ids(
@@ -151,40 +104,31 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
             self.assertEqual([self.PLAYLIST_ID],
                              video.get("videosdb.playlists"))
 
-    @respx.mock
-    async def test_process_playlist_list_PAUSE(self):
-        self.mocked_api["playlistItems"].side_effect = YoutubeAPI.QuotaExceeded(
-            403)
+        # check that one playlist is processed correctly:
 
-        new_state = await Downloader()._process_playlist_list(
-            [self.PLAYLIST_ID], {}, "Sadhguru")
+        playlist = (await self.db.document("playlists/" + self.PLAYLIST_ID).get()).to_dict()
+        self.assertEqual(playlist["kind"], "youtube#playlist")
+        self.assertEqual(playlist["id"], self.PLAYLIST_ID)
 
-        self.assertEqual(new_state, {
-            "lastPlaylistId": "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU",
-            "lastVideoId": None
+        self.assertEqual(playlist["videosdb"], {
+            'slug': 'how-to-be-really-successful-sadhguru-answers',
+            'videoCount': 7,
+            'lastUpdated': DatetimeWithNanoseconds(2022, 7, 6, 12, 18, 45, tzinfo=datetime.timezone.utc),
+            'videoIds': self.VIDEO_IDS
         })
 
-        for v in self.VIDEO_IDS:
-            doc = await self.db.document("videos/" + v).get()
-            self.assertFalse(doc.exists)
+        # check that one video is processed correctly:
+        video_id = "HADeWBBb1so"
 
-    @respx.mock
-    async def test_process_playlist_list_RESUME(self):
-        state = {
-            "lastPlaylistId": self.PLAYLIST_ID,
-            "lastVideoId": "ed7pFle2yM8"  # this is in first page
-        }
-        new_state = await Downloader()._process_playlist_list(
-            [self.PLAYLIST_ID], state, "Sadhguru")
-
-        self.assertEqual(new_state, {
-            "lastPlaylistId": None,
-            "lastVideoId": None
-        })
-
-        for v in self.VIDEO_IDS:
-            doc = await self.db.document("videos/" + v).get()
-            self.assertTrue(doc.exists)
+        video = (await self.db.document("videos/" + video_id).get()).to_dict()
+        self.assertEqual(video["kind"], "youtube#video")
+        self.assertEqual(video["id"], video_id)
+        self.assertEqual(video["videosdb"]["playlists"], [self.PLAYLIST_ID])
+        self.assertEqual(video["videosdb"]["slug"],
+                         "fate-god-luck-or-effort-what-decides-your-success-sadhguru")
+        self.assertIn("descriptionTrimmed", video["videosdb"])
+        self.assertEqual(video["videosdb"]["durationSeconds"], 470.0)
+        self.assertIn("statistics", video)
 
     async def test_firestore_behavior(self):
         a = await self.db.document("videos/" + "asdfsdf").set({

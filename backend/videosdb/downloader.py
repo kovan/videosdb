@@ -119,7 +119,14 @@ class Downloader:
                     "videoIds": firestore.ArrayUnion(ids)
                 })
 
-    async def _process_playlist(self, playlist_id, channel_name, task_group, processed_video_ids, excluded_video_ids, processed_playlist_ids):
+    async def _process_playlist(self,
+                                playlist_id,
+                                channel_name,
+                                task_group,
+                                processed_video_ids,
+                                excluded_video_ids,
+                                processed_playlist_ids):
+
         async with processed_playlist_ids.lock:
             if playlist_id in processed_playlist_ids.items:
                 return
@@ -164,7 +171,7 @@ class Downloader:
             if not modified:
                 return
 
-            video = await self._create_video(video_id, [playlist_id])
+            video = await self._create_video(video, [playlist_id])
             if not video:
                 async with excluded_video_ids.lock:
                     excluded_video_ids.add(video_id)

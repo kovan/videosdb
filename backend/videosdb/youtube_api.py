@@ -144,14 +144,15 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     async def _request_one(self, url, params, use_cache=True):
 
-        status_code, generator = await self._request_main(url, params, use_cache)
+        modified, generator = await self._request_main(url, params, use_cache)
         try:
             item = await anext(generator)
         except StopAsyncIteration:
             item = None
-        return status_code == 304, item
+        return modified, item
 
     async def _request_main(self, url, params, use_cache=True):
         async def generator(pages):
@@ -160,11 +161,13 @@ class YoutubeAPI:
                     yield item
 
         if use_cache:
-            status_code, pages = await pop_first(self._request_with_cache(url, params))
+            result = self._request_with_cache(url, params)
         else:
-            status_code, pages = await pop_first(self._request_base(url, params))
+            result = self._request_base(url, params)
 
-        return status_code == 304, generator(pages)
+        status_code, pages = await pop_first(result)
+
+        return status_code != 304, generator(pages)
 
     async def _request_with_cache(self, url, params):
         @staticmethod
