@@ -146,7 +146,7 @@ class YoutubeAPI:
 
     async def _request_one(self, url, params, use_cache=True):
 
-        status_code, generator = await pop_first(await self._request_main(url, params, use_cache))
+        status_code, generator = await self._request_main(url, params, use_cache)
         try:
             item = await anext(generator)
         except StopAsyncIteration:
@@ -160,9 +160,9 @@ class YoutubeAPI:
                     yield item
 
         if use_cache:
-            status_code, pages = await self._request_with_cache(url, params)
+            status_code, pages = await pop_first(self._request_with_cache(url, params))
         else:
-            status_code, pages = await pop_first(await self._request_base(url, params))
+            status_code, pages = await pop_first(self._request_base(url, params))
 
         return status_code == 304, generator(pages)
 
@@ -180,7 +180,7 @@ class YoutubeAPI:
             headers["If-None-Match"] = cached.get("etag")
 
         status_code, response_pages = await pop_first(
-            await self._request_base(url, params, headers=headers)
+            self._request_base(url, params, headers=headers)
         )
 
         yield status_code

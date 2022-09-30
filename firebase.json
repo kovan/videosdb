@@ -1,36 +1,36 @@
 {
-  "hosting": {
-    "public": "frontend/dist",
-    "trailingSlash": false,
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/tag/**",
-        "destination": "/index.html",
-        "type": 301
-      }
-    ]
-  },
-  "emulators": {
     "hosting": {
-      "host": "0.0.0.0",
-      "port": 3001
+        "public": "frontend/dist",
+        "trailingSlash": false,
+        "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+        ],
+        "rewrites": [
+            {
+                "source": "/tag/**",
+                "destination": "/index.html",
+                "type": 301
+            }
+        ]
     },
-    "ui": {
-      "enabled": true,
-      "port": 13333
+    "emulators": {
+        "hosting": {
+            "host": "0.0.0.0",
+            "port": 3001
+        },
+        "ui": {
+            "enabled": true,
+            "port": 13333
+        },
+        "firestore": {
+            "host": "0.0.0.0",
+            "port": 46456
+        }
     },
     "firestore": {
-      "host": "0.0.0.0",
-      "port": 6001
+        "rules": "backend/firestore.rules",
+        "indexes": "backend/firestore.indexes.json"
     }
-  },
-  "firestore": {
-    "rules": "backend/firestore.rules",
-    "indexes": "backend/firestore.indexes.json"
-  }
 }

@@ -6,7 +6,7 @@ import os
 import aiounittest
 import isodate
 import json
-
+from google.cloud import firestore
 from dotenv import load_dotenv
 from videosdb.downloader import Downloader
 from videosdb.db import DB
@@ -129,19 +129,14 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         self.assertTrue(doc.exists)
 
     @respx.mock
-    async def test_process_playlist_list(self):
+    async def test__process_playlist_ids(self):
         video_id = "HADeWBBb1so"
 
-        new_state = await Downloader()._process_playlist_list(
-            [self.PLAYLIST_ID], {}, "Sadhguru")
+        await Downloader()._process_playlist_ids(
+            [self.PLAYLIST_ID], "Sadhguru")
 
         self.assertEqual(self.mocked_api["playlists"].call_count, 1)
         self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
-
-        self.assertEqual(new_state, {
-            "lastPlaylistId": None,
-            "lastVideoId": None
-        })
 
         doc = await self.db.document("videos/" + video_id).get()
         self.assertTrue(doc.exists)
@@ -190,3 +185,19 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         for v in self.VIDEO_IDS:
             doc = await self.db.document("videos/" + v).get()
             self.assertTrue(doc.exists)
+
+    async def test_firestore_behavior(self):
+        a = await self.db.document("videos/" + "asdfsdf").set({
+            "videosdb": {
+                "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
+            }
+        }, merge=True)
+        b = await self.db.document("videos/" + "asdfsdf").set({
+            "videosdb": {
+                "playlists": firestore.ArrayUnion(["sdfsdf"])
+            }
+        }, merge=True)
+
+        c = await self.db.document("videos/" + "asdfsdf").get()
+        self.assertEqual(
+            {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())

@@ -35,7 +35,8 @@ class Downloader:
     def __init__(self, options=None):
 
         if "FIRESTORE_EMULATOR_HOST" in os.environ:
-            logger.info("USING EMULATOR")
+            logger.info("EMULATOR ACTIVE: %s",
+                        os.environ["FIRESTORE_EMULATOR_HOST"])
         else:
             logger.info("USING LIVE DATABASE")
         # for k, v in os.environ.items():
@@ -80,14 +81,13 @@ class Downloader:
         processed_video_ids = LockedItems(set())
         excluded_video_ids = LockedItems(set())
         processed_playlist_ids = LockedItems(set())
-        # results = LockedItem(dict())  # playlist ID -> list of video ids
         try:
             async with anyio.create_task_group() as task_group:
                 random.shuffle(playlist_ids)
                 # main iterations:
                 for playlist_id in playlist_ids:
                     task_group.start_soon(
-                        self.process_playlist,
+                        self._process_playlist,
                         playlist_id,
                         channel_name,
                         task_group,
@@ -112,20 +112,22 @@ class Downloader:
             else:
                 raise e
 
-        async with processed_video_ids:
-            if len(processed_video_ids):
-                ids = list(processed_video_ids)
+        async with processed_video_ids.lock:
+            if len(processed_video_ids.items):
+                ids = list(processed_video_ids.items)
                 await self.db.noquota_set("meta/video_ids", {
                     "videoIds": firestore.ArrayUnion(ids)
                 })
 
-    async def process_playlist(self, playlist_id, channel_name, task_group, processed_video_ids, excluded_video_ids, processed_playlist_ids):
+    async def _process_playlist(self, playlist_id, channel_name, task_group, processed_video_ids, excluded_video_ids, processed_playlist_ids):
         async with processed_playlist_ids.lock:
             if playlist_id in processed_playlist_ids.items:
                 return
-            processed_playlist_ids.add(playlist_id)
+            processed_playlist_ids.items.add(playlist_id)
 
         modified, playlist = await self.api.get_playlist_info(playlist_id)
+        if not playlist:
+            return
 
         if playlist["snippet"]["channelTitle"] != channel_name:
             return
@@ -180,15 +182,12 @@ class Downloader:
 
     @ traced
     async def _retrieve_all_playlist_ids(self, channel_id):
+        modified, ids = await self.api.list_channelsection_playlist_ids(channel_id)
+        modified, ids2 = await self.api.list_channel_playlist_ids(channel_id)
         if "DEBUG" in os.environ:
-            playlists_ids_stream = stream.iterate(
-                self.api.list_channelsection_playlist_ids(channel_id)
-            )
+            playlists_ids_stream = stream.iterate(ids)
         else:
-            playlists_ids_stream = stream.merge(
-                self.api.list_channelsection_playlist_ids(channel_id),
-                self.api.list_channel_playlist_ids(channel_id)
-            )
+            playlists_ids_stream = stream.merge(ids, ids2)
 
         playlist_ids = set()
         async with playlists_ids_stream.stream() as streamer:
@@ -200,7 +199,7 @@ class Downloader:
     @ traced
     async def _create_channel(self, channel_id):
 
-        channel_info = await self.api.get_channel_info(channel_id)
+        modified, channel_info = await self.api.get_channel_info(channel_id)
 
         logger.info("Processing channel: " +
                     str(channel_info["snippet"]["title"]))
