@@ -174,7 +174,7 @@ class Downloader:
             video = await self._create_video(video, [playlist_id])
             if not video:
                 async with excluded_video_ids.lock:
-                    excluded_video_ids.add(video_id)
+                    excluded_video_ids.items.add(video_id)
                 return
 
         async with excluded_video_ids.lock:
