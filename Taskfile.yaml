@@ -104,7 +104,7 @@ tasks:
               vars:
                 IMAGE: frontend
                 ENV_FILE: testing
-                ARGS: yarn generate-and-start
+                ARGS: yarn generate
 
 
     generate:
