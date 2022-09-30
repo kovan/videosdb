@@ -60,7 +60,8 @@ tasks:
         deps: [init]
         run: once
         cmds:
-            - docker compose build --pull
+            - '{{if .BUILD_ID }} docker compose pull {{end}}'
+            - docker compose build
             - '{{if .BUILD_ID }} docker compose push {{end}}'
             - docker compose up --detach
 
@@ -116,7 +117,7 @@ tasks:
                 run main -c
             - rm -fr dist/
             - docker run
-                -v ./dist/:/app/dist
+                -v ./frontend/dist/:/app/dist
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 yarn generate
