@@ -170,14 +170,12 @@ tasks:
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 
     backend-master:
-        deps: [init]
         cmds:
             - task: build-backend
             - task: unittests-backend
             - task: push-backend
 
     backend-prod:
-        deps: [init]
         cmds:
             - task: build-backend
             - task: unittests-backend
@@ -185,14 +183,12 @@ tasks:
             - task: push-backend
 
     frontend-master:
-        deps: [init]
         cmds:
             - task: build-frontend
             - task: unittests-frontend
             - task: push-frontend
 
     frontend-prod:
-        deps: [init]
         cmds:
             - task: build-frontend
             - task: unittests-frontend
