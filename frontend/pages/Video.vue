@@ -164,6 +164,7 @@ export default {
         } else {
 
             const q = query(collection($db, "videos"), where('videosdb.slug', '==', params.slug))
+            q = query(q, where("id", "!=", null))
             let result = await getDocs(q)
             video = result.docs[0].data()
         }

@@ -61,7 +61,7 @@ tasks:
         run: once
         cmds:
             - docker compose build --pull
-            - docker compose up --detach
+            - docker compose restart || docker compose up --detach
 
 
     unittests-frontend:
