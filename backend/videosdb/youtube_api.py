@@ -18,6 +18,11 @@ def parse_youtube_id(string: str):
     return match.group(1)
 
 
+async def pop_first(async_generator):
+    first = await anext(async_generator)
+    return first, async_generator
+
+
 class YoutubeAPI:
     @staticmethod
     def get_root_url():
@@ -62,31 +67,36 @@ class YoutubeAPI:
         return await self._request_one(url, params)
 
     async def list_channelsection_playlist_ids(self, channel_id):
+        async def generator(results):
+            async for item in results:
+                details = item.get("contentDetails")
+                if not details:
+                    continue
+                if not "playlists" in details:
+                    continue
+                for id in details["playlists"]:
+                    yield id
+
         url = "/channelSections"
         params = {
             "part": "contentDetails",
             "channelId": channel_id
         }
-        results = self._request_main(url, params)
-
-        async for item in results:
-            details = item.get("contentDetails")
-            if not details:
-                continue
-            if not "playlists" in details:
-                continue
-            for id in details["playlists"]:
-                yield id
+        modified, results = await self._request_main(url, params)
+        return modified, generator(results)
 
     async def list_channel_playlist_ids(self, channel_id):
+        async def generator(results):
+            async for item in results:
+                yield item["id"]
+
         url = "/playlists"
         params = {
             "part": "snippet,contentDetails",
             "channelId": channel_id
         }
-        results = self._request_main(url, params)
-        async for item in results:
-            yield item["id"]
+        modified, results = await self._request_main(url, params)
+        return modified, generator(results)
 
     async def get_video_info(self, youtube_id):
         url = "/videos"
@@ -102,7 +112,7 @@ class YoutubeAPI:
             "part": "snippet",
             "playlistId": playlist_id
         }
-        return self._request_main(url, params)
+        return await self._request_main(url, params)
 
     async def get_related_videos(self, youtube_id):
         url = "/search"
@@ -113,7 +123,7 @@ class YoutubeAPI:
         }
         logger.info("getting related videos")
 
-        results = self._request_main(url, params)
+        modified, results = await self._request_main(url, params)
 
         related_videos = dict()
         async for video in results:
@@ -121,7 +131,7 @@ class YoutubeAPI:
                 continue
 
             related_videos[video["id"]["videoId"]] = video
-        return related_videos.values()
+        return modified, related_videos.values()
 
     async def get_channel_info(self, channel_id):
         url = "/channels"
@@ -136,22 +146,25 @@ class YoutubeAPI:
 
     async def _request_one(self, url, params, use_cache=True):
 
-        result = self._request_main(url, params, use_cache)
+        status_code, generator = await pop_first(await self._request_main(url, params, use_cache))
         try:
-            item = await anext(result)
+            item = await anext(generator)
         except StopAsyncIteration:
             item = None
-        return item
+        return status_code == 304, item
 
     async def _request_main(self, url, params, use_cache=True):
-        if use_cache:
-            pages = self._request_with_cache(url, params)
-        else:
-            status_code, pages = self._request_decoupled(url, params)
+        async def generator(pages):
+            async for page in pages:
+                for item in page["items"]:
+                    yield item
 
-        async for page in pages:
-            for item in page["items"]:
-                yield item
+        if use_cache:
+            status_code, pages = await self._request_with_cache(url, params)
+        else:
+            status_code, pages = await pop_first(await self._request_base(url, params))
+
+        return status_code == 304, generator(pages)
 
     async def _request_with_cache(self, url, params):
         @staticmethod
@@ -166,8 +179,11 @@ class YoutubeAPI:
         if cached.exists:
             headers["If-None-Match"] = cached.get("etag")
 
-        status_code, response_pages = await self._request_decoupled(
-            url, params, headers=headers)
+        status_code, response_pages = await pop_first(
+            await self._request_base(url, params, headers=headers)
+        )
+
+        yield status_code
 
         if status_code == 304:
             async for page in self.db.stream("cache/%s/pages" % cache_id):
@@ -190,11 +206,6 @@ class YoutubeAPI:
                 raise e
 
             return
-
-    async def _request_decoupled(self, *args, **kwargs):
-        response = self._request_base(*args, **kwargs)
-        status_code = await anext(response)
-        return status_code, response
 
     async def _request_base(self, url, params, headers=None):
 

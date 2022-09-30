@@ -12,14 +12,21 @@ from aiostream import stream
 from autologging import traced
 import google.api_core.exceptions
 from slugify import slugify
-from videosdb.utils import _contains_exceptions, put_item_at_front
+from videosdb.utils import _contains_exceptions
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 from videosdb.db import DB
+from videosdb.youtube_api import YoutubeAPI
 
 import youtube_transcript_api
 
 
 logger = logging.getLogger(__name__)
+
+
+class LockedItems:
+    def __init__(self, items) -> None:
+        self.lock = anyio.Lock()
+        self.items = items
 
 
 class Downloader:
@@ -58,114 +65,121 @@ class Downloader:
             global_scope.start_soon(self._print_debug_info,
                                     name="Debug info")
 
-            channel = await self._retrieve_channel(self.YT_CHANNEL_ID)
-            playlist_ids = await self._retrieve_playlist_ids(self.YT_CHANNEL_ID)
-            state = (await self.db.get("meta/state")).to_dict()
-            new_state = await self._process_playlist_list(playlist_ids, state, channel["snippet"]["title"])
-            logger.info("Saving state %s", new_state)
-            await self.db.noquota_set("meta/state", new_state)
+            channel = await self._create_channel(self.YT_CHANNEL_ID)
+            playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
+
+            await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"])
+
             await anyio.wait_all_tasks_blocked()
             global_scope.cancel_scope.cancel()
 
         logger.info("Sync finished")
 
     @traced
-    async def _process_playlist_list(self, playlist_ids, state, channel_name):
-        processed_video_ids = set()
-        processed_playlist_ids = set()
-        excluded_video_ids = set()
-        last_playlist_id = None
-        last_video_id = None
+    async def _process_playlist_ids(self, playlist_ids, channel_name):
+        processed_video_ids = LockedItems(set())
+        excluded_video_ids = LockedItems(set())
+        processed_playlist_ids = LockedItems(set())
+        # results = LockedItem(dict())  # playlist ID -> list of video ids
         try:
-            if state.get("lastPlaylistId"):
-                logger.info("Resuming from playlist %s",
-                            state.get("lastPlaylistId"))
-            playlist_ids.sort()
-            playlist_ids = put_item_at_front(
-                playlist_ids,  state.get("lastPlaylistId"))
+            async with anyio.create_task_group() as task_group:
+                random.shuffle(playlist_ids)
+                # main iterations:
+                for playlist_id in playlist_ids:
+                    task_group.start_soon(
+                        self.process_playlist,
+                        playlist_id,
+                        channel_name,
+                        task_group,
+                        processed_video_ids,
+                        excluded_video_ids,
+                        processed_playlist_ids,
+                        name="Playlist %s processor" % playlist_id
+                    )
 
-            # main iterations:
-            for playlist_id in playlist_ids:
-                last_playlist_id = playlist_id
+                # retrieve pending transcripts
+                if self.options and not self.options.exclude_transcripts:
+                    logger.info("Retrieving transcripts")
 
-                if playlist_id in processed_playlist_ids:
-                    continue
-                processed_playlist_ids.add(playlist_id)
-
-                playlist = await self._download_playlist(playlist_id, channel_name)
-                if not playlist:
-                    continue
-
-                # create videos:
-                video_ids = playlist["videosdb"]["videoIds"]
-                video_ids.sort()
-
-                if playlist_id == state.get("lastPlaylistId"):
-                    if state.get("lastVideoId"):
-                        logger.info("Resuming from video %s",
-                                    state.get("lastVideoId"))
-                    video_ids = put_item_at_front(
-                        video_ids,  state.get("lastVideoId"))
-
-                for video_id in video_ids:
-                    last_video_id = video_id
-
-                    if video_id not in processed_video_ids:
-                        processed_video_ids.add(video_id)
-                        video = await self._create_video(video_id, [playlist_id])
-                        if not video:
-                            excluded_video_ids.add(video_id)
-                            continue
-
-                        # update limits, leaving quota for yarn generate and visitors
-                        lengths = len(processed_playlist_ids) + \
-                            len(processed_video_ids)
-
-                        self.db.reserve_read_quota(lengths)
-
-                    if video_id in excluded_video_ids:
-                        continue
-
-                    await self.db.update("videos/" + video_id, {
-                        "videosdb.playlists":
-                        firestore.ArrayUnion([playlist_id])
-                    })
-
-            # retrieve pending transcripts
-            if self.options and not self.options.exclude_transcripts:
-                logger.info("Retrieving transcripts")
-
-                async with anyio.create_task_group() as transcript_downloaders:
-                    async for video in self.db.stream("videos"):
-                        transcript_downloaders.start_soon(
-                            self._handle_transcript, video, name="Download transcript")
+                    async with anyio.create_task_group() as transcript_downloaders:
+                        async for video in self.db.stream("videos"):
+                            transcript_downloaders.start_soon(
+                                self._handle_transcript, video, name="Download transcript")
 
         except Exception as e:
             if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
                 logger.error(e)
-                new_state = {
-                    "lastPlaylistId": last_playlist_id,
-                    "lastVideoId": last_video_id
-                }
-                return new_state
             else:
                 raise e
 
-        if processed_video_ids:
-            ids = list(processed_video_ids)
-            ids.sort()
-            await self.db.noquota_set("meta/video_ids", {
-                "videoIds": firestore.ArrayUnion(ids)
-            })
+        async with processed_video_ids:
+            if len(processed_video_ids):
+                ids = list(processed_video_ids)
+                await self.db.noquota_set("meta/video_ids", {
+                    "videoIds": firestore.ArrayUnion(ids)
+                })
 
-        new_state = {
-            "lastPlaylistId": None,
-            "lastVideoId": None
-        }
-        return new_state
+    async def process_playlist(self, playlist_id, channel_name, task_group, processed_video_ids, excluded_video_ids, processed_playlist_ids):
+        async with processed_playlist_ids.lock:
+            if playlist_id in processed_playlist_ids.items:
+                return
+            processed_playlist_ids.add(playlist_id)
 
-    @traced
-    async def _retrieve_playlist_ids(self, channel_id):
+        modified, playlist = await self.api.get_playlist_info(playlist_id)
+
+        if playlist["snippet"]["channelTitle"] != channel_name:
+            return
+
+        modified, playlist_items = await self.api.list_playlist_items(playlist_id)
+        if not modified:
+            return
+
+        await self._create_playlist(playlist, playlist_items)
+        # create videos:
+        video_ids = playlist["videosdb"]["videoIds"]
+        random.shuffle(video_ids)
+
+        for video_id in video_ids:
+            task_group.start_soon(
+                self._process_video,
+                video_id,
+                playlist_id,
+                processed_video_ids,
+                excluded_video_ids,
+                name="Video %s processor" % video_id
+            )
+
+    @ traced
+    async def _process_video(self, video_id, playlist_id, processed_video_ids, excluded_video_ids):
+        new = False
+        async with processed_video_ids.lock:
+            if video_id not in processed_video_ids.items:
+                processed_video_ids.items.add(video_id)
+                new = True
+
+        if new:
+            modified, video = await self.api.get_video_info(video_id)
+            if not modified:
+                return
+
+            video = await self._create_video(video_id, [playlist_id])
+            if not video:
+                async with excluded_video_ids.lock:
+                    excluded_video_ids.add(video_id)
+                return
+
+        async with excluded_video_ids.lock:
+            if video_id in excluded_video_ids.items:
+                return
+
+        await self.db.set("videos/" + video_id, {
+            "videosdb": {
+                "playlists": firestore.ArrayUnion([playlist_id])
+            }
+        }, merge=True)
+
+    @ traced
+    async def _retrieve_all_playlist_ids(self, channel_id):
         if "DEBUG" in os.environ:
             playlists_ids_stream = stream.iterate(
                 self.api.list_channelsection_playlist_ids(channel_id)
@@ -184,7 +198,7 @@ class Downloader:
         return list(playlist_ids)
 
     @ traced
-    async def _retrieve_channel(self, channel_id):
+    async def _create_channel(self, channel_id):
 
         channel_info = await self.api.get_channel_info(channel_id)
 
@@ -195,22 +209,12 @@ class Downloader:
         return channel_info
 
     @ traced
-    async def _download_playlist(self, playlist_id, channel_name):
-        playlist = await self.api.get_playlist_info(playlist_id)
-
-        if not playlist:
-            return
-
-        if playlist["snippet"]["channelTitle"] != channel_name:
-            return
-
-        result = await self.api.list_playlist_items(playlist_id)
-
+    async def _create_playlist(self, playlist, playlist_items):
         video_count = 0
         last_updated = None
         video_ids = []
 
-        async for item in result:
+        async for item in playlist_items:
             if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
                 continue
             video_ids.append(
@@ -221,25 +225,19 @@ class Downloader:
             if not last_updated or video_date > last_updated:
                 last_updated = video_date
 
-        video_ids.sort()
-
         playlist |= {
             "videosdb": {
-                "slug": slugify(playlist["snippet"]["title"]),
                 "videoCount": video_count,
                 "lastUpdated": last_updated,
-                "videoIds": video_ids
+                "videoIds": video_ids,
+                "slug": slugify(playlist["snippet"]["title"])
             }
         }
-
         await self.db.set("playlists/" + playlist["id"], playlist, merge=True)
         logger.info("Created playlist: " + playlist["snippet"]["title"])
 
-        return playlist
-
-    @traced
-    async def _create_video(self, video_id, playlist_ids=None):
-        video = await self.api.get_video_info(video_id)
+    @ traced
+    async def _create_video(self, video, playlist_ids=None):
 
         if not video:
             return
@@ -250,8 +248,8 @@ class Downloader:
         if video["snippet"]["channelId"] != self.YT_CHANNEL_ID:
             return
 
+        video_id = video["id"]
         playlist_ids = playlist_ids if playlist_ids else []
-        playlist_ids.sort()
 
         video |= {
             "videosdb": {
@@ -276,31 +274,30 @@ class Downloader:
 
         return video
 
-    @traced
+    @ traced
     async def _fill_related_videos(self):
 
         # use remaining YT API daily quota to download a few related video lists:
         logger.info("Filling related videos info.")
 
-        async with anyio.create_task_group():
-            doc = await self.db.get("meta/video_ids")
-            randomized_ids = doc.get("videoIds")
-            random.shuffle(randomized_ids)
-            for video_id in randomized_ids:
-                related_videos = await self.api.get_related_videos(video_id)
+        doc = await self.db.get("meta/video_ids")
+        randomized_ids = doc.get("videoIds")
+        random.shuffle(randomized_ids)
+        for video_id in randomized_ids:
+            related_videos = await self.api.get_related_videos(video_id)
 
-                for related in related_videos:
-                    # for now skip videos from other channels:
-                    if "snippet" in related and related["snippet"]["channelId"] \
-                            != self.YT_CHANNEL_ID:
-                        continue
+            for related in related_videos:
+                # for now skip videos from other channels:
+                if "snippet" in related and related["snippet"]["channelId"] \
+                        != self.YT_CHANNEL_ID:
+                    continue
 
-                    await self.db.update("videos/" + video_id, {
-                        "videosdb.related_videos": firestore.ArrayUnion([related["id"]["videoId"]])
-                    })
+                await self.db.update("videos/" + video_id, {
+                    "videosdb.related_videos": firestore.ArrayUnion([related["id"]["videoId"]])
+                })
 
-                    logger.info("Added new related videos to video %s" %
-                                video_id)
+                logger.info("Added new related videos to video %s" %
+                            video_id)
 
     async def _handle_transcript(self, video):
         if not video.exists:
@@ -349,7 +346,7 @@ class Downloader:
                 logger.info("New status: unavailable")
                 return None, "unavailable"
 
-    @staticmethod
+    @ staticmethod
     def _description_trimmed(description):
         if not description:
             return

@@ -8,7 +8,7 @@ import isodate
 import json
 
 from dotenv import load_dotenv
-from videosdb.downloader import Downloader, put_item_at_front
+from videosdb.downloader import Downloader
 from videosdb.db import DB
 import os
 import logging
@@ -80,12 +80,12 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
                  'ZhI-stDIlCE', 'ed7pFle2yM8', 'gavq4LM8XK0']
     PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
 
-    def test_put_item_at_front(self):
-        s = [3, 5, 6, 8]
-        self.assertEqual(put_item_at_front(s, 6), [6, 8, 3, 5])
-        self.assertEqual(put_item_at_front(s, 8), [8, 3, 5, 6])
-        self.assertEqual(put_item_at_front(s, 123), s)
-        self.assertEqual(put_item_at_front(s, None), s)
+    # def test_put_item_at_front(self):
+    #     s = [3, 5, 6, 8]
+    #     self.assertEqual(put_item_at_front(s, 6), [6, 8, 3, 5])
+    #     self.assertEqual(put_item_at_front(s, 8), [8, 3, 5, 6])
+    #     self.assertEqual(put_item_at_front(s, 123), s)
+    #     self.assertEqual(put_item_at_front(s, None), s)
 
     @respx.mock
     async def test_create_video(self):
@@ -110,7 +110,7 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
     @respx.mock
     async def test_download_playlist(self):
 
-        playlist = await Downloader()._download_playlist(self.PLAYLIST_ID, "Sadhguru")
+        playlist = await Downloader()._get_playlist_items(self.PLAYLIST_ID, "Sadhguru")
 
         self.assertEqual(self.mocked_api["playlists"].call_count, 1)
         self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
