@@ -133,8 +133,8 @@ tasks:
         deps: [init]
         internal: true
         cmds:
-            - docker push {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.REVISION_ID}}
-            - docker push {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
+            - docker push -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.REVISION_ID}}
+            - docker push -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
 
 
     push-frontend:
@@ -197,3 +197,18 @@ tasks:
         deps: [init]
         cmds:
             - task: end2end-tests
+
+    generate-testing:
+        deps: [init]
+        cmds:
+            - task: generate
+
+    generate-sadhguru:
+        deps: [init]
+        cmds:
+            - task: generate
+
+    generate-nithyananda:
+        deps: [init]
+        cmds:
+            - task: generate
