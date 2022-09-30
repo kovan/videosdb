@@ -11,6 +11,7 @@ env:
 
 tasks:
     init:
+        deps: [init]
         internal: true
         run: once
         cmds:
@@ -23,10 +24,11 @@ tasks:
                 {{end}}'
 
     build:
+        deps: [init]
         internal: true
         cmds:
             # pull an image to --cache-from
-            - cmd: '{{if .BUILD_ID }} docker pull {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest{{end}}'
+            - cmd: '{{if .BUILD_ID }} docker pull -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest{{end}}'
               ignore_errors: true
 
             - docker build
@@ -36,6 +38,7 @@ tasks:
                 {{.IMAGE}}
 
     run:
+        deps: [init]
         internal: true
         cmds:
             - docker run --network host --env-file common/env/{{.ENV_FILE}}.txt {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
@@ -61,7 +64,7 @@ tasks:
         deps: [init]
         run: once
         cmds:
-            - docker compose build --pull
+            - docker compose build --pull -q
             - docker compose up --detach
 
 
@@ -155,22 +158,44 @@ tasks:
 
 
 
-# cloud build trigger tasks. Task names match with the trigger names in the GCP console
+# cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 
     backend-master:
-        deps: [init, build-backend, unittests-backend, push-backend]
+        deps: [init]
+        cmds:
+            - build-backend
+            - unittests-backend
+            - push-backend
 
     backend-prod:
-        deps: [init, build-backend, unittests-backend, end2end-tests, push-backend]
+        deps: [init]
+        cmds:
+            - build-backend
+            - unittests-backend
+            - end2end-tests
+            - push-backend
 
     frontend-master:
-        deps: [init, build-frontend, unittests-frontend, push-frontend]
+        deps: [init]
+        cmds:
+            - build-frontend
+            - unittests-frontend
+            - push-frontend
 
     frontend-prod:
-        deps: [init, build-frontend, unittests-frontend, end2end-tests, push-frontend]
+        deps: [init]
+        cmds:
+            - build-frontend
+            - unittests-frontend
+            - end2end-tests
+            - push-frontend
 
     tests-end2end-master:
-        deps: [init, end2end-tests]
+        deps: [init]
+        cmds:
+            - end2end-tests
 
     tests-end2end-prod:
-        deps: [init, end2end-tests]
+        deps: [init]
+        cmds:
+            - end2end-tests
