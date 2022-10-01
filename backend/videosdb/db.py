@@ -23,7 +23,7 @@ class DB:
     def setup(project, config):
         BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
         creds_json_path = os.path.join(
-            BASE_DIR, "keys/%s.json" % config.strip('"'))
+            BASE_DIR, "../common/keys/%s.json" % config.strip('"'))
 
         logger.info("Current project: " + project)
         db = firestore.AsyncClient(project=project,

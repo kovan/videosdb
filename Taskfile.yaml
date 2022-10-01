@@ -34,6 +34,7 @@ tasks:
                 --cache-from {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
                 {{.IMAGE}}
 
+
     run:
         internal: true
         cmds:
@@ -44,6 +45,7 @@ tasks:
         deps: [init]
         run: once
         cmds:
+            - cp -r common backend
             - task: build
               vars:
                 IMAGE: backend
@@ -52,6 +54,7 @@ tasks:
         deps: [init]
         run: once
         cmds:
+            - cp common/firebase/firebase.json frontend
             - task: build
               vars:
                 IMAGE: frontend
@@ -64,6 +67,7 @@ tasks:
             - docker compose build
             - '{{if .BUILD_ID }} docker compose push {{end}}'
             - docker compose up --detach
+            - sleep 1
 
 
     unittests-frontend:
@@ -107,12 +111,13 @@ tasks:
                 ARGS: yarn generate
 
 
+
     deploy:
-        deps: [init]
+        deps: [init, build-frontend]
         cmds:
-            - docker run
-                -e GOOGLE_APPLICATION_CREDENTIALS=backend/videosdb/keys/{{.VIDEOSDB_CONFIG}}.json
-                {{.REPO}}firebase:latest deploy
+            - docker run --network host
+                -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
+                {{.REPO}}frontend-{{.BRANCH}} yarn run firebase deploy
                 --project {{.FIREBASE_PROJECT}}
                 --only=hosting
 
@@ -120,21 +125,24 @@ tasks:
         run: once
         deps: [init, build-frontend, build-backend]
         cmds:
-            - docker run
+            - docker run --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main -c
-            - rm -fr frontend/dist/
-            - docker run
-                -v $(pwd)/frontend/dist/:/app/dist
+            - docker run --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 yarn generate
             - task: deploy
 
     generate-test:
-        deps: [start-test-servers]
+        deps: [start-test-servers, build-backend, build-frontend]
         cmds:
+            - task: run
+              vars:
+                IMAGE: backend
+                ENV_FILE: testing
+                ARGS: run main -c -e
             - task: generate
               vars:
                 VIDEOSDB_CONFIG: testing
