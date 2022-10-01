@@ -3,6 +3,7 @@ env:
     DOCKER_PASSWORD: 5@fs@i@58Zp6wfiH
     REPO_PROJECT: worpdress-279321
     REPO: '{{if .BUILD_ID }}gcr.io/{{.REPO_PROJECT}}/{{end}}'
+    FIRESTORE_EMULATOR_HOST: 127.0.0.1:46456
     BRANCH:
         sh: git branch --show-current
     REVISION_ID:
@@ -40,7 +41,10 @@ tasks:
     run:
         internal: true
         cmds:
-            - docker run --network host --env-file common/env/{{.ENV_FILE}}.txt {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
+            - docker run --network host {{.PROCESSED_ENVS}} --env-file common/env/{{.ENV_FILE}}.txt {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
+        vars:
+            PROCESSED_ENVS:
+                sh: for v in {{.ENVS}}; do echo -n "-e $v "; done
 
     wait-for-emulator:
         internal: true
@@ -48,7 +52,7 @@ tasks:
             - docker run --rm --network host busybox sh -c 'until nc -z localhost {{.FIRESTORE_EMULATOR_PORT}}; do echo "waiting for emulator..."; sleep 1; done'
         vars:
             FIRESTORE_EMULATOR_PORT:
-                sh: cat common/env/testing.txt | grep FIRESTORE_EMULATOR_HOST | cut -d ":" -f 2
+                sh: echo {{.FIRESTORE_EMULATOR_HOST}} | cut -d ":" -f 2
 
 
     build-backend:
@@ -103,6 +107,11 @@ tasks:
                 IMAGE: backend
                 ENV_FILE: testing
                 ARGS: run sh -c "coverage run -m unittest && coverage report -m"
+                ENVS:
+                    LOGLEVEL=DEBUG
+                    DEBUG=1
+                    PYTHONDEVMODE=1
+                    FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
 
     unittests:
         run: once
@@ -118,12 +127,20 @@ tasks:
                 IMAGE: backend
                 ENV_FILE: testing
                 ARGS: run main -c -e
+                ENVS:
+                    LOGLEVEL=DEBUG
+                    DEBUG=1
+                    PYTHONDEVMODE=1
+                    FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
+                    YOUTUBE_API_URL=http://127.0.0.1:43783/youtube/v3
+
             - task: run
               vars:
                 IMAGE: frontend
                 ENV_FILE: testing
                 ARGS: '{{if .BUILD_ID }} yarn generate {{else}} yarn run-s generate start {{end}}'
-
+                ENVS:
+                    FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
 
 
     deploy-test:

@@ -1,14 +1,11 @@
 FIREBASE_PROJECT=videosdb-testing
-FIRESTORE_EMULATOR_HOST=127.0.0.1:46456
-LOGLEVEL=DEBUG
 NODE_OPTIONS=--openssl-legacy-provider
-PYTHONDEVMODE=1
 VIDEOSDB_CONFIG=testing
-VIDEOSDB_HOSTNAME=https://www.sadhguru.digital
-VIDEOSDB_SUBTITLE="Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more."
+VIDEOSDB_CSE_URL=https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635
+VIDEOSDB_HOSTNAME=https://videosdb-testing.web.app
+VIDEOSDB_SHOW_TRANSCRIPTS=true
+VIDEOSDB_SUBTITLE="This is a test subtitle"
 VIDEOSDB_TITLE="Test title"
-VIDEOSDB_WEBSITE=https://isha.sadhguru.org/global/en/wisdom
+VIDEOSDB_WEBSITE=https://videosdb-testing.web.app
 YOUTUBE_API_KEY=AIzaSyB4ssPNsGaIpFv8GNiBl-MbRWzRbuYV-MM
-YOUTUBE_API_URL=http://127.0.0.1:43783/youtube/v3
 YOUTUBE_CHANNEL_ID=UCcYzLCs3zrQIBVHYA1sK2sw
-DEBUG=1

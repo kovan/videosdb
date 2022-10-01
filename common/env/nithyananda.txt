@@ -8,5 +8,4 @@ VIDEOSDB_SUBTITLE="Videos directly from the avatar SPH JGM Nithyananda Paramashi
 VIDEOSDB_TITLE="Nithyananda info"
 VIDEOSDB_WEBSITE=https://kailaasa.org/
 YOUTUBE_API_KEY=AIzaSyCRG-LiGKbn0ZFzNUU7qD3nzwkAw8I9Oa4
-YOUTUBE_API_KEY=AIzaSyCRG-LiGKbn0ZFzNUU7qD3nzwkAw8I9Oa4
 YOUTUBE_CHANNEL_ID=UC9OM-qeiYIPtAkBe9veG5uw
