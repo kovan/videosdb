@@ -97,14 +97,14 @@ class Downloader:
                         name="Playlist %s processor" % playlist_id
                     )
 
-                # retrieve pending transcripts
-                if self.options and not self.options.exclude_transcripts:
-                    logger.info("Retrieving transcripts")
+            # retrieve pending transcripts
+            if self.options and not self.options.exclude_transcripts:
+                logger.info("Retrieving transcripts")
 
-                    async with anyio.create_task_group() as transcript_downloaders:
-                        async for video in self.db.stream("videos"):
-                            transcript_downloaders.start_soon(
-                                self._handle_transcript, video, name="Download transcript")
+                async with anyio.create_task_group() as transcript_downloaders:
+                    async for video in self.db.stream("videos"):
+                        transcript_downloaders.start_soon(
+                            self._handle_transcript, video, name="Download transcript")
 
         except Exception as e:
             if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
