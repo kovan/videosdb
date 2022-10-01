@@ -62,6 +62,7 @@ tasks:
         deps: [init]
         run: once
         cmds:
+            - cp -r common frontend
             - cp common/firebase/firebase.json frontend
             - task: build
               vars:
@@ -79,6 +80,15 @@ tasks:
             - docker compose up --detach
             - task: wait-for-emulator
 
+    build-and-push-test-servers:
+        deps: [init]
+        run: once
+        cmds:
+            - REPO={{.REPO}} docker compose build
+            - docker login gcr.io
+            - REPO={{.REPO}} docker compose push
+        vars:
+            REPO: gcr.io/{{.REPO_PROJECT}}/
 
     unittests-frontend:
         run: once
