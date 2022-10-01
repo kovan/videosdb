@@ -76,7 +76,7 @@ tasks:
                 {{else}}
                     docker compose build
                 {{end}}'
-            - docker compose restart || docker compose up --detach
+            - docker compose up --detach
             - task: wait-for-emulator
 
 
