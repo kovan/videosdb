@@ -131,6 +131,8 @@ class Downloader:
                                 excluded_video_ids,
                                 processed_playlist_ids):
 
+        logger.info("Processing playlist " + playlist_id)
+
         async with processed_playlist_ids.lock:
             if playlist_id in processed_playlist_ids.items:
                 return
@@ -164,6 +166,7 @@ class Downloader:
 
     @ traced
     async def _process_video(self, video_id, playlist_id, processed_video_ids, excluded_video_ids):
+
         new = False
         async with processed_video_ids.lock:
             if video_id not in processed_video_ids.items:
@@ -205,6 +208,7 @@ class Downloader:
             async for playlist_id in streamer:
                 playlist_ids.add(playlist_id)
 
+        logger.info("Retrieved all playlist IDs.")
         return list(playlist_ids)
 
     @ traced
@@ -220,6 +224,7 @@ class Downloader:
 
     @ traced
     async def _create_playlist(self, playlist, playlist_items):
+
         video_count = 0
         last_updated = None
         video_ids = []
@@ -244,7 +249,7 @@ class Downloader:
             }
         }
         await self.db.set("playlists/" + playlist["id"], playlist, merge=True)
-        logger.info("Created playlist: " + playlist["snippet"]["title"])
+        logger.info("Wrote playlist: " + playlist["snippet"]["title"])
 
     @ traced
     async def _create_video(self, video, playlist_ids=None):
@@ -259,6 +264,7 @@ class Downloader:
             return
 
         video_id = video["id"]
+
         playlist_ids = playlist_ids if playlist_ids else []
 
         video |= {
@@ -279,7 +285,7 @@ class Downloader:
 
         await self.db.set("videos/" + video_id, video, merge=True)
 
-        logger.info("Created video: %s (%s)" %
+        logger.info("Wrote video: %s (%s)" %
                     (video_id, video["snippet"]["title"]))
 
         return video
