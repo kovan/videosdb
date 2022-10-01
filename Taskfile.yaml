@@ -143,11 +143,9 @@ tasks:
                 run main -c
             - docker run --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
-                {{.REPO}}frontend-{{.BRANCH}}:latest
-                yarn generate
-            - docker run --network host
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
-                {{.REPO}}frontend-{{.BRANCH}} yarn run firebase deploy
+                {{.REPO}}frontend-{{.BRANCH}}:latest
+                yarn generate && yarn run firebase deploy
                 --project {{.FIREBASE_PROJECT}}
                 --only=hosting
 
