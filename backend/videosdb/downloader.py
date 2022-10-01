@@ -81,29 +81,34 @@ class Downloader:
         processed_video_ids = LockedItems(set())
         excluded_video_ids = LockedItems(set())
         processed_playlist_ids = LockedItems(set())
+        final_video_ids = LockedItems(set())
         try:
-            async with anyio.create_task_group() as task_group:
+            async with anyio.create_task_group() as phase1:
                 random.shuffle(playlist_ids)
                 # main iterations:
                 for playlist_id in playlist_ids:
-                    task_group.start_soon(
+                    phase1.start_soon(
                         self._process_playlist,
                         playlist_id,
                         channel_name,
-                        task_group,
+                        phase1,
                         processed_video_ids,
                         excluded_video_ids,
                         processed_playlist_ids,
                         name="Playlist %s processor" % playlist_id
                     )
 
-            # retrieve pending transcripts
-            if self.options and not self.options.exclude_transcripts:
-                logger.info("Retrieving transcripts")
+            async with anyio.create_task_group() as phase2:
+                async for video in self.db.stream("videos"):
+                    video_id = video.to_dict().get("id")
+                    if video_id:
+                        async with final_video_ids.lock:
+                            final_video_ids.items.add(video_id)
 
-                async with anyio.create_task_group() as transcript_downloaders:
-                    async for video in self.db.stream("videos"):
-                        transcript_downloaders.start_soon(
+                    # retrieve pending transcripts
+                    if self.options and not self.options.exclude_transcripts:
+                        logger.info("Retrieving transcripts")
+                        phase2.start_soon(
                             self._handle_transcript, video, name="Download transcript")
 
         except Exception as e:
@@ -112,12 +117,10 @@ class Downloader:
             else:
                 raise e
 
-        async with processed_video_ids.lock:
-            if len(processed_video_ids.items):
-                ids = list(processed_video_ids.items)
-                await self.db.noquota_set("meta/video_ids", {
-                    "videoIds": firestore.ArrayUnion(ids)
-                })
+        async with final_video_ids.lock:
+            await self.db.noquota_set("meta/video_ids", {
+                "videoIds": firestore.ArrayUnion(list(final_video_ids.items))
+            })
 
     async def _process_playlist(self,
                                 playlist_id,
