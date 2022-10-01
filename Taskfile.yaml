@@ -65,7 +65,7 @@ tasks:
         run: once
         cmds:
             - cp -r common frontend
-            - cp common/firebase/firebase.json frontend
+            - cp common/firebase/firebase.json frontend # firebase command needs this file here
             - task: build
               vars:
                 IMAGE: frontend
@@ -122,24 +122,37 @@ tasks:
               vars:
                 IMAGE: frontend
                 ENV_FILE: testing
-                ARGS: yarn generate
+                ARGS: '{{if .BUILD_ID }} yarn generate {{else}} yarn run-s generate start {{end}}'
 
+
+
+    deploy-test:
+        run: once
+        deps: [init, build-frontend, build-backend, start-test-servers]
+        cmds:
+            - docker run --network host
+                --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
+                {{.REPO}}backend-{{.BRANCH}}:latest
+                run main -c -e
+            - docker run --network host
+                --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
+                -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
+                {{.REPO}}frontend-{{.BRANCH}}:latest
+                yarn run-s generate deploy
 
     generate:
         run: once
         deps: [init, build-frontend, build-backend]
         cmds:
-            - 'docker run --network host
+            - docker run --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
-                run main -c'
-            - 'docker run --network host
+                run main -c
+            - docker run --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
                 {{.REPO}}frontend-{{.BRANCH}}:latest
-                yarn generate && yarn run firebase deploy
-                --project {{.FIREBASE_PROJECT}}
-                --only=hosting'
+                yarn run-s generate deploy
 
 
     push:
@@ -210,7 +223,7 @@ tasks:
     generate-testing:
         - task: generate
           vars:
-            VIDEOSDB_CONFIG: testing-cloudbuild
+            VIDEOSDB_CONFIG: testing
             FIREBASE_PROJECT: videosdb-testing
 
     generate-sadhguru:

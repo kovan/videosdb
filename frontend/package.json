@@ -8,7 +8,8 @@
         "build": "nuxt build",
         "generate": "node --experimental-specifier-resolution=node node_modules/.bin/nuxt generate --fail-on-error",
         "test": "jest",
-        "dev-debug": "node node_modules/.bin/nuxt"
+        "dev-debug": "node node_modules/.bin/nuxt",
+        "deploy": "firebase deploy --project $FIREBASE_PROJECT"
     },
     "dependencies": {
         "@nuxtjs/google-analytics": "^2.4.0",

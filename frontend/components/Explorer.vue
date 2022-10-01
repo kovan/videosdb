@@ -262,7 +262,7 @@ export default {
                 //try {
 
                 let q = query(collection(self.$db, 'videos'))
-                q = query(q, where("id", "!=", null))
+                // q = query(q, where("id", "!=", null))
                 if (self.ordering)
                     q = query(q, orderBy(self.ordering.field, self.ordering.direction))
 

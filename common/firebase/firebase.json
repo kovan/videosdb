@@ -30,7 +30,7 @@
         }
     },
     "firestore": {
-        "rules": "firestore.rules",
-        "indexes": "firestore.indexes.json"
+        "rules": "common/firebase/firestore.rules",
+        "indexes": "common/firebase/firestore.indexes.json"
     }
 }
