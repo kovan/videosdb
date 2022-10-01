@@ -96,7 +96,7 @@ tasks:
               vars:
                 IMAGE: backend
                 ENV_FILE: testing
-                ARGS: run coverage run -m unittest
+                ARGS: run sh -c "coverage run -m unittest && coverage report -m"
 
     unittests:
         run: once
