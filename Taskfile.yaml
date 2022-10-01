@@ -82,15 +82,7 @@ tasks:
             - docker compose up --detach
             - task: wait-for-emulator
 
-    build-and-push-test-servers:
-        deps: [init]
-        run: once
-        cmds:
-            - REPO={{.REPO}} docker compose build
-            - docker login gcr.io
-            - REPO={{.REPO}} docker compose push
-        vars:
-            REPO: gcr.io/{{.REPO_PROJECT}}/
+
 
     unittests-frontend:
         run: once
@@ -133,24 +125,21 @@ tasks:
                 ARGS: yarn generate
 
 
-
-
     generate:
         run: once
         deps: [init, build-frontend, build-backend]
         cmds:
-            - docker run --network host
+            - 'docker run --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
-                run main -c
-            - docker run --network host
+                run main -c'
+            - 'docker run --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 yarn generate && yarn run firebase deploy
                 --project {{.FIREBASE_PROJECT}}
-                --only=hosting
-
+                --only=hosting'
 
 
     push:
@@ -178,62 +167,61 @@ tasks:
               vars:
                 IMAGE: backend
 
-
+    build-and-push-test-servers:
+        deps: [init]
+        run: once
+        cmds:
+            - REPO={{.REPO}} docker compose build
+            - docker login gcr.io
+            - REPO={{.REPO}} docker compose push
+        vars:
+            REPO: gcr.io/{{.REPO_PROJECT}}/
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 
     backend-master:
-        cmds:
-            - task: build-backend
-            - task: unittests-backend
-            - task: push-backend
+        - task: build-backend
+        - task: unittests-backend
+        - task: push-backend
 
     backend-prod:
-        cmds:
-            - task: build-backend
-            - task: unittests-backend
-            - task: end2end-tests
-            - task: push-backend
+        - task: build-backend
+        - task: unittests-backend
+        - task: end2end-tests
+        - task: push-backend
 
     frontend-master:
-        cmds:
-            - task: build-frontend
-            - task: unittests-frontend
-            - task: push-frontend
+        - task: build-frontend
+        - task: unittests-frontend
+        - task: push-frontend
 
     frontend-prod:
-        cmds:
-            - task: build-frontend
-            - task: unittests-frontend
-            - task: end2end-tests
-            - task: push-frontend
+        - task: build-frontend
+        - task: unittests-frontend
+        - task: end2end-tests
+        - task: push-frontend
 
     tests-end2end-master:
-        cmds:
-            - task: end2end-tests
+        - task: end2end-tests
 
     tests-end2end-prod:
-        cmds:
-            - task: end2end-tests
+        - task: end2end-tests
 
     generate-testing:
-        cmds:
-            - task: generate
-              vars:
-                VIDEOSDB_CONFIG: testing-cloudbuild
-                FIREBASE_PROJECT: videosdb-testing
+        - task: generate
+          vars:
+            VIDEOSDB_CONFIG: testing-cloudbuild
+            FIREBASE_PROJECT: videosdb-testing
 
     generate-sadhguru:
-        cmds:
-            - task: generate
-              vars:
-                VIDEOSDB_CONFIG: sadhguru
-                FIREBASE_PROJECT: videosdb-firebase
+        - task: generate
+          vars:
+            VIDEOSDB_CONFIG: sadhguru
+            FIREBASE_PROJECT: videosdb-firebase
 
     generate-nithyananda:
-        cmds:
-            - task: generate
-              vars:
-                VIDEOSDB_CONFIG: nithyananda
-                FIREBASE_PROJECT: videosdb-nithyananda
+        - task: generate
+          vars:
+            VIDEOSDB_CONFIG: nithyananda
+            FIREBASE_PROJECT: videosdb-nithyananda
 

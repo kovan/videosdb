@@ -101,15 +101,16 @@ class Downloader:
             async with anyio.create_task_group() as phase2:
                 async for video in self.db.stream("videos"):
                     video_id = video.to_dict().get("id")
-                    if video_id:
-                        async with final_video_ids.lock:
-                            final_video_ids.items.add(video_id)
+                    if not video_id:
+                        continue
+
+                    async with final_video_ids.lock:
+                        final_video_ids.items.add(video_id)
 
                     # retrieve pending transcripts
                     if self.options and not self.options.exclude_transcripts:
-                        logger.info("Retrieving transcripts")
                         phase2.start_soon(
-                            self._handle_transcript, video, name="Download transcript")
+                            self._handle_transcript, video, name="Download transcript for video " + video_id)
 
         except Exception as e:
             if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
