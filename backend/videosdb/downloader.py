@@ -119,7 +119,7 @@ class Downloader:
                 raise e
 
         async with final_video_ids.lock:
-            await self.db.noquota_set("meta/video_ids", {
+            await self.db.set("meta/video_ids", {
                 "videoIds": firestore.ArrayUnion(list(final_video_ids.items))
             })
 
