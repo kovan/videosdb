@@ -40,6 +40,14 @@ tasks:
         cmds:
             - docker run --network host --env-file common/env/{{.ENV_FILE}}.txt {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
 
+    wait-for-emulator:
+        internal: true
+        cmds:
+            - docker run --rm --network host busybox sh -c 'until nc -z localhost {{.FIRESTORE_EMULATOR_PORT}}; do echo "waiting for emulator..."; sleep 1; done'
+        vars:
+            FIRESTORE_EMULATOR_PORT:
+                sh: cat common/env/testing.txt | grep FIRESTORE_EMULATOR_HOST | cut -d ":" -f 2
+
 
     build-backend:
         deps: [init]
@@ -67,7 +75,7 @@ tasks:
             - docker compose build
             - '{{if .BUILD_ID }} docker compose push {{end}}'
             - docker compose up --detach
-            - sleep 1
+            - task: wait-for-emulator
 
 
     unittests-frontend:
@@ -88,7 +96,7 @@ tasks:
               vars:
                 IMAGE: backend
                 ENV_FILE: testing
-                ARGS: run python -m unittest
+                ARGS: run coverage run -m unittest
 
     unittests:
         run: once
@@ -112,14 +120,6 @@ tasks:
 
 
 
-    deploy:
-        deps: [init, build-frontend]
-        cmds:
-            - docker run --network host
-                -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
-                {{.REPO}}frontend-{{.BRANCH}} yarn run firebase deploy
-                --project {{.FIREBASE_PROJECT}}
-                --only=hosting
 
     generate:
         run: once
@@ -133,19 +133,12 @@ tasks:
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 yarn generate
-            - task: deploy
+            - docker run --network host
+                -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
+                {{.REPO}}frontend-{{.BRANCH}} yarn run firebase deploy
+                --project {{.FIREBASE_PROJECT}}
+                --only=hosting
 
-    generate-test:
-        deps: [start-test-servers, build-backend, build-frontend]
-        cmds:
-            - task: run
-              vars:
-                IMAGE: backend
-                ENV_FILE: testing
-                ARGS: run main -c -e
-            - task: generate
-              vars:
-                VIDEOSDB_CONFIG: testing
 
 
     push:
