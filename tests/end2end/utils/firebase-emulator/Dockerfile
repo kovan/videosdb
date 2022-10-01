@@ -7,7 +7,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt-get install -y nodejs
 RUN apt-get install -y openjdk-18-jre-headless
 RUN npm install -g firebase-tools
-RUN firebase setup:emulators:firestore
+RUN firebase setup:emulators
 
 WORKDIR /root
 
