@@ -6,8 +6,6 @@ services:
         image: ${REPO-}json-caching-proxy
         build:
             context: tests/end2end/utils/json-caching-proxy
-            cache_from:
-                - ${REPO-}json-caching-proxy
         ports:
             - 43783:43783
         stop_signal: SIGKILL
@@ -17,8 +15,6 @@ services:
         image: ${REPO-}firebase-emulator
         build:
             context: tests/end2end/utils/firebase-emulator
-            cache_from:
-                - ${REPO-}firebase-emulator
         environment:
             - GCP_PROJECT=${FIREBASE_PROJECT-firebase-testing}
             - ENABLE_UI=true

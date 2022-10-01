@@ -71,8 +71,12 @@ tasks:
         deps: [init]
         run: once
         cmds:
-            - '{{if empty .BUILD_ID }} docker compose build {{end}}'
-            - docker compose up --detach
+            - '{{if .BUILD_ID }}
+                    docker compose pull -q
+                {{else}}
+                    docker compose build
+                {{end}}'
+            - docker compose restart || docker compose up --detach
             - task: wait-for-emulator
 
 
