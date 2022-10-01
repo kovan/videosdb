@@ -8,6 +8,8 @@ env:
     REVISION_ID:
         sh: git rev-parse HEAD
 
+output: prefixed
+
 tasks:
     init:
         internal: true
