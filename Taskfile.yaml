@@ -41,7 +41,7 @@ tasks:
     run:
         internal: true
         cmds:
-            - docker run --network host {{.PROCESSED_ENVS}} --env-file common/env/{{.ENV_FILE}}.txt {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
+            - docker run --rm --network host {{.PROCESSED_ENVS}} --env-file common/env/{{.ENV_FILE}}.txt {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
         vars:
             PROCESSED_ENVS:
                 sh: for v in {{.ENVS}}; do echo -n "-e $v "; done
