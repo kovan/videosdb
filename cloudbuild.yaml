@@ -3,8 +3,6 @@ steps:
   - name: gcr.io/worpdress-279321/task
     env:
         - 'BUILD_ID=$BUILD_ID'
-        - 'FIREBASE_PROJECT=$_FIREBASE_PROJECT'
-        - 'VIDEOSDB_CONFIG=$_VIDEOSDB_CONFIG'
     args:
         - --verbose
         - $TRIGGER_NAME
