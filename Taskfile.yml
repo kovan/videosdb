@@ -4,6 +4,7 @@ env:
     REPO_PROJECT: worpdress-279321
     REPO: '{{if .BUILD_ID }}gcr.io/{{.REPO_PROJECT}}/{{end}}'
     FIRESTORE_EMULATOR_HOST: 127.0.0.1:46456
+    YOUTUBE_API_URL: http://127.0.0.1:43783/youtube/v3
     BRANCH:
         sh: git branch --show-current
     REVISION_ID:
@@ -144,7 +145,7 @@ tasks:
                     DEBUG=1
                     PYTHONDEVMODE=1
                     FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
-                    YOUTUBE_API_URL=http://127.0.0.1:43783/youtube/v3
+                    YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
 
             - task: run
               vars:
@@ -164,6 +165,8 @@ tasks:
         deps: [init, build-frontend, build-backend, start-test-servers]
         cmds:
             - docker run --network host
+                -e YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
+                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main -c -e
