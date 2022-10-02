@@ -2,12 +2,13 @@ import json
 import logging
 import os
 import re
+from typing import Iterable, NewType
 import httpx
 from urllib.parse import urlencode
 from videosdb.utils import wait_for_port
 import youtube_transcript_api
 from urllib.parse import urlparse
-
+from types import AsyncGeneratorType
 logger = logging.getLogger(__name__)
 
 
@@ -24,12 +25,15 @@ async def pop_first(async_generator):
 
 
 class YoutubeAPI:
+    APIReturnType = NewType(
+        "APIReturnType", tuple[bool, AsyncGeneratorType[dict]])
+
     @staticmethod
-    def get_root_url():
+    def get_root_url() -> str:
         return os.environ.get("YOUTUBE_API_URL",  "https://www.googleapis.com/youtube/v3")
 
     @staticmethod
-    def wait_for_port():
+    def wait_for_port() -> None:
         parsed_ytapi_url = urlparse(YoutubeAPI.get_root_url())
         if parsed_ytapi_url.port:
             wait_for_port(parsed_ytapi_url.port)
@@ -42,7 +46,7 @@ class YoutubeAPI:
         def __str__(self):
             return "%s %s" % (self.status, json.dumps(self.json, indent=4, sort_keys=True))
 
-    async def aclose(self):
+    async def aclose(self) -> None:
         return await self.http.aclose()
 
     def __init__(self, db, yt_key=None):
@@ -58,7 +62,7 @@ class YoutubeAPI:
 
         logger.debug("Pointing at URL: " + self.root_url)
 
-    async def get_playlist_info(self, playlist_id):
+    async def get_playlist_info(self, playlist_id) -> APIReturnType:
         url = "/playlists"
         params = {
             "part": "snippet",
@@ -66,7 +70,7 @@ class YoutubeAPI:
         }
         return await self._request_one(url, params)
 
-    async def list_channelsection_playlist_ids(self, channel_id):
+    async def list_channelsection_playlist_ids(self, channel_id) -> APIReturnType:
         async def generator(results):
             async for item in results:
                 details = item.get("contentDetails")
@@ -85,7 +89,7 @@ class YoutubeAPI:
         modified, results = await self._request_main(url, params)
         return modified, generator(results)
 
-    async def list_channel_playlist_ids(self, channel_id):
+    async def list_channel_playlist_ids(self, channel_id) -> APIReturnType:
         async def generator(results):
             async for item in results:
                 yield item["id"]
@@ -98,7 +102,7 @@ class YoutubeAPI:
         modified, results = await self._request_main(url, params)
         return modified, generator(results)
 
-    async def get_video_info(self, youtube_id):
+    async def get_video_info(self, youtube_id) -> APIReturnType:
         url = "/videos"
         params = {
             "part": "snippet,contentDetails,statistics",
@@ -106,7 +110,7 @@ class YoutubeAPI:
         }
         return await self._request_one(url, params)
 
-    async def list_playlist_items(self, playlist_id):
+    async def list_playlist_items(self, playlist_id) -> APIReturnType:
         url = "/playlistItems"
         params = {
             "part": "snippet",
@@ -114,7 +118,15 @@ class YoutubeAPI:
         }
         return await self._request_main(url, params)
 
-    async def get_related_videos(self, youtube_id):
+    async def get_channel_info(self, channel_id) -> APIReturnType:
+        url = "/channels"
+        params = {
+            "part": "snippet,contentDetails,statistics",
+            "id": channel_id
+        }
+        return await self._request_one(url, params)
+
+    async def get_related_videos(self, youtube_id) -> tuple[bool, Iterable]:
         url = "/search"
         params = {
             "part": "snippet",
@@ -132,14 +144,6 @@ class YoutubeAPI:
 
             related_videos[video["id"]["videoId"]] = video
         return modified, related_videos.values()
-
-    async def get_channel_info(self, channel_id):
-        url = "/channels"
-        params = {
-            "part": "snippet,contentDetails,statistics",
-            "id": channel_id
-        }
-        return await self._request_one(url, params)
 
 
 # ------- PRIVATE-------------------------------------------------------
