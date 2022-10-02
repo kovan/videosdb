@@ -43,6 +43,9 @@ class MockedAPIMixin:
     @classmethod
     def setUpClass(cls):
         load_dotenv("common/env/testing.txt")
+        if "FIRESTORE_EMULATOR_HOST" not in os.environ:
+
+            os.environ["FIRESTORE_EMULATOR_HOST"] = "127.0.0.1:46456"
 
         logger.debug(pprint.pformat(os.environ))
 
@@ -145,3 +148,14 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         c = await self.db.document("videos/" + "asdfsdf").get()
         self.assertEqual(
             {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
+
+    async def test_transcript_downloading(self):
+        with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
+            video = json.load(f)["items"][0]
+
+        d = Downloader()
+        await d.init()
+        await d._handle_transcript(video)
+
+        self.assertIn("transcript", video["videosdb"])
+        self.assertIn("transcript_status", video["videosdb"])

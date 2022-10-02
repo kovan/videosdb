@@ -119,12 +119,12 @@ tasks:
               vars:
                 IMAGE: backend
                 ENV_FILE: testing
-                ARGS: run sh -c "coverage run -m unittest && coverage report -m"
+                ARGS: run sh -c "coverage run -m unittest && coverage report -m && coverage html"
                 ENVS:
                     LOGLEVEL=DEBUG
                     DEBUG=1
                     PYTHONDEVMODE=1
-                    FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
+                    FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}º
 
     unittests:
         run: once

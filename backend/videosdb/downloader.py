@@ -110,7 +110,7 @@ class Downloader:
                     # retrieve pending transcripts
                     if self.options and not self.options.exclude_transcripts:
                         phase2.start_soon(
-                            self._handle_transcript, video, name="Download transcript for video " + video_id)
+                            self._handle_transcript, video.to_dict(), name="Download transcript for video " + video_id)
 
         except Exception as e:
             if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
@@ -316,26 +316,24 @@ class Downloader:
                             video_id)
 
     async def _handle_transcript(self, video):
-        if not video.exists:
-            return
 
-        v = video.to_dict()
-        current_status = fnc.get("videosdb.transcript_status", v)
+        current_status = fnc.get("videosdb.transcript_status", video)
         if current_status not in ("pending", None):
             return
         logger.info("Downloading transcript for video: " +
-                    str(v["id"]) + " because its status is " + str(current_status))
-        transcript, new_status = await self._download_transcript(v["id"])
+                    str(video["id"]) + " because its status is " + str(current_status))
+        transcript, new_status = await self._download_transcript(video["id"])
         if new_status == current_status:
             return
 
-        new_data = {
+        video |= {
             "videosdb": {
                 "transcript_status": new_status,
                 "transcript": transcript
             }
         }
-        await self.db.set("videos/" + v["id"], new_data, merge=True)
+
+        await self.db.set("videos/" + video["id"], video, merge=True)
 
     async def _download_transcript(self, video_id):
         try:
