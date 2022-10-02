@@ -217,7 +217,8 @@ function videoToSitemapEntry(video) {
                     //? removeXMLInvalidChars(video.snippet.description, true).substring(0, 2040)
                     video.snippet.title,
                 duration: video.videosdb.durationSeconds,
-                publication_date: dateToISO(video.snippet.publishedAt)
+                publication_date: dateToISO(video.snippet.publishedAt),
+                player_loc: `https://www.youtube.com/watch?v=${video.id}`
             },
         ],
         priority: 1.0,
@@ -237,8 +238,7 @@ function videoToSitemapEntry(video) {
 }
 
 function videoToStructuredData(video) {
-    // Reference:
-    // https://developers.google.com/search/docs/advanced/sitemaps/video-sitemaps
+
     let json = {
         '@context': 'https://schema.org',
         '@type': 'VideoObject',
