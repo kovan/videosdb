@@ -83,6 +83,9 @@ tasks:
               vars:
                 IMAGE: frontend
 
+    build-all:
+        deps: [build-frontend, build-backend]
+
     start-test-servers:
         deps: [init]
         run: once
@@ -95,7 +98,7 @@ tasks:
             - docker compose up --detach
             - task: wait-for-emulator
 
-
+    stop-test-servers: docker compose down
 
     unittests-frontend:
         run: once
@@ -220,6 +223,12 @@ tasks:
             - REPO={{.REPO}} docker compose push
         vars:
             REPO: gcr.io/{{.REPO_PROJECT}}/
+
+
+    default:
+        - task: build-all
+        - task: unittests
+        - task: end2end-tests
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 
