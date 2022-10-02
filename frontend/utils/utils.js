@@ -251,17 +251,18 @@ function videoToStructuredData(video) {
         ),
         uploadDate: dateToISO(video.snippet.publishedAt),
         duration: video.contentDetails.duration,
+        embedUrl: `https://www.youtube.com/watch?v=${video.id}`
     }
 
-    if ('filename' in video.videosdb) {
-        json.contentUrl =
-            'https://videos.sadhguru.digital/' +
-            encodeURIComponent(video.videosdb.filename)
+    // if ('filename' in video.videosdb) {
+    //     json.contentUrl =
+    //         'https://videos.sadhguru.digital/' +
+    //         encodeURIComponent(video.videosdb.filename)
 
-    } else {
-        json.embedUrl = `https://www.youtube.com/watch?v=${video.id}`
+    // } else {
+    //     json.embedUrl = `https://www.youtube.com/watch?v=${video.id}`
 
-    }
+    // }
 
 
 
