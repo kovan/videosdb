@@ -1,6 +1,8 @@
-#from pytwitter import Api
-from videosdb.db import DB
+# from pytwitter import Api
+import datetime
+import logging
 import tweepy
+logger = logging.getLogger(__name__)
 
 KEYS = {
     # "client_id": "enBHZzVNLWlmV3JKU1NSeWFLV3U6MTpjaQ",
@@ -15,16 +17,30 @@ KEYS = {
 
 
 class Publisher:
-    def __init__(self) -> None:
-        self.db = DB()
+    def __init__(self, db) -> None:
+        self.db = db
 
-        self.api = tweepy.Client(
+        self.api = tweepy.asynchronous.AsyncClient(
             consumer_key=KEYS["api_key"],
             consumer_secret=KEYS["api_secret"],
             access_token=KEYS["access_token"],
             access_token_secret=KEYS["access_secret"])
 
-        tweepy.Client()
+        self.videos = set()
 
-    def publish_tweets(self):
-        self.api.create_tweet(text="hi")
+    async def create_tweet(self, *args, **kwargs):
+        pass  # await self.api.create_tweet(*args, **kwargs)
+
+    def add_video(self, video):
+        self.videos.add(video)
+
+    async def publish_all(self, video):
+        for v in self.videos:
+            await self.create_tweet(v)
+            video |= {
+                "videosdb": {
+                    "publishDate": datetime.datetime.now().isoformat()
+                }
+            }
+            await self.db.set("videos/" + video["id"], video)
+            logger.info("Published video " + video["id"])

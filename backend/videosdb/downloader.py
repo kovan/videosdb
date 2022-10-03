@@ -1,3 +1,4 @@
+import datetime
 import logging
 import bleach
 import os
@@ -12,6 +13,7 @@ from aiostream import stream
 from autologging import traced
 import google.api_core.exceptions
 from slugify import slugify
+from videosdb.publisher import Publisher
 from videosdb.utils import _contains_exceptions
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 from videosdb.db import DB
@@ -66,6 +68,8 @@ class Downloader:
 
             await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"])
 
+            publisher = Publisher()
+
             await anyio.wait_all_tasks_blocked()
             global_scope.cancel_scope.cancel()
 
@@ -92,12 +96,18 @@ class Downloader:
                         processed_playlist_ids,
                         name="Playlist %s processor" % playlist_id
                     )
-
+            publisher = Publisher(self.db)
             async with anyio.create_task_group() as phase2:
                 async for video in self.db.stream("videos"):
                     video_id = video.to_dict().get("id")
                     if not video_id:
                         continue
+                    v_dict = video.to_dict()
+                    if "lastUpdated" in v_dict:
+
+                        if (datetime.datetime.now() - v_dict["lastUpdated"] < datetime.timedelta(days=3)
+                                and not v_dict.get("publishDate")):
+                            publisher.add_video(v_dict)
 
                     async with final_video_ids.lock:
                         final_video_ids.items.add(video_id)
@@ -106,6 +116,8 @@ class Downloader:
                     if self.options and not self.options.exclude_transcripts:
                         phase2.start_soon(
                             self._handle_transcript, video.to_dict(), name="Download transcript for video " + video_id)
+
+            await publisher.publish_all()
 
         except Exception as e:
             if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
