@@ -35,6 +35,13 @@ class DB:
     def __init__(self):
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
+
+        if "FIRESTORE_EMULATOR_HOST" in os.environ:
+            logger.info("EMULATOR ACTIVE: %s",
+                        os.environ["FIRESTORE_EMULATOR_HOST"])
+        else:
+            logger.info("USING LIVE DATABASE")
+
         self.FREE_TIER_WRITE_QUOTA = 20000
         self.FREE_TIER_READ_QUOTA = 50000
         self.write_count = 0

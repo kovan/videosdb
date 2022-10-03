@@ -34,11 +34,6 @@ class Downloader:
     # PUBLIC: -------------------------------------------------------------
     def __init__(self, options=None):
 
-        if "FIRESTORE_EMULATOR_HOST" in os.environ:
-            logger.info("EMULATOR ACTIVE: %s",
-                        os.environ["FIRESTORE_EMULATOR_HOST"])
-        else:
-            logger.info("USING LIVE DATABASE")
         # for k, v in os.environ.items():
         #     logger.debug('- %s = "%s"' % (k, v))
 
