@@ -5,32 +5,10 @@
         "version": "0.2.0",
         "configurations": [
             {
-                "cwd": "${workspaceFolder}/backend/js",
-                "command": "npm start",
-                "name": "Run npm start",
-                "request": "launch",
-                "type": "node-terminal",
-                "envFile": "${workspaceFolder}/../../utils/vars.txt"
-            },
-            {
-                "name": "backend JS",
-                "cwd": "${workspaceFolder}/backend/js",
-                "runtimeArgs": [
-                    "start",
-                    "debug"
-                ],
-                "request": "launch",
-                "skipFiles": [
-                    "<node_internals>/**"
-                ],
-                "type": "node",
-                "envFile": "${workspaceFolder}/../../utils/vars.txt"
-            },
-            {
                 "name": "Backend run check",
                 "type": "python",
                 "request": "launch",
-                "module": "videosdb",
+                "program": "run.py",
                 "pythonArgs": [
                     "-W",
                     "default"
@@ -39,6 +17,8 @@
                     "DEBUG": "1",
                     "LOGLEVEL": "DEBUG",
                     "PYTHONDEVMODE": "1",
+                    "FIRESTORE_EMULATOR_HOST": "127.0.0.1:46456",
+                    "YOUTUBE_API_URL": "http://127.0.0.1:43783/youtube/v3"
                 },
                 "envFile": "${workspaceFolder}/common/env/testing.txt",
                 "args": [

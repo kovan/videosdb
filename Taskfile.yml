@@ -28,7 +28,7 @@ tasks:
     build:
         internal: true
         cmds:
-            # pull an image to --cache-from
+            # pull the image for --cache-from
             - cmd: '{{if .BUILD_ID }} docker pull -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest{{end}}'
               ignore_errors: true
 
@@ -39,31 +39,15 @@ tasks:
                 {{.IMAGE}}
 
 
-    run:
-        internal: true
-        cmds:
-            - docker run --rm
-                --network host {{.PROCESSED_ENVS}}
-                --env-file common/env/{{.ENV_FILE}}.txt
-                {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest {{.ARGS}}
-        vars:
-            PROCESSED_ENVS:
-                sh: for v in {{.ENVS}}; do echo -n "-e $v "; done
-
     wait-for-emulator:
         internal: true
         cmds:
             - docker run --rm --network host busybox
                 sh -c '
-                    until nc -z localhost {{.FIRESTORE_EMULATOR_PORT}};
+                    until nc -z {{.FIRESTORE_EMULATOR_HOST | replace ":" " "}};
                         do echo "waiting for emulator...";
                         sleep 1;
-                    done;
-                    echo -n ok'
-        vars:
-            FIRESTORE_EMULATOR_PORT:
-                sh: echo {{.FIRESTORE_EMULATOR_HOST}} | cut -d ":" -f 2
-
+                    done'
 
     build-backend:
         deps: [init]
@@ -106,26 +90,26 @@ tasks:
         run: once
         deps:  [init, build-frontend]
         cmds:
-            - task: run
-              vars:
-                IMAGE: frontend
-                ENV_FILE: testing
-                ARGS: yarn test
+            - docker run --rm
+                --network host
+                --env-file common/env/testing.txt
+                {{.REPO}}frontend-{{.BRANCH}}:latest  yarn test
+
 
     unittests-backend:
         run: once
         deps: [init, start-test-servers, build-backend]
         cmds:
-            - task: run
-              vars:
-                IMAGE: backend
-                ENV_FILE: testing
-                ARGS: run sh -c "coverage run -m unittest && coverage report -m && coverage html"
-                ENVS:
-                    LOGLEVEL=DEBUG
-                    DEBUG=1
-                    PYTHONDEVMODE=1
-                    FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}º
+            - docker run --rm
+                --network host
+                --env-file common/env/testing.txt
+                -e LOGLEVEL=DEBUG
+                -e DEBUG=1
+                -e PYTHONDEVMODE=1
+                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
+                {{.REPO}}backend-{{.BRANCH}}:latest
+                run sh -c "coverage run -m unittest && coverage report -m && coverage html"
+
 
     unittests:
         run: once
@@ -136,43 +120,43 @@ tasks:
         deps: [init, build-frontend, build-backend, start-test-servers]
         cmds:
             - defer: docker compose logs -t
-            - task: run
-              vars:
-                IMAGE: backend
-                ENV_FILE: testing
-                ARGS: run main -c -e
-                ENVS:
-                    LOGLEVEL=DEBUG
-                    DEBUG=1
-                    PYTHONDEVMODE=1
-                    FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
-                    YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
+            - docker run --rm
+                --network host
+                --env-file common/env/testing.txt
+                -e LOGLEVEL=DEBUG
+                -e DEBUG=1
+                -e PYTHONDEVMODE=1
+                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
+                -e YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
+                {{.REPO}}backend-{{.BRANCH}}:latest
+                run main -c -e
 
-            - task: run
-              vars:
-                IMAGE: frontend
-                ENV_FILE: testing
-                ARGS: '{{if .BUILD_ID }}
-                            yarn generate
-                        {{else}}
-                            yarn run-s generate start
-                        {{end}}'
-                ENVS:
-                    FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
+            - docker run --rm
+                --network host
+                --env-file common/env/testing.txt
+                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
+                {{.REPO}}frontend-{{.BRANCH}}:latest
+                {{if .BUILD_ID }}
+                    yarn generate
+                {{else}}
+                    yarn run-s generate start
+                {{end}}
 
 
     deploy-test:
         run: once
         deps: [init, build-frontend, build-backend, start-test-servers]
         cmds:
-            - docker run --network host
+            - docker run
+                --network host
                 -e YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main -c -e
 
-            - docker run --network host
+            - docker run
+                --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
                 {{.REPO}}frontend-{{.BRANCH}}:latest
@@ -182,11 +166,13 @@ tasks:
         run: once
         deps: [init, build-frontend, build-backend]
         cmds:
-            - docker run --network host
+            - docker run
+                --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main -c
-            - docker run --network host
+            - docker run
+                --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
                 {{.REPO}}frontend-{{.BRANCH}}:latest
@@ -229,34 +215,28 @@ tasks:
             REPO: gcr.io/{{.REPO_PROJECT}}/
 
 
-    default:
-        - task: build-all
-        - task: unittests
-        - task: end2end-tests
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 
     backend-master:
-        - task: build-backend
-        - task: unittests-backend
-        - task: push-backend
+        - deps: [build-backend, unittests-backend]
+        - cmds:
+            - task:  push-backend
 
     backend-prod:
-        - task: build-backend
-        - task: unittests-backend
-        - task: end2end-tests
-        - task: push-backend
+        - deps: [build-backend, unittests-backend, end2end-tests]
+        - cmds:
+            - task: push-backend
 
     frontend-master:
-        - task: build-frontend
-        - task: unittests-frontend
-        - task: push-frontend
+        - deps: [build-frontend, unittests-frontend]
+        - cmds:
+            - task:  push-frontend
 
     frontend-prod:
-        - task: build-frontend
-        - task: unittests-frontend
-        - task: end2end-tests
-        - task: push-frontend
+        - deps: [build-frontend, unittests-frontend, end2end-tests]
+        - cmds:
+            - task: push-frontend
 
     tests-end2end-master:
         - task: end2end-tests

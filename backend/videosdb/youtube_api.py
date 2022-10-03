@@ -236,13 +236,15 @@ class YoutubeAPI:
                 raise self.QuotaExceeded(
                     response.status_code,
                     response.json())
+
+            if response.status_code != 304:
+                response.raise_for_status()
+
             if not page_token:  # first page
                 yield response.status_code
 
             if response.status_code == 304:
                 break
-
-            response.raise_for_status()
 
             json_response = response.json()
 

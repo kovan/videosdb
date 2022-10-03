@@ -1,0 +1,8 @@
+{
+    "remoteServerUrl": "https://www.googleapis.com",
+    "proxyPort": 43783,
+    "cacheEverything": true,
+    "showConsoleOutput": true,
+    "dataRecord": true,
+    "dataPlayback": false
+}

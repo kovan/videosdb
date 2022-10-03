@@ -1,0 +1,9 @@
+{
+    "remoteServerUrl": "https://localhost:1",
+    "proxyPort": 43783,
+    "inputHarFile": "ytapi_responses.har",
+    "showConsoleOutput": true,
+    "dataRecord": false,
+    "dataPlayback": true,
+    "rejectNonCachedRequests": true
+}
