@@ -216,33 +216,29 @@ tasks:
 
 
     default:
-        - task: build-all
-        - task: unittests
-        - task: end2end-tests
+        - deps: [build-all, unittests, end2end-tests]
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 
     backend-master:
-        - task: build-backend
-        - task: unittests-backend
-        - task: push-backend
+        - deps: [build-backend, unittests-backend]
+        - cmds:
+            - task:  push-backend
 
     backend-prod:
-        - task: build-backend
-        - task: unittests-backend
-        - task: end2end-tests
-        - task: push-backend
+        - deps: [build-backend, unittests-backend, end2end-tests]
+        - cmds:
+            - task: push-backend
 
     frontend-master:
-        - task: build-frontend
-        - task: unittests-frontend
-        - task: push-frontend
+        - deps: [build-frontend, unittests-frontend]
+        - cmds:
+            - task:  push-frontend
 
     frontend-prod:
-        - task: build-frontend
-        - task: unittests-frontend
-        - task: end2end-tests
-        - task: push-frontend
+        - deps: [build-frontend, unittests-frontend, end2end-tests]
+        - cmds:
+            - task: push-frontend
 
     tests-end2end-master:
         - task: end2end-tests
