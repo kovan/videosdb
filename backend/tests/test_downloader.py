@@ -14,6 +14,7 @@ from videosdb.db import DB
 import os
 import logging
 import sys
+from videosdb.publisher import Publisher
 
 from videosdb.youtube_api import YoutubeAPI
 
@@ -159,3 +160,9 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
 
         self.assertIn("transcript", video["videosdb"])
         self.assertIn("transcript_status", video["videosdb"])
+
+
+# class PublisherTest(MockedAPIMixin, aiounittest.AsyncTestCase):
+#     def test_hello_twitter(self):
+#         p = Publisher()
+#         p.publish_tweets()

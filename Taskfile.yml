@@ -58,7 +58,8 @@ tasks:
                     until nc -z localhost {{.FIRESTORE_EMULATOR_PORT}};
                         do echo "waiting for emulator...";
                         sleep 1;
-                    done'
+                    done;
+                    echo -n ok'
         vars:
             FIRESTORE_EMULATOR_PORT:
                 sh: echo {{.FIRESTORE_EMULATOR_HOST}} | cut -d ":" -f 2
