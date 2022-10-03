@@ -133,16 +133,16 @@ class Downloader:
                 return
             processed_playlist_ids.items.add(playlist_id)
 
-        modified, playlist = await self.api.get_playlist_info(playlist_id)
+        _, playlist = await self.api.get_playlist_info(playlist_id)
         if not playlist:
             return
 
         if playlist["snippet"]["channelTitle"] != channel_name:
             return
 
-        modified, playlist_items = await self.api.list_playlist_items(playlist_id)
-        if not modified:
-            return
+        _, playlist_items = await self.api.list_playlist_items(playlist_id)
+        # if not _:
+        #     return
 
         await self._create_playlist(playlist, playlist_items)
         # create videos:
@@ -169,9 +169,9 @@ class Downloader:
                 new = True
 
         if new:
-            modified, video = await self.api.get_video_info(video_id)
-            if not modified:
-                return
+            _, video = await self.api.get_video_info(video_id)
+            # if not _:
+            #     return
 
             video = await self._create_video(video, [playlist_id])
             if not video:
@@ -191,8 +191,8 @@ class Downloader:
 
     @ traced
     async def _retrieve_all_playlist_ids(self, channel_id):
-        modified, ids = await self.api.list_channelsection_playlist_ids(channel_id)
-        modified, ids2 = await self.api.list_channel_playlist_ids(channel_id)
+        _, ids = await self.api.list_channelsection_playlist_ids(channel_id)
+        _, ids2 = await self.api.list_channel_playlist_ids(channel_id)
         if "DEBUG" in os.environ:
             playlists_ids_stream = stream.iterate(ids)
         else:
@@ -209,7 +209,7 @@ class Downloader:
     @ traced
     async def _create_channel(self, channel_id):
 
-        modified, channel_info = await self.api.get_channel_info(channel_id)
+        _, channel_info = await self.api.get_channel_info(channel_id)
 
         logger.info("Processing channel: " +
                     str(channel_info["snippet"]["title"]))
