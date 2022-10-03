@@ -1,4 +1,4 @@
-#!env poetry run python3
+#!env python3
 
 import anyio
 import argparse
@@ -8,7 +8,6 @@ import os
 from videosdb.downloader import Downloader
 from videosdb.settings import LOGGING
 from autologging import TRACE
-from videosdb.youtube_api import YoutubeAPI
 
 
 def entrypoint():

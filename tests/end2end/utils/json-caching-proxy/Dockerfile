@@ -1,5 +1,8 @@
 FROM node:16
-RUN npm install -g json-caching-proxy
+WORKDIR "/app"
+RUN git clone https://github.com/kovan/json-caching-proxy
+WORKDIR "/app/json-caching-proxy"
+RUN npm install
 COPY ytapi_responses.har .
-COPY json-caching-proxy.json.config .
-ENTRYPOINT [ "json-caching-proxy", "--config", "json-caching-proxy.json.config"]
+COPY json-caching-proxy.playback.config.json config.json
+ENTRYPOINT [ "node", "bin.js", "--config", "config.json"]

@@ -161,7 +161,7 @@ class Downloader:
 
     @ traced
     async def _process_video(self, video_id, playlist_id, processed_video_ids, excluded_video_ids):
-
+        logger.debug("Processing video " + video_id)
         new = False
         async with processed_video_ids.lock:
             if video_id not in processed_video_ids.items:
