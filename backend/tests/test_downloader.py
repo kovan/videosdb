@@ -136,21 +136,21 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         self.assertEqual(video["videosdb"]["durationSeconds"], 470.0)
         self.assertIn("statistics", video)
 
-    async def test_firestore_behavior(self):
-        a = await self.db.document("videos/" + "asdfsdf").set({
-            "videosdb": {
-                "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
-            }
-        }, merge=True)
-        b = await self.db.document("videos/" + "asdfsdf").set({
-            "videosdb": {
-                "playlists": firestore.ArrayUnion(["sdfsdf"])
-            }
-        }, merge=True)
+    # async def test_firestore_behavior(self):
+    #     a = await self.db.document("videos/" + "asdfsdf").set({
+    #         "videosdb": {
+    #             "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
+    #         }
+    #     }, merge=True)
+    #     b = await self.db.document("videos/" + "asdfsdf").set({
+    #         "videosdb": {
+    #             "playlists": firestore.ArrayUnion(["sdfsdf"])
+    #         }
+    #     }, merge=True)
 
-        c = await self.db.document("videos/" + "asdfsdf").get()
-        self.assertEqual(
-            {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
+    #     c = await self.db.document("videos/" + "asdfsdf").get()
+    #     self.assertEqual(
+    #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
 
     async def test_transcript_downloading(self):
         with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:

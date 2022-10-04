@@ -74,13 +74,13 @@ tasks:
 
     start-test-servers:
         deps: [init]
-        run: once
         cmds:
             - '{{if .BUILD_ID }}
                     docker compose pull -q
                 {{else}}
                     docker compose build
                 {{end}}'
+            - docker compose down
             - docker compose up --detach
             - task: wait-for-emulator
 
@@ -98,8 +98,9 @@ tasks:
 
     unittests-backend:
         run: once
-        deps: [init, start-test-servers, build-backend]
+        deps: [init, build-backend]
         cmds:
+            - task: start-test-servers
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
@@ -117,8 +118,9 @@ tasks:
 
     end2end-tests:
         run: once
-        deps: [init, build-frontend, build-backend, start-test-servers]
+        deps: [init, build-frontend, build-backend]
         cmds:
+            - task: start-test-servers
             - defer: docker compose logs -t
             - docker run --rm
                 --network host
