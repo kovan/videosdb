@@ -14,7 +14,7 @@ from videosdb.db import DB
 import os
 import logging
 import sys
-from videosdb.publisher import Publisher
+from videosdb.publisher import TwitterPublisher
 
 from videosdb.youtube_api import YoutubeAPI
 
@@ -24,10 +24,21 @@ BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 DATA_DIR = BASE_DIR + "/test_data"
 
 
-class MockedAPIMixin:
+class PatchedTestCase(aiounittest.AsyncTestCase):
+
     def get_event_loop(self):  # workaround for bug
         self.my_loop = asyncio.get_event_loop()
         return self.my_loop
+
+    def setUp(self):
+        self.get_event_loop()
+        self.my_loop.run_until_complete(self.myAsyncSetUp())
+
+    async def myAsyncSetUp(self):
+        pass
+
+
+class MockedAPIMixin:
 
     def setUp(self):
 
@@ -80,7 +91,7 @@ class MockedAPIMixin:
             videos.return_value = Response(200, json=json.load(f))
 
 
-class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
+class DownloaderTest(MockedAPIMixin, PatchedTestCase):
     VIDEO_IDS = ['ZhI-stDIlCE', 'ed7pFle2yM8', 'J-1WVf5hFIk',
                  'FBYoZ-FgC84', 'QEkHcPt-Vpw', 'HADeWBBb1so', 'gavq4LM8XK0']
     PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
@@ -162,7 +173,17 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         self.assertIn("transcript_status", video["videosdb"])
 
 
-# class PublisherTest(MockedAPIMixin, aiounittest.AsyncTestCase):
-#     def test_hello_twitter(self):
-#         p = Publisher()
-#         p.publish_tweets()
+class PublisherTest(PatchedTestCase):
+    async def test_hello_twitter(self):
+        with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
+            video = json.load(f)["items"][0]
+
+        video |= {
+            "videosdb": {
+                "slug": "this-is-a-slug-for-testing"
+            }
+        }
+
+        p = TwitterPublisher()
+        r = await p.publish_video(video)
+        print(r)
