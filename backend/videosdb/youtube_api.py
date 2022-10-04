@@ -3,6 +3,7 @@ import logging
 import os
 import re
 from typing import Iterable, NewType
+import anyio
 import httpx
 from urllib.parse import urlencode
 from videosdb.utils import wait_for_port
@@ -214,7 +215,7 @@ class YoutubeAPI:
 
             return
 
-    async def _request_base(self, url, params, headers=None):
+    async def _request_base(self, url, params, headers=None, max_retries=5):
 
         params["key"] = self.yt_key
         url += "?" + urlencode(params)
@@ -227,10 +228,8 @@ class YoutubeAPI:
                 final_url = url
             logger.debug("requesting: " + final_url)
 
-            response = await self.http.get(
-                self.root_url + final_url, timeout=30.0, headers=headers if headers else {})
-            logger.debug("Received response for URL: %s code: %s" %
-                         (final_url, response.status_code))
+            response = await self._get_with_retries(
+                self.root_url + final_url, headers=headers)
 
             if response.status_code == 403:
                 raise self.QuotaExceeded(
@@ -248,17 +247,28 @@ class YoutubeAPI:
 
             json_response = response.json()
 
-            # if not page_token:  # first page
-            #     if "pageInfo" in json_response:
-            #         logger.debug(
-            #             "Total items: " + str(json_response["pageInfo"]["totalResults"]))
-
             yield json_response
 
             if not "nextPageToken" in json_response:
                 break
             else:
                 page_token = json_response["nextPageToken"]
+
+    async def _get_with_retries(self, url, timeout=30.0, headers=None, max_retries=5):
+        retries = 0
+        while True:
+            response = await self.http.get(url, timeout=timeout, headers=headers if headers else {})
+            must_retry = response.status_code >= 500 and response.status_code < 600
+            log_severity = logging.DEBUG if not must_retry else logging.WARN
+            logger.log(log_severity, "Received response for URL: %s code: %s" %
+                       (url, response.status_code))
+            if not must_retry:
+                break
+            retries += 1
+            if retries > max_retries:
+                response.raise_for_status()
+            anyio.sleep(3.0)
+        return response
 
 
 def get_video_transcript(youtube_id):
