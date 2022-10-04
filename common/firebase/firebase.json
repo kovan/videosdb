@@ -1,5 +1,6 @@
 {
     "hosting": {
+        "appAssociation": "AUTO",
         "public": "dist",
         "trailingSlash": false,
         "ignore": [
@@ -8,6 +9,10 @@
             "**/node_modules/**"
         ],
         "rewrites": [
+            {
+                "source": "/v/**",
+                "dynamicLinks": true
+            },
             {
                 "source": "/tag/**",
                 "destination": "/index.html",
