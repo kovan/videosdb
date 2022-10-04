@@ -66,7 +66,7 @@ class Downloader:
 
             await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"])
 
-            await anyio.wait_all_tasks_blocked()
+            # await anyio.wait_all_tasks_blocked()
             global_scope.cancel_scope.cancel()
 
         logger.info("Sync finished")
