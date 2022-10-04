@@ -7,7 +7,6 @@ import respx
 import os
 import aiounittest
 import json
-from google.cloud import firestore
 from dotenv import load_dotenv
 from videosdb.downloader import Downloader
 from videosdb.db import DB
@@ -80,11 +79,15 @@ class MockedAPIMixin:
 
 
 class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
-    VIDEO_IDS = ['ZhI-stDIlCE', 'ed7pFle2yM8', 'J-1WVf5hFIk',
-                 'FBYoZ-FgC84', 'QEkHcPt-Vpw', 'HADeWBBb1so', 'gavq4LM8XK0']
+    VIDEO_IDS = {'ZhI-stDIlCE', 'ed7pFle2yM8', 'J-1WVf5hFIk',
+                 'FBYoZ-FgC84', 'QEkHcPt-Vpw', 'HADeWBBb1so', 'gavq4LM8XK0'}
     PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
 
     VIDEO_ID = "HADeWBBb1so"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
 
     @respx.mock
     async def test_process_playlist_ids(self):
@@ -92,7 +95,7 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         video_ids = await Downloader()._process_playlist_ids(
             [self.PLAYLIST_ID], "Sadhguru")
 
-        self.assertEqual(video_ids, [self.VIDEO_ID])
+        self.assertEqual(video_ids, self.VIDEO_IDS)
 
         self.assertEqual(self.mocked_api["playlists"].call_count, 1)
         self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
@@ -116,12 +119,13 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         self.assertEqual(playlist["kind"], "youtube#playlist")
         self.assertEqual(playlist["id"], self.PLAYLIST_ID)
 
-        self.assertEqual(playlist["videosdb"], {
-            'slug': 'how-to-be-really-successful-sadhguru-answers',
-            'videoCount': 7,
-            'lastUpdated': DatetimeWithNanoseconds(2022, 7, 6, 12, 18, 45, tzinfo=datetime.timezone.utc),
-            'videoIds': self.VIDEO_IDS
-        })
+        vdb = playlist["videosdb"]
+        self.assertEqual(
+            vdb["slug"], 'how-to-be-really-successful-sadhguru-answers')
+        self.assertEqual(vdb["videoCount"], 7)
+        self.assertEqual(vdb["lastUpdated"], DatetimeWithNanoseconds(
+            2022, 7, 6, 12, 18, 45, tzinfo=datetime.timezone.utc))
+        self.assertEqual(set(vdb["videoIds"]), self.VIDEO_IDS)
 
         # check that one video is processed correctly:
         self.VIDEO_ID = "HADeWBBb1so"

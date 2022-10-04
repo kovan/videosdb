@@ -65,6 +65,7 @@ class Downloader:
             playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
 
             await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"])
+            await self._final_video_iteration()
 
             # await anyio.wait_all_tasks_blocked()
             global_scope.cancel_scope.cancel()
@@ -72,11 +73,38 @@ class Downloader:
         logger.info("Sync finished")
 
     @traced
+    async def _final_video_iteration(self):
+        final_video_ids = LockedItems(set())
+        logger.info("Init phase 2")
+        async with anyio.create_task_group() as phase2:
+            async for video in self.db.stream("videos"):
+                video_id = video.to_dict().get("id")
+                if not video_id:
+                    continue
+
+                async with final_video_ids.lock:
+                    final_video_ids.items.add(video_id)
+
+                # retrieve pending transcripts
+                if self.options and not self.options.exclude_transcripts:
+                    phase2.start_soon(
+                        self._handle_transcript, video.to_dict(), name="Download transcript for video " + video_id)
+
+        async with final_video_ids.lock:
+            ids = final_video_ids.items
+            if ids:
+                await self.db.set("meta/video_ids", {
+                    "videoIds": firestore.ArrayUnion(list(ids))
+                })
+
+        return ids
+
+    @traced
     async def _process_playlist_ids(self, playlist_ids, channel_name):
         processed_video_ids = LockedItems(set())
         excluded_video_ids = LockedItems(set())
         processed_playlist_ids = LockedItems(set())
-        final_video_ids = LockedItems(set())
+
         try:
             async with anyio.create_task_group() as phase1:
                 random.shuffle(playlist_ids)
@@ -93,35 +121,13 @@ class Downloader:
                         name="Playlist %s processor" % playlist_id
                     )
 
-            logger.info("Init phase 2")
-            async with anyio.create_task_group() as phase2:
-                async for video in self.db.stream("videos"):
-                    video_id = video.to_dict().get("id")
-                    if not video_id:
-                        continue
-
-                    async with final_video_ids.lock:
-                        final_video_ids.items.add(video_id)
-
-                    # retrieve pending transcripts
-                    if self.options and not self.options.exclude_transcripts:
-                        phase2.start_soon(
-                            self._handle_transcript, video.to_dict(), name="Download transcript for video " + video_id)
-
         except Exception as e:
-            if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
+            if _contains_exceptions([YoutubeAPI.QuotaExceeded], e):
                 logger.error(e)
             else:
                 raise e
 
-        async with final_video_ids.lock:
-            ids = list(final_video_ids.items)
-            if ids:
-                await self.db.set("meta/video_ids", {
-                    "videoIds": firestore.ArrayUnion(ids)
-                })
-
-        return ids
+        return processed_video_ids.items
 
     async def _process_playlist(self,
                                 playlist_id,

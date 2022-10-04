@@ -9,6 +9,7 @@ services:
         ports:
             - 43783:43783
         stop_signal: SIGKILL
+        stop_grace_period: 0s
 
     firebase-emulator:
         network_mode: "host"
