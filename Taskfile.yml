@@ -80,7 +80,7 @@ tasks:
                 {{else}}
                     docker compose build
                 {{end}}'
-            - docker compose down
+            - docker compose stop
             - docker compose up --detach
             - task: wait-for-emulator
 
