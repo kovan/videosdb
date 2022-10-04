@@ -93,6 +93,7 @@ class Downloader:
                         name="Playlist %s processor" % playlist_id
                     )
 
+            logger.info("Init phase 2")
             async with anyio.create_task_group() as phase2:
                 async for video in self.db.stream("videos"):
                     video_id = video.to_dict().get("id")
@@ -114,9 +115,13 @@ class Downloader:
                 raise e
 
         async with final_video_ids.lock:
-            await self.db.set("meta/video_ids", {
-                "videoIds": firestore.ArrayUnion(list(final_video_ids.items))
-            })
+            ids = list(final_video_ids.items)
+            if ids:
+                await self.db.set("meta/video_ids", {
+                    "videoIds": firestore.ArrayUnion(ids)
+                })
+
+        return ids
 
     async def _process_playlist(self,
                                 playlist_id,

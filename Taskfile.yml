@@ -215,6 +215,11 @@ tasks:
             REPO: gcr.io/{{.REPO_PROJECT}}/
 
 
+    default:
+        deps: [init, build-all]
+        cmds:
+            - task: unittests
+            - task: end2end-tests
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 

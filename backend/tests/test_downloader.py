@@ -84,17 +84,20 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
                  'FBYoZ-FgC84', 'QEkHcPt-Vpw', 'HADeWBBb1so', 'gavq4LM8XK0']
     PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
 
+    VIDEO_ID = "HADeWBBb1so"
+
     @respx.mock
     async def test_process_playlist_ids(self):
-        video_id = "HADeWBBb1so"
 
-        await Downloader()._process_playlist_ids(
+        video_ids = await Downloader()._process_playlist_ids(
             [self.PLAYLIST_ID], "Sadhguru")
+
+        self.assertEqual(video_ids, [self.VIDEO_ID])
 
         self.assertEqual(self.mocked_api["playlists"].call_count, 1)
         self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
 
-        doc = await self.db.document("videos/" + video_id).get()
+        doc = await self.db.document("videos/" + self.VIDEO_ID).get()
         self.assertTrue(doc.exists)
 
         pls = [doc.get("id") async for doc in self.db.collection("playlists").stream()]
@@ -121,11 +124,11 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         })
 
         # check that one video is processed correctly:
-        video_id = "HADeWBBb1so"
+        self.VIDEO_ID = "HADeWBBb1so"
 
-        video = (await self.db.document("videos/" + video_id).get()).to_dict()
+        video = (await self.db.document("videos/" + self.VIDEO_ID).get()).to_dict()
         self.assertEqual(video["kind"], "youtube#video")
-        self.assertEqual(video["id"], video_id)
+        self.assertEqual(video["id"], self.VIDEO_ID)
         self.assertEqual(video["videosdb"]["playlists"], [self.PLAYLIST_ID])
         self.assertEqual(video["videosdb"]["slug"],
                          "fate-god-luck-or-effort-what-decides-your-success-sadhguru")
