@@ -74,6 +74,7 @@ tasks:
 
     start-test-servers:
         deps: [init]
+        run: once
         cmds:
             - '{{if .BUILD_ID }}
                     docker compose pull -q
@@ -98,9 +99,8 @@ tasks:
 
     unittests-backend:
         run: once
-        deps: [init, build-backend]
+        deps: [init, build-backend, start-test-servers]
         cmds:
-            - task: start-test-servers
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
@@ -118,9 +118,8 @@ tasks:
 
     end2end-tests:
         run: once
-        deps: [init, build-frontend, build-backend]
+        deps: [init, build-frontend, build-backend, start-test-servers]
         cmds:
-            - task: start-test-servers
             - defer: docker compose logs -t
             - docker run --rm
                 --network host
@@ -218,10 +217,7 @@ tasks:
 
 
     default:
-        deps: [init, build-all]
-        cmds:
-            - task: unittests
-            - task: end2end-tests
+        deps: [init, build-all, unittests, end2end-tests]
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 

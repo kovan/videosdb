@@ -89,10 +89,15 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
     def setUpClass(cls):
         super().setUpClass()
 
+    def setUp(self):
+        super().setUp()
+
+        self.downloader = Downloader(db_prefix="test_")
+
     @respx.mock
     async def test_process_playlist_ids(self):
 
-        video_ids = await Downloader()._process_playlist_ids(
+        video_ids = await self.downloader._process_playlist_ids(
             [self.PLAYLIST_ID], "Sadhguru")
 
         self.assertEqual(video_ids, self.VIDEO_IDS)
@@ -100,14 +105,14 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         self.assertEqual(self.mocked_api["playlists"].call_count, 1)
         self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
 
-        doc = await self.db.document("videos/" + self.VIDEO_ID).get()
+        doc = await self.db.document("test_videos/" + self.VIDEO_ID).get()
         self.assertTrue(doc.exists)
 
-        pls = [doc.get("id") async for doc in self.db.collection("playlists").stream()]
+        pls = [doc.get("id") async for doc in self.db.collection("test_playlists").stream()]
         self.assertEqual(len(pls), 1)
         self.assertEqual(pls[0], self.PLAYLIST_ID)
 
-        vids = [doc async for doc in self.db.collection("videos").stream()]
+        vids = [doc async for doc in self.db.collection("test_videos").stream()]
         self.assertEqual(len(vids), len(self.VIDEO_IDS))
         for video in vids:
             self.assertEqual([self.PLAYLIST_ID],
@@ -115,7 +120,7 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
 
         # check that one playlist is processed correctly:
 
-        playlist = (await self.db.document("playlists/" + self.PLAYLIST_ID).get()).to_dict()
+        playlist = (await self.db.document("test_playlists/" + self.PLAYLIST_ID).get()).to_dict()
         self.assertEqual(playlist["kind"], "youtube#playlist")
         self.assertEqual(playlist["id"], self.PLAYLIST_ID)
 
@@ -130,7 +135,7 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         # check that one video is processed correctly:
         self.VIDEO_ID = "HADeWBBb1so"
 
-        video = (await self.db.document("videos/" + self.VIDEO_ID).get()).to_dict()
+        video = (await self.db.document("test_videos/" + self.VIDEO_ID).get()).to_dict()
         self.assertEqual(video["kind"], "youtube#video")
         self.assertEqual(video["id"], self.VIDEO_ID)
         self.assertEqual(video["videosdb"]["playlists"], [self.PLAYLIST_ID])
@@ -141,18 +146,18 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         self.assertIn("statistics", video)
 
     # async def test_firestore_behavior(self):
-    #     a = await self.db.document("videos/" + "asdfsdf").set({
+    #     a = await self.db.document("test_videos/" + "asdfsdf").set({
     #         "videosdb": {
     #             "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
     #         }
     #     }, merge=True)
-    #     b = await self.db.document("videos/" + "asdfsdf").set({
+    #     b = await self.db.document("test_videos/" + "asdfsdf").set({
     #         "videosdb": {
     #             "playlists": firestore.ArrayUnion(["sdfsdf"])
     #         }
     #     }, merge=True)
 
-    #     c = await self.db.document("videos/" + "asdfsdf").get()
+    #     c = await self.db.document("test_videos/" + "asdfsdf").get()
     #     self.assertEqual(
     #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
 
@@ -160,9 +165,8 @@ class DownloaderTest(MockedAPIMixin, aiounittest.AsyncTestCase):
         with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
             video = json.load(f)["items"][0]
 
-        d = Downloader()
-        await d.init()
-        await d._handle_transcript(video)
+        await self.downloader.init()
+        await self.downloader._handle_transcript(video)
 
         self.assertIn("transcript", video["videosdb"])
         self.assertIn("transcript_status", video["videosdb"])

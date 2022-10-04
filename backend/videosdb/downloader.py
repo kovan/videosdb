@@ -32,7 +32,7 @@ class LockedItems:
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
-    def __init__(self, options=None):
+    def __init__(self, options=None, db_prefix=None):
 
         # for k, v in os.environ.items():
         #     logger.debug('- %s = "%s"' % (k, v))
@@ -42,7 +42,10 @@ class Downloader:
         self.options = options
 
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
-        self.db = DB()
+        if db_prefix:
+            self.db = DB(db_prefix)
+        else:
+            self.db = DB()
         self.api = YoutubeAPI(self.db)
         self.QUOTA_EXCEPTIONS = (
             DB.QuotaExceeded,

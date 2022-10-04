@@ -32,7 +32,8 @@ class DB:
 
         return db
 
-    def __init__(self):
+    def __init__(self, prefix=""):
+        self.prefix = prefix
         project = os.environ["FIREBASE_PROJECT"]
         config = os.environ["VIDEOSDB_CONFIG"]
 
@@ -53,12 +54,12 @@ class DB:
 
     async def init(self):
         # initialize meta table:
-        doc = await self._db.document("meta/video_ids").get()
+        doc = await self._document("meta/video_ids").get()
         if not doc.exists or "videoIds" not in doc.to_dict():
             await doc.reference.set(
                 {"videoIds": list()}
             )
-        doc = await self._db.document("meta/state").get()
+        doc = await self._document("meta/state").get()
         if not doc.exists:
             await doc.reference.set({})
         return self
@@ -77,29 +78,32 @@ class DB:
             raise self.QuotaExceeded(
                 "Surpassed WRITE ops limit of %s" % self.write_limit)
 
+    def _document(self, path):
+        return self._db.document(self.prefix + path)
+
     # ---------------------- PUBLIC -------------------------------
 
     @Retry()
     async def set(self, path, *args, **kwargs):
         # self._write_inc()
-        return await self._db.document(path).set(*args, **kwargs)
+        return await self._document(path).set(*args, **kwargs)
 
     @Retry()
     async def get(self, path, *args, **kwargs):
         self._read_inc()
-        return await self._db.document(path).get(*args, **kwargs)
+        return await self._document(path).get(*args, **kwargs)
 
     @Retry()
     async def update(self, path, *args, **kwargs):
         self._write_inc()
-        return await self._db.document(path).update(*args, **kwargs)
+        return await self._document(path).update(*args, **kwargs)
 
     def stream(self, collection_name):
         return self.Streamer(self, collection_name)
 
     @Retry()
     async def recursive_delete(self, path):
-        ref = self._db.document(path)
+        ref = self._document(path)
         return await self._db.recursive_delete(ref)
 
     class Streamer:
@@ -119,11 +123,11 @@ class DB:
 
     # @Retry()
     # async def noquota_set(self, path, *args, **kwargs):
-    #     return await self._db.document(path).set(*args, **kwargs)
+    #     return await self._document(path).set(*args, **kwargs)
 
     # @Retry()
     # async def noquota_update(self, path, *args, **kwargs):
-    #     return await self._db.document(path).update(*args, **kwargs)
+    #     return await self._document(path).update(*args, **kwargs)
 
     # def reserve_read_quota(self, quota):
     #     self.read_limit = self.FREE_TIER_READ_QUOTA - quota - 5000
