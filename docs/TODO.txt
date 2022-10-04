@@ -1,8 +1,9 @@
 
-
+- publicaciones en twitter progresivas o del tirón?
 - poner descripciones de los botones en caso de tablet/escritorio
 - habilitar related videos en sadhguru ¿? consume muchisima quota
 - si eso mirar xq no va el query q = where(q, "!=", null) en Video.vue
+
 
 
 

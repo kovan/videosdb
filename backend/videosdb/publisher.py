@@ -2,7 +2,6 @@
 import datetime
 import logging
 import os
-import facebook
 import httpx
 from tweepy.asynchronous import AsyncClient
 logger = logging.getLogger(__name__)
@@ -15,7 +14,7 @@ class Publisher:
         self.db = db
         self.http = httpx.AsyncClient()
 
-    async def get_bitly_url(self, url):
+    async def _get_bitly_url(self, url):
         response = await self.http.post("https://api-ssl.bitly.com/v4/shorten",
                                         headers={
                                             "Authorization": "Bearer " + BITLY_ACCESS_TOKEN,
@@ -28,16 +27,33 @@ class Publisher:
         response.raise_for_status()
         return response.json()["link"]
 
-    async def post_text(self, video):
+    async def _create_post_text(self, video):
         url = os.environ["VIDEOSDB_HOSTNAME"] + \
             "/video/" + video["videosdb"]["slug"]
-        short_url = await self.get_bitly_url(url)
+        short_url = await self._get_bitly_url(url)
         text = "{title}, {short_url}, {youtube_url} ".format(
             title=video["snippet"]["title"],
             youtube_url="https://www.youtube.com/watch?v=" + video["id"],
             short_url=short_url
         )
         return text
+
+    async def _save_to_db(self, video, pub_id, pub_type):
+        video |= {
+            "videosdb": {
+                "publishing": {
+                    pub_type: {
+                        "publishDate": datetime.datetime.now().isoformat(),
+                        "id":  pub_id
+                    }
+                }
+            }
+        }
+        # await self.db.set("videos/" + video["id"], video)
+        logger.info("Published video " + video["id"])
+
+    async def publish_video(self, video):
+        raise NotImplementedError()
 
 
 class TwitterPublisher(Publisher):
@@ -76,30 +92,25 @@ class TwitterPublisher(Publisher):
         self.videos.add(video)
 
     async def publish_video(self, video):
-        text = self.post_text(video)
+        text = await self._create_post_text(video)
 
         result = await self.create_tweet(text=text)
-        video |= {
-            "videosdb": {
-                "publishing": {
-                    "twitter": {
-                        "publishDate": datetime.datetime.now().isoformat(),
-                        "id": result.data["id"]
-                    }
-                }
-            }
-        }
-        # await self.db.set("videos/" + video["id"], video)
-        logger.info("Published video " + video["id"])
+
+        self._save_to_db(video, result.data["id"], "twiter")
 
 
-class FacebookPublisher(Publisher):
-    def __init__(self, db) -> None:
-        super().__init__(db)
+# class FacebookPublisher(Publisher):
+#     ACCESS_TOKEN_1 = "199149919028365|Kbax0dCo8FMtUMwXf_1_URCmkLY"
+#     ACCESS_TOKEN_2 = "EAAC1IDQuRI0BAPN3FMT0ZCyaPBf72XeZAZAsiHnPb5z8024vfA2jTAy2Vbi3IlhHNU295RCTZBXwmyIsNZBrOWeSOPmDhxzqQUValr7WUYuZBIZBnCg8nrcmtadxxzJXvxiQ36JDCiSYVByHRnYxVxQ4mMgcatTsqyLThhDZADuMLL983w5FiZBoMDZBSDrCSeQVon4INU3aOR2F9tIyuSRAWrqNYBbFM680kZD"
 
-        oauth_access_token = ""
-        self.api = facebook.GraphAPI(oauth_access_token)
+#     def __init__(self, db=None) -> None:
+#         super().__init__(db)
 
-        groups = self.api.get_object("me/groups")
-        group_id = groups['data'][0]['id']  # we take the ID of the first group
-        self.api.put_object(group_id, "feed", message="from terminal")
+#         self.api = facebook.GraphAPI(self.ACCESS_TOKEN_2)
+
+#     async def publish_video(self, video):
+#         text = await self._create_post_text(video)
+
+#         result = await self.api.put_object("me", "feed", message=text)
+
+#         await self._save_to_db(video, result, type(self))
