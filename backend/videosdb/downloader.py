@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import logging
 import bleach
 import os
@@ -109,7 +110,12 @@ class Downloader:
                         phase2.start_soon(
                             self._handle_transcript, video.to_dict(), name="Download transcript for video " + video_id)
 
-                    if not fnc.get("videosdb.publishing.id"):
+                    v_dict = video.to_dict()
+                    video_date = isodate.parse_datetime(
+                        fnc.get("snippet.publishedAt"), v_dict)
+
+                    if (not fnc.get("videosdb.publishing.id", v_dict)
+                            and datetime.now() - video_date < timedelta(days=1)):
                         publisher.publish_video(video)
 
         except Exception as e:
