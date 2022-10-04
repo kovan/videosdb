@@ -13,6 +13,31 @@ BITLY_ACCESS_TOKEN = "87dce0221a0751012efc890ba7ef595a3e8763ab"
 class Publisher:
     def __init__(self, db) -> None:
         self.db = db
+        self.http = httpx.AsyncClient()
+
+    async def get_bitly_url(self, url):
+        response = await self.http.post("https://api-ssl.bitly.com/v4/shorten",
+                                        headers={
+                                            "Authorization": "Bearer " + BITLY_ACCESS_TOKEN,
+                                        },
+                                        json={
+                                            "long_url": url,
+                                            "domain": "bit.ly",
+                                            "group_guid": "Bma3nPlFgj5"
+                                        })
+        response.raise_for_status()
+        return response.json()["link"]
+
+    async def post_text(self, video):
+        url = os.environ["VIDEOSDB_HOSTNAME"] + \
+            "/video/" + video["videosdb"]["slug"]
+        short_url = await self.get_bitly_url(url)
+        text = "{title}, {short_url}, {youtube_url} ".format(
+            title=video["snippet"]["title"],
+            youtube_url="https://www.youtube.com/watch?v=" + video["id"],
+            short_url=short_url
+        )
+        return text
 
 
 class TwitterPublisher(Publisher):
@@ -35,7 +60,6 @@ class TwitterPublisher(Publisher):
     def __init__(self, db=None) -> None:
         super().__init__(db)
 
-        self.http = httpx.AsyncClient()
         keys = self.KEYS_DEV
         self.api = AsyncClient(
             consumer_key=keys["api_key"],
@@ -51,22 +75,10 @@ class TwitterPublisher(Publisher):
     def add_video(self, video):
         self.videos.add(video)
 
-    async def get_bitly_url(self, url):
-        return await self.http.post("https://api-ssl.bitly.com/v4/shorten",
-                                    headers={
-                                        "Authorization": "Bearer " + BITLY_ACCESS_TOKEN
-                                    },
-                                    data={
-                                        "long_url": url,
-                                        "domain": "bit.ly"
-                                    })
-
     async def publish_video(self, video):
-        url = os.environ["VIDEOSDB_HOSTNAME"] + \
-            "/video/" + video["videosdb"]["slug"]
-        short_url = await self.get_bitly_url(url)
-        text = "{title}, {bitly_url}"
-        result = await self.create_tweet(text=video["title"])
+        text = self.post_text(video)
+
+        result = await self.create_tweet(text=text)
         video |= {
             "videosdb": {
                 "publishing": {

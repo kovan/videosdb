@@ -173,17 +173,17 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
         self.assertIn("transcript_status", video["videosdb"])
 
 
-class PublisherTest(PatchedTestCase):
-    async def test_hello_twitter(self):
-        with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
-            video = json.load(f)["items"][0]
+# class PublisherTest(PatchedTestCase):
+#     async def test_hello_twitter(self):
+#         with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
+#             video = json.load(f)["items"][0]
 
-        video |= {
-            "videosdb": {
-                "slug": "this-is-a-slug-for-testing"
-            }
-        }
+#         video |= {
+#             "videosdb": {
+#                 "slug": "this-is-a-slug-for-testing"
+#             }
+#         }
 
-        p = TwitterPublisher()
-        r = await p.publish_video(video)
-        print(r)
+#         p = TwitterPublisher()
+#         r = await p.publish_video(video)
+#         print(r)
