@@ -120,7 +120,7 @@ tasks:
         run: once
         deps: [init, build-frontend, build-backend, start-test-servers]
         cmds:
-            - defer: docker compose logs -t
+            - defer: docker compose logs
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
