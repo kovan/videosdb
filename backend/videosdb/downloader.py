@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 import logging
 import bleach
 import os
@@ -13,7 +12,7 @@ from aiostream import stream
 from autologging import traced
 import google.api_core.exceptions
 from slugify import slugify
-from videosdb.publisher import TwitterPublisher
+from videosdb.publisher import Publisher
 from videosdb.utils import _contains_exceptions
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 from videosdb.db import DB
@@ -34,7 +33,7 @@ class LockedItems:
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
-    def __init__(self, options=None):
+    def __init__(self, options=None, db_prefix=None):
 
         # for k, v in os.environ.items():
         #     logger.debug('- %s = "%s"' % (k, v))
@@ -44,7 +43,10 @@ class Downloader:
         self.options = options
 
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
-        self.db = DB()
+        if db_prefix:
+            self.db = DB(db_prefix)
+        else:
+            self.db = DB()
         self.api = YoutubeAPI(self.db)
         self.QUOTA_EXCEPTIONS = (
             DB.QuotaExceeded,
@@ -67,6 +69,7 @@ class Downloader:
             playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
 
             await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"])
+            await self._final_video_iteration()
 
             # await anyio.wait_all_tasks_blocked()
             global_scope.cancel_scope.cancel()
@@ -74,11 +77,44 @@ class Downloader:
         logger.info("Sync finished")
 
     @traced
+    async def _final_video_iteration(self):
+        final_video_ids = LockedItems(set())
+        logger.info("Init phase 2")
+        if self.options and self.options.enable_twitter_publishing:
+            publisher = Publisher()
+
+        async with anyio.create_task_group() as phase2:
+            async for video in self.db.stream("videos"):
+                video_id = video.to_dict().get("id")
+                if not video_id:
+                    continue
+
+                async with final_video_ids.lock:
+                    final_video_ids.items.add(video_id)
+
+                # retrieve pending transcripts
+                if self.options and not self.options.exclude_transcripts:
+                    phase2.start_soon(
+                        self._handle_transcript, video.to_dict(), name="Download transcript for video " + video_id)
+
+                if self.options and self.options.enable_twitter_publishing:
+                    v_dict = video.to_dict()
+                    publisher.publish_video(v_dict)
+
+        async with final_video_ids.lock:
+            ids = final_video_ids.items
+            if ids:
+                await self.db.set("meta/video_ids", {
+                    "videoIds": firestore.ArrayUnion(list(ids))
+                })
+
+        return ids
+
+    @traced
     async def _process_playlist_ids(self, playlist_ids, channel_name):
         processed_video_ids = LockedItems(set())
         excluded_video_ids = LockedItems(set())
         processed_playlist_ids = LockedItems(set())
-        videos_in_db_ids = LockedItems(set())
         try:
             async with anyio.create_task_group() as phase1:
                 random.shuffle(playlist_ids)
@@ -95,39 +131,13 @@ class Downloader:
                         name="Playlist %s processor" % playlist_id
                     )
 
-            publisher = TwitterPublisher(self.db)
-            async with anyio.create_task_group() as phase2:
-                async for video in self.db.stream("videos"):
-                    video_id = video.to_dict().get("id")
-                    if not video_id:
-                        continue
-
-                    async with videos_in_db_ids.lock:
-                        videos_in_db_ids.items.add(video_id)
-
-                    # retrieve pending transcripts
-                    if self.options and not self.options.exclude_transcripts:
-                        phase2.start_soon(
-                            self._handle_transcript, video.to_dict(), name="Download transcript for video " + video_id)
-
-                    v_dict = video.to_dict()
-                    video_date = isodate.parse_datetime(
-                        fnc.get("snippet.publishedAt"), v_dict)
-
-                    if (not fnc.get("videosdb.publishing.id", v_dict)
-                            and datetime.now() - video_date < timedelta(days=1)):
-                        publisher.publish_video(video)
-
         except Exception as e:
-            if _contains_exceptions(self.QUOTA_EXCEPTIONS, e):
+            if _contains_exceptions([YoutubeAPI.QuotaExceeded], e):
                 logger.error(e)
             else:
                 raise e
 
-        async with videos_in_db_ids.lock:
-            await self.db.set("meta/video_ids", {
-                "videoIds": firestore.ArrayUnion(list(videos_in_db_ids.items))
-            })
+        return processed_video_ids.items
 
     async def _process_playlist(self,
                                 playlist_id,

@@ -21,6 +21,8 @@ def entrypoint():
     parser.add_argument("-e", "--exclude-transcripts", action="store_true")
     parser.add_argument("-d", "--fill-related-videos", action="store_true")
     parser.add_argument("-u", "--update-dnslink", action="store_true")
+    parser.add_argument("-t", "--enable-twitter-publishing",
+                        action="store_true")
     parser.add_argument(
         "-f", "--download-and-register-in-ipfs", action="store_true")
     parser.add_argument("-o", "--overwrite-hashes", action="store_true")

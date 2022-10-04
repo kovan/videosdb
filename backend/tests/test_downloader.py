@@ -7,7 +7,6 @@ import respx
 import os
 import aiounittest
 import json
-from google.cloud import firestore
 from dotenv import load_dotenv
 from videosdb.downloader import Downloader
 from videosdb.db import DB
@@ -92,28 +91,40 @@ class MockedAPIMixin:
 
 
 class DownloaderTest(MockedAPIMixin, PatchedTestCase):
-    VIDEO_IDS = ['ZhI-stDIlCE', 'ed7pFle2yM8', 'J-1WVf5hFIk',
-                 'FBYoZ-FgC84', 'QEkHcPt-Vpw', 'HADeWBBb1so', 'gavq4LM8XK0']
+    VIDEO_IDS = {'ZhI-stDIlCE', 'ed7pFle2yM8', 'J-1WVf5hFIk',
+                 'FBYoZ-FgC84', 'QEkHcPt-Vpw', 'HADeWBBb1so', 'gavq4LM8XK0'}
     PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+
+    VIDEO_ID = "HADeWBBb1so"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+    def setUp(self):
+        super().setUp()
+
+        self.downloader = Downloader(db_prefix="test_")
 
     @respx.mock
     async def test_process_playlist_ids(self):
-        video_id = "HADeWBBb1so"
 
-        await Downloader()._process_playlist_ids(
+        video_ids = await self.downloader._process_playlist_ids(
             [self.PLAYLIST_ID], "Sadhguru")
+
+        self.assertEqual(video_ids, self.VIDEO_IDS)
 
         self.assertEqual(self.mocked_api["playlists"].call_count, 1)
         self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
 
-        doc = await self.db.document("videos/" + video_id).get()
+        doc = await self.db.document("test_videos/" + self.VIDEO_ID).get()
         self.assertTrue(doc.exists)
 
-        pls = [doc.get("id") async for doc in self.db.collection("playlists").stream()]
+        pls = [doc.get("id") async for doc in self.db.collection("test_playlists").stream()]
         self.assertEqual(len(pls), 1)
         self.assertEqual(pls[0], self.PLAYLIST_ID)
 
-        vids = [doc async for doc in self.db.collection("videos").stream()]
+        vids = [doc async for doc in self.db.collection("test_videos").stream()]
         self.assertEqual(len(vids), len(self.VIDEO_IDS))
         for video in vids:
             self.assertEqual([self.PLAYLIST_ID],
@@ -121,23 +132,24 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
 
         # check that one playlist is processed correctly:
 
-        playlist = (await self.db.document("playlists/" + self.PLAYLIST_ID).get()).to_dict()
+        playlist = (await self.db.document("test_playlists/" + self.PLAYLIST_ID).get()).to_dict()
         self.assertEqual(playlist["kind"], "youtube#playlist")
         self.assertEqual(playlist["id"], self.PLAYLIST_ID)
 
-        self.assertEqual(playlist["videosdb"], {
-            'slug': 'how-to-be-really-successful-sadhguru-answers',
-            'videoCount': 7,
-            'lastUpdated': DatetimeWithNanoseconds(2022, 7, 6, 12, 18, 45, tzinfo=datetime.timezone.utc),
-            'videoIds': self.VIDEO_IDS
-        })
+        vdb = playlist["videosdb"]
+        self.assertEqual(
+            vdb["slug"], 'how-to-be-really-successful-sadhguru-answers')
+        self.assertEqual(vdb["videoCount"], 7)
+        self.assertEqual(vdb["lastUpdated"], DatetimeWithNanoseconds(
+            2022, 7, 6, 12, 18, 45, tzinfo=datetime.timezone.utc))
+        self.assertEqual(set(vdb["videoIds"]), self.VIDEO_IDS)
 
         # check that one video is processed correctly:
-        video_id = "HADeWBBb1so"
+        self.VIDEO_ID = "HADeWBBb1so"
 
-        video = (await self.db.document("videos/" + video_id).get()).to_dict()
+        video = (await self.db.document("test_videos/" + self.VIDEO_ID).get()).to_dict()
         self.assertEqual(video["kind"], "youtube#video")
-        self.assertEqual(video["id"], video_id)
+        self.assertEqual(video["id"], self.VIDEO_ID)
         self.assertEqual(video["videosdb"]["playlists"], [self.PLAYLIST_ID])
         self.assertEqual(video["videosdb"]["slug"],
                          "fate-god-luck-or-effort-what-decides-your-success-sadhguru")
@@ -145,46 +157,45 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
         self.assertEqual(video["videosdb"]["durationSeconds"], 470.0)
         self.assertIn("statistics", video)
 
-    async def test_firestore_behavior(self):
-        a = await self.db.document("videos/" + "asdfsdf").set({
-            "videosdb": {
-                "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
-            }
-        }, merge=True)
-        b = await self.db.document("videos/" + "asdfsdf").set({
-            "videosdb": {
-                "playlists": firestore.ArrayUnion(["sdfsdf"])
-            }
-        }, merge=True)
+    # async def test_firestore_behavior(self):
+    #     a = await self.db.document("test_videos/" + "asdfsdf").set({
+    #         "videosdb": {
+    #             "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
+    #         }
+    #     }, merge=True)
+    #     b = await self.db.document("test_videos/" + "asdfsdf").set({
+    #         "videosdb": {
+    #             "playlists": firestore.ArrayUnion(["sdfsdf"])
+    #         }
+    #     }, merge=True)
 
-        c = await self.db.document("videos/" + "asdfsdf").get()
-        self.assertEqual(
-            {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
+    #     c = await self.db.document("test_videos/" + "asdfsdf").get()
+    #     self.assertEqual(
+    #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
 
     async def test_transcript_downloading(self):
         with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
             video = json.load(f)["items"][0]
 
-        d = Downloader()
-        await d.init()
-        await d._handle_transcript(video)
+        await self.downloader.init()
+        await self.downloader._handle_transcript(video)
 
         self.assertIn("transcript", video["videosdb"])
         self.assertIn("transcript_status", video["videosdb"])
 
 
-class PublisherTest(PatchedTestCase):
-    async def test_hello_twitter(self):
-        with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
-            video = json.load(f)["items"][0]
+# class PublisherTest(PatchedTestCase):
+#     async def test_hello_twitter(self):
+#         with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
+#             video = json.load(f)["items"][0]
 
-        video |= {
-            "videosdb": {
-                "slug": "this-is-a-slug-for-testing"
-            }
-        }
+#         video |= {
+#             "videosdb": {
+#                 "slug": "this-is-a-slug-for-testing"
+#             }
+#         }
 
-        p = TwitterPublisher()
+#         p = TwitterPublisher()
 
-        r = await p.publish_video(video)
-        print(r)
+#         r = await p.publish_video(video)
+#         print(r)

@@ -81,6 +81,7 @@ tasks:
                 {{else}}
                     docker compose build
                 {{end}}'
+            - docker compose stop
             - docker compose up --detach
             - task: wait-for-emulator
 
@@ -98,7 +99,7 @@ tasks:
 
     unittests-backend:
         run: once
-        deps: [init, start-test-servers, build-backend]
+        deps: [init, build-backend, start-test-servers]
         cmds:
             - docker run --rm
                 --network host
@@ -119,7 +120,7 @@ tasks:
         run: once
         deps: [init, build-frontend, build-backend, start-test-servers]
         cmds:
-            - defer: docker compose logs -t
+            - defer: docker compose logs
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
@@ -215,34 +216,38 @@ tasks:
             REPO: gcr.io/{{.REPO_PROJECT}}/
 
 
+    default:
+        deps: [init, build-all, unittests, end2end-tests]
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 
     backend-master:
-        - deps: [build-backend, unittests-backend]
-        - cmds:
-            - task:  push-backend
+        deps: [init, build-backend, unittests-backend]
+        cmds:
+            - task: push-backend
 
     backend-prod:
-        - deps: [build-backend, unittests-backend, end2end-tests]
-        - cmds:
+        deps: [build-backend, unittests-backend, end2end-tests]
+        cmds:
             - task: push-backend
 
     frontend-master:
-        - deps: [build-frontend, unittests-frontend]
-        - cmds:
-            - task:  push-frontend
+        deps: [build-frontend, unittests-frontend]
+        cmds:
+            - task: push-frontend
 
     frontend-prod:
-        - deps: [build-frontend, unittests-frontend, end2end-tests]
-        - cmds:
+        deps: [build-frontend, unittests-frontend, end2end-tests]
+        cmds:
             - task: push-frontend
 
     tests-end2end-master:
-        - task: end2end-tests
+        cmds:
+            - task: end2end-tests
 
     tests-end2end-prod:
-        - task: end2end-tests
+        cmds:
+            - task: end2end-tests
 
     generate-testing:
         - task: generate

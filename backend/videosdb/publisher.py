@@ -5,6 +5,7 @@ import datetime
 import logging
 import os
 import httpx
+import isodate
 from tweepy.asynchronous import AsyncClient
 logger = logging.getLogger(__name__)
 
@@ -104,15 +105,19 @@ class TwitterPublisher(Publisher):
             await self.publish_video(video)
 
     async def publish_video(self, video):
-        video_dict = video.to_dict()
-        if fnc.get("videosdb.publishing.publishDate", video_dict):
+        video_date = isodate.parse_datetime(
+            fnc.get("snippet.publishedAt"), video)
+
+        if (fnc.get("videosdb.publishing.id", video)
+                or datetime.now() - video_date > datetime.timedelta(days=1)):
+            # already published or old, so don't publish
             return
 
-        text = await self._create_post_text(video_dict)
+        text = await self._create_post_text(video)
 
         result = await self.create_tweet(text=text)
 
-        await self._save_to_db(video_dict, result.data["id"], "twiter")
+        await self._save_to_db(video, result.data["id"], "twiter")
 
 
 # class FacebookPublisher(Publisher):
