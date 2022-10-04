@@ -1,4 +1,6 @@
+
 # from pytwitter import Api
+import fnc
 import datetime
 import logging
 import os
@@ -30,22 +32,23 @@ class Publisher:
     async def _create_post_text(self, video):
         url = os.environ["VIDEOSDB_HOSTNAME"] + \
             "/video/" + video["videosdb"]["slug"]
-        short_url = await self._get_bitly_url(url)
+        # short_url = await self._get_bitly_url(url)
+        yt_url = "https://www.youtube.com/watch?v=" + video["id"],
         text = "{title}, {short_url}, {youtube_url} ".format(
             title=video["snippet"]["title"],
-            youtube_url="https://www.youtube.com/watch?v=" + video["id"],
-            short_url=short_url
+            youtube_url=yt_url,
+            short_url=url
         )
         return text
 
-    async def _save_to_db(self, video, pub_id, pub_type):
+    async def _save_to_db(self, video, pub_id):
         video |= {
             "videosdb": {
                 "publishing": {
-                    pub_type: {
-                        "publishDate": datetime.datetime.now().isoformat(),
-                        "id":  pub_id
-                    }
+
+                    "publishDate": datetime.datetime.now().isoformat(),
+                    "id":  pub_id
+
                 }
             }
         }
@@ -70,7 +73,12 @@ class TwitterPublisher(Publisher):
         "api_secret": "wOCUGluLxY7dJURJnwVSACu2VYoeWE2CW6sp4bQoGQeVglbUwu",
         "access_token": "1576729637199265793-5xmsyDQaVVaTTHOcXggOHMTxPlV3NU",
         "access_secret": "LUW64jOicSzWzEslXixQ6JYi0RPT911vcsxYKrL65mE4o",
-
+    }
+    KEYS_PROD = {
+        "api_key": "f73ZNvOyGwYVJUUyav65KW4xv",
+        "api_secret": "QOU5Oo9svOWT9tEd9SPiPUUck41gqmU0C6mLzr1wCJtpZeifOp",
+        "access_token": "c1l6RHRpMS1tVVBzQ3hLZHkySXI6MTpjaQ",
+        "access_secret": "yQuARx02RyIc6EMVFs3i5nVRqTmAMvXbpunyx0Gv40r1bNcxss",
     }
 
     def __init__(self, db=None) -> None:
@@ -91,12 +99,20 @@ class TwitterPublisher(Publisher):
     def add_video(self, video):
         self.videos.add(video)
 
+    async def publish_all(self,):
+        for video in self.videos:
+            await self.publish_video(video)
+
     async def publish_video(self, video):
-        text = await self._create_post_text(video)
+        video_dict = video.to_dict()
+        if fnc.get("videosdb.publishing.publishDate", video_dict):
+            return
+
+        text = await self._create_post_text(video_dict)
 
         result = await self.create_tweet(text=text)
 
-        self._save_to_db(video, result.data["id"], "twiter")
+        await self._save_to_db(video_dict, result.data["id"], "twiter")
 
 
 # class FacebookPublisher(Publisher):
