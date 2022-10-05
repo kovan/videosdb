@@ -65,10 +65,9 @@ class Downloader:
             global_scope.start_soon(self._print_debug_info,
                                     name="Debug info")
 
-            channel = await self._create_channel(self.YT_CHANNEL_ID)
-            playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
-
             try:
+                channel = await self._create_channel(self.YT_CHANNEL_ID)
+                playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
                 await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"])
             except Exception as e:
                 my_handler(YoutubeAPI.QuotaExceeded, e, logger.error)
