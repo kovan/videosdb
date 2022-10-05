@@ -1,3 +1,4 @@
+from google.cloud.firestore_v1.async_transaction import AsyncTransaction
 import json
 import logging
 import os
@@ -199,19 +200,28 @@ class YoutubeAPI:
             return
 
         if status_code >= 200 and status_code < 300:
+
+            transaction = AsyncTransaction(
+                client=self.db._db)
+
+            write_count = 0
             page_n = 0
-            try:
-                async for page in response_pages:
-                    if page_n == 0:
-                        await self.db.set("cache/" + cache_id, {"etag": page["etag"]})
-                    await self.db.set("cache/%s/pages/%s" % (cache_id, page_n), page)
-                    yield page
-                    page_n += 1
-            except Exception as e:
-                # do not cache half-responses
-                logger.info("Deleting half-downloaded cache pages")
-                await self.db.recursive_delete("cache/" + cache_id)
-                raise e
+            async for page in response_pages:
+                if page_n == 0:
+                    ref = self.db._document("cache/" + cache_id)
+                    transaction.set(ref, {"etag": page["etag"]})
+                    write_count += 1
+
+                ref = self.db._document(
+                    "cache/%s/pages/%s" % (cache_id, page_n))
+                transaction.set(ref, page)
+                write_count += 1
+
+                yield page
+            page_n += 1
+
+            await transaction.commit()
+            await self.db._write_counter.inc(write_count)
 
             return
 

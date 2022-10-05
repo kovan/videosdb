@@ -1,4 +1,5 @@
 
+import anyio
 from google.cloud import firestore
 from google.oauth2 import service_account
 import os
@@ -7,6 +8,21 @@ import sys
 from google.api_core.retry import Retry
 from videosdb.utils import wait_for_port
 logger = logging.getLogger(__name__)
+
+
+class Counter:
+    def __init__(self, type: str, limit: int):
+        self.type = type
+        self.counter = 0
+        self.limit = limit
+        self.lock = anyio.Lock()
+
+    async def inc(self, quantity=1):
+        async with self.lock:
+            self.counter += quantity
+            if self.counter > self.limit:
+                raise self.QuotaExceeded(
+                    "Surpassed %s ops limit of %s" % (self.type, self.limit))
 
 
 class DB:
@@ -45,11 +61,11 @@ class DB:
 
         self.FREE_TIER_WRITE_QUOTA = 20000
         self.FREE_TIER_READ_QUOTA = 50000
-        self.write_count = 0
-        self.write_limit = self.FREE_TIER_WRITE_QUOTA
-        self.read_count = 0
         # leave 20000 for yarn generate and visitors
-        self.read_limit = self.FREE_TIER_READ_QUOTA - 20000
+        self._read_counter = Counter(
+            "reads", self.FREE_TIER_READ_QUOTA - 20000)
+        self._write_counter = Counter("writes", self.FREE_TIER_WRITE_QUOTA)
+
         self._db = self.setup(project, config)
 
     async def init(self):
@@ -66,60 +82,35 @@ class DB:
 
     # google.api_core.exceptions.ResourceExhausted: 429 Quota exceeded.
 
-    def _read_inc(self):
-        self.read_count += 1
-        if self.read_count > self.read_limit:
-            raise self.QuotaExceeded(
-                "Surpassed READ ops limit of %s" % self.read_limit)
-
-    def _write_inc(self):
-        self.write_count += 1
-        if self.write_count > self.write_limit:
-            raise self.QuotaExceeded(
-                "Surpassed WRITE ops limit of %s" % self.write_limit)
-
     def _document(self, path):
         return self._db.document(self.prefix + path)
 
+    def _collection(self, path):
+        return self._db.collection(self.prefix + path)
     # ---------------------- PUBLIC -------------------------------
 
     @Retry()
     async def set(self, path, *args, **kwargs):
-        # self._write_inc()
+        await self._write_counter.inc()
         return await self._document(path).set(*args, **kwargs)
 
     @Retry()
     async def get(self, path, *args, **kwargs):
-        self._read_inc()
+        await self._read_counter.inc()
         return await self._document(path).get(*args, **kwargs)
 
     @Retry()
     async def update(self, path, *args, **kwargs):
-        self._write_inc()
+        await self._write_counter.inc()
         return await self._document(path).update(*args, **kwargs)
 
     def stream(self, collection_name):
-        return self.Streamer(self, collection_name)
+        return self._collection(collection_name).stream()
 
     @Retry()
     async def recursive_delete(self, path):
         ref = self._document(path)
         return await self._db.recursive_delete(ref)
-
-    class Streamer:
-        def __init__(self, db, collection_name):
-            self.db = db
-            self.collection_name = collection_name
-
-        def __aiter__(self):
-            self.generator = self.db._db.collection(
-                self.collection_name).stream()
-            return self.generator
-
-        @Retry()
-        async def __anext__(self):
-            self.db._read_inc()
-            yield anext(self.generator)
 
     @Retry()
     async def set_noquota(self, path, *args, **kwargs):

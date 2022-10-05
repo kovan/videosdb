@@ -13,7 +13,6 @@ from videosdb.db import DB
 import os
 import logging
 import sys
-from videosdb.publisher import TwitterPublisher
 
 from videosdb.youtube_api import YoutubeAPI
 
@@ -21,6 +20,20 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 DATA_DIR = BASE_DIR + "/test_data"
+
+
+def read_response_files():
+    raw_responses = {}
+    with open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json") as f:
+        raw_responses["playlists"] = json.load(f)
+    with open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json") as f:
+        raw_responses["playlistItems.1"] = json.load(f)
+    with open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json") as f:
+        raw_responses["playlistItems.2"] = json.load(f)
+    with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
+        raw_responses["videos"] = json.load(f)
+
+    return raw_responses
 
 
 class PatchedTestCase(aiounittest.AsyncTestCase):
@@ -71,23 +84,23 @@ class MockedAPIMixin:
 
     @classmethod
     def createMocks(cls):
+
+        cls.raw_responses = read_response_files()
+
         playlists = cls.mocked_api.get(path="/playlists", name="playlists")
-        with open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json") as f:
-            playlists.return_value = Response(200, json=json.load(f))
+        playlists.return_value = Response(
+            200, json=cls.raw_responses["playlists"])
 
         playlistItems = cls.mocked_api.get(
             path="/playlistItems", name="playlistItems")
 
-        side_effects = []
-        with open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json") as f:
-            side_effects.append(Response(200, json=json.load(f)))
-        with open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json") as f:
-            side_effects.append(Response(200, json=json.load(f)))
-        playlistItems.side_effect = side_effects
+        playlistItems.side_effect = [
+            Response(200, json=cls.raw_responses["playlistItems.1"]),
+            Response(200, json=cls.raw_responses["playlistItems.2"])
+        ]
 
         videos = cls.mocked_api.get(path="/videos",  name="videos")
-        with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
-            videos.return_value = Response(200, json=json.load(f))
+        videos.return_value = Response(200, json=cls.raw_responses["videos"])
 
 
 class DownloaderTest(MockedAPIMixin, PatchedTestCase):
@@ -155,7 +168,18 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
                          "fate-god-luck-or-effort-what-decides-your-success-sadhguru")
         self.assertIn("descriptionTrimmed", video["videosdb"])
         self.assertEqual(video["videosdb"]["durationSeconds"], 470.0)
+        self.assertTrue(isinstance(
+            video["snippet"]["publishedAt"], datetime.datetime))
         self.assertIn("statistics", video)
+
+        # check that cache pages were written
+
+        cache_id = "test_cache/playlistItems?part=snippet&playlistId=PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+        cache_doc = (await self.db.document(cache_id).get()).to_dict()
+        self.assertEqual(cache_doc["etag"], "WYcEnKmXzfgV-X0qnGX2VWt6rPY")
+        cache_doc_page_0 = (await self.db.document(cache_id + "/pages/0").get()).to_dict()
+        self.assertEqual(
+            cache_doc_page_0["kind"], "youtube#playlistItemListResponse")
 
     # async def test_firestore_behavior(self):
     #     a = await self.db.document("test_videos/" + "asdfsdf").set({
@@ -174,8 +198,8 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
     #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
 
     async def test_transcript_downloading(self):
-        with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
-            video = json.load(f)["items"][0]
+
+        video = self.raw_responses["videos"]["items"][0]
 
         await self.downloader.init()
         await self.downloader._handle_transcript(video)

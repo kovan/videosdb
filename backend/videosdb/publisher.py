@@ -1,11 +1,9 @@
-
 # from pytwitter import Api
 import fnc
 import datetime
 import logging
 import os
 import httpx
-import isodate
 from tweepy.asynchronous import AsyncClient
 logger = logging.getLogger(__name__)
 
@@ -88,11 +86,10 @@ class TwitterPublisher(Publisher):
         if os.environ["VIDEOSDB_CONFIG"] != "nithyananda":
             return
 
-        video_date = isodate.parse_datetime(
-            fnc.get("snippet.publishedAt"), video)
-
+        video_date = fnc.get("snippet.publishedAt", video)
+        now = datetime.datetime.now(datetime.timezone.utc)
         if (fnc.get("videosdb.publishing.id", video)
-                or datetime.now() - video_date > datetime.timedelta(days=1)):
+                or now - video_date > datetime.timedelta(days=1)):
             # already published or old, so don't publish
             return
 
@@ -101,7 +98,7 @@ class TwitterPublisher(Publisher):
         video |= {
             "videosdb": {
                 "publishing": {
-                    "publishDate": datetime.datetime.now().isoformat(),
+                    "publishDate": now.isoformat(),
                     "id":  result.data["id"],
                     "text": text
                 }

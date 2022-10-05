@@ -12,7 +12,7 @@ from aiostream import stream
 from autologging import traced
 import google.api_core.exceptions
 from slugify import slugify
-from videosdb.publisher import Publisher
+from videosdb.publisher import TwitterPublisher
 from videosdb.utils import my_handler
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 from videosdb.db import DB
@@ -28,6 +28,18 @@ class LockedItems:
     def __init__(self, items) -> None:
         self.lock = anyio.Lock()
         self.items = items
+
+
+async def fix_publishedAt(video, anyio_taskgroup, db):
+    video_dict = video.to_dict()
+    if video_dict.get("publishedAt"):
+        del video_dict["publishedAt"]
+        video_dict["snippet"]["publishedAt"] = isodate.parse_datetime(
+            video_dict["snippet"]["publishedAt"])
+        logger.info(
+            "Fixing type of publishedAt for video %s" % (video["id"]))
+        anyio_taskgroup.start_soon(db.set, "videos/" +
+                                   video_dict["id"], video, merge=True)
 
 
 class Downloader:
@@ -85,7 +97,7 @@ class Downloader:
         final_video_ids = LockedItems(set())
         logger.info("Init phase 2")
         if self.options and self.options.enable_twitter_publishing:
-            publisher = Publisher(self.db)
+            publisher = TwitterPublisher(self.db)
 
         async with anyio.create_task_group() as phase2:
             async for video in self.db.stream("videos"):
@@ -101,9 +113,13 @@ class Downloader:
                     phase2.start_soon(
                         self._handle_transcript, video.to_dict(), name="Download transcript for video " + video_id)
 
+                v_dict = video.to_dict()
+                # somehow unprocessed videos got into de db, process them:
+
+                await fix_publishedAt(video, phase2, self.db)
+
                 if self.options and self.options.enable_twitter_publishing:
-                    v_dict = video.to_dict()
-                    publisher.publish_video(v_dict)
+                    await publisher.publish_video(v_dict)
 
         async with final_video_ids.lock:
             ids = final_video_ids.items
@@ -287,11 +303,13 @@ class Downloader:
                 "descriptionTrimmed": bleach.linkify(video["snippet"]["description"]),
                 "durationSeconds": isodate.parse_duration(
                     video["contentDetails"]["duration"]).total_seconds(),
-                "playlists": playlist_ids
+
             }
         }
+        if playlist_ids:
+            video["playlists"] = firestore.ArrayUnion(playlist_ids)
 
-        video["publishedAt"] = isodate.parse_datetime(
+        video["snippet"]["publishedAt"] = isodate.parse_datetime(
             video["snippet"]["publishedAt"])
 
         for stat, value in video["statistics"].items():
