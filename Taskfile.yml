@@ -171,7 +171,9 @@ tasks:
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
-                run main -c
+                run main
+                    --check-for-new-videos
+                    --enable-twitter-publishing
             - docker run
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
