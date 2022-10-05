@@ -33,12 +33,12 @@ class Publisher:
     async def _create_post_text(self, video):
         url = os.environ["VIDEOSDB_HOSTNAME"] + \
             "/video/" + video["videosdb"]["slug"]
-        # short_url = await self._get_bitly_url(url)
+        short_url = await self._get_bitly_url(url)
         yt_url = "https://www.youtube.com/watch?v=" + video["id"],
-        text = "{title}, {short_url}, {youtube_url} ".format(
+        text = "{title}, {youtube_url}, {short_url} ".format(
             title=video["snippet"]["title"],
             youtube_url=yt_url,
-            short_url=url
+            short_url=short_url
         )
         return text
 
@@ -101,18 +101,16 @@ class TwitterPublisher(Publisher):
 
         text = await self._create_post_text(video)
         result = await self.create_tweet(text=text)
-        db_result = await self._save_to_db(video, result.data["id"], "twiter")
-        logger.info("Published video " + video["id"])
-        return db_result
-
-    async def _save_to_db(self, video, pub_id):
         video |= {
             "videosdb": {
                 "publishing": {
                     "publishDate": datetime.datetime.now().isoformat(),
-                    "id":  pub_id
+                    "id":  result.data["id"],
+                    "text": text
                 }
             }
         }
-        # await self.db.set_noquota("videos/" + video["id"], video)
+        # await self.db.set_noquota("videos/" + video["id"], video, merge=True)
+
+        logger.info("Published video " + video["id"])
         return None
