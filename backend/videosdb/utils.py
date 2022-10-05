@@ -29,15 +29,51 @@ def wait_for_port(port: int, host: str = 'localhost', timeout: float = 30.0):
                                    'connections.'.format(port, host)) from ex
 
 
-def _contains_exceptions(exception_types, exception):
-    if type(exception) == anyio.ExceptionGroup:
-        for e in exception.exceptions:
-            if type(e) in exception_types:
-                return True
-    elif type(exception) in exception_types:
-        return True
+# class ExceptionFilter:
+#     def __init__(self, exception_type_to_filter, exception):
+#         self.ex_type = exception_type_to_filter
+#         self.exception = exception
+#         self.to_handle_exceptions = []
+#         self.to_handle_exceptions_iter = iter(self.to_handle_exceptions)
+#         self.unhandled_exceptions = []
 
-    return False
+#         if type(exception) == anyio.ExceptionGroup:
+#             for e in exception.exceptions:
+#                 if type(e) == self.ex_type:
+#                     self.to_handle_exceptions.append(e)
+#                 else:
+#                     self.unhandled_exceptions.append(e)
+
+#         else:
+#             if type(exception) == self.ex_type:
+#                 self.to_handle_exceptions.append(exception)
+#             else:
+#                 self.unhandled_exceptions.append(exception)
+
+#     def __iter__(self):
+#         return
+
+#     def __next__(self):
+#         next(self.to_handle_exceptions_iter)
+#         for e in self.unhandled_exceptions:
+#             raise e
+
+
+def my_handler(my_type, e, handler):
+    if type(e) == anyio.ExceptionGroup:
+        unhandled = []
+        for ex in e.exceptions:
+            if type(ex) == my_type:
+                handler(ex)
+            else:
+                unhandled.append(ex)
+        if unhandled:
+            raise anyio.ExceptionGroup(unhandled)
+
+    elif type(e) == my_type:
+        handler(e)
+    else:
+        raise e
 
 
 def put_item_at_front(seq, item):

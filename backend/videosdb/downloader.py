@@ -13,7 +13,7 @@ from autologging import traced
 import google.api_core.exceptions
 from slugify import slugify
 from videosdb.publisher import Publisher
-from videosdb.utils import _contains_exceptions
+from videosdb.utils import my_handler
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 from videosdb.db import DB
 from videosdb.youtube_api import YoutubeAPI
@@ -132,10 +132,7 @@ class Downloader:
                     )
 
         except Exception as e:
-            if _contains_exceptions([YoutubeAPI.QuotaExceeded], e):
-                logger.error(e)
-            else:
-                raise e
+            my_handler(YoutubeAPI.QuotaExceeded, e, logger.error)
 
         return processed_video_ids.items
 
