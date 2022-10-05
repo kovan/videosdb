@@ -93,7 +93,7 @@ class TwitterPublisher(Publisher):
         video_date = fnc.get("snippet.publishedAt", video)
         now = datetime.datetime.now(datetime.timezone.utc)
         if (fnc.get("videosdb.publishing.id", video)
-                or now - video_date > datetime.timedelta(days=1)):
+                or now - video_date > datetime.timedelta(weeks=1)):
             # already published or old, so don't publish
             return
 
