@@ -68,7 +68,12 @@ class Downloader:
             channel = await self._create_channel(self.YT_CHANNEL_ID)
             playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
 
-            await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"])
+            try:
+                await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"])
+            except Exception as e:
+                my_handler(YoutubeAPI.QuotaExceeded, e, logger.error)
+
+            # does not use quota:
             await self._final_video_iteration()
 
             # await anyio.wait_all_tasks_blocked()
@@ -115,24 +120,21 @@ class Downloader:
         processed_video_ids = LockedItems(set())
         excluded_video_ids = LockedItems(set())
         processed_playlist_ids = LockedItems(set())
-        try:
-            async with anyio.create_task_group() as phase1:
-                random.shuffle(playlist_ids)
-                # main iterations:
-                for playlist_id in playlist_ids:
-                    phase1.start_soon(
-                        self._process_playlist,
-                        playlist_id,
-                        channel_name,
-                        phase1,
-                        processed_video_ids,
-                        excluded_video_ids,
-                        processed_playlist_ids,
-                        name="Playlist %s processor" % playlist_id
-                    )
 
-        except Exception as e:
-            my_handler(YoutubeAPI.QuotaExceeded, e, logger.error)
+        async with anyio.create_task_group() as phase1:
+            random.shuffle(playlist_ids)
+            # main iterations:
+            for playlist_id in playlist_ids:
+                phase1.start_soon(
+                    self._process_playlist,
+                    playlist_id,
+                    channel_name,
+                    phase1,
+                    processed_video_ids,
+                    excluded_video_ids,
+                    processed_playlist_ids,
+                    name="Playlist %s processor" % playlist_id
+                )
 
         return processed_video_ids.items
 
