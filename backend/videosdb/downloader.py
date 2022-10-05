@@ -81,7 +81,7 @@ class Downloader:
         final_video_ids = LockedItems(set())
         logger.info("Init phase 2")
         if self.options and self.options.enable_twitter_publishing:
-            publisher = Publisher()
+            publisher = Publisher(self.db)
 
         async with anyio.create_task_group() as phase2:
             async for video in self.db.stream("videos"):
