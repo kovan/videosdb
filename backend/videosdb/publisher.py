@@ -83,14 +83,11 @@ class TwitterPublisher(Publisher):
     async def create_tweet(self, *args, **kwargs):
         return await self.api.create_tweet(*args, **kwargs)
 
-    def add_video(self, video):
-        self.videos.add(video)
-
-    async def publish_all(self,):
-        for video in self.videos:
-            await self.publish_video(video)
-
     async def publish_video(self, video):
+
+        if os.environ["VIDEOSDB_CONFIG"] != "nithyananda":
+            return
+
         video_date = isodate.parse_datetime(
             fnc.get("snippet.publishedAt"), video)
 
