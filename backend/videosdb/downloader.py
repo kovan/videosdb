@@ -115,12 +115,16 @@ class Downloader:
                         self._handle_transcript, video.to_dict(), name="Download transcript for video " + video_id)
 
                 v_dict = video.to_dict()
-                # somehow unprocessed videos got into de db, process them:
 
+                # somehow bad processed videos got into de db:
                 await fix_publishedAt(video, phase2, self.db)
 
-                if self.options and self.options.enable_twitter_publishing:
-                    await publisher.publish_video(v_dict)
+                try:
+                    if self.options and self.options.enable_twitter_publishing:
+                        await publisher.publish_video(v_dict)
+                except Exception as e:
+                    # twitter errors show not stop the program
+                    logger.exception(e)
 
         async with final_video_ids.lock:
             ids = final_video_ids.items

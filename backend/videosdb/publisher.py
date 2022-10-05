@@ -62,8 +62,8 @@ class TwitterPublisher(Publisher):
     KEYS_PROD = {
         "api_key": "f73ZNvOyGwYVJUUyav65KW4xv",
         "api_secret": "QOU5Oo9svOWT9tEd9SPiPUUck41gqmU0C6mLzr1wCJtpZeifOp",
-        "access_token": "c1l6RHRpMS1tVVBzQ3hLZHkySXI6MTpjaQ",
-        "access_secret": "yQuARx02RyIc6EMVFs3i5nVRqTmAMvXbpunyx0Gv40r1bNcxss",
+        "access_token": "1576729637199265793-nDzS5ceL3iwqrw69tarOT9Crw4FClG",
+        "access_secret": "xuxWmsnsfHCbCyWxe5GDgOsaBjmpJpoZygFK6bXWXst9g",
     }
 
     def __init__(self, db=None) -> None:
