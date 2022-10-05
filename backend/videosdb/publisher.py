@@ -71,7 +71,7 @@ class TwitterPublisher(Publisher):
     def __init__(self, db=None) -> None:
         super().__init__(db)
 
-        keys = self.KEYS_DEV
+        keys = self.KEYS_PROD
         self.api = AsyncClient(
             consumer_key=keys["api_key"],
             consumer_secret=keys["api_secret"],
@@ -110,7 +110,7 @@ class TwitterPublisher(Publisher):
                 }
             }
         }
-        # await self.db.set_noquota("videos/" + video["id"], video, merge=True)
+        await self.db.set_noquota("videos/" + video["id"], video, merge=True)
 
         logger.info("Published video " + video["id"])
         return None
