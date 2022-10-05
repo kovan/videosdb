@@ -32,14 +32,15 @@ class LockedItems:
 
 async def fix_publishedAt(video, anyio_taskgroup, db):
     video_dict = video.to_dict()
-    if video_dict.get("publishedAt"):
-        del video_dict["publishedAt"]
+    if type(video_dict["snippet"]["publishedAt"]) == str:
         video_dict["snippet"]["publishedAt"] = isodate.parse_datetime(
             video_dict["snippet"]["publishedAt"])
         logger.info(
-            "Fixing type of publishedAt for video %s" % (video["id"]))
-        anyio_taskgroup.start_soon(db.set, "videos/" +
-                                   video_dict["id"], video, merge=True)
+            "Fixing type of publishedAt for video %s" % (video_dict["id"]))
+
+        async def set_video():
+            return await db.set("videos/" + video_dict["id"], video_dict, merge=True)
+        anyio_taskgroup.start_soon(set_video)
 
 
 class Downloader:
