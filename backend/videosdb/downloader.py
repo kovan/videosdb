@@ -38,9 +38,7 @@ async def fix_publishedAt(video, anyio_taskgroup, db):
         logger.info(
             "Fixing type of publishedAt for video %s" % (video_dict["id"]))
 
-        async def set_video():
-            return await db.set("videos/" + video_dict["id"], video_dict, merge=True)
-        anyio_taskgroup.start_soon(set_video)
+        return await db.set("videos/" + video_dict["id"], video_dict, merge=True)
 
 
 class Downloader:
