@@ -33,7 +33,11 @@ class Publisher:
             "/video/" + video["videosdb"]["slug"]
         short_url = await self._get_bitly_url(url)
         yt_url = "https://www.youtube.com/watch?v=" + video["id"],
-        text = "{title}, {youtube_url}, {short_url} ".format(
+        text = """
+        {title}
+        {youtube_url}
+        {short_url}
+        """.format(
             title=video["snippet"]["title"],
             youtube_url=yt_url,
             short_url=short_url
