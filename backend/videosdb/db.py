@@ -121,13 +121,17 @@ class DB:
             self.db._read_inc()
             yield anext(self.generator)
 
-    # @Retry()
-    # async def noquota_set(self, path, *args, **kwargs):
-    #     return await self._document(path).set(*args, **kwargs)
+    @Retry()
+    async def set_noquota(self, path, *args, **kwargs):
+        return await self._document(path).set(*args, **kwargs)
 
-    # @Retry()
-    # async def noquota_update(self, path, *args, **kwargs):
-    #     return await self._document(path).update(*args, **kwargs)
+    @Retry()
+    async def update_noquota(self, path, *args, **kwargs):
+        return await self._document(path).update(*args, **kwargs)
+
+    @Retry()
+    async def get_noquota(self, path, *args, **kwargs):
+        return await self._document(path).get(*args, **kwargs)
 
     # def reserve_read_quota(self, quota):
     #     self.read_limit = self.FREE_TIER_READ_QUOTA - quota - 5000

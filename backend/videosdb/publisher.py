@@ -42,20 +42,6 @@ class Publisher:
         )
         return text
 
-    async def _save_to_db(self, video, pub_id):
-        video |= {
-            "videosdb": {
-                "publishing": {
-
-                    "publishDate": datetime.datetime.now().isoformat(),
-                    "id":  pub_id
-
-                }
-            }
-        }
-        # await self.db.set("videos/" + video["id"], video)
-        logger.info("Published video " + video["id"])
-
     async def publish_video(self, video):
         raise NotImplementedError()
 
@@ -114,24 +100,19 @@ class TwitterPublisher(Publisher):
             return
 
         text = await self._create_post_text(video)
-
         result = await self.create_tweet(text=text)
+        db_result = await self._save_to_db(video, result.data["id"], "twiter")
+        logger.info("Published video " + video["id"])
+        return db_result
 
-        await self._save_to_db(video, result.data["id"], "twiter")
-
-
-# class FacebookPublisher(Publisher):
-#     ACCESS_TOKEN_1 = "199149919028365|Kbax0dCo8FMtUMwXf_1_URCmkLY"
-#     ACCESS_TOKEN_2 = "EAAC1IDQuRI0BAPN3FMT0ZCyaPBf72XeZAZAsiHnPb5z8024vfA2jTAy2Vbi3IlhHNU295RCTZBXwmyIsNZBrOWeSOPmDhxzqQUValr7WUYuZBIZBnCg8nrcmtadxxzJXvxiQ36JDCiSYVByHRnYxVxQ4mMgcatTsqyLThhDZADuMLL983w5FiZBoMDZBSDrCSeQVon4INU3aOR2F9tIyuSRAWrqNYBbFM680kZD"
-
-#     def __init__(self, db=None) -> None:
-#         super().__init__(db)
-
-#         self.api = facebook.GraphAPI(self.ACCESS_TOKEN_2)
-
-#     async def publish_video(self, video):
-#         text = await self._create_post_text(video)
-
-#         result = await self.api.put_object("me", "feed", message=text)
-
-#         await self._save_to_db(video, result, type(self))
+    async def _save_to_db(self, video, pub_id):
+        video |= {
+            "videosdb": {
+                "publishing": {
+                    "publishDate": datetime.datetime.now().isoformat(),
+                    "id":  pub_id
+                }
+            }
+        }
+        # await self.db.set_noquota("videos/" + video["id"], video)
+        return None
