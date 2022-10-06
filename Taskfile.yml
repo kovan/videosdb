@@ -165,7 +165,7 @@ tasks:
 
     generate:
         run: once
-        deps: [init, build-frontend, build-backend]
+        deps: [init, build-frontend, build-backend, unittests, end2end-tests]
         cmds:
             - docker run
                 --network host
