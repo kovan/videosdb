@@ -264,7 +264,7 @@ class YoutubeAPI:
             else:
                 page_token = json_response["nextPageToken"]
 
-    async def _get_with_retries(self, url, timeout=30.0, headers=None, max_retries=5):
+    async def _get_with_retries(self, url, timeout=60.0, headers=None, max_retries=5):
         retries = 0
         while True:
             response = await self.http.get(url, timeout=timeout, headers=headers if headers else {})
