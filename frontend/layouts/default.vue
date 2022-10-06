@@ -76,15 +76,9 @@ function getRandomInt(max) {
 }
 import {
     getDoc,
-    getDocs,
-    limit,
-    orderBy,
-    where,
-    startAfter,
     doc,
-    query, collection
 } from 'firebase/firestore'
-import { initializeApp, getApp } from "firebase/app";
+
 import { parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
 import { getVuexData } from '~/utils/utils'
@@ -147,6 +141,7 @@ export default {
             return parseISO(iso_date).toLocaleDateString()
         },
         async randomVideo() {
+
             const video_ids_doc = await getDoc(doc(this.$db, "meta/video_ids"))
             const video_ids = video_ids_doc.data().videoIds
 
