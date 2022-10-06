@@ -1,10 +1,14 @@
+from google.cloud.firestore_v1.async_transaction import AsyncTransaction
 import json
 import logging
 import os
 import re
-from typing import NewType
+from typing import Iterable, NewType
+import anyio
 import httpx
+from urllib.parse import urlencode
 from videosdb.utils import wait_for_port
+import youtube_transcript_api
 from urllib.parse import urlparse
 from types import AsyncGeneratorType
 logger = logging.getLogger(__name__)
@@ -49,8 +53,8 @@ class YoutubeAPI:
 
     def __init__(self, db, yt_key=None):
         self.db = db
-        #limits = httpx.Limits(max_connections=50)
-        self.http = httpx.AsyncClient()  # limits=limits)
+        limits = httpx.Limits(max_connections=50)
+        self.http = httpx.AsyncClient(limits=limits)
 
         self.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
         if not self.yt_key:
@@ -145,6 +149,7 @@ class YoutubeAPI:
 
 
 # ------- PRIVATE-------------------------------------------------------
+
 
     async def _request_one(self, url, params, use_cache=True):
 
@@ -259,7 +264,7 @@ class YoutubeAPI:
             else:
                 page_token = json_response["nextPageToken"]
 
-    async def _get_with_retries(self, url, timeout=60.0, headers=None, max_retries=5):
+    async def _get_with_retries(self, url, timeout=30.0, headers=None, max_retries=5):
         retries = 0
         while True:
             response = await self.http.get(url, timeout=timeout, headers=headers if headers else {})
