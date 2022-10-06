@@ -30,15 +30,16 @@ class LockedItems:
         self.items = items
 
 
-async def fix_publishedAt(video, anyio_taskgroup, db):
-    video_dict = video.to_dict()
-    if type(video_dict["snippet"]["publishedAt"]) == str:
-        video_dict["snippet"]["publishedAt"] = isodate.parse_datetime(
-            video_dict["snippet"]["publishedAt"])
-        logger.info(
-            "Fixing type of publishedAt for video %s" % (video_dict["id"]))
+async def fix_publishedAt(video_id, db):
 
-        return await db.set("videos/" + video_dict["id"], video_dict, merge=True)
+    video = await db.get("videos/" + video_id)
+    video_dict = video.to_dict()
+    video_dict["snippet"]["publishedAt"] = isodate.parse_datetime(
+        video_dict["snippet"]["publishedAt"])
+    logger.info(
+        "Fixing type of publishedAt for video %s" % (video_dict["id"]))
+
+    return await db.set("videos/" + video_id, video_dict, merge=True)
 
 
 class Downloader:
@@ -98,6 +99,8 @@ class Downloader:
         if self.options and self.options.enable_twitter_publishing:
             publisher = TwitterPublisher(self.db)
 
+        publishedAt_fix_list_ids = LockedItems(set())
+
         async with anyio.create_task_group() as phase2:
             async for video in self.db.stream("videos"):
                 video_id = video.to_dict().get("id")
@@ -112,24 +115,28 @@ class Downloader:
                     phase2.start_soon(
                         self._handle_transcript, video.to_dict(), name="Download transcript for video " + video_id)
 
-                v_dict = video.to_dict()
+                video_dict = video.to_dict()
 
                 # somehow bad processed videos got into de db:
-                await fix_publishedAt(video, phase2, self.db)
+                if type(video_dict["snippet"]["publishedAt"]) == str:
+                    async with publishedAt_fix_list_ids.lock:
+                        publishedAt_fix_list_ids.items.add(video_id)
 
                 try:
                     if self.options and self.options.enable_twitter_publishing:
-                        await publisher.publish_video(v_dict)
+                        await publisher.publish_video(video_dict)
                 except Exception as e:
                     # twitter errors show not stop the program
                     logger.exception(e)
 
-        async with final_video_ids.lock:
-            ids = final_video_ids.items
-            if ids:
-                await self.db.set("meta/video_ids", {
-                    "videoIds": firestore.ArrayUnion(list(ids))
-                })
+        for video_id in publishedAt_fix_list_ids.items:
+            await fix_publishedAt(video_id, phase2, self.db)
+
+        ids = final_video_ids.items
+        if ids:
+            await self.db.set("meta/video_ids", {
+                "videoIds": firestore.ArrayUnion(list(ids))
+            })
 
         return ids
 
