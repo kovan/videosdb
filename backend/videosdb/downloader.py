@@ -121,13 +121,13 @@ class Downloader:
                 if type(video_dict["snippet"]["publishedAt"]) == str:
                     async with publishedAt_fix_list_ids.lock:
                         publishedAt_fix_list_ids.items.add(video_id)
-
-                try:
-                    if self.options and self.options.enable_twitter_publishing:
-                        await publisher.publish_video(video_dict)
-                except Exception as e:
-                    # twitter errors show not stop the program
-                    logger.exception(e)
+                else:
+                    try:
+                        if self.options and self.options.enable_twitter_publishing:
+                            await publisher.publish_video(video_dict)
+                    except Exception as e:
+                        # twitter errors show not stop the program
+                        logger.exception(e)
 
         for video_id in publishedAt_fix_list_ids.items:
             await fix_publishedAt(video_id, self.db)
