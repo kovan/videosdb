@@ -130,7 +130,7 @@ class Downloader:
                     logger.exception(e)
 
         for video_id in publishedAt_fix_list_ids.items:
-            await fix_publishedAt(video_id, phase2, self.db)
+            await fix_publishedAt(video_id, self.db)
 
         ids = final_video_ids.items
         if ids:
