@@ -86,3 +86,7 @@ def put_item_at_front(seq, item):
     except ValueError:
         pass
     return seq
+
+
+def json_schema_validation(db):
+    pass

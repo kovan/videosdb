@@ -36,7 +36,12 @@ class DB:
             wait_for_port(port, host, timeout)
 
     @staticmethod
-    def setup(project, config):
+    def setup(project=None, config=None):
+        if not project:
+            project = os.environ["FIREBASE_PROJECT"]
+        if not config:
+            config = os.environ["VIDEOSDB_CONFIG"]
+
         BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
         creds_json_path = os.path.join(
             BASE_DIR, "../common/keys/%s.json" % config.strip('"'))
@@ -66,7 +71,7 @@ class DB:
             "reads", self.FREE_TIER_READ_QUOTA - 20000)
         self._write_counter = Counter("writes", self.FREE_TIER_WRITE_QUOTA)
 
-        self._db = self.setup(project, config)
+        self._db = self.setup()
 
     async def init(self):
         # initialize meta table:

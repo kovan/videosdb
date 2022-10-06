@@ -1,9 +1,6 @@
 {
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-        "source.fixAll": true
-    },
     "search.useGlobalIgnoreFiles": true,
     "search.exclude": {
         "**/.git": true,
@@ -25,4 +22,5 @@
         "-p",
         "test_*.py"
     ],
+    "python.analysis.typeCheckingMode": "off",
 }

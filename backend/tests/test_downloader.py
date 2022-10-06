@@ -75,9 +75,7 @@ class MockedAPIMixin:
 
         # DB.wait_for_port(60.0)
 
-        project = os.environ["FIREBASE_PROJECT"]
-        config = os.environ["VIDEOSDB_CONFIG"]
-        cls.db = DB.setup(project, config)
+        cls.db = DB.setup()
         cls.mocked_api = respx.mock(base_url=YoutubeAPI.get_root_url(),
                                     assert_all_called=False)
         cls.createMocks()

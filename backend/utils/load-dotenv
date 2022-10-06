@@ -1,0 +1,6 @@
+# !/bin/sh
+set -o allexport
+. $1
+set +o allexport
+shift
+exec $@
