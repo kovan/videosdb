@@ -204,9 +204,8 @@ tasks:
 
 
     generate-gcp:
-        deps: [init]
+        deps: [init,  build-all, unittests, end2end-tests, download-cache]
         cmds:
-            - task: download-cache
             - defer:
                 - task: upload-cache
             - task: generate
