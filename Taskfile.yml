@@ -168,7 +168,6 @@ tasks:
         deps: [init]
         cmds:
             - docker run --rm
-                --name gcloud
                 -v $(pwd)/common/keys:/keys
                 google/cloud-sdk:alpine
                 gcloud auth activate-service-account --key-file /keys/{{.VIDEOSDB_CONFIG}}.json &&
@@ -185,7 +184,6 @@ tasks:
             - rm -f cache.tar.gz
             - tar czf cache.tar.gz .httpx-cache
             - docker run --rm
-                --name gcloud
                 -v $(pwd)/common/keys:/keys
                 google/cloud-sdk:alpine
                 gcloud auth activate-service-account --key-file /keys/{{.VIDEOSDB_CONFIG}}.json &&
@@ -196,12 +194,14 @@ tasks:
         cmds:
             - task: "{{if .PRUEBA_YES}}init{{end}}"
 
-
     generate:
         run: once
         deps: [init, build-frontend, build-backend, unittests, end2end-tests]
         cmds:
             - task: "{{if .BUILD_ID}}download-cache{{end}}"
+              vars:
+                VIDEOSDB_CONFIG: {{.VIDEOSDB_CONFIG}}
+
             - mkdir -p .httpx-cache
             - docker run --rm
                 --name backend
@@ -213,6 +213,9 @@ tasks:
                     --check-for-new-videos
                     --enable-twitter-publishing
             - task: "{{if .BUILD_ID}}upload-cache{{end}}"
+              vars:
+                VIDEOSDB_CONFIG: {{.VIDEOSDB_CONFIG}}
+
             - docker run --rm
                 --name frontend
                 --network host
