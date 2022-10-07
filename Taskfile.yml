@@ -167,14 +167,20 @@ tasks:
     download-cache:
         deps: [init]
         cmds:
-            - docker run --rm
+            - docker run
+                --name gcloud
                 -v $(pwd)/common/keys:/keys
                 google/cloud-sdk:alpine
-                gcloud auth activate-service-account --key-file /keys/{{.VIDEOSDB_CONFIG}}.json &&
-                gsutil cp gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/cache.tar.gz .
+                gcloud auth activate-service-account --key-file /keys/{{.VIDEOSDB_CONFIG}}.json
+            - defer: docker rm gcloud
+            - docker run --rm
+                --volumes-from gcloud
+                --mount type=bind,src=$(pwd),dst=/app
+                google/cloud-sdk:alpine
+                gsutil cp gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/cache.tar.gz /app
             - rm -fr .httpx-cache
             - tar xf cache.tar.gz
-            - rm cache.tar.gz
+            - rm -f cache.tar.gz
 
 
 
@@ -183,24 +189,19 @@ tasks:
         cmds:
             - rm -f cache.tar.gz
             - tar czf cache.tar.gz .httpx-cache
-            - docker run --rm
+            - docker run
+                --name gcloud
                 -v $(pwd)/common/keys:/keys
                 google/cloud-sdk:alpine
-                gcloud auth activate-service-account --key-file /keys/{{.VIDEOSDB_CONFIG}}.json &&
-                gsutil cp cache.tar.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}
-            - rm cache.tar.gz
+                gcloud auth activate-service-account --key-file /keys/{{.VIDEOSDB_CONFIG}}.json
+            - defer: docker rm gcloud
+            - docker run --rm
+                --volumes-from gcloud
+                --mount type=bind,src=$(pwd),dst=/app
+                google/cloud-sdk:alpine
+                gsutil cp /app/cache.tar.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/
+            - rm -f cache.tar.gz
 
-    prueba: echo {{.VIDEOSDB_CONFIG}}
-
-    prueba2:
-        cmds:
-            - task: prueba
-
-    prueba3:
-        cmds:
-            - export VIDEOSDB_CONFIG=test
-            - defer:
-                - task: prueba2
 
     generate-gcp:
         deps: [init]
