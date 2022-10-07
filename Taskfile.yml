@@ -183,7 +183,6 @@ tasks:
             - rm -f cache.tar.gz
 
 
-
     upload-cache:
         deps: [init]
         cmds:
@@ -202,21 +201,6 @@ tasks:
                 gsutil cp /app/cache.tar.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/
             - rm -f cache.tar.gz
 
-
-    generate-gcp:
-        deps: [init,  build-all, unittests, end2end-tests, download-cache]
-        cmds:
-            - defer:
-                - task: upload-cache
-            - task: generate
-
-
-
-    generate:
-        deps: [init, build-all, unittests, end2end-tests]
-        cmds:
-            - task: run-backend
-            - task: run-frontend
 
 
     run-backend:
@@ -243,6 +227,22 @@ tasks:
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 yarn run-s generate deploy
+
+
+    generate-gcp:
+        deps: [init,  build-all, unittests, end2end-tests, download-cache]
+        cmds:
+            - task: run-backend
+            - task: upload-cache
+            - task: run-frontend
+
+
+    generate:
+        deps: [init, build-all, unittests, end2end-tests]
+        cmds:
+            - task: run-backend
+            - task: run-frontend
+
 
 
     push:
