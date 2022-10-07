@@ -5,6 +5,7 @@ import argparse
 import logging.config
 import logging
 import os
+from dotenv import load_dotenv
 from videosdb.downloader import Downloader
 from videosdb.settings import LOGGING
 from autologging import TRACE
@@ -21,6 +22,7 @@ def entrypoint():
     parser.add_argument("-e", "--exclude-transcripts", action="store_true")
     parser.add_argument("-d", "--fill-related-videos", action="store_true")
     parser.add_argument("-u", "--update-dnslink", action="store_true")
+    parser.add_argument("-v", "--dotenv", action="store")
     parser.add_argument("-t", "--enable-twitter-publishing",
                         action="store_true")
     parser.add_argument(
@@ -28,21 +30,16 @@ def entrypoint():
     parser.add_argument("-o", "--overwrite-hashes", action="store_true")
 
     options = parser.parse_args()
+
+    if options.dotenv:
+        load_dotenv(options.dotenv)
+
     if options.check_for_new_videos:
         # DB.wait_for_port()
         # YoutubeAPI.wait_for_port()
         downloader = Downloader(options)
 
         anyio.run(downloader.check_for_new_videos)
-
-    if options.download_and_register_in_ipfs:
-        ipfs = IPFS()
-        ipfs.download_and_register_folder(
-            options.overwrite_hashes)
-
-    if options.update_dnslink:
-        ipfs = IPFS()
-        ipfs.update_dnslink(force=True)
 
 
 if __name__ == "__main__":

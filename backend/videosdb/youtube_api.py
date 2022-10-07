@@ -1,4 +1,5 @@
-from google.cloud.firestore_v1.async_transaction import AsyncTransaction
+import httpx_cache
+#from google.cloud.firestore_v1.async_transaction import AsyncTransaction
 import json
 import logging
 import os
@@ -51,10 +52,20 @@ class YoutubeAPI:
     async def aclose(self) -> None:
         return await self.http.aclose()
 
-    def __init__(self, db, yt_key=None):
+    def __init__(self, db, yt_key=None, use_cache=True):
         self.db = db
         limits = httpx.Limits(max_connections=50)
-        self.http = httpx.AsyncClient(limits=limits)
+        if use_cache:
+            logger.info("Using HTTPX cache")
+            cache_dir = os.environ.get("HTTPX_CACHE_DIR")
+            if cache_dir:
+                cache = httpx_cache.FileCache(cache_dir=cache_dir)
+            else:
+                cache = httpx_cache.FileCache()
+
+            self.http = httpx_cache.AsyncClient(cache=cache, limits=limits)
+        else:
+            self.http = httpx.AsyncClient(limits=limits)
 
         self.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
         if not self.yt_key:
@@ -150,80 +161,75 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+    async def _request_one(self, url, params, ):
 
-    async def _request_one(self, url, params, use_cache=True):
-
-        modified, generator = await self._request_main(url, params, use_cache)
+        modified, generator = await self._request_main(url, params)
         try:
             item = await anext(generator)
         except StopAsyncIteration:
             item = None
         return modified, item
 
-    async def _request_main(self, url, params, use_cache=True):
+    async def _request_main(self, url, params):
         async def generator(pages):
             async for page in pages:
                 for item in page["items"]:
                     yield item
 
-        if use_cache:
-            result = self._request_with_cache(url, params)
-        else:
-            result = self._request_base(url, params)
-
+        result = self._request_base(url, params)
         status_code, pages = await pop_first(result)
 
         return status_code != 304, generator(pages)
 
-    async def _request_with_cache(self, url, params):
-        @staticmethod
-        def _key_func(url: str, params: dict):
-            return url.lstrip("/") + "?" + urlencode(params)
-            # s = url + str(params)
-            # return hashlib.sha256(s.encode('utf-8')).hexdigest()
+    # async def _request_with_cache(self, url, params):
+    #     @staticmethod
+    #     def _key_func(url: str, params: dict):
+    #         return url.lstrip("/") + "?" + urlencode(params)
+    #         # s = url + str(params)
+    #         # return hashlib.sha256(s.encode('utf-8')).hexdigest()
 
-        cache_id = _key_func(url, params)
-        cached = await self.db.get("cache/" + cache_id)
-        headers = {}
-        if cached.exists:
-            headers["If-None-Match"] = cached.get("etag")
+    #     cache_id = _key_func(url, params)
+    #     cached = await self.db.get("cache/" + cache_id)
+    #     headers = {}
+    #     if cached.exists:
+    #         headers["If-None-Match"] = cached.get("etag")
 
-        status_code, response_pages = await pop_first(
-            self._request_base(url, params, headers=headers)
-        )
+    #     status_code, response_pages = await pop_first(
+    #         self._request_base(url, params, headers=headers)
+    #     )
 
-        yield status_code
+    #     yield status_code
 
-        if status_code == 304:
-            async for page in self.db.stream("cache/%s/pages" % cache_id):
-                yield page.to_dict()
-            return
+    #     if status_code == 304:
+    #         async for page in self.db.stream("cache/%s/pages" % cache_id):
+    #             yield page.to_dict()
+    #         return
 
-        if status_code >= 200 and status_code < 300:
+    #     if status_code >= 200 and status_code < 300:
 
-            transaction = AsyncTransaction(
-                client=self.db._db)
+    #         transaction = AsyncTransaction(
+    #             client=self.db._db)
 
-            write_count = 0
-            page_n = 0
-            async for page in response_pages:
-                if page_n == 0:
-                    ref = self.db._document("cache/" + cache_id)
-                    transaction.set(ref, {"etag": page["etag"]})
-                    write_count += 1
+    #         write_count = 0
+    #         page_n = 0
+    #         async for page in response_pages:
+    #             if page_n == 0:
+    #                 ref = self.db._document("cache/" + cache_id)
+    #                 transaction.set(ref, {"etag": page["etag"]})
+    #                 write_count += 1
 
-                ref = self.db._document(
-                    "cache/%s/pages/%s" % (cache_id, page_n))
-                transaction.set(ref, page)
-                write_count += 1
+    #             ref = self.db._document(
+    #                 "cache/%s/pages/%s" % (cache_id, page_n))
+    #             transaction.set(ref, page)
+    #             write_count += 1
 
-                yield page
-            page_n += 1
+    #             yield page
+    #         page_n += 1
 
-            await transaction.commit()
-            await self.db._write_counter.inc(write_count)
+    #         await transaction.commit()
+    #         await self.db._write_counter.inc(write_count)
 
-            return
+    #         return
 
     async def _request_base(self, url, params, headers=None, max_retries=5):
 

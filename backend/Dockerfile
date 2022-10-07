@@ -20,21 +20,22 @@ RUN apt clean
 #COPY utils/install_certificates.py /tmp
 # RUN python /tmp/install_certificates.py
 
-RUN useradd -m appuser
+
 WORKDIR /app
-RUN chown appuser:appuser .
-USER appuser
+
+
 
 RUN wget  http://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -O - > install-poetry.py
 RUN  python3 install-poetry.py
-ENV PATH="/home/appuser/.local/bin:${PATH}"
+
+ADD poetry.lock pyproject.toml  /app/
+
+ENV PATH="/root/.local/bin:${PATH}"
+RUN echo $PATH
+RUN poetry install --no-interaction
 
 
-ADD --chown=appuser:appuser poetry.lock pyproject.toml  /app/
-RUN /home/appuser/.local/bin/poetry install  --no-interaction
-
-
-COPY --chown=appuser:appuser . .
+COPY  . .
 
 
 

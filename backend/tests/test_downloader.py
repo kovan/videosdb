@@ -172,12 +172,12 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
 
         # check that cache pages were written
 
-        cache_id = "test_cache/playlistItems?part=snippet&playlistId=PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
-        cache_doc = (await self.db.document(cache_id).get()).to_dict()
-        self.assertEqual(cache_doc["etag"], "WYcEnKmXzfgV-X0qnGX2VWt6rPY")
-        cache_doc_page_0 = (await self.db.document(cache_id + "/pages/0").get()).to_dict()
-        self.assertEqual(
-            cache_doc_page_0["kind"], "youtube#playlistItemListResponse")
+        # cache_id = "test_cache/playlistItems?part=snippet&playlistId=PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+        # cache_doc = (await self.db.document(cache_id).get()).to_dict()
+        # self.assertEqual(cache_doc["etag"], "WYcEnKmXzfgV-X0qnGX2VWt6rPY")
+        # cache_doc_page_0 = (await self.db.document(cache_id + "/pages/0").get()).to_dict()
+        # self.assertEqual(
+        #     cache_doc_page_0["kind"], "youtube#playlistItemListResponse")
 
     # async def test_firestore_behavior(self):
     #     a = await self.db.document("test_videos/" + "asdfsdf").set({

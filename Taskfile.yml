@@ -121,6 +121,7 @@ tasks:
         deps: [init, build-frontend, build-backend, start-test-servers]
         cmds:
             - defer: docker compose logs
+            - mkdir -p .httpx-cache
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
@@ -163,18 +164,57 @@ tasks:
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 yarn run-s generate deploy
 
+    download-cache:
+        deps: [init]
+        cmds:
+            - docker run --rm
+                --name gcloud
+                -v $(pwd)/common/keys:/keys
+                google/cloud-sdk:alpine
+                gcloud auth activate-service-account --key-file /keys/{{.VIDEOSDB_CONFIG}}.json &&
+                gsutil cp gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/cache.tar.gz .
+            - rm -fr .httpx-cache
+            - tar xf cache.tar.gz
+            - rm cache.tar.gz
+
+
+
+    upload-cache:
+        deps: [init]
+        cmds:
+            - rm -f cache.tar.gz
+            - tar czf cache.tar.gz .httpx-cache
+            - docker run --rm
+                --name gcloud
+                -v $(pwd)/common/keys:/keys
+                google/cloud-sdk:alpine
+                gcloud auth activate-service-account --key-file /keys/{{.VIDEOSDB_CONFIG}}.json &&
+                gsutil cp cache.tar.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}
+            - rm cache.tar.gz
+
+    prueba:
+        cmds:
+            - task: "{{if .PRUEBA_YES}}init{{end}}"
+
+
     generate:
         run: once
         deps: [init, build-frontend, build-backend, unittests, end2end-tests]
         cmds:
-            - docker run
+            - task: "{{if .BUILD_ID}}download-cache{{end}}"
+            - mkdir -p .httpx-cache
+            - docker run --rm
+                --name backend
                 --network host
+                --mount type=bind,src=$(pwd)/.httpx-cache,dst=/root/.cache/httpx-cache
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main
                     --check-for-new-videos
                     --enable-twitter-publishing
-            - docker run
+            - task: "{{if .BUILD_ID}}upload-cache{{end}}"
+            - docker run --rm
+                --name frontend
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
