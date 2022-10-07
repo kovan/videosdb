@@ -190,21 +190,41 @@ tasks:
                 gsutil cp cache.tar.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}
             - rm cache.tar.gz
 
-    prueba:
+    prueba: echo {{.VIDEOSDB_CONFIG}}
+
+    prueba2:
         cmds:
-            - task: "{{if .PRUEBA_YES}}init{{end}}"
+            - task: prueba
+
+    prueba3:
+        cmds:
+            - export VIDEOSDB_CONFIG=test
+            - defer:
+                - task: prueba2
+
+    generate-gcp:
+        deps: [init]
+        cmds:
+            - task: download-cache
+            - defer:
+                - task: upload-cache
+            - task: generate
+
+
 
     generate:
-        run: once
-        deps: [init, build-frontend, build-backend, unittests, end2end-tests]
+        deps: [init, build-all, unittests, end2end-tests]
         cmds:
-            - task: "{{if .BUILD_ID}}download-cache{{end}}"
-              vars:
-                VIDEOSDB_CONFIG: {{.VIDEOSDB_CONFIG}}
+            - task: run-backend
+            - task: run-frontend
 
+
+    run-backend:
+        run: once
+        deps: [init, build-backend]
+        cmds:
             - mkdir -p .httpx-cache
             - docker run --rm
-                --name backend
                 --network host
                 --mount type=bind,src=$(pwd)/.httpx-cache,dst=/root/.cache/httpx-cache
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
@@ -212,12 +232,12 @@ tasks:
                 run main
                     --check-for-new-videos
                     --enable-twitter-publishing
-            - task: "{{if .BUILD_ID}}upload-cache{{end}}"
-              vars:
-                VIDEOSDB_CONFIG: {{.VIDEOSDB_CONFIG}}
 
+    run-frontend:
+        run: once
+        deps: [init, build-frontend]
+        cmds:
             - docker run --rm
-                --name frontend
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
@@ -295,20 +315,14 @@ tasks:
             - task: end2end-tests
 
     generate-testing:
-        - task: generate
-          vars:
-            VIDEOSDB_CONFIG: testing
-            FIREBASE_PROJECT: videosdb-testing
+        cmds:
+            - task: generate-gcp
 
     generate-sadhguru:
-        - task: generate
-          vars:
-            VIDEOSDB_CONFIG: sadhguru
-            FIREBASE_PROJECT: videosdb-firebase
+        cmds:
+            - task: generate-gcp
 
     generate-nithyananda:
-        - task: generate
-          vars:
-            VIDEOSDB_CONFIG: nithyananda
-            FIREBASE_PROJECT: videosdb-nithyananda
+        cmds:
+            - task: generate-gcp
 
