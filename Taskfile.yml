@@ -227,7 +227,6 @@ tasks:
             - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
             - docker run --rm
                 --network host
-                --mount type=bind,src=$(pwd)/.httpx-cache,dst=/root/.cache/httpx-cache
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main
