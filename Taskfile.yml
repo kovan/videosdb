@@ -47,7 +47,7 @@ tasks:
                 sh -c '
                     until nc -z {{.HOST}} {{.PORT}};
                         do echo "waiting for port {{.PORT}} on host {{.HOST}} ...";
-                        sleep 1;
+                        sleep 2;
                     done'
 
     build-backend:
@@ -99,7 +99,7 @@ tasks:
                 {{else}}
                     docker compose build
                 {{end}}'
-            - docker compose restart || docker compose up --detach
+            - docker compose up --detach
             - task: wait-for-redis
             - task: wait-for-emulator
 
