@@ -26,14 +26,13 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
-            'stream': sys.stderr
+            'stream': sys.stdout
         }
     },
     'loggers': {
         'anyio': {
             "level": os.environ.get("LOGLEVEL", "INFO"),
         },
-
         'asyncio': {
             "level": os.environ.get("LOGLEVEL", "INFO"),
         },
