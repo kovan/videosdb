@@ -7,7 +7,7 @@ import httpx
 from tweepy.asynchronous import AsyncClient
 logger = logging.getLogger(__name__)
 
-BITLY_ACCESS_TOKEN = "87dce0221a0751012efc890ba7ef595a3e8763ab"
+BITLY_ACCESS_TOKEN = "35811ca34a0829350789fceabfffd6ed57588672"
 
 
 class Publisher:
