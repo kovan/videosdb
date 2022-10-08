@@ -56,14 +56,14 @@ class MockedAPIMixin:
     def setUp(self):
 
         self.get_event_loop()
-        self.my_loop.run_until_complete(self._clear_db())
+        self.my_loop.run_until_complete(self._clear_dbs())
         self.mocked_api.start()
         self.addCleanup(self.mocked_api.stop)
 
-    async def _clear_db(self):
-        logger.debug("clearing db")
+    async def _clear_dbs(self):
         async for col in self.db.collections():
             await self.db.recursive_delete(col)
+        await self.redis.flushdb()
 
     @classmethod
     def setUpClass(cls):
@@ -76,6 +76,7 @@ class MockedAPIMixin:
 
         # DB.wait_for_port(60.0)
 
+        cls.redis = redis.Redis()
         cls.db = DB.setup()
         cls.mocked_api = respx.mock(base_url=YoutubeAPI.get_root_url(),
                                     assert_all_called=False)
@@ -117,7 +118,6 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
         super().setUp()
 
         self.downloader = Downloader(db_prefix="test_")
-        self.redis = redis.Redis()
 
     @respx.mock
     async def test_process_playlist_ids(self):
@@ -172,7 +172,6 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
             video["snippet"]["publishedAt"], datetime.datetime))
         self.assertIn("statistics", video)
 
-    async def test_cache(self):
         # check that cache pages were written
 
         cache_id = "playlistItems?part=snippet&playlistId=PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
