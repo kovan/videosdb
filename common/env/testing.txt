@@ -1,3 +1,4 @@
+LOGLEVEL=DEBUG
 FIREBASE_PROJECT=videosdb-testing
 NODE_OPTIONS=--openssl-legacy-provider
 VIDEOSDB_CONFIG=testing
