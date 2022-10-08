@@ -25,6 +25,12 @@ services:
         ports:
             - 46456:46456
 
+    redis:
+        network_mode: host
+        image: redis
+        ports:
+            - 6379:6379
+
 volumes:
     emulator-data:
         name: emulator-data

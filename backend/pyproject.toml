@@ -19,7 +19,8 @@ fnc = "^0.5.3"
 bleach = "^5.0.1"
 tweepy = {extras = ["async"], version = "^4.10.1"}
 json_schema = "^0.3"
-httpx-cache = "^0.6.0"
+redis = "^4.3.4"
+httpx-caching = {git = "https://github.com/kovan/httpx-caching.git"}
 
 
 [tool.poetry.dev-dependencies]

@@ -9,6 +9,7 @@ env:
         sh: git branch --show-current
     REVISION_ID:
         sh: git rev-parse HEAD
+    TEST_SERVERS: json-caching-proxy firebase-emulator
 
 output: prefixed
 
@@ -39,13 +40,13 @@ tasks:
                 {{.IMAGE}}
 
 
-    wait-for-emulator:
+    wait-for-port:
         internal: true
         cmds:
             - docker run --rm --network host busybox
                 sh -c '
-                    until nc -z {{.FIRESTORE_EMULATOR_HOST | replace ":" " "}};
-                        do echo "waiting for emulator...";
+                    until nc -z {{.HOST}} {{.PORT}};
+                        do echo "waiting for port {{.PORT}} on host {{.HOST}} ...";
                         sleep 1;
                     done'
 
@@ -72,7 +73,24 @@ tasks:
     build-all:
         deps: [build-frontend, build-backend]
 
-    start-test-servers:
+    wait-for-redis:
+        cmds:
+            - task: wait-for-port
+              vars:
+                HOST: 127.0.0.1
+                PORT: 6379
+
+    wait-for-emulator:
+        cmds:
+            - task: wait-for-port
+              vars:
+                HOST:
+                    sh: echo {{.FIRESTORE_EMULATOR_HOST}} | cut -d ":" -f 1
+                PORT:
+                    sh: echo {{.FIRESTORE_EMULATOR_HOST}} | cut -d ":" -f 2
+
+
+    start-servers:
         deps: [init]
         run: once
         cmds:
@@ -83,9 +101,10 @@ tasks:
                 {{end}}'
             - docker compose stop
             - docker compose up --detach
+            - task: wait-for-redis
             - task: wait-for-emulator
 
-    stop-test-servers: docker compose down
+    stop-servers: docker compose down
 
     unittests-frontend:
         run: once
@@ -94,12 +113,13 @@ tasks:
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
-                {{.REPO}}frontend-{{.BRANCH}}:latest  yarn test
+                {{.REPO}}frontend-{{.BRANCH}}:latest
+                yarn test
 
 
     unittests-backend:
         run: once
-        deps: [init, build-backend, start-test-servers]
+        deps: [init, build-backend, start-servers]
         cmds:
             - docker run --rm
                 --network host
@@ -118,10 +138,9 @@ tasks:
 
     end2end-tests:
         run: once
-        deps: [init, build-frontend, build-backend, start-test-servers]
+        deps: [init, build-frontend, build-backend, start-servers]
         cmds:
             - defer: docker compose logs
-            - mkdir -p .httpx-cache
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
@@ -147,7 +166,7 @@ tasks:
 
     deploy-test:
         run: once
-        deps: [init, build-frontend, build-backend, start-test-servers]
+        deps: [init, build-frontend, build-backend, start-servers]
         cmds:
             - docker run
                 --network host
@@ -177,17 +196,13 @@ tasks:
                 --volumes-from gcloud
                 --mount type=bind,src=$(pwd),dst=/app
                 google/cloud-sdk:alpine
-                gsutil cp gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/cache.tar.gz /app
-            - rm -fr .httpx-cache
-            - tar xf cache.tar.gz
-            - rm -f cache.tar.gz
-
+                gsutil cp gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/dump.rdb.gz /app
+            - gunzip -f dump.rdb.gz
 
     upload-cache:
         deps: [init]
         cmds:
-            - rm -f cache.tar.gz
-            - tar czf cache.tar.gz .httpx-cache
+            - gzip --keep dump.rdb
             - docker run
                 --name gcloud
                 -v $(pwd)/common/keys:/keys
@@ -198,8 +213,8 @@ tasks:
                 --volumes-from gcloud
                 --mount type=bind,src=$(pwd),dst=/app
                 google/cloud-sdk:alpine
-                gsutil cp /app/cache.tar.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/
-            - rm -f cache.tar.gz
+                gsutil cp /app/dump.rdb.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/
+            - rm -f dump.rdb.gz
 
 
 
@@ -207,7 +222,9 @@ tasks:
         run: once
         deps: [init, build-backend]
         cmds:
-            - mkdir -p .httpx-cache
+            - docker compose up redis -d
+            - task: wait-for-redis
+            - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
             - docker run --rm
                 --network host
                 --mount type=bind,src=$(pwd)/.httpx-cache,dst=/root/.cache/httpx-cache
@@ -216,6 +233,8 @@ tasks:
                 run main
                     --check-for-new-videos
                     --enable-twitter-publishing
+
+
 
     run-frontend:
         run: once
@@ -274,9 +293,9 @@ tasks:
         deps: [init]
         run: once
         cmds:
-            - REPO={{.REPO}} docker compose build
+            - REPO={{.REPO}} docker compose build {{.TEST_SERVERS}}
             - docker login gcr.io
-            - REPO={{.REPO}} docker compose push
+            - REPO={{.REPO}} docker compose push {{.TEST_SERVERS}}
         vars:
             REPO: gcr.io/{{.REPO_PROJECT}}/
 

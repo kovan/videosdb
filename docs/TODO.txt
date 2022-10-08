@@ -1,3 +1,5 @@
+- mirar lo de firebase shortlnks
+
 
 - publicaciones en twitter progresivas o del tirón?
 - poner descripciones de los botones en caso de tablet/escritorio

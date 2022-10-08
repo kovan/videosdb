@@ -1,4 +1,5 @@
-import httpx_cache
+
+from httpx_caching import CachingClient, AsyncRedisCache
 #from google.cloud.firestore_v1.async_transaction import AsyncTransaction
 import json
 import logging
@@ -55,17 +56,10 @@ class YoutubeAPI:
     def __init__(self, db, yt_key=None, use_cache=True):
         self.db = db
         limits = httpx.Limits(max_connections=50)
+        self.http = httpx.AsyncClient(limits=limits)
         if use_cache:
             logger.info("Using HTTPX cache")
-            cache_dir = os.environ.get("HTTPX_CACHE_DIR")
-            if cache_dir:
-                cache = httpx_cache.FileCache(cache_dir=cache_dir)
-            else:
-                cache = httpx_cache.FileCache()
-
-            self.http = httpx_cache.AsyncClient(cache=cache, limits=limits)
-        else:
-            self.http = httpx.AsyncClient(limits=limits)
+            self.http = CachingClient(self.http, cache=AsyncRedisCache())
 
         self.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
         if not self.yt_key:

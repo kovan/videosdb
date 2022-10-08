@@ -34,3 +34,4 @@ backend/output.txt
 node_modules/
 .httpx-cache
 cache.tar.gz
+dump.rdb
