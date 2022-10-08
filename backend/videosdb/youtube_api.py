@@ -198,7 +198,7 @@ class YoutubeAPI:
 
         if status_code == 304:
             for page_n in range(cached["n_pages"]):
-                page = json.loads(await redis.get(f"{cache_id}_page_{page_n}"))
+                page = json.loads(await self.redis.get(f"{cache_id}_page_{page_n}"))
                 yield page
 
         elif status_code >= 200 and status_code < 300:

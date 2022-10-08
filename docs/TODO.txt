@@ -1,10 +1,9 @@
 - mirar lo de firebase shortlnks
-
-
 - publicaciones en twitter progresivas o del tirón?
 - poner descripciones de los botones en caso de tablet/escritorio
+
 - habilitar related videos en sadhguru ¿? consume muchisima quota
-- el entorno test de twitter es publico wtf
+
 
 
 
