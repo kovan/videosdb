@@ -134,5 +134,6 @@ class TwitterPublisher(Publisher):
         }
         await self.db.set_noquota("videos/" + video["id"], video, merge=True)
 
-        logger.info("Published video " + video["id"])
+        logger.info("Published in Twitter video %s with text: %s" % (
+            video["id"], text))
         return None
