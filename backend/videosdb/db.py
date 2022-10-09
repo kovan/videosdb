@@ -84,7 +84,7 @@ class DB:
         if not doc.exists:
             await doc.reference.set({})
         # check writes are not out of quota:
-        await self._set("meta/test", {})
+        await self.set("meta/test", {})
         return self
 
     # google.api_core.exceptions.ResourceExhausted: 429 Quota exceeded.
