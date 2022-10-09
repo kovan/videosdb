@@ -36,7 +36,7 @@ class Publisher:
 
         config = os.environ["VIDEOSDB_CONFIG"]
         config_path = os.path.join(
-            BASE_DIR, "../../common/firebase/configs/%s.json" % config.strip('"'))
+            BASE_DIR, "../common/firebase/configs/%s.json" % config.strip('"'))
         with open(config_path) as key_file:
             contents = json.load(key_file)
             api_key = contents["apiKey"]
