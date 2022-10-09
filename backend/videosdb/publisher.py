@@ -19,7 +19,7 @@ class Publisher:
         self.db = db
         self.http = httpx.AsyncClient()
 
-    # async def _get_short_url(self, url):
+    # async def _get_short_url_bitly(self, url):
     #     response = await self.http.post("https://api-ssl.bitly.com/v4/shorten",
     #                                     headers={
     #                                         "Authorization": "Bearer " + BITLY_ACCESS_TOKEN,
@@ -31,6 +31,7 @@ class Publisher:
     #                                     })
     #     response.raise_for_status()
     #     return response.json()["link"]
+
     async def _get_short_url_firebase(self, url):
 
         config = os.environ["VIDEOSDB_CONFIG"]
@@ -41,23 +42,21 @@ class Publisher:
             api_key = contents["apiKey"]
 
         request_url = "https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=" + api_key
-        url = "https://videosdb-testing.web.app/video/sadhguru-meets-with-the-students-of-isha-samskriti"
         json_data = {
             "dynamicLinkInfo": {
-                "domainUriPrefix": "https://nithyananda.cc/v",
+                "domainUriPrefix": "https://www.nithyananda.cc/v",
                 "link": url,
             }
         }
         response = await self.http.post(request_url, json=json_data)
 
-        response.raise_for_status()
-        return response.json()
+        return response.json()["shortLink"]
 
     async def _create_post_text(self, video):
         url = os.environ["VIDEOSDB_HOSTNAME"] + \
             "/video/" + video["videosdb"]["slug"]
         short_url = await self._get_short_url_firebase(url)
-        yt_url = "https://www.youtube.com/watch?v=" + video["id"],
+        yt_url = "http://youtu.be/" + video["id"],
         text = """
         {title}
         {youtube_url}
