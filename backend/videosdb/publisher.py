@@ -56,7 +56,7 @@ class Publisher:
         url = os.environ["VIDEOSDB_HOSTNAME"] + \
             "/video/" + video["videosdb"]["slug"]
         short_url = await self._get_short_url_firebase(url)
-        yt_url = "http://youtu.be/" + video["id"],
+        yt_url = "http://youtu.be/" + video["id"]
         text = """
         {title}
         {youtube_url}
