@@ -1,4 +1,7 @@
 # from pytwitter import Api
+import ipdb
+import json
+import sys
 import fnc
 import datetime
 import logging
@@ -8,6 +11,7 @@ from tweepy.asynchronous import AsyncClient
 logger = logging.getLogger(__name__)
 
 BITLY_ACCESS_TOKEN = "35811ca34a0829350789fceabfffd6ed57588672"
+BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
 
 
 class Publisher:
@@ -15,23 +19,44 @@ class Publisher:
         self.db = db
         self.http = httpx.AsyncClient()
 
-    async def _get_bitly_url(self, url):
-        response = await self.http.post("https://api-ssl.bitly.com/v4/shorten",
-                                        headers={
-                                            "Authorization": "Bearer " + BITLY_ACCESS_TOKEN,
-                                        },
-                                        json={
-                                            "long_url": url,
-                                            "domain": "bit.ly",
-                                            "group_guid": "Bma3nPlFgj5"
-                                        })
+    # async def _get_short_url(self, url):
+    #     response = await self.http.post("https://api-ssl.bitly.com/v4/shorten",
+    #                                     headers={
+    #                                         "Authorization": "Bearer " + BITLY_ACCESS_TOKEN,
+    #                                     },
+    #                                     json={
+    #                                         "long_url": url,
+    #                                         "domain": "bit.ly",
+    #                                         "group_guid": "Bma3nPlFgj5"
+    #                                     })
+    #     response.raise_for_status()
+    #     return response.json()["link"]
+    async def _get_short_url_firebase(self, url):
+
+        config = os.environ["VIDEOSDB_CONFIG"]
+        config_path = os.path.join(
+            BASE_DIR, "../../common/firebase/configs/%s.json" % config.strip('"'))
+        with open(config_path) as key_file:
+            contents = json.load(key_file)
+            api_key = contents["apiKey"]
+
+        request_url = "https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=" + api_key
+        url = "https://videosdb-testing.web.app/video/sadhguru-meets-with-the-students-of-isha-samskriti"
+        json_data = {
+            "dynamicLinkInfo": {
+                "domainUriPrefix": "https://nithyananda.cc/v",
+                "link": url,
+            }
+        }
+        response = await self.http.post(request_url, json=json_data)
+
         response.raise_for_status()
-        return response.json()["link"]
+        return response.json()
 
     async def _create_post_text(self, video):
         url = os.environ["VIDEOSDB_HOSTNAME"] + \
             "/video/" + video["videosdb"]["slug"]
-        short_url = await self._get_bitly_url(url)
+        short_url = await self._get_short_url_firebase(url)
         yt_url = "https://www.youtube.com/watch?v=" + video["id"],
         text = """
         {title}
