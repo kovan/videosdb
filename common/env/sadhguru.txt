@@ -1,4 +1,3 @@
-LOGLEVEL=INFO
 FIREBASE_PROJECT=videosdb-firebase
 NODE_OPTIONS=--openssl-legacy-provider
 VIDEOSDB_CONFIG=sadhguru
