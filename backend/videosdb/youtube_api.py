@@ -52,12 +52,16 @@ class YoutubeAPI:
     async def aclose(self) -> None:
         return await self.http.aclose()
 
-    def __init__(self, db, yt_key=None):
+    def __init__(self, db, yt_key=None, redis_db_n=None):
         self.db = db
         limits = httpx.Limits(max_connections=50)
         self.http = httpx.AsyncClient(limits=limits)
 
-        self.redis = redis.Redis()
+        if redis_db_n:
+            self.redis = redis.Redis(db=redis_db_n)
+        else:
+            self.redis = redis.Redis()
+
         self.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
         if not self.yt_key:
             self.yt_key = "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU"

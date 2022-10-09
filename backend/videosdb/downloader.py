@@ -45,7 +45,7 @@ async def fix_publishedAt(video_id, db):
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
-    def __init__(self, options=None, db_prefix=None):
+    def __init__(self, options=None, db_prefix=None, redis_db_n=None):
 
         # for k, v in os.environ.items():
         #     logger.debug('- %s = "%s"' % (k, v))
@@ -59,7 +59,7 @@ class Downloader:
             self.db = DB(db_prefix)
         else:
             self.db = DB()
-        self.api = YoutubeAPI(self.db)
+        self.api = YoutubeAPI(self.db, redis_db_n=redis_db_n)
         self.QUOTA_EXCEPTIONS = (
             DB.QuotaExceeded,
             YoutubeAPI.QuotaExceeded,

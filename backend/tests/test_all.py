@@ -77,7 +77,7 @@ class MockedAPIMixin:
 
         # DB.wait_for_port(60.0)
 
-        cls.redis = redis.Redis()
+        cls.redis = redis.Redis(db=1)
         cls.db = DB.setup()
         cls.mocked_api = respx.mock(base_url=YoutubeAPI.get_root_url(),
                                     assert_all_called=False)
@@ -118,7 +118,7 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
     def setUp(self):
         super().setUp()
 
-        self.downloader = Downloader(db_prefix="test_")
+        self.downloader = Downloader(db_prefix="test_", redis_db_n=1)
 
     @respx.mock
     async def test_process_playlist_ids(self):

@@ -1,7 +1,6 @@
-- mirar lo de firebase shortlnks
-- publicaciones en twitter progresivas o del tirón?
-- poner descripciones de los botones en caso de tablet/escritorio
 
+
+- poner descripciones de los botones en caso de tablet/escritorio
 - habilitar related videos en sadhguru ¿? consume muchisima quota
 
 
@@ -16,11 +15,24 @@
 
 
 
-- si quiero que no se invalide la cache del CDN en cada deploy, quitar de las tablas todo lo que sea estado, y también quitar fechas de actualización no usadas.
-   - la fecha de actualización general generarla con <client-only> mediante JS a la fecha de hoy.
-   - quitar la fecha de actualización de los videos y listas.
-   - sacar las IDs de las ultimas playlist y videos descargados a una nueva tabla "state" (dict plid -> vid)
-   - quizá ordenar listas de categorias, videoids y playlisids para que los payload.js generados sean siempre iguales.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
