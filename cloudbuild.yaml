@@ -4,6 +4,7 @@ steps:
     env:
         - 'BUILD_ID=$BUILD_ID'
         - 'VIDEOSDB_CONFIG=$_VIDEOSDB_CONFIG'
+        - 'LOGLEVEL=$_LOGLEVEL'
     args:
         - --verbose
         - $TRIGGER_NAME
