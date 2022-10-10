@@ -336,12 +336,18 @@ tasks:
     generate-testing:
         cmds:
             - task: generate-gcp
+        preconditions:
+            - test {{.VIDEOSDB_CONFIG}}
 
     generate-sadhguru:
         cmds:
             - task: generate-gcp
+        preconditions:
+            - test {{.VIDEOSDB_CONFIG}}
 
     generate-nithyananda:
         cmds:
             - task: generate-gcp
+        preconditions:
+            - test {{.VIDEOSDB_CONFIG}}
 
