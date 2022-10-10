@@ -179,9 +179,14 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
         cache_doc = json.loads(await self.redis.get(cache_id))
         self.assertEqual(cache_doc["etag"], "WYcEnKmXzfgV-X0qnGX2VWt6rPY")
         self.assertEqual(cache_doc["n_pages"], 2)
-        cache_doc_page_0 = json.loads(await self.redis.get(cache_id + "_page_0"))
+        cached_page_0 = json.loads(await self.redis.get(cache_id + "_page_0"))
+        cached_page_1 = json.loads(await self.redis.get(cache_id + "_page_1"))
         self.assertEqual(
-            cache_doc_page_0["kind"], "youtube#playlistItemListResponse")
+            cached_page_0["etag"], self.raw_responses["playlistItems.1"]["etag"])
+        self.assertEqual(
+            cached_page_1["etag"], self.raw_responses["playlistItems.2"]["etag"])
+
+        # check that pages were used:
 
     # async def test_firestore_behavior(self):
     #     a = await self.db.document("test_videos/" + "asdfsdf").set({
@@ -208,20 +213,3 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
 
         self.assertIn("transcript", video["videosdb"])
         self.assertIn("transcript_status", video["videosdb"])
-
-
-class PublisherTest(PatchedTestCase):
-    async def test_hello_twitter(self):
-        with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
-            video = json.load(f)["items"][0]
-
-        video |= {
-            "videosdb": {
-                "slug": "this-is-a-slug-for-testing"
-            }
-        }
-
-        p = TwitterPublisher()
-
-        r = await p.publish_video(video)
-        print(r)

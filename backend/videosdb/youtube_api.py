@@ -1,9 +1,10 @@
 
+from copy import deepcopy
 import json
 import logging
 import os
 import re
-from typing import Iterable, NewType
+from typing import Iterable, NewType, OrderedDict
 import anyio
 import httpx
 from urllib.parse import urlencode
@@ -156,6 +157,7 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     async def _request_one(self, url, params, use_cache=True):
 
         modified, generator = await self._request_main(url, params, use_cache)
@@ -183,9 +185,15 @@ class YoutubeAPI:
     async def _request_with_cache(self, url, params):
         @staticmethod
         def _key_func(url: str, params: dict):
-            return url.lstrip("/") + "?" + urlencode(params)
-            # s = url + str(params)
-            # return hashlib.sha256(s.encode('utf-8')).hexdigest()
+            keys = list(params.keys())
+            keys.sort()
+            params_seq = []
+            for key in keys:
+                if key == "key":  # the api key can vary, skip it
+                    continue
+                params_seq.append((key, params[key]))
+
+            return url.lstrip("/") + "?" + urlencode(params_seq)
 
         cache_id = _key_func(url, params)
         cached = await self.redis.get(cache_id)
