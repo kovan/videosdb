@@ -16,7 +16,7 @@ import logging
 import sys
 from videosdb.publisher import TwitterPublisher
 
-from videosdb.youtube_api import YoutubeAPI
+from videosdb.youtube_api import Cache, YoutubeAPI
 
 logger = logging.getLogger(__name__)
 
@@ -175,10 +175,13 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
 
         # check that cache pages were written
 
-        cache_id = "playlistItems?part=snippet&playlistId=PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
-        cache_doc = json.loads(await self.redis.get(cache_id))
-        self.assertEqual(cache_doc["etag"], "WYcEnKmXzfgV-X0qnGX2VWt6rPY")
-        self.assertEqual(cache_doc["n_pages"], 2)
+        cache_id = Cache.key_func("/playlistItems", {
+            "part": "snippet",
+            "playlistId": "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+        })
+        cached = json.loads(await self.redis.get(cache_id))
+        self.assertEqual(cached["etag"], "WMsDqOm6raLZmN3legOjPB7T3XI")
+        self.assertEqual(cached["n_pages"], 2)
         cached_page_0 = json.loads(await self.redis.get(cache_id + "_page_0"))
         cached_page_1 = json.loads(await self.redis.get(cache_id + "_page_1"))
         self.assertEqual(

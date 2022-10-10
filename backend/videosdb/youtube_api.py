@@ -28,28 +28,75 @@ async def pop_first(async_generator):
     return first, async_generator
 
 
-# class Cache:
+class Cache:
 
-#     def __init__(self, redis_db_n=None):
-#         if redis_db_n:
-#             self.redis = redis.Redis(db=redis_db_n)
-#         else:
-#             self.redis = redis.Redis()
+    def __init__(self, redis_db_n=None):
+        if redis_db_n:
+            self.redis = redis.Redis(db=redis_db_n)
+        else:
+            self.redis = redis.Redis()
 
-#     async def get(self, key: str) -> dict | None:
-#         return json.loads(await self.redis.get(key))
+    @staticmethod
+    def key_func(url: str, params: dict):
+        keys = list(params.keys())
+        keys.sort()
+        params_seq = []
+        for key in keys:
+            if key == "key":  # the api key can vary, skip it
+                continue
+            params_seq.append((key, params[key]))
 
-#     async def set(self, key: str, value: dict):
-#         value = json.dumps(value)
-#         return await self.redis.set(key, value)
+        return url.lstrip("/") + "?" + urlencode(params_seq)
 
-#     async def __aenter__(self):
-#         self._transaction = self.redis.pipeline()
-#         return self._transaction
+    @staticmethod
+    def _pages_key_func(key, page_n):
+        return f"{key}_page_{page_n}"
 
-#     async def __aexit__(self, exc_type, exc_value, traceback):
-#         if not exc_type and not exc_value and not traceback:
-#             await self._transaction.execute()
+    async def get(self, key):
+        async def page_generator():
+            for page_n in range(page_count):
+                value = await self.redis.get(
+                    self._pages_key_func(key, page_n)
+                )
+                yield json.loads(value)
+
+        value = await self.redis.get(key)
+        if not value:
+            return None, None
+
+        json_value = json.loads(value)
+        page_count = json_value["n_pages"]
+
+        return json_value["etag"], page_generator()
+
+    async def set(self, key, page_generator):
+        transaction = self.redis.pipeline()
+        page_count = 0
+        etag = None
+        async for page in page_generator:
+            if page_count == 0:
+                etag = page["etag"]
+            transaction.set(
+                self._pages_key_func(key, page_count),
+                json.dumps(page))
+            page_count += 1
+            yield page
+
+        transaction.set(key,
+                        json.dumps({
+                            "etag": etag,
+                            "n_pages": page_count
+                        }))
+        logger.debug("Response Etag: " + etag)
+        await transaction.execute()
+
+    async def __aenter__(self):
+        self._transaction = self.redis.pipeline()
+        return self._transaction
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        if not exc_type and not exc_value and not traceback:
+            await self._transaction.execute()
 
 
 class YoutubeAPI:
@@ -82,10 +129,7 @@ class YoutubeAPI:
         limits = httpx.Limits(max_connections=50)
         self.http = httpx.AsyncClient(limits=limits)
 
-        if redis_db_n:
-            self.redis = redis.Redis(db=redis_db_n)
-        else:
-            self.redis = redis.Redis()
+        self.cache = Cache(redis_db_n)
 
         self.yt_key = os.environ.get("YOUTUBE_API_KEY", yt_key)
         if not self.yt_key:
@@ -181,6 +225,7 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     async def _request_one(self, url, params, use_cache=True):
 
         modified, generator = await self._request_main(url, params, use_cache)
@@ -206,29 +251,16 @@ class YoutubeAPI:
         return status_code != 304, generator(pages)
 
     async def _request_with_cache(self, url, params):
-        @staticmethod
-        def _key_func(url: str, params: dict):
-            keys = list(params.keys())
-            keys.sort()
-            params_seq = []
-            for key in keys:
-                if key == "key":  # the api key can vary, skip it
-                    continue
-                params_seq.append((key, params[key]))
-
-            return url.lstrip("/") + "?" + urlencode(params_seq)
-
-        @staticmethod
-        def _pages_key_func(key, page_n):
-            return f"{key}_page_{page_n}"
 
         headers = {}
-        key = _key_func(url, params)
-        cached = await self.redis.get(key)
 
-        if cached:
-            cached = json.loads(cached)
-            headers["If-None-Match"] = cached["etag"]
+        key = Cache.key_func(url, params)
+
+        etag, cached_pages = await self.cache.get(key)
+
+        if etag:
+            logger.debug("Request Etag: " + etag)
+            headers["If-None-Match"] = etag
 
         status_code, response_pages = await pop_first(
             self._request_base(url, params, headers=headers)
@@ -237,29 +269,12 @@ class YoutubeAPI:
         yield status_code
 
         if status_code == 304:
-            for page_n in range(cached["n_pages"]):
-                value = await self.redis.get(_pages_key_func(key, page_n))
-                yield json.loads(value)
-
+            pages_generator = cached_pages
         elif status_code >= 200 and status_code < 300:
+            pages_generator = self.cache.set(key, response_pages)
 
-            transaction = self.redis.pipeline()
-            page_n = 0
-            async for page in response_pages:
-                transaction.set(
-                    _pages_key_func(key, page_n),
-                    json.dumps(page))
-                page_n += 1
-                yield page
-
-            transaction.set(key, json.dumps(
-                {
-                    "etag": page["etag"],
-                    "n_pages": page_n
-                }
-            ))
-
-            await transaction.execute()
+        async for page in pages_generator:
+            yield page
 
     async def _request_base(self, url, params, headers=None, max_retries=5):
 
