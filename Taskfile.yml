@@ -15,7 +15,6 @@ output: prefixed
 
 tasks:
     init:
-        internal: true
         run: once
         cmds:
             - cmd:
@@ -25,6 +24,7 @@ tasks:
                 {{else}}
                     pgrep docker > /dev/null || sudo service docker start
                 {{end}}'
+            - env
 
     build:
         internal: true
