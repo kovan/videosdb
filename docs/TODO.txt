@@ -1,3 +1,5 @@
+El loglevel sigue sin ir
+
 - backups de la db desde el taskfile
 
 - poner descripciones de los botones en caso de tablet/escritorio

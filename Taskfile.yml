@@ -228,6 +228,7 @@ tasks:
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
+                {{if .LOGLEVEL}} -e LOGLEVEL={{.LOGLEVEL}} {{end}}
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main
                     --check-for-new-videos
