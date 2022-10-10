@@ -222,6 +222,8 @@ tasks:
         run: once
         deps: [init, build-backend]
         cmds:
+            - docker compose stop redis
+            - docker compose cp dump.rdb redis:/data
             - docker compose up redis -d
             - task: wait-for-redis
             - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
