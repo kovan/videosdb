@@ -327,8 +327,8 @@ class Downloader:
 
         await self.db.set("videos/" + video_id, video, merge=True)
 
-        logger.info("Wrote video: %s (%s)" %
-                    (video_id, video["snippet"]["title"]))
+        logger.info("Wrote video: %s" %
+                    (video_id))
 
         return video
 

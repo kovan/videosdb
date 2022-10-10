@@ -73,6 +73,7 @@ class Cache:
         transaction = self.redis.pipeline()
         page_count = 0
         etag = None
+        pages = []
         async for page in page_generator:
             if page_count == 0:
                 etag = page["etag"]
@@ -80,7 +81,7 @@ class Cache:
                 self._pages_key_func(key, page_count),
                 json.dumps(page))
             page_count += 1
-            yield page
+            pages.append(page)
 
         transaction.set(key,
                         json.dumps({
@@ -89,14 +90,7 @@ class Cache:
                         }))
         logger.debug("Response Etag: " + etag)
         await transaction.execute()
-
-    async def __aenter__(self):
-        self._transaction = self.redis.pipeline()
-        return self._transaction
-
-    async def __aexit__(self, exc_type, exc_value, traceback):
-        if not exc_type and not exc_value and not traceback:
-            await self._transaction.execute()
+        return pages
 
 
 class YoutubeAPI:
@@ -225,7 +219,6 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
-
     async def _request_one(self, url, params, use_cache=True):
 
         modified, generator = await self._request_main(url, params, use_cache)
@@ -269,12 +262,13 @@ class YoutubeAPI:
         yield status_code
 
         if status_code == 304:
-            pages_generator = cached_pages
+            async for page in cached_pages:
+                yield page
         elif status_code >= 200 and status_code < 300:
-            pages_generator = self.cache.set(key, response_pages)
-
-        async for page in pages_generator:
-            yield page
+            for page in await self.cache.set(key, response_pages):
+                yield page
+        else:
+            logger.warn("Unexpected status code: " + status_code)
 
     async def _request_base(self, url, params, headers=None, max_retries=5):
 
