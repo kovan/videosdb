@@ -1,6 +1,6 @@
 timeout: 3600s
 steps:
-  - name: gcr.io/worpdress-279321/task
+  - name: gcr.io/worpdress-279321/videosdb-builder
     env:
         - 'BUILD_ID=$BUILD_ID'
         - 'VIDEOSDB_CONFIG=$_VIDEOSDB_CONFIG'
