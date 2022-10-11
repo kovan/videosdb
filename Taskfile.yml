@@ -1,8 +1,8 @@
 version: '3'
 env:
     DOCKER_PASSWORD: 5@fs@i@58Zp6wfiH
-    REPO_PROJECT: worpdress-279321
-    REPO: '{{if .BUILD_ID }}gcr.io/{{.REPO_PROJECT}}/{{end}}'
+    MAIN_PROJECT: worpdress-279321
+    REPO: '{{if .BUILD_ID }}gcr.io/{{.MAIN_PROJECT}}/{{end}}'
     FIRESTORE_EMULATOR_HOST: 127.0.0.1:46456
     YOUTUBE_API_URL: http://127.0.0.1:43783/youtube/v3
     BRANCH:
@@ -20,7 +20,8 @@ tasks:
             - cmd:
                 '{{if .BUILD_ID }}
                     echo {{.DOCKER_PASSWORD}} | docker login --username eelis --password-stdin;
-                    docker login gcr.io
+                    cat common/keys/{{.MAIN_PROJECT}}.json| docker login -u _json_key --password-stdin gcr.io
+                    gcloud auth activate-service-account --key-file common/keys/{{.MAIN_PROJECT}}.json
                 {{end}}'
             - env
 
@@ -184,7 +185,6 @@ tasks:
     download-cache:
         deps: [init]
         cmds:
-            - gcloud auth activate-service-account --key-file common/keys/{{.VIDEOSDB_CONFIG}}.json
             - gsutil cp gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/dump.rdb.gz /app
             - gunzip -f dump.rdb.gz
         preconditions:
@@ -195,19 +195,27 @@ tasks:
         deps: [init]
         cmds:
             - gzip --keep dump.rdb
-            - gcloud auth activate-service-account --key-file common/keys/{{.VIDEOSDB_CONFIG}}.json
             - gsutil cp /app/dump.rdb.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/
             - rm -f dump.rdb.gz
         preconditions:
             - test {{.VIDEOSDB_CONFIG}}
 
+    backup-db:
+        deps: [init]
+        cmds:
+            - firestore-export 
+                --accountCredentials common/keys/{{.VIDEOSDB_CONFIG}}.json
+                --backupFile db-backup.json
+                --prettyPrint
+        preconditions:
+            - test {{.VIDEOSDB_CONFIG}}                
 
 
     run-backend:
         run: once
         deps: [init, build-backend]
         cmds:
-            - docker compose stop redis
+            - docker compose stop redis firebase-emulator
             - docker compose cp dump.rdb redis:/data
             - docker compose up redis -d
             - task: wait-for-redis
@@ -215,6 +223,7 @@ tasks:
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
+                -e 
                 {{if .LOGLEVEL}} -e LOGLEVEL={{.LOGLEVEL}} {{end}}
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main
@@ -231,6 +240,7 @@ tasks:
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
+                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 yarn run-s generate deploy
@@ -242,12 +252,21 @@ tasks:
             - task: run-backend
             - task: upload-cache
             - task: run-frontend
+            - gzip -keep db-backup.json
+            - gsutil cp db-backup.json.gz gs://backup-db-{{.VIDEOSDB_CONFIG}}/
+            - rm -f db-backup.json.gz
 
 
     generate:
-        deps: [init, build-all, unittests, end2end-tests]
+        deps: [init, build-all, unittests, end2end-tests, start-servers]
         cmds:
             - task: run-backend
+            - firestore-export 
+                --accountCredentials common/keys/{{.VIDEOSDB_CONFIG}}.json
+                --backupFile db-backup.json
+                --prettyPrint
+            - FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}} firestore-import 
+                --backupFile db-backup.json
             - task: run-frontend
 
 
@@ -282,12 +301,11 @@ tasks:
         run: once
         cmds:
             - REPO={{.REPO}} docker compose build {{.TEST_SERVERS}}
-            - cat common/keys/{{.REPO_PROJECT}}.json| docker login -u _json_key --password-stdin gcr.io
             - REPO={{.REPO}} docker compose push {{.TEST_SERVERS}}
             - docker build utils/builder -t videosdb-builder -t {{.REPO}}videosdb-builder
             - docker push {{.REPO}}videosdb-builder
         vars:
-            REPO: gcr.io/{{.REPO_PROJECT}}/
+            REPO: gcr.io/{{.MAIN_PROJECT}}/
 
 
 

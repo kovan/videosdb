@@ -35,3 +35,4 @@ node_modules/
 .httpx-cache
 cache.tar.gz
 dump.rdb
+db-backup.json

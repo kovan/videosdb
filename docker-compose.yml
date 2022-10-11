@@ -20,8 +20,6 @@ services:
             - GCP_PROJECT=${FIREBASE_PROJECT-firebase-testing}
             - ENABLE_UI=true
             - WSL_DISTRO_NAME=ubuntu
-        volumes:
-            - emulator-data:/firebase/baseline-data
         ports:
             - 46456:46456
 
@@ -32,6 +30,3 @@ services:
             - 6379:6379
         command: redis-server --loglevel warning
 
-volumes:
-    emulator-data:
-        name: emulator-data
