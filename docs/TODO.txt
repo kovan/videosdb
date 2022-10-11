@@ -1,4 +1,4 @@
-El loglevel sigue sin ir
+
 
 
 - poner descripciones de los botones en caso de tablet/escritorio
