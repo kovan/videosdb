@@ -55,8 +55,6 @@ class DB:
 
     def __init__(self, prefix=""):
         self.prefix = prefix
-        project = os.environ["FIREBASE_PROJECT"]
-        config = os.environ["VIDEOSDB_CONFIG"]
 
         if "FIRESTORE_EMULATOR_HOST" in os.environ:
             logger.info("EMULATOR ACTIVE: %s",
