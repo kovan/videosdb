@@ -20,8 +20,8 @@ tasks:
             - cmd:
                 '{{if .BUILD_ID }}
                     echo {{.DOCKER_PASSWORD}} | docker login --username eelis --password-stdin;
-                    cat common/keys/{{.MAIN_PROJECT}}.json| docker login -u _json_key --password-stdin gcr.io
-                    gcloud auth activate-service-account --key-file common/keys/{{.MAIN_PROJECT}}.json
+                    cat common/keys/{{.MAIN_PROJECT}}.json| docker login -u _json_key --password-stdin gcr.io;
+                    gcloud auth activate-service-account --key-file common/keys/{{.MAIN_PROJECT}}.json;
                 {{end}}'
             - env
 
