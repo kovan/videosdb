@@ -277,15 +277,18 @@ tasks:
               vars:
                 IMAGE: backend
 
-    build-and-push-test-servers:
+    build-and-push-other-images:
         deps: [init]
         run: once
         cmds:
             - REPO={{.REPO}} docker compose build {{.TEST_SERVERS}}
-            - docker login gcr.io
+            - cat common/keys/{{.REPO_PROJECT}}.json| docker login -u _json_key --password-stdin gcr.io
             - REPO={{.REPO}} docker compose push {{.TEST_SERVERS}}
+            - docker build utils/builder -t videosdb-builder -t {{.REPO}}videosdb-builder
+            - docker push {{.REPO}}videosdb-builder
         vars:
             REPO: gcr.io/{{.REPO_PROJECT}}/
+
 
 
     default:
