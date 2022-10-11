@@ -185,7 +185,7 @@ tasks:
     download-cache:
         deps: [init]
         cmds:
-            - gsutil cp gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/dump.rdb.gz /app
+            - gsutil cp gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/dump.rdb.gz .
             - gunzip -f dump.rdb.gz
         preconditions:
             - test {{.VIDEOSDB_CONFIG}}
@@ -195,20 +195,12 @@ tasks:
         deps: [init]
         cmds:
             - gzip --keep dump.rdb
-            - gsutil cp /app/dump.rdb.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/
+            - gsutil cp dump.rdb.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/
             - rm -f dump.rdb.gz
         preconditions:
             - test {{.VIDEOSDB_CONFIG}}
 
-    backup-db:
-        deps: [init]
-        cmds:
-            - firestore-export 
-                --accountCredentials common/keys/{{.VIDEOSDB_CONFIG}}.json
-                --backupFile db-backup.json
-                --prettyPrint
-        preconditions:
-            - test {{.VIDEOSDB_CONFIG}}                
+           
 
 
     run-backend:
