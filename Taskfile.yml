@@ -247,7 +247,6 @@ tasks:
             - firestore-export 
                 --accountCredentials common/keys/{{.VIDEOSDB_CONFIG}}.json
                 --backupFile db-export.json
-                --prettyPrint
             - FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}} firestore-import 
                 --backupFile db-export.json            
             - task: upload-db-backup
