@@ -24,7 +24,7 @@ def entrypoint():
     parser.add_argument("-d", "--fill-related-videos", action="store_true")
     parser.add_argument("-u", "--update-dnslink", action="store_true")
     parser.add_argument("-v", "--dotenv", action="store")
-    parser.add_argument("-h", "--export-to-emulator-host", action="store")
+    parser.add_argument("-x", "--export-to-emulator-host", action="store")
     parser.add_argument("-t", "--enable-twitter-publishing",
                         action="store_true")
     parser.add_argument(
