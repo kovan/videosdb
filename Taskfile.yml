@@ -31,7 +31,7 @@ tasks:
         cmds:
             # pull the image for --cache-from
             - cmd: '{{if .BUILD_ID }} docker pull -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest{{end}}'
-              ignore_errors: true
+              ignore_error: true
 
             - docker build
                 -t {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.REVISION_ID}}
