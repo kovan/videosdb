@@ -1,7 +1,0 @@
-[build]
-base = "frontend/"
-publish = "dist/"
-command = "yarn build && yarn generate"
-environment = { API_URL = "https://backend.sadhguru.digital/api" }
-
-
