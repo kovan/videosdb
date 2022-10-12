@@ -3,7 +3,7 @@ env:
     DOCKER_PASSWORD: 5@fs@i@58Zp6wfiH
     MAIN_PROJECT: worpdress-279321
     REGISTRY: us-central1-docker.pkg.dev/{{.MAIN_PROJECT}}/registry/
-    REPO: '{{if .BUILD_ID }}{{.REGISTRY}}/{{end}}'
+    REPO: '{{if .BUILD_ID }}{{.REGISTRY}}{{end}}'
     FIRESTORE_EMULATOR_HOST: 127.0.0.1:46456
     YOUTUBE_API_URL: http://127.0.0.1:43783/youtube/v3
     BRANCH:
