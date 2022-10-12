@@ -2,7 +2,8 @@ version: '3'
 env:
     DOCKER_PASSWORD: 5@fs@i@58Zp6wfiH
     MAIN_PROJECT: worpdress-279321
-    REPO: '{{if .BUILD_ID }}gcr.io/{{.MAIN_PROJECT}}/{{end}}'
+    REGISTRY: us-central1-docker.pkg.dev/{{.MAIN_PROJECT}}/registry/
+    REPO: '{{if .BUILD_ID }}{{.REGISTRY}}/{{end}}'
     FIRESTORE_EMULATOR_HOST: 127.0.0.1:46456
     YOUTUBE_API_URL: http://127.0.0.1:43783/youtube/v3
     BRANCH:
@@ -20,8 +21,8 @@ tasks:
             - cmd:
                 '{{if .BUILD_ID }}
                     echo {{.DOCKER_PASSWORD}} | docker login --username eelis --password-stdin;
-                    cat common/keys/{{.MAIN_PROJECT}}.json| docker login -u _json_key --password-stdin gcr.io;
                     gcloud auth activate-service-account --key-file common/keys/{{.MAIN_PROJECT}}.json;
+                    gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
                 {{end}}'
             - env
 
@@ -291,12 +292,10 @@ tasks:
         deps: [init]
         run: once
         cmds:
-            - REPO={{.REPO}} docker compose build {{.TEST_SERVERS}}
-            - REPO={{.REPO}} docker compose push {{.TEST_SERVERS}}
-            - docker build utils/builder -t {{.REPO}}videosdb-builder
-            - docker push {{.REPO}}videosdb-builder
-        vars:
-            REPO: gcr.io/{{.MAIN_PROJECT}}/
+            - REPO={{.REGISTRY}} docker compose build {{.TEST_SERVERS}}
+            - REPO={{.REGISTRY}} docker compose push {{.TEST_SERVERS}}
+            - docker build utils/builder -t {{.REGISTRY}}videosdb-builder
+            - docker push {{.REGISTRY}}videosdb-builder
 
 
 

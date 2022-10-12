@@ -1,6 +1,6 @@
 timeout: 3600s
 steps:
-  - name: gcr.io/worpdress-279321/videosdb-builder
+  - name: us-central1-docker.pkg.dev/worpdress-279321/registry/videosdb-builder
     env:
         - 'BUILD_ID=$BUILD_ID'
         - 'VIDEOSDB_CONFIG=$_VIDEOSDB_CONFIG'
