@@ -186,8 +186,6 @@ tasks:
         cmds:
             - gsutil cp gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/dump.rdb.gz .
             - gunzip -f dump.rdb.gz
-        preconditions:
-            - test {{.VIDEOSDB_CONFIG}}
 
 
     upload-cache:
@@ -196,10 +194,15 @@ tasks:
             - gzip --keep dump.rdb
             - gsutil cp dump.rdb.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/
             - rm -f dump.rdb.gz
-        preconditions:
-            - test {{.VIDEOSDB_CONFIG}}
 
-           
+    
+    upload-db-backup:
+        deps: [init]
+        cmds:
+            - gzip --keep db-export.json
+            - gsutil cp db-export.json.gz gs://backup-db-{{.VIDEOSDB_CONFIG}}/
+            - rm -f db-export.json.gz
+
 
 
     run-backend:
@@ -240,22 +243,21 @@ tasks:
         cmds:
             - task: run-backend
             - task: upload-cache
+            - firestore-export 
+                --accountCredentials common/keys/{{.VIDEOSDB_CONFIG}}.json
+                --backupFile db-export.json
+                --prettyPrint
+            - FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}} firestore-import 
+                --backupFile db-export.json            
+            - task: upload-db-backup
             - task: run-frontend
-            - gzip -keep db-backup.json
-            - gsutil cp db-backup.json.gz gs://backup-db-{{.VIDEOSDB_CONFIG}}/
-            - rm -f db-backup.json.gz
+
 
 
     generate:
         deps: [init, build-all, unittests, end2end-tests, start-servers]
         cmds:
             - task: run-backend
-            - firestore-export 
-                --accountCredentials common/keys/{{.VIDEOSDB_CONFIG}}.json
-                --backupFile db-backup.json
-                --prettyPrint
-            - FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}} firestore-import 
-                --backupFile db-backup.json
             - task: run-frontend
 
 
