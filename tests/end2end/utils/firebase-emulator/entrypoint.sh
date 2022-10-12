@@ -1,3 +1,3 @@
 #!/bin/bash
 firebase use default
-firebase emulators:start %*
+firebase emulators:start

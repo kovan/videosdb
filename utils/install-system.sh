@@ -1,8 +1,9 @@
 #!/bin/bash
 # all this for debian
 sudo apt-get update
-sudo apt install -y zsh curl wget tmux git fzf
+sudo apt install -y zsh curl wget tmux git fzf vim net-tools apt-file netcat nmap
 sudo apt install -y firefox-esr
+sudo apt-file update
 
 #oh my zsh
 
@@ -32,6 +33,9 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plu
 
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - &&\
 sudo apt-get install -y nodejs
+#poetry
+sudo apt install python3-distutils
+curl -sSL https://install.python-poetry.org | python3 -
 
 
 #other
