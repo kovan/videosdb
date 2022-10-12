@@ -214,7 +214,6 @@ tasks:
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
-                -e 
                 {{if .LOGLEVEL}} -e LOGLEVEL={{.LOGLEVEL}} {{end}}
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main
@@ -292,7 +291,7 @@ tasks:
         cmds:
             - REPO={{.REPO}} docker compose build {{.TEST_SERVERS}}
             - REPO={{.REPO}} docker compose push {{.TEST_SERVERS}}
-            - docker build utils/builder -t videosdb-builder -t {{.REPO}}videosdb-builder
+            - docker build utils/builder -t {{.REPO}}videosdb-builder
             - docker push {{.REPO}}videosdb-builder
         vars:
             REPO: gcr.io/{{.MAIN_PROJECT}}/
