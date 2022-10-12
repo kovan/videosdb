@@ -41,4 +41,7 @@ cd prj
 git clone https://github.com/kovan/dotfiles
 cp zshrc ~/.zshrc
 source ~/.zshrc
+
+git config --global user.name kovan
+git config --global user.email "you@example.com"
 ssh-keygen
