@@ -129,5 +129,18 @@ class DB:
     async def get_noquota(self, path, *args, **kwargs):
         return await self._document(path).get(*args, **kwargs)
 
-    # def reserve_read_quota(self, quota):
-    #     self.read_limit = self.FREE_TIER_READ_QUOTA - quota - 5000
+    async def export_to_emulator(self, emulator_host):
+        project = os.environ["FIREBASE_PROJECT"]
+        os.environ["FIREBASE_EMULATOR_HOST"] = emulator_host
+        emulator_client = firestore.AsyncClient(project=project)
+        del os.environ["FIREBASE_EMULATOR_HOST"]
+
+        async def process_collection(col):
+            async for doc in col.stream():
+                ref = emulator_client.collection(
+                    col).document(doc.reference)
+                ref.set(doc)
+
+        async with anyio.create_task_group as tg:
+            async for col in self._db.collections():
+                tg.start_soon(process_collection, col)

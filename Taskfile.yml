@@ -254,8 +254,10 @@ tasks:
             - firestore-export 
                 --accountCredentials common/keys/{{.VIDEOSDB_CONFIG}}.json
                 --backupFile db-export.json
-            - FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}} firestore-import 
-                --backupFile db-export.json            
+            - FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}} 
+                GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
+                firestore-import -y
+                --backupFile db-export.json
             - task: upload-db-backup
             - task: run-frontend
 

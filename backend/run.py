@@ -6,6 +6,7 @@ import logging.config
 import logging
 import os
 from dotenv import load_dotenv
+from videosdb.db import DB
 from videosdb.downloader import Downloader
 from videosdb.settings import LOGGING
 from autologging import TRACE
@@ -23,6 +24,7 @@ def entrypoint():
     parser.add_argument("-d", "--fill-related-videos", action="store_true")
     parser.add_argument("-u", "--update-dnslink", action="store_true")
     parser.add_argument("-v", "--dotenv", action="store")
+    parser.add_argument("-h", "--export-to-emulator-host", action="store")
     parser.add_argument("-t", "--enable-twitter-publishing",
                         action="store_true")
     parser.add_argument(
@@ -40,6 +42,10 @@ def entrypoint():
         downloader = Downloader(options)
 
         anyio.run(downloader.check_for_new_videos)
+
+    if options.export_to_emulator_host:
+        db = DB()
+        anyio.run(db.export_to_emulator(options.export_to_emulator_host))
 
 
 if __name__ == "__main__":
