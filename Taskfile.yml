@@ -135,7 +135,6 @@ tasks:
         deps: [init, unittests-backend, unittests-frontend]
 
     end2end-tests:
-        silent: true
         run: once
         deps: [init, build-frontend, build-backend, start-servers]
         cmds:
@@ -207,7 +206,7 @@ tasks:
         run: once
         deps: [init, build-backend]
         cmds:
-            - docker compose stop redis firebase-emulator
+            - docker compose stop redis
             - docker compose cp dump.rdb redis:/data
             - docker compose up redis -d
             - task: wait-for-redis
@@ -228,7 +227,6 @@ tasks:
         run: once
         deps: [init, build-frontend]
         cmds:
-            - docker compose stop firebase-emulator
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
