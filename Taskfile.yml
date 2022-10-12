@@ -4,7 +4,7 @@ env:
     MAIN_PROJECT: worpdress-279321
     REGISTRY: us-central1-docker.pkg.dev/{{.MAIN_PROJECT}}/registry/
     REPO: '{{if .BUILD_ID }}{{.REGISTRY}}{{end}}'
-    FIRESTORE_EMULATOR_HOST: 127.0.0.1:46456
+    FIRESTORE_EMULATOR: 127.0.0.1:46456
     YOUTUBE_API_URL: http://127.0.0.1:43783/youtube/v3
     BRANCH:
         sh: git branch --show-current
@@ -85,9 +85,9 @@ tasks:
             - task: wait-for-port
               vars:
                 HOST:
-                    sh: echo {{.FIRESTORE_EMULATOR_HOST}} | cut -d ":" -f 1
+                    sh: echo {{.FIRESTORE_EMULATOR}} | cut -d ":" -f 1
                 PORT:
-                    sh: echo {{.FIRESTORE_EMULATOR_HOST}} | cut -d ":" -f 2
+                    sh: echo {{.FIRESTORE_EMULATOR}} | cut -d ":" -f 2
 
 
     start-servers:
@@ -126,7 +126,7 @@ tasks:
                 -e LOGLEVEL=DEBUG
                 -e DEBUG=1
                 -e PYTHONDEVMODE=1
-                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
+                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run sh -c "coverage run -m unittest && coverage report -m && coverage html"
 
@@ -146,7 +146,7 @@ tasks:
                 -e LOGLEVEL=DEBUG
                 -e DEBUG=1
                 -e PYTHONDEVMODE=1
-                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
+                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 -e YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main -c -e
@@ -154,7 +154,7 @@ tasks:
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
-                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
+                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 {{if .BUILD_ID }}
                     yarn generate
@@ -170,7 +170,7 @@ tasks:
     #         - docker run
     #             --network host
     #             -e YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
-    #             -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
+    #             -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
     #             --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
     #             {{.REPO}}backend-{{.BRANCH}}:latest
     #             run main -c -e
@@ -233,11 +233,18 @@ tasks:
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
-                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}}
+                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
                 {{.REPO}}frontend-{{.BRANCH}}:latest
                 yarn run-s generate deploy
 
+
+    firestore-export: 
+        cmds:  
+            - env 
+            - firestore-export 
+                --accountCredentials common/keys/{{.VIDEOSDB_CONFIG}}.json
+                --backupFile db-export.json
 
     generate-gcp:
         deps: [init,  build-all, unittests, end2end-tests, download-cache]
@@ -247,7 +254,7 @@ tasks:
             - firestore-export 
                 --accountCredentials common/keys/{{.VIDEOSDB_CONFIG}}.json
                 --backupFile db-export.json
-            - FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR_HOST}} firestore-import 
+            - FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}} firestore-import 
                 --backupFile db-export.json            
             - task: upload-db-backup
             - task: run-frontend

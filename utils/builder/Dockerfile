@@ -6,6 +6,7 @@ RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/loc
 RUN apt install -y netcat 
 RUN apt install -y nodejs npm
 RUN npm install -g node-firestore-import-export
+RUN apt install -y ltrace strace
 
 
 RUN git config --global --add safe.directory /app
