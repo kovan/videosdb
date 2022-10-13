@@ -1,13 +1,10 @@
 #!/bin/bash
 # all this for debian
 sudo apt-get update
-sudo apt install -y zsh curl wget tmux git fzf vim net-tools apt-file netcat nmap
+sudo apt install -y zsh curl wget tmux git fzf vim net-tools apt-file netcat nmap strace ltrace 
 sudo apt install -y firefox-esr
 sudo apt-file update
 
-#oh my zsh
-
-sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 # task
 sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
@@ -46,6 +43,9 @@ git clone https://github.com/kovan/dotfiles
 cp zshrc ~/.zshrc
 source ~/.zshrc
 
+sudo usermod -a -G docker k
 git config --global user.name kovan
 git config --global user.email "you@example.com"
 ssh-keygen
+
+sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
