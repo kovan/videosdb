@@ -215,6 +215,7 @@ tasks:
                     --check-for-new-videos
                     --enable-twitter-publishing
             - docker compose restart firebase-emulator
+            - task: wait-for-emulator
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
