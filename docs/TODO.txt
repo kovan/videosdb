@@ -1,5 +1,3 @@
-- exportación al emu no va
-- cambiar a firestore lite ahora que uso el emulador para generar?
 
 
 - poner descripciones de los botones en caso de tablet/escritorio
