@@ -26,6 +26,11 @@ echo \
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
+
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+sudo apt-get update && sudo apt-get install google-cloud-cli
+
 #node
 
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - &&\
@@ -34,6 +39,7 @@ sudo apt-get install -y nodejs
 sudo apt install python3-distutils
 curl -sSL https://install.python-poetry.org | python3 -
 
+sudo npm i -g firebase-tools
 
 #other
 mkdir -p ~/prj
