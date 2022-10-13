@@ -66,8 +66,8 @@ class DB:
         self.FREE_TIER_READ_QUOTA = 50000
         # leave 20000 for yarn generate and visitors
         self._read_counter = Counter(
-            "reads", self.FREE_TIER_READ_QUOTA - 20000)
-        self._write_counter = Counter("writes", self.FREE_TIER_WRITE_QUOTA)
+            "reads", self.FREE_TIER_READ_QUOTA - 10000)
+        self._write_counter = Counter("writes", self.FREE_TIER_WRITE_QUOTA - 500)
 
         self._db = self.setup()
 
