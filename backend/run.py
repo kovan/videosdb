@@ -45,7 +45,7 @@ def entrypoint():
 
     if options.export_to_emulator_host:
         db = DB()
-        anyio.run(db.export_to_emulator(options.export_to_emulator_host))
+        anyio.run(db.export_to_emulator, options.export_to_emulator_host)
 
 
 if __name__ == "__main__":

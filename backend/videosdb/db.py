@@ -47,6 +47,12 @@ class DB:
             BASE_DIR, "../common/keys/%s.json" % config.strip('"'))
 
         logger.info("Current project: " + project)
+        logger.info("Current config: " + config)
+        if "FIRESTORE_EMULATOR_HOST" in os.environ:
+            logger.info("USING EMULATOR: %s",
+                        os.environ["FIRESTORE_EMULATOR_HOST"])
+        else:
+            logger.info("USING LIVE DATABASE")
         db = firestore.AsyncClient(project=project,
                                    credentials=service_account.Credentials.from_service_account_file(
                                        creds_json_path))
@@ -55,12 +61,6 @@ class DB:
 
     def __init__(self, prefix=""):
         self.prefix = prefix
-
-        if "FIRESTORE_EMULATOR_HOST" in os.environ:
-            logger.info("EMULATOR ACTIVE: %s",
-                        os.environ["FIRESTORE_EMULATOR_HOST"])
-        else:
-            logger.info("USING LIVE DATABASE")
 
         self.FREE_TIER_WRITE_QUOTA = 20000
         self.FREE_TIER_READ_QUOTA = 50000
@@ -130,10 +130,10 @@ class DB:
         return await self._document(path).get(*args, **kwargs)
 
     async def export_to_emulator(self, emulator_host):
-        project = os.environ["FIREBASE_PROJECT"]
-        os.environ["FIREBASE_EMULATOR_HOST"] = emulator_host
-        emulator_client = firestore.AsyncClient(project=project)
-        del os.environ["FIREBASE_EMULATOR_HOST"]
+
+        os.environ["FIRESTORE_EMULATOR_HOST"] = emulator_host
+        emulator_client = self.setup()
+        del os.environ["FIRESTORE_EMULATOR_HOST"]
 
         async def process_collection(col):
             async for doc in col.stream():
@@ -141,6 +141,6 @@ class DB:
                     col).document(doc.reference)
                 ref.set(doc)
 
-        async with anyio.create_task_group as tg:
+        async with anyio.create_task_group() as tg:
             async for col in self._db.collections():
                 tg.start_soon(process_collection, col)
