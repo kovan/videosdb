@@ -197,15 +197,6 @@ tasks:
             - rm -f dump.rdb.gz
 
     
-    upload-db-backup:
-        deps: [init]
-        cmds:
-            - gzip --keep db-export.json
-            - gsutil cp db-export.json.gz gs://backup-db-{{.VIDEOSDB_CONFIG}}/
-            - rm -f db-export.json.gz
-
-
-
     run-backend:
         run: once
         deps: [init, build-backend]
@@ -223,8 +214,12 @@ tasks:
                 run main
                     --check-for-new-videos
                     --enable-twitter-publishing
-
-
+            - docker run --rm
+                --network host
+                --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
+                {{.REPO}}backend-{{.BRANCH}}:latest
+                run main
+                    --export-to-emulator-host {{.FIRESTORE_EMULATOR}}
 
     run-frontend:
         run: once
@@ -239,29 +234,14 @@ tasks:
                 yarn run-s generate deploy
 
 
-    firestore-export: 
-        cmds:  
-            - env 
-            - firestore-export 
-                --accountCredentials common/keys/{{.VIDEOSDB_CONFIG}}.json
-                --backupFile db-export.json
 
     generate-gcp:
         deps: [init,  build-all, unittests, end2end-tests, download-cache]
         cmds:
-            - task: run-backend
-            - task: upload-cache
-            - firestore-export 
-                --accountCredentials common/keys/{{.VIDEOSDB_CONFIG}}.json
-                --backupFile db-export.json
-            - FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}} 
-                GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
-                firestore-import -y
-                --backupFile db-export.json
-            - task: upload-db-backup
-            - task: run-frontend
+            - task: generate
+            - defer: {task: upload-cache}
 
-
+           
 
     generate:
         deps: [init, build-all, unittests, end2end-tests, start-servers]

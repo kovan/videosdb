@@ -40,18 +40,20 @@ sudo apt install python3-distutils
 curl -sSL https://install.python-poetry.org | python3 -
 
 sudo npm i -g firebase-tools
+sudo npm i -g yarn
 
+sudo usermod -a -G docker k
+git config --global user.name kovan
+git config --global user.email "you@example.com"
+
+
+sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 #other
 mkdir -p ~/prj
-sudo node install -g yarn
 cd prj
 git clone https://github.com/kovan/dotfiles
 cp zshrc ~/.zshrc
 source ~/.zshrc
 
-sudo usermod -a -G docker k
-git config --global user.name kovan
-git config --global user.email "you@example.com"
 ssh-keygen
 
-sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
