@@ -60,11 +60,6 @@ class Downloader:
         else:
             self.db = DB()
         self.api = YoutubeAPI(self.db, redis_db_n=redis_db_n)
-        self.QUOTA_EXCEPTIONS = (
-            DB.QuotaExceeded,
-            YoutubeAPI.QuotaExceeded,
-            google.api_core.exceptions.ResourceExhausted
-        )
 
     async def init(self):
         await self.db.init()

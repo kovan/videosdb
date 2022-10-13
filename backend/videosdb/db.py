@@ -9,6 +9,8 @@ from google.api_core.retry import Retry
 from videosdb.utils import wait_for_port
 logger = logging.getLogger(__name__)
 
+class QuotaExceeded(Exception):
+    pass
 
 class Counter:
     def __init__(self, type: str, limit: int):
@@ -21,13 +23,11 @@ class Counter:
         async with self.lock:
             self.counter += quantity
             if self.counter > self.limit:
-                raise self.QuotaExceeded(
+                raise QuotaExceeded(
                     "Surpassed %s ops limit of %s" % (self.type, self.limit))
 
 
 class DB:
-    class QuotaExceeded(Exception):
-        pass
 
     @staticmethod
     def wait_for_port(timeout=30.0):
