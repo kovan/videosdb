@@ -82,8 +82,6 @@ class Downloader:
         if self.options and self.options.enable_twitter_publishing:
             publisher = TwitterPublisher(self.db)
 
-        publishedAt_fix_list_ids = LockedItems(set())
-
         async with anyio.create_task_group() as phase2:
             async for video in self.db.stream("videos"):
                 video_id = video.to_dict().get("id")
@@ -106,9 +104,6 @@ class Downloader:
                 except Exception as e:
                     # twitter errors show not stop the program
                     logger.exception(e)
-
-        for video_id in publishedAt_fix_list_ids.items:
-            await fix_publishedAt(video_id, self.db)
 
         ids = final_video_ids.items
         if ids:
