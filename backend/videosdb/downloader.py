@@ -30,18 +30,6 @@ class LockedItems:
         self.items = items
 
 
-async def fix_publishedAt(video_id, db):
-
-    video = await db.get("videos/" + video_id)
-    video_dict = video.to_dict()
-    video_dict["snippet"]["publishedAt"] = isodate.parse_datetime(
-        video_dict["snippet"]["publishedAt"])
-    logger.info(
-        "Fixing type of publishedAt for video %s" % (video_dict["id"]))
-
-    return await db.set("videos/" + video_id, video_dict, merge=True)
-
-
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
@@ -112,17 +100,12 @@ class Downloader:
 
                 video_dict = video.to_dict()
 
-                # somehow bad processed videos got into de db:
-                if type(video_dict["snippet"]["publishedAt"]) == str:
-                    async with publishedAt_fix_list_ids.lock:
-                        publishedAt_fix_list_ids.items.add(video_id)
-                else:
-                    try:
-                        if self.options and self.options.enable_twitter_publishing:
-                            await publisher.publish_video(video_dict)
-                    except Exception as e:
-                        # twitter errors show not stop the program
-                        logger.exception(e)
+                try:
+                    if self.options and self.options.enable_twitter_publishing:
+                        await publisher.publish_video(video_dict)
+                except Exception as e:
+                    # twitter errors show not stop the program
+                    logger.exception(e)
 
         for video_id in publishedAt_fix_list_ids.items:
             await fix_publishedAt(video_id, self.db)
