@@ -136,7 +136,8 @@ class DB:
         del os.environ["FIRESTORE_EMULATOR_HOST"]
 
         async for col in self._db.collections():
-            async for doc in col.stream():
-                ref = emulator_client.collection(
+            async for doc_ref in col.list_documents():
+                doc = await doc_ref.get()
+                emulator_ref = emulator_client.collection(
                     col.id).document(doc.id)
-                await ref.set(doc.to_dict())
+                await emulator_ref.set(doc.to_dict())
