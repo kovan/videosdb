@@ -196,7 +196,7 @@ tasks:
             - gsutil cp dump.rdb.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/
             - rm -f dump.rdb.gz
 
-    
+
     run-backend:
         run: once
         deps: [init, build-backend]
@@ -243,7 +243,7 @@ tasks:
             - task: generate
             - defer: {task: upload-cache}
 
-           
+
 
     generate:
         deps: [init, build-all, unittests, end2end-tests, start-servers]
@@ -288,6 +288,8 @@ tasks:
             - docker push {{.REGISTRY}}videosdb-builder
 
 
+    test:
+        deps: [init, unittests, end2end-tests]
 
     default:
         deps: [init, build-all, unittests, end2end-tests]

@@ -201,6 +201,12 @@ class Downloader:
             if video_id in excluded_video_ids.items:
                 return
 
+        # all videos are read twice (one in phase 2 and other in DB export)
+        # from DB after this phase, plus margin for some other ops:
+
+        new_limit = len(processed_video_ids.items) * 2 + 5000
+        self.db.adjust_read_limit(new_limit)
+
         await self.db.set("videos/" + video_id, {
             "videosdb": {
                 "playlists": firestore.ArrayUnion([playlist_id])

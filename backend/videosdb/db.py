@@ -1,4 +1,5 @@
 
+from enum import Enum
 import anyio
 from google.cloud import firestore
 from google.oauth2 import service_account
@@ -11,7 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class Counter:
-    def __init__(self, type: str, limit: int):
+    class Type(Enum):
+        READS = 1
+        WRITES = 2
+
+    def __init__(self, type: Type, limit: int):
         self.type = type
         self.counter = 0
         self.limit = limit
@@ -23,6 +28,9 @@ class Counter:
             if self.counter > self.limit:
                 raise QuotaExceeded(
                     "Surpassed %s ops limit of %s" % (self.type, self.limit))
+
+    def __repr__(self):
+        return f"Counter {self.type}: {self.counter}/{self.limit}"
 
 
 class DB:
@@ -63,10 +71,10 @@ class DB:
         self.FREE_TIER_WRITE_QUOTA = 20000
         self.FREE_TIER_READ_QUOTA = 50000
         # leave 20000 for yarn generate and visitors
-        self._read_counter = Counter(
-            "reads", self.FREE_TIER_READ_QUOTA - 10000)
-        self._write_counter = Counter(
-            "writes", self.FREE_TIER_WRITE_QUOTA - 500)
+        self._read_counter = Counter(Counter.Type.READS,
+                                     self.FREE_TIER_READ_QUOTA)
+        self._write_counter = Counter(Counter.Type.WRITES,
+                                      self.FREE_TIER_WRITE_QUOTA - 500)
 
         self._db = self.setup()
 
@@ -92,6 +100,11 @@ class DB:
     def _collection(self, path):
         return self._db.collection(self.prefix + path)
     # ---------------------- PUBLIC -------------------------------
+
+    async def adjust_read_limit(self, new_limit: int):
+        async with self._read_counter.lock:
+            if self._read_counter.limit < new_limit:
+                self._read_counter.limit = self.FREE_TIER_READ_QUOTA - new_limit
 
     @Retry()
     async def set(self, path, *args, **kwargs):
