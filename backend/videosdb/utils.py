@@ -67,14 +67,14 @@ def my_handler(my_type, e, handler):
     if type(e) == anyio.ExceptionGroup:
         unhandled = []
         for ex in e.exceptions:
-            if type(ex) == my_type:
+            if isinstance(e, my_type):
                 handler(ex)
             else:
                 unhandled.append(ex)
         if unhandled:
             raise anyio.ExceptionGroup(unhandled)
 
-    elif type(e) == my_type:
+    elif isinstance(e, my_type):
         handler(e)
     else:
         raise e
