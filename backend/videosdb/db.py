@@ -135,12 +135,8 @@ class DB:
         emulator_client = self.setup()
         del os.environ["FIRESTORE_EMULATOR_HOST"]
 
-        async def process_collection(col):
+        async for col in self._db.collections():
             async for doc in col.stream():
                 ref = emulator_client.collection(
                     col.id).document(doc.id)
                 await ref.set(doc.to_dict())
-
-        async with anyio.create_task_group() as tg:
-            async for col in self._db.collections():
-                tg.start_soon(process_collection, col)
