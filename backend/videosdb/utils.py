@@ -7,6 +7,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class QuotaExceeded(Exception):
+    pass
+
+
 def wait_for_port(port: int, host: str = 'localhost', timeout: float = 30.0):
     """Wait until a port starts accepting TCP connections.
     Args:

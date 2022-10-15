@@ -4,12 +4,12 @@ import json
 import logging
 import os
 import re
-from typing import Iterable, NewType, OrderedDict
+from typing import Iterable, NewType
 import anyio
 import httpx
 from urllib.parse import urlencode
 import redis.asyncio as redis
-from videosdb.utils import wait_for_port
+from videosdb.utils import wait_for_port, QuotaExceeded
 import youtube_transcript_api
 from urllib.parse import urlparse
 from types import AsyncGeneratorType
@@ -107,7 +107,7 @@ class YoutubeAPI:
         if parsed_ytapi_url.port:
             wait_for_port(parsed_ytapi_url.port)
 
-    class QuotaExceeded(Exception):
+    class YTQuotaExceeded(QuotaExceeded):
         def __init__(self, status, json={}):
             self.status = status
             self.json = json

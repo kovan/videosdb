@@ -6,11 +6,9 @@ import os
 import logging
 import sys
 from google.api_core.retry import Retry
-from videosdb.utils import wait_for_port
+from videosdb.utils import QuotaExceeded, wait_for_port
 logger = logging.getLogger(__name__)
 
-class QuotaExceeded(Exception):
-    pass
 
 class Counter:
     def __init__(self, type: str, limit: int):
@@ -67,7 +65,8 @@ class DB:
         # leave 20000 for yarn generate and visitors
         self._read_counter = Counter(
             "reads", self.FREE_TIER_READ_QUOTA - 10000)
-        self._write_counter = Counter("writes", self.FREE_TIER_WRITE_QUOTA - 500)
+        self._write_counter = Counter(
+            "writes", self.FREE_TIER_WRITE_QUOTA - 500)
 
         self._db = self.setup()
 

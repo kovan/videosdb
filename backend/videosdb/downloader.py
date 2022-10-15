@@ -13,7 +13,7 @@ from autologging import traced
 import google.api_core.exceptions
 from slugify import slugify
 from videosdb.publisher import TwitterPublisher
-from videosdb.utils import my_handler
+from videosdb.utils import QuotaExceeded, my_handler
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 from videosdb.db import DB
 from videosdb.youtube_api import YoutubeAPI
@@ -65,7 +65,7 @@ class Downloader:
                 playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
                 await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"])
             except Exception as e:
-                my_handler(YoutubeAPI.QuotaExceeded, e, logger.error)
+                my_handler(QuotaExceeded, e, logger.error)
 
             # does not use quota:
             await self._final_video_iteration()
@@ -107,7 +107,7 @@ class Downloader:
 
         ids = final_video_ids.items
         if ids:
-            await self.db.set("meta/video_ids", {
+            await self.db.set_noquota("meta/video_ids", {
                 "videoIds": firestore.ArrayUnion(list(ids))
             })
 
@@ -348,7 +348,7 @@ class Downloader:
             }
         }
 
-        await self.db.set("videos/" + video["id"], video, merge=True)
+        await self.db.set_noquota("videos/" + video["id"], video, merge=True)
 
     async def _download_transcript(self, video_id):
         try:
