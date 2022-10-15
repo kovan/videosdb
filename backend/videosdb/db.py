@@ -108,6 +108,7 @@ class DB:
         await self._write_counter.inc()
         return await self._document(path).update(*args, **kwargs)
 
+    @Retry()
     def stream(self, collection_name):
         return self._collection(collection_name).stream()
 
