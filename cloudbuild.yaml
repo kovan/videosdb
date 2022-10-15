@@ -1,4 +1,4 @@
-timeout: 3600s
+timeout: 5400s
 steps:
   - name: us-central1-docker.pkg.dev/worpdress-279321/registry/videosdb-builder
     env:
