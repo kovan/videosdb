@@ -287,7 +287,7 @@ class YoutubeAPI:
                 self.root_url + final_url, headers=headers)
 
             if response.status_code == 403:
-                raise self.QuotaExceeded(
+                raise self.YTQuotaExceeded(
                     response.status_code,
                     response.json())
 
