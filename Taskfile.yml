@@ -206,6 +206,8 @@ tasks:
             - docker compose up redis -d
             - task: wait-for-redis
             - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
+            - docker compose restart firebase-emulator
+            - task: wait-for-emulator
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
@@ -214,14 +216,8 @@ tasks:
                 run main
                     --check-for-new-videos
                     --enable-twitter-publishing
-            - docker compose restart firebase-emulator
-            - task: wait-for-emulator
-            - docker run --rm
-                --network host
-                --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
-                {{.REPO}}backend-{{.BRANCH}}:latest
-                run main
                     --export-to-emulator-host {{.FIRESTORE_EMULATOR}}
+
 
     run-frontend:
         run: once
@@ -293,6 +289,15 @@ tasks:
 
     default:
         deps: [init, build-all, unittests, end2end-tests]
+
+
+    nodocker-run-backend:
+        cd backend &&
+        LOGLEVEL=DEBUG
+        DEBUG=1
+        YOUTUBE_API_URL=http://127.0.0.1:43783/youtube/v3
+        FIRESTORE_EMULATOR_HOST=localhost:46456
+        poetry run main -c -e --dotenv ../common/env/testing.txt; cd ..
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 

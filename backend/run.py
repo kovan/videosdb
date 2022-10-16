@@ -43,10 +43,6 @@ def entrypoint():
 
         anyio.run(downloader.check_for_new_videos)
 
-    if options.export_to_emulator_host:
-        db = DB()
-        anyio.run(db.export_to_emulator, options.export_to_emulator_host)
-
 
 if __name__ == "__main__":
     entrypoint()

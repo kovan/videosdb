@@ -207,12 +207,12 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
     #     self.assertEqual(
     #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
 
-    async def test_transcript_downloading(self):
+    # async def test_transcript_downloading(self):
 
-        video = self.raw_responses["videos"]["items"][0]
+    #     video = self.raw_responses["videos"]["items"][0]
 
-        await self.downloader.init()
-        await self.downloader._handle_transcript(video)
+    #     await self.downloader.init()
+    #     await self.downloader._handle_transcript(video)
 
-        self.assertIn("transcript", video["videosdb"])
-        self.assertIn("transcript_status", video["videosdb"])
+    #     self.assertIn("transcript", video["videosdb"])
+    #     self.assertIn("transcript_status", video["videosdb"])

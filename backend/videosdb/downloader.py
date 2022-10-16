@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 import bleach
 import os
 import pprint
@@ -30,6 +31,139 @@ class LockedItems:
         self.items = items
 
 
+@traced
+class Task:
+    def __init__(self, db, options, nursery):
+        self.db = db
+        self.options = options
+        self.nursery = nursery
+
+    async def __call__(self, video):
+        raise NotImplementedError()
+
+
+@traced
+class ExportToEmulatorTask(Task):
+
+    def __init__(self, db, options, nursery):
+        super().__init__(db, options, nursery)
+        self.enabled = options and options.export_to_emulator_host
+        if not self.enabled:
+            return
+
+        current_emu = os.environ.get("FIRESTORE_EMULATOR_HOST")
+        if current_emu:
+            old_emu = current_emu
+        os.environ["FIRESTORE_EMULATOR_HOST"] = options.export_to_emulator_host
+
+        self.emulator_client = DB.setup()
+
+        if old_emu:
+            os.environ["FIRESTORE_EMULATOR_HOST"] = old_emu
+        else:
+            del os.environ["FIRESTORE_EMULATOR_HOST"]
+
+    async def __call__(self, video):
+        if not self.enabled:
+            return
+        emulator_ref = self.emulator_client.collection(
+            "videos").document(video["id"])
+        await emulator_ref.set(video)
+
+    async def export_pending_collections(self):
+        if not self.enabled:
+            return
+        async for col in self.db._db.collections():
+            if col == "videos":
+                continue
+
+            async for doc_ref in col.list_documents():
+                doc = await doc_ref.get()
+                emulator_ref = self.emulator_client.collection(
+                    col.id).document(doc.id)
+                await emulator_ref.set(doc.to_dict())
+
+
+@traced
+class PublishTask(Task):
+    def __init__(self, db, options, nursery):
+        super().__init__(db, options, nursery)
+        self.enabled = options and options.enable_twitter_publishing
+        if self.enabled:
+            self.publisher = TwitterPublisher(db)
+
+    async def __call__(self, video):
+        if not self.enabled:
+            return
+
+        try:
+            await self.publisher.publish_video(video)
+        except Exception as e:
+            # twitter errors show not stop the program
+            logger.exception(e)
+
+
+@traced
+class RetrievePendingTranscriptsTask(Task):
+    def __init__(self, db, options, nursery):
+        super().__init__(db, options, nursery)
+        self.enabled = options and not options.exclude_transcripts
+        self.capacity_limiter = anyio.CapacityLimiter(10)
+
+    async def __call__(self, video):
+        if not self.enabled:
+            return
+        self.nursery.start_soon(self._handle_transcript,
+                                video, name="Download transcript for video " + video["id"])
+
+    async def _handle_transcript(self, video):
+
+        current_status = fnc.get("videosdb.transcript_status", video)
+        if current_status not in ("pending", None):
+            return
+        logger.info("Downloading transcript for video: " +
+                    str(video["id"]) + " because its status is " + str(current_status))
+        transcript, new_status = await self._download_transcript(video["id"], self.capacity_limiter)
+        if new_status == current_status:
+            return
+
+        video |= {
+            "videosdb": {
+                "transcript_status": new_status,
+                "transcript": transcript
+            }
+        }
+
+        await self.downloader.db.set_noquota("videos/" + video["id"], video, merge=True)
+
+    @staticmethod
+    async def _download_transcript(video_id, capacity_limiter):
+        try:
+            transcript = await anyio.to_thread.run_sync(
+                get_video_transcript, video_id, limiter=capacity_limiter)
+
+            return transcript, "downloaded"
+        except youtube_transcript_api.TooManyRequests as e:
+            logger.warning(str(e))
+            logger.warning("New status: pending")
+            return None, "pending"
+        except youtube_transcript_api.CouldNotRetrieveTranscript as e:
+            # weird but that's how the lib works:
+            if (hasattr(e, "video_id")
+                and hasattr(e.video_id, "response")
+                    and e.video_id.response.status_code == 429):
+                logger.warning(str(e))
+                logger.warning("New status: pending")
+                return None, "pending"
+            else:
+                logger.info(
+                    "Transcription not available for video: " + str(video_id))
+                logger.info(str(e))
+                logger.info("New status: unavailable")
+                return None, "unavailable"
+
+
+@traced
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
@@ -51,14 +185,13 @@ class Downloader:
 
     async def init(self):
         await self.db.init()
-        self.capacity_limiter = anyio.CapacityLimiter(10)
 
     async def check_for_new_videos(self):
         logger.info("Sync start")
-        async with anyio.create_task_group() as global_scope:
+        async with anyio.create_task_group() as phase1_nursery:
             await self.init()
-            global_scope.start_soon(self._print_debug_info,
-                                    name="Debug info")
+            phase1_nursery.start_soon(self._print_debug_info,
+                                      name="Debug info")
 
             try:
                 channel = await self._create_channel(self.YT_CHANNEL_ID)
@@ -68,42 +201,38 @@ class Downloader:
                 my_handler(QuotaExceeded, e, logger.error)
 
             # does not use quota:
-            await self._final_video_iteration()
+
+            async with anyio.create_task_group() as phase2_nursery:
+                args = self.db, self.options, phase2_nursery
+                export_to_emulator_task = ExportToEmulatorTask(*args)
+                tasks = [
+                    RetrievePendingTranscriptsTask(*args),
+                    PublishTask(*args),
+                    export_to_emulator_task
+                ]
+                await self._final_video_iteration(tasks)
+                await export_to_emulator_task.export_pending_collections()
 
             # await anyio.wait_all_tasks_blocked()
-            global_scope.cancel_scope.cancel()
+            phase1_nursery.cancel_scope.cancel()
 
         logger.info("Sync finished")
 
-    @traced
-    async def _final_video_iteration(self):
+    async def _final_video_iteration(self, phase2_tasks):
         final_video_ids = LockedItems(set())
         logger.info("Init phase 2")
-        if self.options and self.options.enable_twitter_publishing:
-            publisher = TwitterPublisher(self.db)
 
-        async with anyio.create_task_group() as phase2:
-            async for video in self.db.stream("videos"):
-                video_id = video.to_dict().get("id")
-                if not video_id:
-                    continue
+        async for video in self.db.stream("videos"):
+            video_dict = video.to_dict()
+            video_id = video_dict.get("id")
+            if not video_id:
+                continue
 
-                async with final_video_ids.lock:
-                    final_video_ids.items.add(video_id)
+            async with final_video_ids.lock:
+                final_video_ids.items.add(video_id)
 
-                # retrieve pending transcripts
-                if self.options and not self.options.exclude_transcripts:
-                    phase2.start_soon(
-                        self._handle_transcript, video.to_dict(), name="Download transcript for video " + video_id)
-
-                video_dict = video.to_dict()
-
-                try:
-                    if self.options and self.options.enable_twitter_publishing:
-                        await publisher.publish_video(video_dict)
-                except Exception as e:
-                    # twitter errors show not stop the program
-                    logger.exception(e)
+            for task in phase2_tasks:
+                await task(video_dict)
 
         ids = final_video_ids.items
         if ids:
@@ -113,7 +242,6 @@ class Downloader:
 
         return ids
 
-    @traced
     async def _process_playlist_ids(self, playlist_ids, channel_name):
         processed_video_ids = LockedItems(set())
         excluded_video_ids = LockedItems(set())
@@ -177,7 +305,6 @@ class Downloader:
                 name="Video %s processor" % video_id
             )
 
-    @ traced
     async def _process_video(self, video_id, playlist_id, processed_video_ids, excluded_video_ids):
         logger.debug("Processing video " + video_id)
         new = False
@@ -213,7 +340,6 @@ class Downloader:
             }
         }, merge=True)
 
-    @ traced
     async def _retrieve_all_playlist_ids(self, channel_id):
         _, ids = await self.api.list_channelsection_playlist_ids(channel_id)
         _, ids2 = await self.api.list_channel_playlist_ids(channel_id)
@@ -230,7 +356,6 @@ class Downloader:
         logger.info("Retrieved all playlist IDs.")
         return list(playlist_ids)
 
-    @ traced
     async def _create_channel(self, channel_id):
 
         _, channel_info = await self.api.get_channel_info(channel_id)
@@ -241,7 +366,6 @@ class Downloader:
         await self.db.set("channel_infos/" + channel_id, channel_info, merge=True)
         return channel_info
 
-    @ traced
     async def _create_playlist(self, playlist, playlist_items):
 
         video_count = 0
@@ -270,7 +394,6 @@ class Downloader:
         await self.db.set("playlists/" + playlist["id"], playlist, merge=True)
         logger.info("Wrote playlist: " + playlist["snippet"]["title"])
 
-    @ traced
     async def _create_video(self, video, playlist_ids=None):
 
         if not video:
@@ -311,7 +434,6 @@ class Downloader:
 
         return video
 
-    @ traced
     async def _fill_related_videos(self):
 
         # use remaining YT API daily quota to download a few related video lists:
@@ -335,51 +457,6 @@ class Downloader:
 
                 logger.info("Added new related videos to video %s" %
                             video_id)
-
-    async def _handle_transcript(self, video):
-
-        current_status = fnc.get("videosdb.transcript_status", video)
-        if current_status not in ("pending", None):
-            return
-        logger.info("Downloading transcript for video: " +
-                    str(video["id"]) + " because its status is " + str(current_status))
-        transcript, new_status = await self._download_transcript(video["id"])
-        if new_status == current_status:
-            return
-
-        video |= {
-            "videosdb": {
-                "transcript_status": new_status,
-                "transcript": transcript
-            }
-        }
-
-        await self.db.set_noquota("videos/" + video["id"], video, merge=True)
-
-    async def _download_transcript(self, video_id):
-        try:
-            transcript = await anyio.to_thread.run_sync(
-                get_video_transcript, video_id, limiter=self.capacity_limiter)
-
-            return transcript, "downloaded"
-        except youtube_transcript_api.TooManyRequests as e:
-            logger.warning(str(e))
-            logger.warning("New status: pending")
-            return None, "pending"
-        except youtube_transcript_api.CouldNotRetrieveTranscript as e:
-            # weird but that's how the lib works:
-            if (hasattr(e, "video_id")
-                and hasattr(e.video_id, "response")
-                    and e.video_id.response.status_code == 429):
-                logger.warning(str(e))
-                logger.warning("New status: pending")
-                return None, "pending"
-            else:
-                logger.info(
-                    "Transcription not available for video: " + str(video_id))
-                logger.info(str(e))
-                logger.info("New status: unavailable")
-                return None, "unavailable"
 
     @ staticmethod
     def _description_trimmed(description):

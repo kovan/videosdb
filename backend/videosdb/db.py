@@ -141,16 +141,3 @@ class DB:
     @Retry()
     async def get_noquota(self, path, *args, **kwargs):
         return await self._document(path).get(*args, **kwargs)
-
-    async def export_to_emulator(self, emulator_host):
-
-        os.environ["FIRESTORE_EMULATOR_HOST"] = emulator_host
-        emulator_client = self.setup()
-        del os.environ["FIRESTORE_EMULATOR_HOST"]
-
-        async for col in self._db.collections():
-            async for doc_ref in col.list_documents():
-                doc = await doc_ref.get()
-                emulator_ref = emulator_client.collection(
-                    col.id).document(doc.id)
-                await emulator_ref.set(doc.to_dict())
