@@ -1,6 +1,7 @@
 import datetime
 from google.api_core.datetime_helpers import DatetimeWithNanoseconds
 import asyncio
+import anyio
 import pprint
 from httpx import Response
 import redis.asyncio as redis
@@ -9,7 +10,7 @@ import os
 import aiounittest
 import json
 from dotenv import load_dotenv
-from videosdb.downloader import Downloader
+from videosdb.downloader import Downloader, RetrievePendingTranscriptsTask
 from videosdb.db import DB
 import os
 import logging
@@ -207,12 +208,14 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
     #     self.assertEqual(
     #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
 
-    # async def test_transcript_downloading(self):
+    async def test_transcript_downloading(self):
 
-    #     video = self.raw_responses["videos"]["items"][0]
+        video = self.raw_responses["videos"]["items"][0]
 
-    #     await self.downloader.init()
-    #     await self.downloader._handle_transcript(video)
+        async with anyio.create_task_group() as tg:
+            task = RetrievePendingTranscriptsTask(DB(), nursery=tg)
+            task.enabled = True
+            await task(video)
 
-    #     self.assertIn("transcript", video["videosdb"])
-    #     self.assertIn("transcript_status", video["videosdb"])
+        self.assertIn("transcript", video["videosdb"])
+        self.assertIn("transcript_status", video["videosdb"])

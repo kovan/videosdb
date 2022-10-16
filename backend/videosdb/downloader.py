@@ -33,7 +33,7 @@ class LockedItems:
 
 @traced
 class Task:
-    def __init__(self, db, options, nursery):
+    def __init__(self, db, options=None, nursery=None):
         self.db = db
         self.options = options
         self.nursery = nursery
@@ -45,7 +45,7 @@ class Task:
 @traced
 class ExportToEmulatorTask(Task):
 
-    def __init__(self, db, options, nursery):
+    def __init__(self, db, options=None, nursery=None):
         super().__init__(db, options, nursery)
         self.enabled = options and options.export_to_emulator_host
         if not self.enabled:
@@ -86,7 +86,7 @@ class ExportToEmulatorTask(Task):
 
 @traced
 class PublishTask(Task):
-    def __init__(self, db, options, nursery):
+    def __init__(self, db, options=None, nursery=None):
         super().__init__(db, options, nursery)
         self.enabled = options and options.enable_twitter_publishing
         if self.enabled:
@@ -105,7 +105,7 @@ class PublishTask(Task):
 
 @traced
 class RetrievePendingTranscriptsTask(Task):
-    def __init__(self, db, options, nursery):
+    def __init__(self, db, options=None, nursery=None):
         super().__init__(db, options, nursery)
         self.enabled = options and not options.exclude_transcripts
         self.capacity_limiter = anyio.CapacityLimiter(10)
@@ -134,7 +134,7 @@ class RetrievePendingTranscriptsTask(Task):
             }
         }
 
-        await self.downloader.db.set_noquota("videos/" + video["id"], video, merge=True)
+        await self.db.set_noquota("videos/" + video["id"], video, merge=True)
 
     @staticmethod
     async def _download_transcript(video_id, capacity_limiter):
