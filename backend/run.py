@@ -20,7 +20,7 @@ def entrypoint():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--check-for-new-videos", action="store_true")
-    parser.add_argument("-e", "--exclude-transcripts", action="store_true")
+    parser.add_argument("-e", "--enable-transcripts", action="store_true")
     parser.add_argument("-d", "--fill-related-videos", action="store_true")
     parser.add_argument("-u", "--update-dnslink", action="store_true")
     parser.add_argument("-v", "--dotenv", action="store")

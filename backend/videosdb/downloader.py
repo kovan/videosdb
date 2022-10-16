@@ -60,6 +60,7 @@ class ExportToEmulatorTask(Task):
         self.emulator_client = DB.setup()
 
         if old_emu:
+            logger.debug("Restoring emulator host")
             os.environ["FIRESTORE_EMULATOR_HOST"] = old_emu
         else:
             del os.environ["FIRESTORE_EMULATOR_HOST"]
@@ -108,7 +109,7 @@ class PublishTask(Task):
 class RetrievePendingTranscriptsTask(Task):
     def __init__(self, db, options=None, nursery=None):
         super().__init__(db, options, nursery)
-        self.enabled = options and not options.exclude_transcripts
+        self.enabled = options and options.enable_transcripts
         self.capacity_limiter = anyio.CapacityLimiter(10)
 
     async def __call__(self, video):
@@ -202,18 +203,22 @@ class Downloader:
             except Exception as e:
                 my_handler(QuotaExceeded, e, logger.error)
 
-            # Phase 2: does not use Youtube quota quota:
+            # Phase 2: does not use Youtube quota:
             async with anyio.create_task_group() as phase2_nursery:
                 args = self.db, self.options, phase2_nursery
+
                 export_to_emulator_task = ExportToEmulatorTask(*args)
                 tasks = [
                     RetrievePendingTranscriptsTask(*args),
-                    PublishTask(*args),
-                    export_to_emulator_task
+                    PublishTask(*args)
                 ]
+                if not "DEBUG" in os.environ:
+                    tasks.append(export_to_emulator_task)
 
                 await self._final_video_iteration(tasks)
-                await export_to_emulator_task.export_pending_collections()
+
+                if not "DEBUG" in os.environ:
+                    await export_to_emulator_task.export_pending_collections()
 
             # await anyio.wait_all_tasks_blocked()
             phase1_nursery.cancel_scope.cancel()
