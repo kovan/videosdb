@@ -154,7 +154,7 @@ tasks:
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 -e YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
                 {{.REPO}}backend-{{.BRANCH}}:latest
-                run main -c -e
+                run main -c
 
             - docker run --rm
                 --network host
@@ -178,7 +178,7 @@ tasks:
     #             -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
     #             --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
     #             {{.REPO}}backend-{{.BRANCH}}:latest
-    #             run main -c -e
+    #             run main -c
 
     #         - docker run
     #             --network host
@@ -220,8 +220,10 @@ tasks:
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run main
                     --check-for-new-videos
+                    --enable-transcripts
                     --enable-twitter-publishing
                     --export-to-emulator-host {{.FIRESTORE_EMULATOR}}
+
 
 
     run-frontend:
@@ -302,7 +304,7 @@ tasks:
         DEBUG=1
         YOUTUBE_API_URL=http://127.0.0.1:43783/youtube/v3
         FIRESTORE_EMULATOR_HOST=localhost:46456
-        poetry run main -c -e --dotenv ../common/env/testing.txt; cd ..
+        poetry run main -c --dotenv ../common/env/testing.txt; cd ..
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 
