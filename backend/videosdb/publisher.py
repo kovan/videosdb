@@ -1,5 +1,5 @@
-# from pytwitter import Api
-import ipdb
+
+import anyio
 import json
 import sys
 import fnc
@@ -106,7 +106,7 @@ class TwitterPublisher(Publisher):
 
         self.videos = set()
 
-    async def create_tweet(self, *args, **kwargs):
+    async def _create_tweet(self, *args, **kwargs):
         return await self.api.create_tweet(*args, **kwargs)
 
     async def publish_video(self, video):
@@ -122,7 +122,7 @@ class TwitterPublisher(Publisher):
             return
 
         text = await self._create_post_text(video)
-        result = await self.create_tweet(text=text)
+        result = await self._create_tweet(text=text)
         video |= {
             "videosdb": {
                 "publishing": {
@@ -136,4 +136,7 @@ class TwitterPublisher(Publisher):
 
         logger.info("Published in Twitter video %s with text: %s" % (
             video["id"], text))
+
+        await anyio.sleep(5)  # don't saturate the api, just in case
+
         return None
