@@ -1,26 +1,25 @@
 import logging
-from typing import Any
-import bleach
 import os
 import pprint
-from google.cloud import firestore
-import re
 import random
+import re
+from typing import Any
+
 import anyio
+import bleach
 import fnc
+import google.api_core.exceptions
 import isodate
+import youtube_transcript_api
 from aiostream import stream
 from autologging import traced
-import google.api_core.exceptions
+from google.cloud import firestore
 from slugify import slugify
-from videosdb.publisher import TwitterPublisher
-from videosdb.utils import QuotaExceeded, my_handler
-from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 from videosdb.db import DB
-from videosdb.youtube_api import YoutubeAPI
+from videosdb.publisher import TwitterPublisher
+from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 
-import youtube_transcript_api
-
+from videosdb.utils import QuotaExceeded, my_handler
 
 logger = logging.getLogger(__name__)
 

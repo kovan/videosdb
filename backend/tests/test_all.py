@@ -1,22 +1,21 @@
-import datetime
-from google.api_core.datetime_helpers import DatetimeWithNanoseconds
 import asyncio
-import anyio
+import datetime
+import json
+import logging
+import os
 import pprint
-from httpx import Response
+import sys
+
+import aiounittest
+import anyio
 import redis.asyncio as redis
 import respx
-import os
-import aiounittest
-import json
 from dotenv import load_dotenv
-from videosdb.downloader import Downloader, RetrievePendingTranscriptsTask
+from google.api_core.datetime_helpers import DatetimeWithNanoseconds
+from httpx import Response
 from videosdb.db import DB
-import os
-import logging
-import sys
+from videosdb.downloader import Downloader, RetrievePendingTranscriptsTask
 from videosdb.publisher import TwitterPublisher
-
 from videosdb.youtube_api import Cache, YoutubeAPI
 
 logger = logging.getLogger(__name__)
