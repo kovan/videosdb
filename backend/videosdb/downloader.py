@@ -244,6 +244,7 @@ class Downloader:
                 "videoIds": firestore.ArrayUnion(list(ids))
             })
 
+        logger.info("Final video list length: " + str(len(ids)))
         return ids
 
     async def _process_playlist_ids(self, playlist_ids, channel_name):

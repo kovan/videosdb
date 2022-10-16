@@ -99,7 +99,7 @@ tasks:
                 {{else}}
                     docker compose build
                 {{end}}'
-            - docker compose up --detach
+            - docker compose up --detach --force-recreate
             - task: wait-for-redis
             - task: wait-for-emulator
 
