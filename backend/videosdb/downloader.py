@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import logging
 import os
 import pprint
@@ -37,6 +38,7 @@ class Task:
         self.options = options
         self.nursery = nursery
 
+    @abstractmethod
     async def __call__(self, video):
         raise NotImplementedError()
 
@@ -192,6 +194,7 @@ class Downloader:
             phase1_nursery.start_soon(self._print_debug_info,
                                       name="Debug info")
 
+            # Phase 1:
             try:
                 channel = await self._create_channel(self.YT_CHANNEL_ID)
                 playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
@@ -199,8 +202,7 @@ class Downloader:
             except Exception as e:
                 my_handler(QuotaExceeded, e, logger.error)
 
-            # does not use quota:
-
+            # Phase 2: does not use Youtube quota quota:
             async with anyio.create_task_group() as phase2_nursery:
                 args = self.db, self.options, phase2_nursery
                 export_to_emulator_task = ExportToEmulatorTask(*args)
@@ -209,6 +211,7 @@ class Downloader:
                     PublishTask(*args),
                     export_to_emulator_task
                 ]
+
                 await self._final_video_iteration(tasks)
                 await export_to_emulator_task.export_pending_collections()
 
@@ -327,11 +330,10 @@ class Downloader:
             if video_id in excluded_video_ids.items:
                 return
 
-        # all videos are read twice (one in phase 2 and other in DB export)
-        # from DB after this phase, plus margin for some other ops:
+        # all videos must be read later from DB after this phase, plus margin for some other ops:
 
-        new_limit = len(processed_video_ids.items) * 2 + 5000
-        self.db.adjust_read_limit(new_limit)
+        new_limit = len(processed_video_ids.items) + 5000
+        await self.db.adjust_read_limit(new_limit)
 
         await self.db.set("videos/" + video_id, {
             "videosdb": {

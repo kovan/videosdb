@@ -120,7 +120,9 @@ tasks:
         run: once
         deps: [init, build-backend, start-servers]
         cmds:
-            - docker run --rm
+            - rm -f {{.CID_FILE}}
+            - docker run
+                --cidfile {{.CID_FILE}}
                 --network host
                 --env-file common/env/testing.txt
                 -e LOGLEVEL=DEBUG
@@ -129,7 +131,10 @@ tasks:
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 {{.REPO}}backend-{{.BRANCH}}:latest
                 run sh -c "coverage run -m unittest && coverage report -m && coverage html"
-
+            - defer: docker rm $(cat {{.CID_FILE}})
+            - docker cp $(cat {{.CID_FILE}}):/app/htmlcov .
+        vars:
+            CID_FILE: /tmp/unittests-backend.cid
 
     unittests:
         run: once
