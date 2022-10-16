@@ -78,7 +78,7 @@ class MockedAPIMixin:
         # DB.wait_for_port(60.0)
 
         cls.redis = redis.Redis(db=1)
-        cls.db = DB.setup()
+        cls.db = DB.get_client()
         cls.mocked_api = respx.mock(base_url=YoutubeAPI.get_root_url(),
                                     assert_all_called=False)
         cls.createMocks()
@@ -117,8 +117,7 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
 
     def setUp(self):
         super().setUp()
-
-        self.downloader = Downloader(db_prefix="test_", redis_db_n=1)
+        self.downloader = Downloader(db=DB(prefix="test_"), redis_db_n=1)
 
     @respx.mock
     async def test_process_playlist_ids(self):
@@ -212,7 +211,8 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
         video = self.raw_responses["videos"]["items"][0]
 
         async with anyio.create_task_group() as tg:
-            task = RetrievePendingTranscriptsTask(DB(), nursery=tg)
+            task = RetrievePendingTranscriptsTask(
+                DB(prefix="test_"), nursery=tg)
             task.enabled = True
             await task(video)
 

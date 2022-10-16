@@ -57,7 +57,7 @@ class ExportToEmulatorTask(Task):
             old_emu = current_emu
         os.environ["FIRESTORE_EMULATOR_HOST"] = options.export_to_emulator_host
 
-        self.emulator_client = DB.setup()
+        self.emulator_client = DB.get_client()
 
         if old_emu:
             logger.debug("Restoring emulator host")
@@ -169,7 +169,7 @@ class RetrievePendingTranscriptsTask(Task):
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
-    def __init__(self, options=None, db_prefix=None, redis_db_n=None):
+    def __init__(self, options=None, db=None, redis_db_n=None):
 
         # for k, v in os.environ.items():
         #     logger.debug('- %s = "%s"' % (k, v))
@@ -179,10 +179,7 @@ class Downloader:
         self.options = options
 
         self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
-        if db_prefix:
-            self.db = DB(db_prefix)
-        else:
-            self.db = DB()
+        self.db = db if db else DB()
         self.api = YoutubeAPI(self.db, redis_db_n=redis_db_n)
 
     async def init(self):

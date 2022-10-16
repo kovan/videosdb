@@ -42,7 +42,7 @@ class DB:
             wait_for_port(port, host, timeout)
 
     @staticmethod
-    def setup(project=None, config=None):
+    def get_client(project=None, config=None):
         if not project:
             project = os.environ["FIREBASE_PROJECT"]
         if not config:
@@ -76,7 +76,7 @@ class DB:
         self._write_counter = Counter(Counter.Type.WRITES,
                                       self.FREE_TIER_WRITE_QUOTA - 500)
 
-        self._db = self.setup()
+        self._db = self.get_client()
 
     async def init(self):
         # initialize meta table:
