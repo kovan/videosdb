@@ -52,16 +52,14 @@ class ExportToEmulatorTask(Task):
         if not self.enabled:
             return
 
-        current_emu = os.environ.get("FIRESTORE_EMULATOR_HOST")
-        if current_emu:
-            old_emu = current_emu
+        previous_emu = os.environ.get("FIRESTORE_EMULATOR_HOST")
         os.environ["FIRESTORE_EMULATOR_HOST"] = options.export_to_emulator_host
 
         self.emulator_client = DB.get_client()
 
-        if old_emu:
+        if previous_emu:
             logger.debug("Restoring emulator host")
-            os.environ["FIRESTORE_EMULATOR_HOST"] = old_emu
+            os.environ["FIRESTORE_EMULATOR_HOST"] = previous_emu
         else:
             del os.environ["FIRESTORE_EMULATOR_HOST"]
 
