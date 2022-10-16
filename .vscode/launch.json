@@ -22,8 +22,7 @@
                 },
                 "envFile": "${workspaceFolder}/common/env/testing.txt",
                 "args": [
-                    "-c",
-                    "-e"
+                    "-c"
                 ],
                 "console": "integratedTerminal",
                 "cwd": "${workspaceFolder}/backend",
@@ -71,8 +70,7 @@
                 },
                 "cwd": "${workspaceFolder}/frontend",
                 "console": "integratedTerminal",
-                "outputCapture": "std",
-                "justMyCode": false
+                "outputCapture": "std"
             },
             {
                 "name": "yarn dev",
@@ -92,8 +90,7 @@
                 "envFile": "${workspaceFolder}/common/env/testing.txt",
                 "cwd": "${workspaceFolder}/frontend",
                 "console": "integratedTerminal",
-                "outputCapture": "std",
-                "justMyCode": false
+                "outputCapture": "std"
             },
             {
                 "name": "yarn build",
@@ -109,8 +106,7 @@
                 "envFile": "${workspaceFolder}/frontend/.env",
                 "cwd": "${workspaceFolder}/frontend",
                 "console": "integratedTerminal",
-                "outputCapture": "std",
-                "justMyCode": false
+                "outputCapture": "std"
             },
             {
                 "name": "yarn start",
@@ -126,19 +122,16 @@
                 "envFile": "${workspaceFolder}/frontend/.env",
                 "cwd": "${workspaceFolder}/frontend",
                 "console": "integratedTerminal",
-                "outputCapture": "std",
-                "justMyCode": false
+                "outputCapture": "std"
             },
             {
                 "type": "node",
                 "request": "attach",
                 "name": "Attach Program",
-                "console": "integratedTerminal",
                 "skipFiles": [
                     "<node_internals>/**"
                 ],
-                "port": 9229,
-                "justMyCode": false
+                "port": 9229
             },
         ]
     }

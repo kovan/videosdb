@@ -210,15 +210,12 @@ class Downloader:
                 export_to_emulator_task = ExportToEmulatorTask(*args)
                 tasks = [
                     RetrievePendingTranscriptsTask(*args),
-                    PublishTask(*args)
+                    PublishTask(*args),
+                    export_to_emulator_task
                 ]
-                if not "DEBUG" in os.environ:
-                    tasks.append(export_to_emulator_task)
 
                 await self._final_video_iteration(tasks)
-
-                if not "DEBUG" in os.environ:
-                    await export_to_emulator_task.export_pending_collections()
+                await export_to_emulator_task.export_pending_collections()
 
             # await anyio.wait_all_tasks_blocked()
             phase1_nursery.cancel_scope.cancel()
