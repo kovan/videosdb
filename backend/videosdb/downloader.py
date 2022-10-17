@@ -164,6 +164,93 @@ class RetrievePendingTranscriptsTask(Task):
 
 
 @traced
+class VideoProcessor:
+    def __init__(self, db, api, channel_id) -> None:
+        self.db = db
+        self.api = api
+        self.channel_id = channel_id
+        self.processed_video_ids = LockedItems(set())
+        self.excluded_video_ids = LockedItems(set())
+
+    # entrypoint:
+
+    async def add_video(self, video_id, playlist_id):
+        logger.debug(
+            f"Processing playlist item video {video_id}, {playlist_id}")
+
+        new = False
+        async with self.processed_video_ids.lock:
+            if video_id not in self.processed_video_ids.items:
+                self.processed_video_ids.items.add(video_id)
+                new = True
+
+        async with self.excluded_video_ids.lock:
+            if video_id in self.excluded_video_ids.items:
+                return
+
+        if new:
+            _, video = await self.api.get_video_info(video_id)
+            video = await self._create_video(video, [playlist_id])
+            if video:
+
+                # all videos must be read later from DB after this phase,
+                # plus margin for some other ops:
+                new_limit = len(self.processed_video_ids.items) + 5000
+                await self.db.adjust_read_limit(new_limit)
+            else:
+                async with self.excluded_video_ids.lock:
+                    self.excluded_video_ids.items.add(video_id)
+
+        else:
+
+            await self.db.set("videos/" + video_id, {
+                "videosdb": {
+                    "playlists": firestore.ArrayUnion([playlist_id])
+                }
+            }, merge=True)
+
+    async def _create_video(self, video, playlist_ids=None):
+
+        if not video:
+            return
+        # some playlists include videos from other channels
+        # for now exclude those videos
+        # in the future maybe exclude whole playlist
+
+        if video["snippet"]["channelId"] != self.channel_id:
+            return
+
+        video_id = video["id"]
+
+        playlist_ids = playlist_ids if playlist_ids else []
+
+        video |= {
+            "videosdb": {
+                "slug":  slugify(video["snippet"]["title"]),
+                "descriptionTrimmed": bleach.linkify(video["snippet"]["description"]),
+                "durationSeconds": isodate.parse_duration(
+                    video["contentDetails"]["duration"]).total_seconds(),
+
+            }
+        }
+        if playlist_ids:
+            video["videosdb"]["playlists"] = firestore.ArrayUnion(playlist_ids)
+
+        video["snippet"]["publishedAt"] = isodate.parse_datetime(
+            video["snippet"]["publishedAt"])
+
+        for stat, value in video["statistics"].items():
+            video["statistics"][stat] = int(value)
+
+        await self.db.set("videos/" + video_id, video, merge=True)
+
+        logger.info("Wrote video: %s" %
+                    (video_id))
+
+        return video
+
+
+@traced
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
@@ -244,9 +331,6 @@ class Downloader:
         return ids
 
     async def _process_playlist_ids(self, playlist_ids, channel_name):
-        processed_video_ids = LockedItems(set())
-        excluded_video_ids = LockedItems(set())
-        processed_playlist_ids = LockedItems(set())
 
         async with anyio.create_task_group() as phase1:
             random.shuffle(playlist_ids)
@@ -257,28 +341,15 @@ class Downloader:
                     playlist_id,
                     channel_name,
                     phase1,
-                    processed_video_ids,
-                    excluded_video_ids,
-                    processed_playlist_ids,
                     name="Playlist %s processor" % playlist_id
                 )
-
-        return processed_video_ids.items
 
     async def _process_playlist(self,
                                 playlist_id,
                                 channel_name,
-                                task_group,
-                                processed_video_ids,
-                                excluded_video_ids,
-                                processed_playlist_ids):
+                                task_group):
 
         logger.info("Processing playlist " + playlist_id)
-
-        async with processed_playlist_ids.lock:
-            if playlist_id in processed_playlist_ids.items:
-                return
-            processed_playlist_ids.items.add(playlist_id)
 
         _, playlist = await self.api.get_playlist_info(playlist_id)
         if not playlist:
@@ -295,50 +366,15 @@ class Downloader:
         # create videos:
         video_ids = playlist["videosdb"]["videoIds"]
         random.shuffle(video_ids)
+        video_processor = VideoProcessor(self.db, self.api, self.YT_CHANNEL_ID)
 
         for video_id in video_ids:
             task_group.start_soon(
-                self._process_video,
+                video_processor.add_video,
                 video_id,
                 playlist_id,
-                processed_video_ids,
-                excluded_video_ids,
-                name="Video %s processor" % video_id
+                name="Add video %s" % video_id
             )
-
-    async def _process_video(self, video_id, playlist_id, processed_video_ids, excluded_video_ids):
-        logger.debug("Processing video " + video_id)
-        new = False
-        async with processed_video_ids.lock:
-            if video_id not in processed_video_ids.items:
-                processed_video_ids.items.add(video_id)
-                new = True
-
-        if new:
-            _, video = await self.api.get_video_info(video_id)
-            # if not _:
-            #     return
-
-            video = await self._create_video(video, [playlist_id])
-            if not video:
-                async with excluded_video_ids.lock:
-                    excluded_video_ids.items.add(video_id)
-                return
-
-        async with excluded_video_ids.lock:
-            if video_id in excluded_video_ids.items:
-                return
-
-        # all videos must be read later from DB after this phase, plus margin for some other ops:
-
-        new_limit = len(processed_video_ids.items) + 5000
-        await self.db.adjust_read_limit(new_limit)
-
-        await self.db.set("videos/" + video_id, {
-            "videosdb": {
-                "playlists": firestore.ArrayUnion([playlist_id])
-            }
-        }, merge=True)
 
     async def _retrieve_all_playlist_ids(self, channel_id):
         _, ids = await self.api.list_channelsection_playlist_ids(channel_id)
@@ -393,46 +429,6 @@ class Downloader:
         }
         await self.db.set("playlists/" + playlist["id"], playlist, merge=True)
         logger.info("Wrote playlist: " + playlist["snippet"]["title"])
-
-    async def _create_video(self, video, playlist_ids=None):
-
-        if not video:
-            return
-        # some playlists include videos from other channels
-        # for now exclude those videos
-        # in the future maybe exclude whole playlist
-
-        if video["snippet"]["channelId"] != self.YT_CHANNEL_ID:
-            return
-
-        video_id = video["id"]
-
-        playlist_ids = playlist_ids if playlist_ids else []
-
-        video |= {
-            "videosdb": {
-                "slug":  slugify(video["snippet"]["title"]),
-                "descriptionTrimmed": bleach.linkify(video["snippet"]["description"]),
-                "durationSeconds": isodate.parse_duration(
-                    video["contentDetails"]["duration"]).total_seconds(),
-
-            }
-        }
-        if playlist_ids:
-            video["videosdb"]["playlists"] = firestore.ArrayUnion(playlist_ids)
-
-        video["snippet"]["publishedAt"] = isodate.parse_datetime(
-            video["snippet"]["publishedAt"])
-
-        for stat, value in video["statistics"].items():
-            video["statistics"][stat] = int(value)
-
-        await self.db.set("videos/" + video_id, video, merge=True)
-
-        logger.info("Wrote video: %s" %
-                    (video_id))
-
-        return video
 
     async def _fill_related_videos(self):
 

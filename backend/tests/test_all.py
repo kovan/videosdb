@@ -125,10 +125,9 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
         video_ids = await self.downloader._process_playlist_ids(
             [self.PLAYLIST_ID], "Sadhguru")
 
-        self.assertEqual(video_ids, self.VIDEO_IDS)
-
         self.assertEqual(self.mocked_api["playlists"].call_count, 1)
         self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
+        self.assertEqual(self.mocked_api["videos"].call_count, 7)
 
         doc = await self.db.document("test_videos/" + self.VIDEO_ID).get()
         self.assertTrue(doc.exists)
@@ -138,10 +137,11 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
         self.assertEqual(pls[0], self.PLAYLIST_ID)
 
         vids = [doc async for doc in self.db.collection("test_videos").stream()]
-        self.assertEqual(len(vids), len(self.VIDEO_IDS))
+
         for video in vids:
             self.assertEqual([self.PLAYLIST_ID],
                              video.get("videosdb.playlists"))
+            self.assertIn("slug", video.get("videosdb"))
 
         # check that one playlist is processed correctly:
 
