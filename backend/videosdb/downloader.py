@@ -221,7 +221,8 @@ class Downloader:
         final_video_ids = LockedItems(set())
         logger.info("Init phase 2")
 
-        async for video in self.db.stream("videos"):
+        async for video_ref in self.db.list_documents("videos"):
+            video = await video_ref.get()
             video_dict = video.to_dict()
             video_id = video_dict.get("id")
             if not video_id:

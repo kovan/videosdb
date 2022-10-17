@@ -126,6 +126,10 @@ class DB:
         return self._collection(collection_name).stream()
 
     @Retry()
+    def list_documents(self, collection_name):
+        return self._collection(collection_name).list_documents()
+
+    @Retry()
     async def recursive_delete(self, path):
         ref = self._document(path)
         return await self._db.recursive_delete(ref)
