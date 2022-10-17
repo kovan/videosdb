@@ -1,0 +1,282 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "snippet": {
+      "type": "object",
+      "properties": {
+        "publishedAt": {
+          "type": "string"
+        },
+        "channelTitle": {
+          "type": "string"
+        },
+        "channelId": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultAudioLanguage": {
+          "type": "string"
+        },
+        "thumbnails": {
+          "type": "object",
+          "properties": {
+            "maxres": {
+              "type": "object",
+              "properties": {
+                "height": {
+                  "type": "integer"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "width": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "height",
+                "url",
+                "width"
+              ]
+            },
+            "high": {
+              "type": "object",
+              "properties": {
+                "height": {
+                  "type": "integer"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "width": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "height",
+                "url",
+                "width"
+              ]
+            },
+            "medium": {
+              "type": "object",
+              "properties": {
+                "height": {
+                  "type": "integer"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "width": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "height",
+                "url",
+                "width"
+              ]
+            },
+            "standard": {
+              "type": "object",
+              "properties": {
+                "height": {
+                  "type": "integer"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "width": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "height",
+                "url",
+                "width"
+              ]
+            },
+            "default": {
+              "type": "object",
+              "properties": {
+                "height": {
+                  "type": "integer"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "width": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "height",
+                "url",
+                "width"
+              ]
+            }
+          },
+          "required": [
+            "maxres",
+            "high",
+            "medium",
+            "standard",
+            "default"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "localized": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "description"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "liveBroadcastContent": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "string"
+        },
+        "defaultLanguage": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "publishedAt",
+        "channelTitle",
+        "channelId",
+        "tags",
+        "defaultAudioLanguage",
+        "thumbnails",
+        "description",
+        "localized",
+        "title",
+        "liveBroadcastContent",
+        "categoryId",
+        "defaultLanguage"
+      ]
+    },
+    "statistics": {
+      "type": "object",
+      "properties": {
+        "favoriteCount": {
+          "type": "integer"
+        },
+        "commentCount": {
+          "type": "integer"
+        },
+        "likeCount": {
+          "type": "integer"
+        },
+        "viewCount": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "favoriteCount",
+        "commentCount",
+        "likeCount",
+        "viewCount"
+      ]
+    },
+    "videosdb": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string"
+        },
+        "playlists": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "durationSeconds": {
+          "type": "number"
+        },
+        "descriptionTrimmed": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug",
+        "playlists",
+        "durationSeconds",
+        "descriptionTrimmed"
+      ]
+    },
+    "etag": {
+      "type": "string"
+    },
+    "contentDetails": {
+      "type": "object",
+      "properties": {
+        "duration": {
+          "type": "string"
+        },
+        "projection": {
+          "type": "string"
+        },
+        "licensedContent": {
+          "type": "boolean"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "dimension": {
+          "type": "string"
+        },
+        "caption": {
+          "type": "string"
+        },
+        "contentRating": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "duration",
+        "projection",
+        "licensedContent",
+        "definition",
+        "dimension",
+        "caption",
+        "contentRating"
+      ]
+    }
+  },
+  "required": [
+    "kind",
+    "id",
+    "snippet",
+    "statistics",
+    "videosdb",
+    "etag",
+    "contentDetails"
+  ]
+}
