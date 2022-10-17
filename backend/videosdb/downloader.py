@@ -419,7 +419,7 @@ class Downloader:
             }
         }
         if playlist_ids:
-            video["playlists"] = firestore.ArrayUnion(playlist_ids)
+            video["videosdb"]["playlists"] = firestore.ArrayUnion(playlist_ids)
 
         video["snippet"]["publishedAt"] = isodate.parse_datetime(
             video["snippet"]["publishedAt"])
