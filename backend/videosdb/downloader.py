@@ -280,9 +280,8 @@ class Downloader:
             try:
                 await self._phase1()
                 await self._phase2()
-            except Exception as e:
+            finally:
                 await self._print_debug_info(True)
-                raise e
 
             # await anyio.wait_all_tasks_blocked()
             global_nursery.cancel_scope.cancel()
@@ -484,8 +483,12 @@ class Downloader:
     async def _print_debug_info(self, once=False):
         while True:
             tasks = anyio.get_running_tasks()
-            logger.debug('Running tasks:' + str(len(tasks)))
-            logger.debug(pprint.pformat(tasks))
+            logger.info('Running tasks:' + str(len(tasks)))
+            logger.info(pprint.pformat(tasks))
+            stats = await self.api.cache.stats()
+            logger.info("Cache stats: ")
+            logger.info(pprint.pformat(stats))
+
             if once:
                 return
             await anyio.sleep(30)

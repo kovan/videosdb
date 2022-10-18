@@ -36,6 +36,9 @@ class Cache:
         else:
             self.redis = redis.Redis()
 
+    def stats(self):
+        return self.redis.info("stats")
+
     @staticmethod
     def key_func(url: str, params: dict):
         keys = list(params.keys())
