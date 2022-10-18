@@ -157,6 +157,7 @@ class DB:
         with open(get_module_path() + "/../../common/firebase/db-schema.json") as f:
             schema = json.load(f)
 
-        async for video in self._collection("videos").stream():  # type: ignore
-            video_dict = video.to_dict()  # type: ignore
+        async for doc_ref in self._collection("videos").list_documents():
+            video = await doc_ref.get()  # type: ignore
+            video_dict = video.to_dict()
             validate(instance=video_dict, schema=schema)
