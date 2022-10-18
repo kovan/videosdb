@@ -68,21 +68,6 @@
                 "description": {
                     "type": "string"
                 },
-                "localized": {
-                    "type": "object",
-                    "properties": {
-                        "title": {
-                            "type": "string"
-                        },
-                        "description": {
-                            "type": "string"
-                        }
-                    },
-                    "required": [
-                        "title",
-                        "description"
-                    ]
-                },
                 "title": {
                     "type": "string"
                 }
@@ -93,33 +78,10 @@
                 "channelId",
                 "thumbnails",
                 "description",
-                "localized",
                 "title"
             ]
         },
-        "statistics": {
-            "type": "object",
-            "properties": {
-                "favoriteCount": {
-                    "type": "integer"
-                },
-                "commentCount": {
-                    "type": "integer"
-                },
-                "likeCount": {
-                    "type": "integer"
-                },
-                "viewCount": {
-                    "type": "integer"
-                }
-            },
-            "required": [
-                "favoriteCount",
-                "commentCount",
-                "likeCount",
-                "viewCount"
-            ]
-        },
+        "statistics": {},
         "videosdb": {
             "type": "object",
             "properties": {
@@ -158,20 +120,11 @@
                 "projection": {
                     "type": "string"
                 },
-                "licensedContent": {
-                    "type": "boolean"
-                },
                 "definition": {
-                    "type": "string"
-                },
-                "dimension": {
                     "type": "string"
                 },
                 "caption": {
                     "type": "string"
-                },
-                "contentRating": {
-                    "type": "object"
                 }
             },
             "required": [
