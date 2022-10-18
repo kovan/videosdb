@@ -146,19 +146,20 @@ class DownloaderTest(PatchedTestCase):
 
         self.assertEqual(
             self.video_processor._processed_video_ids.item, self.VIDEO_IDS)
-        self.assertEqual(self.video_processor._excluded_video_ids.item, set())
+        self.assertEqual(
+            self.video_processor._excluded_video_ids.item, {"FBYoZ-FgC84"})
         self.assertEqual(self.video_processor._video_to_playlist_list.item, {
             'HADeWBBb1so': [self.PLAYLIST_ID],
-            'FBYoZ-FgC84': [self.PLAYLIST_ID],
             'QEkHcPt-Vpw': [self.PLAYLIST_ID],
             'ZhI-stDIlCE': [self.PLAYLIST_ID],
             'ed7pFle2yM8': [self.PLAYLIST_ID],
             'gavq4LM8XK0': [self.PLAYLIST_ID],
             'J-1WVf5hFIk': [self.PLAYLIST_ID]
         })
-        vids = [doc async for doc in self.db.collection("test_videos").stream()]
+        videos = [doc async for doc in self.db.collection("test_videos").stream()]
 
-        for video in vids:
+        for video in videos:
+            self.assertIn(video.get("id"), self.VIDEO_IDS)
             self.assertEqual([self.PLAYLIST_ID],
                              video.get("videosdb.playlists"))
             self.assertIn("slug", video.get("videosdb"))
@@ -226,15 +227,15 @@ class DownloaderTest(PatchedTestCase):
     #     self.assertEqual(
     #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
 
-    async def test_transcript_downloading(self):
+    # async def test_transcript_downloading(self):
 
-        video = self.raw_responses["videos"][self.VIDEO_ID]["items"][0]
+    #     video = self.raw_responses["videos"][self.VIDEO_ID]["items"][0]
 
-        async with anyio.create_task_group() as tg:
-            task = RetrievePendingTranscriptsTask(
-                self.mydb, nursery=tg)
-            task.enabled = True
-            await task(video)
+    #     async with anyio.create_task_group() as tg:
+    #         task = RetrievePendingTranscriptsTask(
+    #             self.mydb, nursery=tg)
+    #         task.enabled = True
+    #         await task(video)
 
-        self.assertIn("transcript", video["videosdb"])
-        self.assertIn("transcript_status", video["videosdb"])
+    #     self.assertIn("transcript", video["videosdb"])
+    #     self.assertIn("transcript_status", video["videosdb"])

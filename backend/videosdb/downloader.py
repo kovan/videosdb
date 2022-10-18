@@ -201,10 +201,6 @@ class VideoProcessor:
                 v_ids.add(video_id)
                 new = True
 
-        async with self._excluded_video_ids as v_ids:
-            if video_id in v_ids:
-                return
-
         if new:
             _, video = await self._api.get_video_info(video_id)
             video = await self._create_video(video)
@@ -217,6 +213,7 @@ class VideoProcessor:
             else:
                 async with self._excluded_video_ids as v_ids:
                     v_ids.add(video_id)
+                return
 
         async with self._excluded_video_ids as v_ids:
             if video_id not in v_ids:
@@ -283,45 +280,54 @@ class Downloader:
             global_nursery.start_soon(self._print_debug_info,
                                       name="Debug info")
 
-            # Phase 1:
-            video_processor = VideoProcessor(
-                self.db, self.api, self.YT_CHANNEL_ID)
             try:
-                channel = await self._create_channel(self.YT_CHANNEL_ID)
-                if not channel:
-                    return
-                playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
-                await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"], video_processor)
+                await self._phase1()
+                await self._phase2()
             except Exception as e:
-                my_handler(QuotaExceeded, e, logger.error)
-            finally:
-                await video_processor.close()
-
-            # Phase 2: does not use Youtube quota:
-            async with anyio.create_task_group() as phase2_nursery:
-                args = self.db, self.options, phase2_nursery
-
-                export_to_emulator_task = ExportToEmulatorTask(*args)
-                tasks = [
-                    RetrievePendingTranscriptsTask(*args),
-                    PublishTask(*args),
-                    export_to_emulator_task
-                ]
-
-                await self._final_video_iteration(tasks)
-                await export_to_emulator_task.export_pending_collections()
+                await self._print_debug_info(True)
+                raise e
 
             # await anyio.wait_all_tasks_blocked()
             global_nursery.cancel_scope.cancel()
 
         logger.info("Sync finished")
 
+    async def _phase1(self):
+        # Phase 1:
+        video_processor = VideoProcessor(
+            self.db, self.api, self.YT_CHANNEL_ID)
+        try:
+            channel = await self._create_channel(self.YT_CHANNEL_ID)
+            if not channel:
+                return
+            playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
+            await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"], video_processor)
+        except Exception as e:
+            my_handler(QuotaExceeded, e, logger.error)
+        finally:
+            await video_processor.close()
+
+    async def _phase2(self):
+        # Phase 2: does not use Youtube quota:
+        async with anyio.create_task_group() as phase2_nursery:
+            args = self.db, self.options, phase2_nursery
+
+            export_to_emulator_task = ExportToEmulatorTask(*args)
+            tasks = [
+                RetrievePendingTranscriptsTask(*args),
+                PublishTask(*args),
+                export_to_emulator_task
+            ]
+
+            await self._final_video_iteration(tasks)
+            await export_to_emulator_task.export_pending_collections()
+
     async def _final_video_iteration(self, phase2_tasks):
         final_video_ids = LockedItem(set())
         logger.info("Init phase 2")
 
         async for video_ref in self.db.list_documents("videos"):
-            video = video_ref.get()
+            video = await video_ref.get()  # type: ignore
             video_dict = video.to_dict()
             video_id = video_dict.get("id")
             if not video_id:
@@ -478,10 +484,11 @@ class Downloader:
             return description[:match.start()]
         return description
 
-    async def _print_debug_info(self):
+    async def _print_debug_info(self, once=False):
         while True:
             tasks = anyio.get_running_tasks()
             logger.debug('Running tasks:' + str(len(tasks)))
             logger.debug(pprint.pformat(tasks))
-
+            if once:
+                return
             await anyio.sleep(30)
