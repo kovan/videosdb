@@ -175,7 +175,6 @@ class VideoProcessor:
         self._db = db
         self._api = api
         self._channel_id = channel_id
-        self._processed_video_ids = LockedItem(set())
         self._excluded_video_ids = LockedItem(set())
         self._video_to_playlist_list = LockedItem(dict())
 
@@ -183,8 +182,11 @@ class VideoProcessor:
     async def close(self):
         async with self._video_to_playlist_list as videos:
             for video_id, playlists in videos.items():
+                if video_id in self._excluded_video_ids.item:
+                    continue
                 if not playlists:
                     continue
+
                 await self._db.update("videos/" + video_id, {
                     "videosdb.playlists": firestore.ArrayUnion(playlists)
 
@@ -194,31 +196,26 @@ class VideoProcessor:
         logger.debug(
             f"Processing playlist item video {video_id}, {playlist_id}")
 
-        async with self._processed_video_ids as v_ids:
-            if video_id in v_ids:
+        async with self._video_to_playlist_list as videos:
+            if video_id in videos.keys():
                 new = False
             else:
-                v_ids.add(video_id)
+                videos[video_id] = []
                 new = True
 
         if new:
             _, video = await self._api.get_video_info(video_id)
             video = await self._create_video(video)
-            if video:  # not excluded
-                async with self._video_to_playlist_list as videos:
-                    videos[video_id] = []
-
-                # reserve quota for final update
-                await self._db.increase_reserved_quota(CounterTypes.WRITES)
-            else:
-                async with self._excluded_video_ids as v_ids:
-                    v_ids.add(video_id)
+            if not video:  # excluded
+                async with self._excluded_video_ids as videos:
+                    videos.add(video_id)
                 return
 
-        async with self._excluded_video_ids as v_ids:
-            if video_id not in v_ids:
-                async with self._video_to_playlist_list as videos:
-                    videos[video_id].append(playlist_id)
+            # reserve quota for final update
+            await self._db.increase_reserved_quota(CounterTypes.WRITES)
+
+        async with self._video_to_playlist_list as videos:
+            videos[video_id].append(playlist_id)
 
     async def _create_video(self, video):
 

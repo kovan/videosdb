@@ -145,10 +145,9 @@ class DownloaderTest(PatchedTestCase):
         await self.video_processor.close()
 
         self.assertEqual(
-            self.video_processor._processed_video_ids.item, self.VIDEO_IDS)
-        self.assertEqual(
             self.video_processor._excluded_video_ids.item, {"FBYoZ-FgC84"})
         self.assertEqual(self.video_processor._video_to_playlist_list.item, {
+            'FBYoZ-FgC84': [],
             'HADeWBBb1so': [self.PLAYLIST_ID],
             'QEkHcPt-Vpw': [self.PLAYLIST_ID],
             'ZhI-stDIlCE': [self.PLAYLIST_ID],
