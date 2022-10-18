@@ -52,8 +52,9 @@ class DB:
         if not project:
             project = os.environ.get("FIREBASE_PROJECT", "videosdb-testing")
 
+        BASE_DIR = os.path.dirname(str(sys.modules[__name__].__file__))
         creds_json_path = os.path.join(
-            get_module_path(), "../../common/keys/%s.json" % config.strip('"'))
+            BASE_DIR, "../common/keys/%s.json" % config.strip('"'))
 
         logger.info("Current project: " + project)
         logger.info("Current config: " + config)
@@ -125,6 +126,11 @@ class DB:
     async def update(self, path, *args, **kwargs):
         await self._counters[CounterTypes.WRITES].inc()
         return await self._document(path).update(*args, **kwargs)
+
+    @Retry()
+    async def delete(self, path, *args, **kwargs):
+        await self._counters[CounterTypes.WRITES].inc()
+        return await self._document(path).delete(*args, **kwargs)
 
     @Retry()
     def list_documents(self, collection_name):

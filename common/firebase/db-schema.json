@@ -11,85 +11,17 @@
         "snippet": {
             "type": "object",
             "properties": {
-                "publishedAt": {
-                    "type": "string"
-                },
+                "publishedAt": {},
                 "channelTitle": {
                     "type": "string"
                 },
                 "channelId": {
                     "type": "string"
                 },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "defaultAudioLanguage": {
-                    "type": "string"
-                },
                 "thumbnails": {
                     "type": "object",
                     "properties": {
-                        "maxres": {
-                            "type": "object",
-                            "properties": {
-                                "height": {
-                                    "type": "integer"
-                                },
-                                "url": {
-                                    "type": "string"
-                                },
-                                "width": {
-                                    "type": "integer"
-                                }
-                            },
-                            "required": [
-                                "height",
-                                "url",
-                                "width"
-                            ]
-                        },
-                        "high": {
-                            "type": "object",
-                            "properties": {
-                                "height": {
-                                    "type": "integer"
-                                },
-                                "url": {
-                                    "type": "string"
-                                },
-                                "width": {
-                                    "type": "integer"
-                                }
-                            },
-                            "required": [
-                                "height",
-                                "url",
-                                "width"
-                            ]
-                        },
                         "medium": {
-                            "type": "object",
-                            "properties": {
-                                "height": {
-                                    "type": "integer"
-                                },
-                                "url": {
-                                    "type": "string"
-                                },
-                                "width": {
-                                    "type": "integer"
-                                }
-                            },
-                            "required": [
-                                "height",
-                                "url",
-                                "width"
-                            ]
-                        },
-                        "standard": {
                             "type": "object",
                             "properties": {
                                 "height": {
@@ -129,10 +61,7 @@
                         }
                     },
                     "required": [
-                        "maxres",
-                        "high",
                         "medium",
-                        "standard",
                         "default"
                     ]
                 },
@@ -156,30 +85,16 @@
                 },
                 "title": {
                     "type": "string"
-                },
-                "liveBroadcastContent": {
-                    "type": "string"
-                },
-                "categoryId": {
-                    "type": "string"
-                },
-                "defaultLanguage": {
-                    "type": "string"
                 }
             },
             "required": [
                 "publishedAt",
                 "channelTitle",
                 "channelId",
-                "tags",
-                "defaultAudioLanguage",
                 "thumbnails",
                 "description",
                 "localized",
-                "title",
-                "liveBroadcastContent",
-                "categoryId",
-                "defaultLanguage"
+                "title"
             ]
         },
         "statistics": {
