@@ -22,6 +22,9 @@
         "-p",
         "test_*.py"
     ],
-    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.typeCheckingMode": "basic",
     "git.ignoreLimitWarning": true,
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportOptionalMemberAccess": "none"
+    },
 }

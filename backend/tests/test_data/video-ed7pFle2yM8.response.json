@@ -1,0 +1,95 @@
+{
+  "kind": "youtube#videoListResponse",
+  "etag": "WXZgaalZ0sAsPPnaV62KLyXFrag",
+  "items": [
+    {
+      "kind": "youtube#video",
+      "etag": "SAKCs_fZxWq9XS36CiNu9i1CG8k",
+      "id": "ed7pFle2yM8",
+      "snippet": {
+        "publishedAt": "2012-08-10T06:49:02Z",
+        "channelId": "UCcYzLCs3zrQIBVHYA1sK2sw",
+        "title": "The Science of Being Successful | Sadhguru",
+        "description": "Speaking about what it takes to be successful, Sadhguru explains that success comes when an individual functions at his full potential, which is possible only when the dimension of inner wellbeing is explored. Sadhguru looks at how every aspect of Indian culture was crafted, and powerful technologies were created, to evolve a human being to the Ultimate possibility.\n\nSadhguru Talks @ IIT Madras, Student Activity Center, Chennai, Oct 2010\n\n#Sadhguru\nYogi, mystic and visionary, Sadhguru is a spiritual master with a difference. An arresting blend of profundity and pragmatism, his life and work serves as a reminder that yoga is a contemporary science, vitally relevant to our times. \n\nSadhguru Exclusive (Register Now)\n⚡ http://isha.co/ex-yt \n\nSadhguru App (Download)\n📱 http://onelink.to/sadhguru__app\n\nOfficial Sadhguru Website \n🌎 http://isha.sadhguru.org \n\nDonate Towards Crafting A Conscious Planet\n🙏 http://isha.co/sanghamitra-yt\ufeff\n\nOfferings from Sadhguru in Challenging Times \n🌼 https://isha.sadhguru.org/sadhana-support\n\nGuided Yoga & Meditations by Sadhguru (Free Online)\n🌼 http://isha.sadhguru.org/5-min-practices\n🌼 http://isha.sadhguru.org/IshaKriya\n\nInner Engineering Online Program\n🌼 http://isha.co/IEO-YT (Register Now)\n\nOfficial Social Profiles of Sadhguru  (Subscribe)\n🌐 https://youtube.com/sadhguru?sub_confirmation=1\n🌐 https://facebook.com/sadhguru\n🌐 https://instagram.com/sadhguru\n🌐 https://twitter.com/SadhguruJV\n🌐 https://t.me/Sadhguru",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/ed7pFle2yM8/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/ed7pFle2yM8/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/ed7pFle2yM8/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/ed7pFle2yM8/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/ed7pFle2yM8/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Sadhguru",
+        "tags": [
+          "The Science of Being Successful",
+          "How do I enhance my competence?",
+          "education",
+          "IIT Madras",
+          "seeking",
+          "Sadhguru (Person)",
+          "spirituality",
+          "competence",
+          "Chennai",
+          "Corruption",
+          "Sadhguru at IIT",
+          "mysticism",
+          "college students",
+          "institute",
+          "engineering",
+          "degrees",
+          "indian culture",
+          "P-Aug2012",
+          "Student Activity Center",
+          "Oct 2010",
+          "Sadhguru 2010"
+        ],
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "en",
+        "localized": {
+          "title": "The Science of Being Successful | Sadhguru",
+          "description": "Speaking about what it takes to be successful, Sadhguru explains that success comes when an individual functions at his full potential, which is possible only when the dimension of inner wellbeing is explored. Sadhguru looks at how every aspect of Indian culture was crafted, and powerful technologies were created, to evolve a human being to the Ultimate possibility.\n\nSadhguru Talks @ IIT Madras, Student Activity Center, Chennai, Oct 2010\n\n#Sadhguru\nYogi, mystic and visionary, Sadhguru is a spiritual master with a difference. An arresting blend of profundity and pragmatism, his life and work serves as a reminder that yoga is a contemporary science, vitally relevant to our times. \n\nSadhguru Exclusive (Register Now)\n⚡ http://isha.co/ex-yt \n\nSadhguru App (Download)\n📱 http://onelink.to/sadhguru__app\n\nOfficial Sadhguru Website \n🌎 http://isha.sadhguru.org \n\nDonate Towards Crafting A Conscious Planet\n🙏 http://isha.co/sanghamitra-yt\ufeff\n\nOfferings from Sadhguru in Challenging Times \n🌼 https://isha.sadhguru.org/sadhana-support\n\nGuided Yoga & Meditations by Sadhguru (Free Online)\n🌼 http://isha.sadhguru.org/5-min-practices\n🌼 http://isha.sadhguru.org/IshaKriya\n\nInner Engineering Online Program\n🌼 http://isha.co/IEO-YT (Register Now)\n\nOfficial Social Profiles of Sadhguru  (Subscribe)\n🌐 https://youtube.com/sadhguru?sub_confirmation=1\n🌐 https://facebook.com/sadhguru\n🌐 https://instagram.com/sadhguru\n🌐 https://twitter.com/SadhguruJV\n🌐 https://t.me/Sadhguru"
+        },
+        "defaultAudioLanguage": "en"
+      },
+      "contentDetails": {
+        "duration": "PT5M52S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "true",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "781674",
+        "likeCount": "10654",
+        "favoriteCount": "0",
+        "commentCount": "29"
+      }
+    }
+  ],
+  "pageInfo": {
+    "totalResults": 1,
+    "resultsPerPage": 1
+  }
+}

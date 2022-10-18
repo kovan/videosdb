@@ -1,0 +1,86 @@
+{
+  "kind": "youtube#videoListResponse",
+  "etag": "yNv0KMMFZBn5LzucC2kt5J1v8cc",
+  "items": [
+    {
+      "kind": "youtube#video",
+      "etag": "-KsLfwUF_9tiBXvRzNvUfjz0M7s",
+      "id": "gavq4LM8XK0",
+      "snippet": {
+        "publishedAt": "2016-08-24T03:30:00Z",
+        "channelId": "UCcYzLCs3zrQIBVHYA1sK2sw",
+        "title": "Sadhguru on Fear of Failure",
+        "description": "Whatever situations arise in life, Sadhguru says, one can choose to use them and make himself stronger and better, or he can sit and cry. For one who sees his life as a stepping stone to a larger possibility, there is no such thing as failure.\n\nTo watch this video in Tamil - https://youtu.be/h3nk7ofiEQc\n\n#Sadhguru\nYogi, mystic and visionary, Sadhguru is a spiritual master with a difference. An arresting blend of profundity and pragmatism, his life and work serves as a reminder that yoga is a contemporary science, vitally relevant to our times. \n\nSadhguru Exclusive (Register Now)\n⚡ http://isha.co/ex-yt \n\nSadhguru App (Download)\n📱 http://onelink.to/sadhguru__app\n\nOfficial Sadhguru Website \n🌎 http://isha.sadhguru.org \n\nDonate Towards Crafting A Conscious Planet\n🙏 https://isha.sadhguru.org/sanghamitra\n\nOfferings from Sadhguru in Challenging Times \n🌼 https://isha.sadhguru.org/sadhana-support\n\nGuided Yoga & Meditations by Sadhguru (Free Online)\n🌼 http://isha.sadhguru.org/5-min-practices\n🌼 http://isha.sadhguru.org/IshaKriya\n\nInner Engineering Online Program\n50% off  | FREE for COVID Warriors\n🌼 http://isha.co/IEO-YT (Register Now)\n\nOfficial Social Profiles of Sadhguru  (Subscribe)\n🌐 https://youtube.com/sadhguru?sub_confirmation=1\n🌐 https://facebook.com/sadhguru\n🌐 https://instagram.com/sadhguru\n🌐 https://twitter.com/SadhguruJV\n🌐 https://t.me/Sadhguru",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/gavq4LM8XK0/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/gavq4LM8XK0/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/gavq4LM8XK0/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/gavq4LM8XK0/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/gavq4LM8XK0/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Sadhguru",
+        "tags": [
+          "Fear of Failure",
+          "In the Lap of the Master",
+          "Isha Yoga Center",
+          "mysticism",
+          "isha yoga",
+          "Sathsang",
+          "sadguru speeches in english 2016",
+          "seeking",
+          "Sadhguru (Person)",
+          "wisdom",
+          "sadhguru speeches",
+          "Apr 2009",
+          "spirituality"
+        ],
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "localized": {
+          "title": "Sadhguru on Fear of Failure",
+          "description": "Whatever situations arise in life, Sadhguru says, one can choose to use them and make himself stronger and better, or he can sit and cry. For one who sees his life as a stepping stone to a larger possibility, there is no such thing as failure.\n\nTo watch this video in Tamil - https://youtu.be/h3nk7ofiEQc\n\n#Sadhguru\nYogi, mystic and visionary, Sadhguru is a spiritual master with a difference. An arresting blend of profundity and pragmatism, his life and work serves as a reminder that yoga is a contemporary science, vitally relevant to our times. \n\nSadhguru Exclusive (Register Now)\n⚡ http://isha.co/ex-yt \n\nSadhguru App (Download)\n📱 http://onelink.to/sadhguru__app\n\nOfficial Sadhguru Website \n🌎 http://isha.sadhguru.org \n\nDonate Towards Crafting A Conscious Planet\n🙏 https://isha.sadhguru.org/sanghamitra\n\nOfferings from Sadhguru in Challenging Times \n🌼 https://isha.sadhguru.org/sadhana-support\n\nGuided Yoga & Meditations by Sadhguru (Free Online)\n🌼 http://isha.sadhguru.org/5-min-practices\n🌼 http://isha.sadhguru.org/IshaKriya\n\nInner Engineering Online Program\n50% off  | FREE for COVID Warriors\n🌼 http://isha.co/IEO-YT (Register Now)\n\nOfficial Social Profiles of Sadhguru  (Subscribe)\n🌐 https://youtube.com/sadhguru?sub_confirmation=1\n🌐 https://facebook.com/sadhguru\n🌐 https://instagram.com/sadhguru\n🌐 https://twitter.com/SadhguruJV\n🌐 https://t.me/Sadhguru"
+        },
+        "defaultAudioLanguage": "en"
+      },
+      "contentDetails": {
+        "duration": "PT10M34S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "true",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "953841",
+        "likeCount": "17103",
+        "favoriteCount": "0",
+        "commentCount": "57"
+      }
+    }
+  ],
+  "pageInfo": {
+    "totalResults": 1,
+    "resultsPerPage": 1
+  }
+}

@@ -1,22 +1,21 @@
-from abc import abstractmethod
 import logging
 import os
 import pprint
 import random
 import re
+from abc import abstractmethod
 from typing import Any
 
 import anyio
 import bleach
 import fnc
-import google.api_core.exceptions
 import isodate
 import youtube_transcript_api
 from aiostream import stream
 from autologging import traced
 from google.cloud import firestore
 from slugify import slugify
-from videosdb.db import DB
+from videosdb.db import DB, CounterTypes
 from videosdb.publisher import TwitterPublisher
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 
@@ -25,10 +24,17 @@ from videosdb.utils import QuotaExceeded, my_handler
 logger = logging.getLogger(__name__)
 
 
-class LockedItems:
-    def __init__(self, items) -> None:
+class LockedItem:
+    def __init__(self, item) -> None:
         self.lock = anyio.Lock()
-        self.items = items
+        self.item = item
+
+    async def __aenter__(self):
+        await self.lock.acquire()
+        return self.item
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self.lock.release()
 
 
 @traced
@@ -166,50 +172,58 @@ class RetrievePendingTranscriptsTask(Task):
 @traced
 class VideoProcessor:
     def __init__(self, db, api, channel_id) -> None:
-        self.db = db
-        self.api = api
-        self.channel_id = channel_id
-        self.processed_video_ids = LockedItems(set())
-        self.excluded_video_ids = LockedItems(set())
+        self._db = db
+        self._api = api
+        self._channel_id = channel_id
+        self._processed_video_ids = LockedItem(set())
+        self._excluded_video_ids = LockedItem(set())
+        self._video_to_playlist_list = LockedItem(dict())
 
     # entrypoint:
+    async def close(self):
+        async with self._video_to_playlist_list as videos:
+            for video_id, playlists in videos.items():
+                if not playlists:
+                    continue
+                await self._db.update("videos/" + video_id, {
+                    "videosdb.playlists": firestore.ArrayUnion(playlists)
+
+                })
 
     async def add_video(self, video_id, playlist_id):
         logger.debug(
             f"Processing playlist item video {video_id}, {playlist_id}")
 
-        new = False
-        async with self.processed_video_ids.lock:
-            if video_id not in self.processed_video_ids.items:
-                self.processed_video_ids.items.add(video_id)
+        async with self._processed_video_ids as v_ids:
+            if video_id in v_ids:
+                new = False
+            else:
+                v_ids.add(video_id)
                 new = True
 
-        async with self.excluded_video_ids.lock:
-            if video_id in self.excluded_video_ids.items:
+        async with self._excluded_video_ids as v_ids:
+            if video_id in v_ids:
                 return
 
         if new:
-            _, video = await self.api.get_video_info(video_id)
-            video = await self._create_video(video, [playlist_id])
-            if video:
+            _, video = await self._api.get_video_info(video_id)
+            video = await self._create_video(video)
+            if video:  # not excluded
+                async with self._video_to_playlist_list as videos:
+                    videos[video_id] = []
 
-                # all videos must be read later from DB after this phase,
-                # plus margin for some other ops:
-                new_limit = len(self.processed_video_ids.items) + 5000
-                await self.db.adjust_read_limit(new_limit)
+                # reserve quota for final update
+                await self._db.increase_reserved_quota(CounterTypes.WRITES)
             else:
-                async with self.excluded_video_ids.lock:
-                    self.excluded_video_ids.items.add(video_id)
+                async with self._excluded_video_ids as v_ids:
+                    v_ids.add(video_id)
 
-        else:
+        async with self._excluded_video_ids as v_ids:
+            if video_id not in v_ids:
+                async with self._video_to_playlist_list as videos:
+                    videos[video_id].append(playlist_id)
 
-            await self.db.set("videos/" + video_id, {
-                "videosdb": {
-                    "playlists": firestore.ArrayUnion([playlist_id])
-                }
-            }, merge=True)
-
-    async def _create_video(self, video, playlist_ids=None):
+    async def _create_video(self, video):
 
         if not video:
             return
@@ -217,12 +231,10 @@ class VideoProcessor:
         # for now exclude those videos
         # in the future maybe exclude whole playlist
 
-        if video["snippet"]["channelId"] != self.channel_id:
+        if video["snippet"]["channelId"] != self._channel_id:
             return
 
         video_id = video["id"]
-
-        playlist_ids = playlist_ids if playlist_ids else []
 
         video |= {
             "videosdb": {
@@ -233,8 +245,6 @@ class VideoProcessor:
 
             }
         }
-        if playlist_ids:
-            video["videosdb"]["playlists"] = firestore.ArrayUnion(playlist_ids)
 
         video["snippet"]["publishedAt"] = isodate.parse_datetime(
             video["snippet"]["publishedAt"])
@@ -242,22 +252,18 @@ class VideoProcessor:
         for stat, value in video["statistics"].items():
             video["statistics"][stat] = int(value)
 
-        await self.db.set("videos/" + video_id, video, merge=True)
+        await self._db.set("videos/" + video_id, video, merge=True)
 
-        logger.info("Wrote video: %s" %
-                    (video_id))
+        logger.info("Wrote video: %s" % (video_id))
 
         return video
 
 
-@traced
+@ traced
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
     def __init__(self, options=None, db=None, redis_db_n=None):
-
-        # for k, v in os.environ.items():
-        #     logger.debug('- %s = "%s"' % (k, v))
 
         logger.debug("ENVIRONMENT:")
         logger.debug(pprint.pformat(os.environ))
@@ -272,18 +278,24 @@ class Downloader:
 
     async def check_for_new_videos(self):
         logger.info("Sync start")
-        async with anyio.create_task_group() as phase1_nursery:
+        async with anyio.create_task_group() as global_nursery:
             await self.init()
-            phase1_nursery.start_soon(self._print_debug_info,
+            global_nursery.start_soon(self._print_debug_info,
                                       name="Debug info")
 
             # Phase 1:
+            video_processor = VideoProcessor(
+                self.db, self.api, self.YT_CHANNEL_ID)
             try:
                 channel = await self._create_channel(self.YT_CHANNEL_ID)
+                if not channel:
+                    return
                 playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
-                await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"])
+                await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"], video_processor)
             except Exception as e:
                 my_handler(QuotaExceeded, e, logger.error)
+            finally:
+                await video_processor.close()
 
             # Phase 2: does not use Youtube quota:
             async with anyio.create_task_group() as phase2_nursery:
@@ -300,28 +312,28 @@ class Downloader:
                 await export_to_emulator_task.export_pending_collections()
 
             # await anyio.wait_all_tasks_blocked()
-            phase1_nursery.cancel_scope.cancel()
+            global_nursery.cancel_scope.cancel()
 
         logger.info("Sync finished")
 
     async def _final_video_iteration(self, phase2_tasks):
-        final_video_ids = LockedItems(set())
+        final_video_ids = LockedItem(set())
         logger.info("Init phase 2")
 
         async for video_ref in self.db.list_documents("videos"):
-            video = await video_ref.get()
+            video = video_ref.get()
             video_dict = video.to_dict()
             video_id = video_dict.get("id")
             if not video_id:
                 continue
 
-            async with final_video_ids.lock:
-                final_video_ids.items.add(video_id)
+            async with final_video_ids as video_ids:
+                video_ids.add(video_id)
 
             for task in phase2_tasks:
                 await task(video_dict)
 
-        ids = final_video_ids.items
+        ids = final_video_ids.item
         if ids:
             await self.db.set_noquota("meta/video_ids", {
                 "videoIds": firestore.ArrayUnion(list(ids))
@@ -330,7 +342,7 @@ class Downloader:
         logger.info("Final video list length: " + str(len(ids)))
         return ids
 
-    async def _process_playlist_ids(self, playlist_ids, channel_name):
+    async def _process_playlist_ids(self, playlist_ids, channel_name, video_processor):
 
         async with anyio.create_task_group() as phase1:
             random.shuffle(playlist_ids)
@@ -340,6 +352,7 @@ class Downloader:
                     self._process_playlist,
                     playlist_id,
                     channel_name,
+                    video_processor,
                     phase1,
                     name="Playlist %s processor" % playlist_id
                 )
@@ -347,6 +360,7 @@ class Downloader:
     async def _process_playlist(self,
                                 playlist_id,
                                 channel_name,
+                                video_processor,
                                 task_group):
 
         logger.info("Processing playlist " + playlist_id)
@@ -366,7 +380,6 @@ class Downloader:
         # create videos:
         video_ids = playlist["videosdb"]["videoIds"]
         random.shuffle(video_ids)
-        video_processor = VideoProcessor(self.db, self.api, self.YT_CHANNEL_ID)
 
         for video_id in video_ids:
             task_group.start_soon(
@@ -395,6 +408,8 @@ class Downloader:
     async def _create_channel(self, channel_id):
 
         _, channel_info = await self.api.get_channel_info(channel_id)
+        if not channel_info:
+            return
 
         logger.info("Processing channel: " +
                     str(channel_info["snippet"]["title"]))
@@ -430,29 +445,29 @@ class Downloader:
         await self.db.set("playlists/" + playlist["id"], playlist, merge=True)
         logger.info("Wrote playlist: " + playlist["snippet"]["title"])
 
-    async def _fill_related_videos(self):
+    # async def _fill_related_videos(self):
 
-        # use remaining YT API daily quota to download a few related video lists:
-        logger.info("Filling related videos info.")
+    #     # use remaining YT API daily quota to download a few related video lists:
+    #     logger.info("Filling related videos info.")
 
-        doc = await self.db.get("meta/video_ids")
-        randomized_ids = doc.get("videoIds")
-        random.shuffle(randomized_ids)
-        for video_id in randomized_ids:
-            related_videos = await self.api.get_related_videos(video_id)
+    #     doc = await self.db.get("meta/video_ids")
+    #     randomized_ids = doc.get("videoIds")
+    #     random.shuffle(randomized_ids)
+    #     for video_id in randomized_ids:
+    #         related_videos = await self.api.get_related_videos(video_id)
 
-            for related in related_videos:
-                # for now skip videos from other channels:
-                if "snippet" in related and related["snippet"]["channelId"] \
-                        != self.YT_CHANNEL_ID:
-                    continue
+    #         for related in related_videos:
+    #             # for now skip videos from other channels:
+    #             if "snippet" in related and related["snippet"]["channelId"] \
+    #                     != self.YT_CHANNEL_ID:
+    #                 continue
 
-                await self.db.update("videos/" + video_id, {
-                    "videosdb.related_videos": firestore.ArrayUnion([related["id"]["videoId"]])
-                })
+    #             await self.db.update("videos/" + video_id, {
+    #                 "videosdb.related_videos": firestore.ArrayUnion([related["id"]["videoId"]])
+    #             })
 
-                logger.info("Added new related videos to video %s" %
-                            video_id)
+    #             logger.info("Added new related videos to video %s" %
+    #                         video_id)
 
     @ staticmethod
     def _description_trimmed(description):

@@ -43,7 +43,7 @@
                     "debug-test"
                 ],
                 "console": "integratedTerminal",
-                "justMyCode": false
+                "justMyCode": true
             },
             {
                 "name": "Python: Current File",

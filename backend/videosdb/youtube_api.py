@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import re
-from typing import Iterable, NewType
+from typing import Iterable, NewType, TypeVar
 import anyio
 import httpx
 from urllib.parse import urlencode
@@ -58,6 +58,8 @@ class Cache:
                 value = await self.redis.get(
                     self._pages_key_func(key, page_n)
                 )
+                if not value:
+                    raise KeyError()
                 yield json.loads(value)
 
         value = await self.redis.get(key)
@@ -88,14 +90,12 @@ class Cache:
                             "etag": etag,
                             "n_pages": page_count
                         }))
-        logger.debug("Response Etag: " + etag)
+        logger.debug("Response Etag: ", etag)
         await transaction.execute()
         return pages
 
 
 class YoutubeAPI:
-    APIReturnType = NewType(
-        "APIReturnType", tuple[bool, AsyncGeneratorType[dict]])
 
     @staticmethod
     def get_root_url() -> str:
@@ -133,7 +133,7 @@ class YoutubeAPI:
 
         logger.debug("Pointing at URL: " + self.root_url)
 
-    async def get_playlist_info(self, playlist_id) -> APIReturnType:
+    async def get_playlist_info(self, playlist_id):
         url = "/playlists"
         params = {
             "part": "snippet",
@@ -141,7 +141,7 @@ class YoutubeAPI:
         }
         return await self._request_one(url, params)
 
-    async def list_channelsection_playlist_ids(self, channel_id) -> APIReturnType:
+    async def list_channelsection_playlist_ids(self, channel_id):
         async def generator(results):
             async for item in results:
                 details = item.get("contentDetails")
@@ -160,7 +160,7 @@ class YoutubeAPI:
         modified, results = await self._request_main(url, params)
         return modified, generator(results)
 
-    async def list_channel_playlist_ids(self, channel_id) -> APIReturnType:
+    async def list_channel_playlist_ids(self, channel_id):
         async def generator(results):
             async for item in results:
                 yield item["id"]
@@ -173,7 +173,7 @@ class YoutubeAPI:
         modified, results = await self._request_main(url, params)
         return modified, generator(results)
 
-    async def get_video_info(self, youtube_id) -> APIReturnType:
+    async def get_video_info(self, youtube_id):
         url = "/videos"
         params = {
             "part": "snippet,contentDetails,statistics",
@@ -181,7 +181,7 @@ class YoutubeAPI:
         }
         return await self._request_one(url, params)
 
-    async def list_playlist_items(self, playlist_id) -> APIReturnType:
+    async def list_playlist_items(self, playlist_id):
         url = "/playlistItems"
         params = {
             "part": "snippet",
@@ -189,7 +189,7 @@ class YoutubeAPI:
         }
         return await self._request_main(url, params)
 
-    async def get_channel_info(self, channel_id) -> APIReturnType:
+    async def get_channel_info(self, channel_id):
         url = "/channels"
         params = {
             "part": "snippet,contentDetails,statistics",
@@ -197,7 +197,7 @@ class YoutubeAPI:
         }
         return await self._request_one(url, params)
 
-    async def get_related_videos(self, youtube_id) -> tuple[bool, Iterable]:
+    async def get_related_videos(self, youtube_id):
         url = "/search"
         params = {
             "part": "snippet",
@@ -228,7 +228,7 @@ class YoutubeAPI:
             item = None
         return modified, item
 
-    async def _request_main(self, url, params, use_cache=True):
+    async def _request_main(self, url, params, use_cache=True) -> tuple[bool, AsyncGeneratorType]:
         async def generator(pages):
             async for page in pages:
                 for item in page["items"]:
@@ -241,7 +241,7 @@ class YoutubeAPI:
 
         status_code, pages = await pop_first(result)
 
-        return status_code != 304, generator(pages)
+        return status_code != 304, generator(pages)  # type: ignore
 
     async def _request_with_cache(self, url, params):
 
@@ -262,6 +262,8 @@ class YoutubeAPI:
         yield status_code
 
         if status_code == 304:
+            if not cached_pages:
+                raise KeyError()
             async for page in cached_pages:
                 yield page
         elif status_code >= 200 and status_code < 300:
@@ -270,7 +272,7 @@ class YoutubeAPI:
         else:
             logger.warn("Unexpected status code: " + status_code)
 
-    async def _request_base(self, url, params, headers=None, max_retries=5):
+    async def _request_base(self, url, params, headers=None):
 
         params["key"] = self.yt_key
         url += "?" + urlencode(params)
@@ -322,7 +324,7 @@ class YoutubeAPI:
             retries += 1
             if retries > max_retries:
                 response.raise_for_status()
-            anyio.sleep(3.0)
+            await anyio.sleep(3.0)
         return response
 
 

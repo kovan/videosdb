@@ -1,3 +1,4 @@
+# type: ignore
 import asyncio
 import datetime
 import json
@@ -14,17 +15,17 @@ from dotenv import load_dotenv
 from google.api_core.datetime_helpers import DatetimeWithNanoseconds
 from httpx import Response
 from videosdb.db import DB
-from videosdb.downloader import Downloader, RetrievePendingTranscriptsTask
+from videosdb.downloader import Downloader, RetrievePendingTranscriptsTask, VideoProcessor
 from videosdb.publisher import TwitterPublisher
 from videosdb.youtube_api import Cache, YoutubeAPI
 
 logger = logging.getLogger(__name__)
 
-BASE_DIR = os.path.dirname(sys.modules[__name__].__file__)
+BASE_DIR = os.path.dirname(str(sys.modules[__name__].__file__))
 DATA_DIR = BASE_DIR + "/test_data"
 
 
-def read_response_files():
+def read_response_files(video_ids):
     raw_responses = {}
     with open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json") as f:
         raw_responses["playlists"] = json.load(f)
@@ -32,8 +33,11 @@ def read_response_files():
         raw_responses["playlistItems.1"] = json.load(f)
     with open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json") as f:
         raw_responses["playlistItems.2"] = json.load(f)
-    with open(DATA_DIR + "/video-HADeWBBb1so.response.json") as f:
-        raw_responses["videos"] = json.load(f)
+
+    raw_responses["videos"] = {}
+    for vid in video_ids:
+        with open(f"{DATA_DIR}/video-{vid}.response.json") as f:
+            raw_responses["videos"][vid] = json.load(f)
 
     return raw_responses
 
@@ -52,7 +56,12 @@ class PatchedTestCase(aiounittest.AsyncTestCase):
         pass
 
 
-class MockedAPIMixin:
+class DownloaderTest(PatchedTestCase):
+    VIDEO_IDS = {'ZhI-stDIlCE', 'ed7pFle2yM8', 'J-1WVf5hFIk',
+                 'FBYoZ-FgC84', 'QEkHcPt-Vpw', 'HADeWBBb1so', 'gavq4LM8XK0'}
+    PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+
+    VIDEO_ID = "HADeWBBb1so"
 
     def setUp(self):
 
@@ -60,6 +69,12 @@ class MockedAPIMixin:
         self.my_loop.run_until_complete(self._clear_dbs())
         self.mocked_api.start()
         self.addCleanup(self.mocked_api.stop)
+
+        self.YT_CHANNEL_ID = "UCcYzLCs3zrQIBVHYA1sK2sw"
+        self.mydb = DB(prefix="test_")
+        self.downloader = Downloader(db=self.mydb, redis_db_n=1)
+        self.video_processor = VideoProcessor(
+            self.mydb, YoutubeAPI(self.mydb), self.YT_CHANNEL_ID)
 
     async def _clear_dbs(self):
         async for col in self.db.collections():
@@ -79,63 +94,68 @@ class MockedAPIMixin:
 
         cls.redis = redis.Redis(db=1)
         cls.db = DB.get_client()
-        cls.mocked_api = respx.mock(base_url=YoutubeAPI.get_root_url(),
-                                    assert_all_called=False)
         cls.createMocks()
 
     @classmethod
     def createMocks(cls):
+        cls.raw_responses = read_response_files(cls.VIDEO_IDS)
+        cls.mocked_api = respx.mock(base_url=YoutubeAPI.get_root_url(),
+                                    assert_all_called=False)
 
-        cls.raw_responses = read_response_files()
+        cls.mocked_api.route(
+            path="/playlists",
+            name="playlists"
+        ).mock(
+            Response(200, json=cls.raw_responses["playlists"])
+        )
 
-        playlists = cls.mocked_api.get(path="/playlists", name="playlists")
-        playlists.return_value = Response(
-            200, json=cls.raw_responses["playlists"])
+        cls.mocked_api.route(
+            path="/playlistItems",
+            name="playlistItems"
+        ).mock(
+            side_effect=[
+                Response(200, json=cls.raw_responses["playlistItems.1"]),
+                Response(200, json=cls.raw_responses["playlistItems.2"])
+            ]
+        )
 
-        playlistItems = cls.mocked_api.get(
-            path="/playlistItems", name="playlistItems")
+        for vid in cls.VIDEO_IDS:
+            cls.mocked_api.route(
+                path="/videos",
+                params={"id": vid}
+            ).mock(
+                return_value=Response(
+                    200, json=cls.raw_responses["videos"][vid])
+            )
 
-        playlistItems.side_effect = [
-            Response(200, json=cls.raw_responses["playlistItems.1"]),
-            Response(200, json=cls.raw_responses["playlistItems.2"])
-        ]
-
-        videos = cls.mocked_api.get(path="/videos",  name="videos")
-        videos.return_value = Response(200, json=cls.raw_responses["videos"])
-
-
-class DownloaderTest(MockedAPIMixin, PatchedTestCase):
-    VIDEO_IDS = {'ZhI-stDIlCE', 'ed7pFle2yM8', 'J-1WVf5hFIk',
-                 'FBYoZ-FgC84', 'QEkHcPt-Vpw', 'HADeWBBb1so', 'gavq4LM8XK0'}
-    PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
-
-    VIDEO_ID = "HADeWBBb1so"
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
-    def setUp(self):
-        super().setUp()
-        self.downloader = Downloader(db=DB(prefix="test_"), redis_db_n=1)
-
-    @respx.mock
+    @ respx.mock
     async def test_process_playlist_ids(self):
 
         video_ids = await self.downloader._process_playlist_ids(
-            [self.PLAYLIST_ID], "Sadhguru")
+            [self.PLAYLIST_ID], "Sadhguru", self.video_processor)
 
         self.assertEqual(self.mocked_api["playlists"].call_count, 1)
         self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
-        self.assertEqual(self.mocked_api["videos"].call_count, 7)
-
-        doc = await self.db.document("test_videos/" + self.VIDEO_ID).get()
-        self.assertTrue(doc.exists)
 
         pls = [doc.get("id") async for doc in self.db.collection("test_playlists").stream()]
         self.assertEqual(len(pls), 1)
         self.assertEqual(pls[0], self.PLAYLIST_ID)
 
+        # check that VideoProcessor works correctly:
+        await self.video_processor.close()
+
+        self.assertEqual(
+            self.video_processor._processed_video_ids.item, self.VIDEO_IDS)
+        self.assertEqual(self.video_processor._excluded_video_ids.item, set())
+        self.assertEqual(self.video_processor._video_to_playlist_list.item, {
+            'HADeWBBb1so': [self.PLAYLIST_ID],
+            'FBYoZ-FgC84': [self.PLAYLIST_ID],
+            'QEkHcPt-Vpw': [self.PLAYLIST_ID],
+            'ZhI-stDIlCE': [self.PLAYLIST_ID],
+            'ed7pFle2yM8': [self.PLAYLIST_ID],
+            'gavq4LM8XK0': [self.PLAYLIST_ID],
+            'J-1WVf5hFIk': [self.PLAYLIST_ID]
+        })
         vids = [doc async for doc in self.db.collection("test_videos").stream()]
 
         for video in vids:
@@ -208,7 +228,7 @@ class DownloaderTest(MockedAPIMixin, PatchedTestCase):
 
     async def test_transcript_downloading(self):
 
-        video = self.raw_responses["videos"]["items"][0]
+        video = self.raw_responses["videos"][self.VIDEO_ID]["items"][0]
 
         async with anyio.create_task_group() as tg:
             task = RetrievePendingTranscriptsTask(
