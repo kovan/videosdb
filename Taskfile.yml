@@ -99,7 +99,8 @@ tasks:
                 {{else}}
                     docker compose build
                 {{end}}'
-            - docker compose up --detach --force-recreate
+            - docker compose restart
+            - docker compose up --detach
             - task: wait-for-redis
             - task: wait-for-emulator
 
@@ -144,7 +145,7 @@ tasks:
         run: once
         deps: [init, build-frontend, build-backend, start-servers]
         cmds:
-            - defer: docker compose logs
+            #- defer: docker compose logs
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt

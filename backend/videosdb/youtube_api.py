@@ -90,7 +90,7 @@ class Cache:
                             "etag": etag,
                             "n_pages": page_count
                         }))
-        logger.debug("Response Etag: ", etag)
+
         await transaction.execute()
         return pages
 

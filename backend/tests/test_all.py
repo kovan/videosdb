@@ -131,7 +131,7 @@ class DownloaderTest(PatchedTestCase):
     @ respx.mock
     async def test_process_playlist_ids(self):
 
-        video_ids = await self.downloader._process_playlist_ids(
+        await self.downloader._process_playlist_ids(
             [self.PLAYLIST_ID], "Sadhguru", self.video_processor)
 
         self.assertEqual(self.mocked_api["playlists"].call_count, 1)
@@ -232,7 +232,7 @@ class DownloaderTest(PatchedTestCase):
 
         async with anyio.create_task_group() as tg:
             task = RetrievePendingTranscriptsTask(
-                DB(prefix="test_"), nursery=tg)
+                self.mydb, nursery=tg)
             task.enabled = True
             await task(video)
 
