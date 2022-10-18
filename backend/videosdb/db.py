@@ -1,4 +1,5 @@
-
+from videosdb.utils import get_module_path
+import json
 from enum import Enum
 import anyio
 from google.cloud import firestore
@@ -7,6 +8,7 @@ import os
 import logging
 import sys
 from google.api_core.retry import Retry
+from jsonschema import validate
 from videosdb.utils import QuotaExceeded, wait_for_port
 logger = logging.getLogger(__name__)
 
@@ -45,14 +47,13 @@ class DB:
 
     @staticmethod
     def get_client(project=None, config=None):
-        if not project:
-            project = os.environ["FIREBASE_PROJECT"]
         if not config:
-            config = os.environ["VIDEOSDB_CONFIG"]
+            config = os.environ.get("VIDEOSDB_CONFIG", "testing")
+        if not project:
+            project = os.environ.get("FIREBASE_PROJECT", "videosdb-testing")
 
-        BASE_DIR = os.path.dirname(str(sys.modules[__name__].__file__))
         creds_json_path = os.path.join(
-            BASE_DIR, "../common/keys/%s.json" % config.strip('"'))
+            get_module_path(), "../../common/keys/%s.json" % config.strip('"'))
 
         logger.info("Current project: " + project)
         logger.info("Current config: " + config)
@@ -145,3 +146,11 @@ class DB:
     @Retry()
     async def get_noquota(self, path, *args, **kwargs):
         return await self._document(path).get(*args, **kwargs)
+
+    async def validate_videos_schema(self):
+        with open(get_module_path() + "/../../common/firebase/db-schema.json") as f:
+            schema = json.load(f)
+
+        async for video in self._collection("videos").stream():  # type: ignore
+            video_dict = video.to_dict()  # type: ignore
+            validate(instance=video_dict, schema=schema)

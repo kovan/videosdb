@@ -1,14 +1,22 @@
+
 import socket
 import time
 import anyio
 import logging
-
-
+import os
+import sys
+import inspect
 logger = logging.getLogger(__name__)
 
 
 class QuotaExceeded(Exception):
     pass
+
+
+def get_module_path():
+    frame = inspect.currentframe()
+    file = inspect.getabsfile(frame)  # type: ignore
+    return os.path.dirname(file)
 
 
 def wait_for_port(port: int, host: str = 'localhost', timeout: float = 30.0):
@@ -31,36 +39,6 @@ def wait_for_port(port: int, host: str = 'localhost', timeout: float = 30.0):
             if time.perf_counter() - start_time >= timeout:
                 raise TimeoutError('Waited too long for the port {} on host {} to start accepting '
                                    'connections.'.format(port, host)) from ex
-
-
-# class ExceptionFilter:
-#     def __init__(self, exception_type_to_filter, exception):
-#         self.ex_type = exception_type_to_filter
-#         self.exception = exception
-#         self.to_handle_exceptions = []
-#         self.to_handle_exceptions_iter = iter(self.to_handle_exceptions)
-#         self.unhandled_exceptions = []
-
-#         if type(exception) == anyio.ExceptionGroup:
-#             for e in exception.exceptions:
-#                 if type(e) == self.ex_type:
-#                     self.to_handle_exceptions.append(e)
-#                 else:
-#                     self.unhandled_exceptions.append(e)
-
-#         else:
-#             if type(exception) == self.ex_type:
-#                 self.to_handle_exceptions.append(exception)
-#             else:
-#                 self.unhandled_exceptions.append(exception)
-
-#     def __iter__(self):
-#         return
-
-#     def __next__(self):
-#         next(self.to_handle_exceptions_iter)
-#         for e in self.unhandled_exceptions:
-#             raise e
 
 
 def my_handler(my_type, e, handler):
