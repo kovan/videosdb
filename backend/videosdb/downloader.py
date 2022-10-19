@@ -199,7 +199,8 @@ class VideoProcessor:
         video = {}
         try:
             _, downloaded_video = await self._api.get_video_info(video_id)
-            video |= downloaded_video
+            if downloaded_video:
+                video |= downloaded_video
         except Exception as e:
             my_handler(YoutubeAPI.YTQuotaExceeded, e, logger.error)
 
