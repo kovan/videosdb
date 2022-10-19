@@ -202,6 +202,7 @@ class VideoProcessor:
             if downloaded_video:
                 video |= downloaded_video
         except Exception as e:
+            # keep going so that we write whatever we have (playlists)
             my_handler(YoutubeAPI.YTQuotaExceeded, e, logger.error)
 
         if not video:
