@@ -196,39 +196,46 @@ class VideoProcessor:
             videos[video_id].append(playlist_id)
 
     async def _create_video(self, video_id, playlists):
-        _, video = await self._api.get_video_info(video_id)
+        video = {}
+        try:
+            _, downloaded_video = await self._api.get_video_info(video_id)
+            video |= downloaded_video
+        except Exception as e:
+            my_handler(YoutubeAPI.YTQuotaExceeded, e, logger.error)
+
         if not video:
             return
-        # some playlists include videos from other channels
-        # for now exclude those videos
-        # in the future maybe exclude whole playlist
 
-        if video["snippet"]["channelId"] != self._channel_id:
-            return
+        video["videosdb"] = {}
 
-        video_id = video["id"]
+        if downloaded_video:
+            # some playlists include videos from other channels
+            # for now exclude those videos
+            # in the future maybe exclude whole playlist
 
-        video |= {
-            "videosdb": {
+            if fnc.get("snippet.channelId", video) != self._channel_id:
+                return
+
+            video["videosdb"] |= {
                 "slug":  slugify(video["snippet"]["title"]),
                 "descriptionTrimmed": bleach.linkify(video["snippet"]["description"]),
                 "durationSeconds": isodate.parse_duration(
                     video["contentDetails"]["duration"]).total_seconds(),
 
             }
-        }
+
+            video["snippet"]["publishedAt"] = isodate.parse_datetime(
+                video["snippet"]["publishedAt"])
+
+            for stat, value in video["statistics"].items():
+                video["statistics"][stat] = int(value)
+
         if playlists:
             video["videosdb"]["playlists"] = firestore.ArrayUnion(playlists)
 
-        video["snippet"]["publishedAt"] = isodate.parse_datetime(
-            video["snippet"]["publishedAt"])
+        await self._db.set("videos/" + video["id"], video, merge=True)
 
-        for stat, value in video["statistics"].items():
-            video["statistics"][stat] = int(value)
-
-        await self._db.set("videos/" + video_id, video, merge=True)
-
-        logger.info("Wrote video: %s" % (video_id))
+        logger.info("Wrote video: %s" % video["id"])
 
         return video
 

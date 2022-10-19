@@ -155,12 +155,14 @@ class DownloaderTest(PatchedTestCase):
             'gavq4LM8XK0': [self.PLAYLIST_ID],
             'J-1WVf5hFIk': [self.PLAYLIST_ID]
         })
+        excluded_video_id = 'FBYoZ-FgC84'
         videos = [doc async for doc in self.db.collection("test_videos").stream()]
 
         for video in videos:
             self.assertIn(video.get("id"), self.VIDEO_IDS)
             self.assertEqual([self.PLAYLIST_ID],
                              video.get("videosdb.playlists"))
+            self.assertNotEqual(video.get("id"), excluded_video_id)
             self.assertIn("slug", video.get("videosdb"))
 
         # check that one playlist is processed correctly:

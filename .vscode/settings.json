@@ -25,6 +25,7 @@
     "python.analysis.typeCheckingMode": "basic",
     "git.ignoreLimitWarning": true,
     "python.analysis.diagnosticSeverityOverrides": {
-        "reportOptionalMemberAccess": "none"
+        "reportOptionalMemberAccess": "none",
+        "reportUnboundVariable": "none"
     },
 }
