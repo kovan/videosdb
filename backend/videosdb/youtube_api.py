@@ -223,6 +223,7 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
+
     async def _request_one(self, url, params, use_cache=True):
 
         modified, generator = await self._request_main(url, params, use_cache)
@@ -274,7 +275,7 @@ class YoutubeAPI:
             for page in await self.cache.set(key, response_pages):
                 yield page
         else:
-            logger.warn("Unexpected status code: " + status_code)
+            logger.warn("Unexpected status code: %s" % status_code)
 
     async def _request_base(self, url, params, headers=None):
 
