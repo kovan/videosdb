@@ -1,5 +1,4 @@
 FIREBASE_PROJECT=videosdb-nithyananda
-NODE_OPTIONS=--openssl-legacy-provider
 VIDEOSDB_CONFIG=nithyananda
 VIDEOSDB_CSE_URL=https://cse.google.com/cse.js?cx=01cdeecc3143a44a2
 VIDEOSDB_HOSTNAME=https://www.nithyananda.cc

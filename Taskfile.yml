@@ -299,13 +299,18 @@ tasks:
         deps: [init, build-all, unittests, end2end-tests]
 
 
-    nodocker-run-backend:
+    local-run-backend:
         cd backend &&
         LOGLEVEL=DEBUG
         DEBUG=1
         YOUTUBE_API_URL=http://127.0.0.1:43783/youtube/v3
         FIRESTORE_EMULATOR_HOST=localhost:46456
         poetry run main -c --dotenv ../common/env/testing.txt; cd ..
+
+    local-ipython-shell: backend/utils/ipythonshell.sh
+
+
+
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 

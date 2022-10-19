@@ -1,5 +1,4 @@
 FIREBASE_PROJECT=videosdb-testing
-NODE_OPTIONS=--openssl-legacy-provider
 VIDEOSDB_CONFIG=testing
 VIDEOSDB_CSE_URL=https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635
 VIDEOSDB_HOSTNAME=https://videosdb-testing.web.app

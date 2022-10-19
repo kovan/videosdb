@@ -1,5 +1,7 @@
 # type: ignore
 import asyncio
+
+from google.cloud import firestore
 import datetime
 import json
 import logging
@@ -144,10 +146,8 @@ class DownloaderTest(PatchedTestCase):
         # check that VideoProcessor works correctly:
         await self.video_processor.close()
 
-        self.assertEqual(
-            self.video_processor._excluded_video_ids.item, {"FBYoZ-FgC84"})
         self.assertEqual(self.video_processor._video_to_playlist_list.item, {
-            'FBYoZ-FgC84': [],
+            'FBYoZ-FgC84': [self.PLAYLIST_ID],
             'HADeWBBb1so': [self.PLAYLIST_ID],
             'QEkHcPt-Vpw': [self.PLAYLIST_ID],
             'ZhI-stDIlCE': [self.PLAYLIST_ID],
@@ -210,31 +210,31 @@ class DownloaderTest(PatchedTestCase):
 
         # check that pages were used:
 
-    # async def test_firestore_behavior(self):
-    #     a = await self.db.document("test_videos/" + "asdfsdf").set({
-    #         "videosdb": {
-    #             "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
-    #         }
-    #     }, merge=True)
-    #     b = await self.db.document("test_videos/" + "asdfsdf").set({
-    #         "videosdb": {
-    #             "playlists": firestore.ArrayUnion(["sdfsdf"])
-    #         }
-    #     }, merge=True)
+    async def test_firestore_behavior(self):
+        a = await self.db.document("test_videos/" + "asdfsdf").set({
+            "videosdb": {
+                "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
+            }
+        }, merge=True)
+        b = await self.db.document("test_videos/" + "asdfsdf").set({
+            "videosdb": {
+                "playlists": firestore.ArrayUnion(["sdfsdf"])
+            }
+        }, merge=True)
 
-    #     c = await self.db.document("test_videos/" + "asdfsdf").get()
-    #     self.assertEqual(
-    #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
+        c = await self.db.document("test_videos/" + "asdfsdf").get()
+        self.assertEqual(
+            {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
 
-    # async def test_transcript_downloading(self):
+    async def test_transcript_downloading(self):
 
-    #     video = self.raw_responses["videos"][self.VIDEO_ID]["items"][0]
+        video = self.raw_responses["videos"][self.VIDEO_ID]["items"][0]
 
-    #     async with anyio.create_task_group() as tg:
-    #         task = RetrievePendingTranscriptsTask(
-    #             self.mydb, nursery=tg)
-    #         task.enabled = True
-    #         await task(video)
+        async with anyio.create_task_group() as tg:
+            task = RetrievePendingTranscriptsTask(
+                self.mydb, nursery=tg)
+            task.enabled = True
+            await task(video)
 
-    #     self.assertIn("transcript", video["videosdb"])
-    #     self.assertIn("transcript_status", video["videosdb"])
+        self.assertIn("transcript", video["videosdb"])
+        self.assertIn("transcript_status", video["videosdb"])

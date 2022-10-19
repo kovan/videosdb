@@ -1,5 +1,4 @@
 FIREBASE_PROJECT=videosdb-firebase
-NODE_OPTIONS=--openssl-legacy-provider
 VIDEOSDB_CONFIG=sadhguru
 VIDEOSDB_CSE_URL=https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635
 VIDEOSDB_HOSTNAME=https://www.sadhguru.digital

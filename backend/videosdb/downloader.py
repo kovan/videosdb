@@ -175,50 +175,28 @@ class VideoProcessor:
         self._db = db
         self._api = api
         self._channel_id = channel_id
-        self._excluded_video_ids = LockedItem(set())
         self._video_to_playlist_list = LockedItem(dict())
 
     # entrypoint:
     async def close(self):
         async with self._video_to_playlist_list as videos:
-            for video_id, playlists in videos.items():
-                if video_id in self._excluded_video_ids.item:
-                    continue
-                if not playlists:
-                    continue
-
-                await self._db.update("videos/" + video_id, {
-                    "videosdb.playlists": firestore.ArrayUnion(playlists)
-
-                })
+            video_ids = list(videos.keys())
+            random.shuffle(video_ids)
+            for video_id in video_ids:
+                playlists = videos[video_id]
+                await self._create_video(video_id, playlists)
 
     async def add_video(self, video_id, playlist_id):
         logger.debug(
-            f"Processing playlist item video {video_id}, {playlist_id}")
+            f"Processing playlist item video {video_id}, playlist {playlist_id}")
 
         async with self._video_to_playlist_list as videos:
-            if video_id in videos.keys():
-                new = False
-            else:
+            if video_id not in videos.keys():
                 videos[video_id] = []
-                new = True
-
-        if new:
-            _, video = await self._api.get_video_info(video_id)
-            video = await self._create_video(video)
-            if not video:  # excluded
-                async with self._excluded_video_ids as videos:
-                    videos.add(video_id)
-                return
-
-            # reserve quota for final update
-            await self._db.increase_reserved_quota(CounterTypes.WRITES)
-
-        async with self._video_to_playlist_list as videos:
             videos[video_id].append(playlist_id)
 
-    async def _create_video(self, video):
-
+    async def _create_video(self, video_id, playlists):
+        _, video = await self._api.get_video_info(video_id)
         if not video:
             return
         # some playlists include videos from other channels
@@ -239,6 +217,8 @@ class VideoProcessor:
 
             }
         }
+        if playlists:
+            video["videosdb"]["playlists"] = firestore.ArrayUnion(playlists)
 
         video["snippet"]["publishedAt"] = isodate.parse_datetime(
             video["snippet"]["publishedAt"])
@@ -298,10 +278,9 @@ class Downloader:
                 return
             playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
             await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"], video_processor)
+            await video_processor.close()
         except Exception as e:
             my_handler(QuotaExceeded, e, logger.error)
-        finally:
-            await video_processor.close()
 
     async def _phase2(self):
         # Phase 2: does not use Youtube quota:

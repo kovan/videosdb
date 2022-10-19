@@ -24,7 +24,8 @@ def parse_youtube_id(string: str):
 
 
 async def pop_first(async_generator):
-    first = await anext(async_generator)
+    # in Python 3.10 we have anext() but not here
+    first = await async_generator.__anext__()
     return first, async_generator
 
 
@@ -226,7 +227,7 @@ class YoutubeAPI:
 
         modified, generator = await self._request_main(url, params, use_cache)
         try:
-            item = await anext(generator)
+            item = await generator.__anext__()
         except StopAsyncIteration:
             item = None
         return modified, item
