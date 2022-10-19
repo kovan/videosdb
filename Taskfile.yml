@@ -102,7 +102,7 @@ tasks:
 
     unittests-frontend:
         run: once
-        deps:  [init, build-frontend]
+        deps:  [build-frontend]
         cmds:
             - docker run --rm
                 --network host
