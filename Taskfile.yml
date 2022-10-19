@@ -290,6 +290,8 @@ tasks:
             - REPO={{.REGISTRY}} docker compose push {{.TEST_SERVERS}}
             - docker build utils/builder -t {{.REGISTRY}}videosdb-builder
             - docker push {{.REGISTRY}}videosdb-builder
+        vars:
+            BUILD_ID: dummy-build-id
 
 
     test:
