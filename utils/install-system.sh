@@ -1,9 +1,25 @@
 #!/bin/bash
 # all this for debian
 sudo apt-get update
-sudo apt install -y zsh curl wget tmux git fzf vim net-tools apt-file netcat nmap strace ltrace bwm-ngº
-sudo apt install -y firefox-esr
+sudo apt install -y zsh curl wget tmux git fzf vim net-tools apt-file netcat nmap strace ltrace bwm-ng
 sudo apt-file update
+
+
+
+sudo usermod -a -G docker k
+git config --global user.name kovan
+git config --global user.email "you@example.com"
+echo net.ipv4.ping_group_range="0 2147483647" | sudo tee /etc/sysctl.conf
+
+
+#other
+mkdir -p ~/prj
+cd ~/prj
+git clone https://github.com/kovan/dotfiles
+
+sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+cp ~/prj/dotfiles/zshrc ~/.zshrc
+source ~/.zshrc
 
 
 # task
@@ -36,24 +52,8 @@ sudo apt-get update && sudo apt-get install google-cloud-cli
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - &&\
 sudo apt-get install -y nodejs
 #poetry
-sudo apt install python3-distutils
+sudo apt install python3-distutils -y
 curl -sSL https://install.python-poetry.org | python3 -
 
-sudo npm i -g firebase-tools
+#sudo npm i -g firebase-tools
 sudo npm i -g yarn
-
-sudo usermod -a -G docker k
-git config --global user.name kovan
-git config --global user.email "you@example.com"
-echo net.ipv4.ping_group_range="0 2147483647" | sudo tee /etc/sysctl.conf
-
-sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-#other
-mkdir -p ~/prj
-cd prj
-git clone https://github.com/kovan/dotfiles
-cp zshrc ~/.zshrc
-source ~/.zshrc
-
-ssh-keygen
-
