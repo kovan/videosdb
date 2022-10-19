@@ -3,10 +3,9 @@ env:
     DOCKER_PASSWORD: 5@fs@i@58Zp6wfiH
     MAIN_PROJECT: worpdress-279321
     REGISTRY: us-central1-docker.pkg.dev/{{.MAIN_PROJECT}}/registry/
-    REPO: '{{if .IN_GCP }}{{.REGISTRY}}{{end}}'
+    REPO: '{{if .BUILD_ID }}{{.REGISTRY}}{{end}}'
     FIRESTORE_EMULATOR: 127.0.0.1:46456
     YOUTUBE_API_URL: http://127.0.0.1:43783/youtube/v3
-    IN_GCP: "{{.BUILD_ID}} || {{.GOOGLE_CLOUD_SHELL}}"
     BRANCH:
         sh: git branch --show-current
     REVISION_ID:
@@ -16,22 +15,19 @@ env:
 output: prefixed
 
 tasks:
-    init:
+    init-gcp:
         run: once
         cmds:
-            - cmd:
-                '{{if .IN_GCP }}
-                    echo {{.DOCKER_PASSWORD}} | docker login --username eelis --password-stdin;
-                    gcloud auth activate-service-account --key-file common/keys/{{.MAIN_PROJECT}}.json;
-                    gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
-                {{end}}'
+            - echo {{.DOCKER_PASSWORD}} | docker login --username eelis --password-stdin;
+            - gcloud auth activate-service-account --key-file common/keys/{{.MAIN_PROJECT}}.json;
+            - gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
             - env
 
     build:
         internal: true
         cmds:
             # pull the image for --cache-from
-            - cmd: '{{if .IN_GCP }} docker pull -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest{{end}}'
+            - cmd: '{{if .BUILD_ID }} docker pull -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest{{end}}'
               ignore_error: true
 
             - docker build
@@ -52,7 +48,6 @@ tasks:
                     done'
 
     build-backend:
-        deps: [init]
         run: once
         cmds:
             - cp -r common backend
@@ -61,7 +56,6 @@ tasks:
                 IMAGE: backend
 
     build-frontend:
-        deps: [init]
         run: once
         cmds:
             - cp -r common frontend
@@ -92,10 +86,9 @@ tasks:
 
 
     start-servers:
-        deps: [init]
         run: once
         cmds:
-            - '{{if .IN_GCP }}
+            - '{{if .BUILD_ID }}
                     docker compose pull -q
                 {{else}}
                     docker compose build
@@ -120,7 +113,7 @@ tasks:
 
     unittests-backend:
         run: once
-        deps: [init, build-backend, start-servers]
+        deps: [build-backend, start-servers]
         cmds:
             - rm -f {{.CID_FILE}}
             - docker run
@@ -140,11 +133,11 @@ tasks:
 
     unittests:
         run: once
-        deps: [init, unittests-backend, unittests-frontend]
+        deps: [unittests-backend, unittests-frontend]
 
     end2end-tests:
         run: once
-        deps: [init, build-frontend, build-backend, start-servers]
+        deps: [build-frontend, build-backend, start-servers]
         cmds:
             #- defer: docker compose logs
             - docker run --rm
@@ -163,7 +156,7 @@ tasks:
                 --env-file common/env/testing.txt
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 {{.REPO}}frontend-{{.BRANCH}}:latest
-                {{if .IN_GCP }}
+                {{if .BUILD_ID }}
                     yarn generate
                 {{else}}
                     yarn run-s generate start
@@ -172,7 +165,7 @@ tasks:
 
     # deploy-test:
     #     run: once
-    #     deps: [init, build-frontend, build-backend, start-servers]
+    #     deps: [build-frontend, build-backend, start-servers]
     #     cmds:
     #         - docker run
     #             --network host
@@ -190,14 +183,12 @@ tasks:
     #             yarn run-s generate deploy
 
     download-cache:
-        deps: [init]
         cmds:
             - gsutil cp gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/dump.rdb.gz .
             - gunzip -f dump.rdb.gz
 
 
     upload-cache:
-        deps: [init]
         cmds:
             - gzip --keep dump.rdb
             - gsutil cp dump.rdb.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/
@@ -206,7 +197,7 @@ tasks:
 
     run-backend:
         run: once
-        deps: [init, build-backend]
+        deps: [build-backend]
         cmds:
             - docker compose stop redis
             - docker compose cp dump.rdb redis:/data
@@ -230,7 +221,7 @@ tasks:
 
     run-frontend:
         run: once
-        deps: [init, build-frontend]
+        deps: [build-frontend]
         cmds:
             - docker run --rm
                 --network host
@@ -243,7 +234,7 @@ tasks:
 
 
     generate-gcp:
-        deps: [init,  build-all, unittests, end2end-tests, download-cache]
+        deps: [build-all, unittests, end2end-tests, download-cache]
         cmds:
             - task: generate
             - defer: {task: upload-cache}
@@ -251,7 +242,7 @@ tasks:
 
 
     generate:
-        deps: [init, build-all, unittests, end2end-tests, start-servers]
+        deps: [build-all, unittests, end2end-tests, start-servers]
         cmds:
             - task: run-backend
             - task: run-frontend
@@ -259,7 +250,6 @@ tasks:
 
 
     push:
-        deps: [init]
         internal: true
         cmds:
             - docker push -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.REVISION_ID}}
@@ -284,7 +274,7 @@ tasks:
                 IMAGE: backend
 
     build-and-push-other-images:
-        deps: [init]
+        deps: [init-gcp]
         run: once
         cmds:
             - REPO={{.REGISTRY}} docker compose build {{.TEST_SERVERS}}
@@ -292,14 +282,14 @@ tasks:
             - docker build utils/builder -t {{.REGISTRY}}videosdb-builder
             - docker push {{.REGISTRY}}videosdb-builder
         vars:
-            IN_GCP: dummy-build-id
+            BUILD_ID: dummy-build-id
 
 
     test:
-        deps: [init, unittests, end2end-tests]
+        deps: [unittests, end2end-tests]
 
     default:
-        deps: [init, build-all, unittests, end2end-tests]
+        deps: [build-all, unittests, end2end-tests]
 
 
     local-run-backend:
@@ -318,7 +308,7 @@ tasks:
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 
     backend-master:
-        deps: [init, build-backend, unittests-backend]
+        deps: [build-backend, unittests-backend]
         cmds:
             - task: push-backend
 
