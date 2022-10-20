@@ -62,7 +62,7 @@ import {
     startAfter,
     doc,
     query, collection
-} from 'firebase/firestore'
+} from 'firebase/firestore/lite'
 
 export default {
     name: 'Explorer',

@@ -77,7 +77,7 @@ function getRandomInt(max) {
 import {
     getDoc,
     doc,
-} from 'firebase/firestore'
+} from 'firebase/firestore/lite'
 
 import { parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'

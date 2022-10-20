@@ -11,7 +11,7 @@ import {
     startAfter,
     doc,
     query, collection
-} from 'firebase/firestore'
+} from 'firebase/firestore/lite'
 
 
 var lock = new AsyncLock();
