@@ -7,7 +7,7 @@
         "start": "nuxt start",
         "build": "nuxt build",
         "generate": "node --experimental-specifier-resolution=node node_modules/.bin/nuxt generate --fail-on-error",
-        "test": "jest",
+        "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
         "dev-debug": "node node_modules/.bin/nuxt",
         "deploy": "firebase deploy --project $FIREBASE_PROJECT"
     },
