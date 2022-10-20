@@ -315,7 +315,9 @@ tasks:
 
     local-ipython-shell: backend/utils/ipythonshell.sh
 
+    local-firebase-emulator: cd common/firebase && firebase use default && firebase emulators:start; cd ../..
 
+    local-push-to-prod: git checkout prod && git merge master && git push && git checkout master
 
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console

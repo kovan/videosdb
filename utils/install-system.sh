@@ -1,7 +1,7 @@
 #!/bin/bash
 # all this for debian
 sudo apt-get update
-sudo apt install -y zsh curl wget tmux git fzf vim net-tools apt-file netcat nmap strace ltrace bwm-ng
+sudo apt install -y zsh curl wget tmux git fzf vim net-tools apt-file netcat nmap strace ltrace bwm-ng ripgrep htop fd-find
 sudo apt-file update
 
 
