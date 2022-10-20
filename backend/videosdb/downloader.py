@@ -39,6 +39,7 @@ class LockedItem:
 
 @traced
 class Task:
+
     def __init__(self, db, options=None, nursery=None):
         self.db = db
         self.options = options
