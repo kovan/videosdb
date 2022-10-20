@@ -2,7 +2,7 @@
 LazyHydrate(when-visible)
     .card.mb-4.shadow-sm.text-center
         NuxtLink(:to='"/video/" + this.video.videosdb.slug')
-        b-img-lazy.bd-placeholder-img.card-img-top(
+        b-img.bd-placeholder-img.card-img-top(
             :src='this.video.snippet.thumbnails.medium.url',
             height='180',
             width='320',

@@ -66,6 +66,7 @@ export default {
     components: true,
 
     buildModules: [
+        'nuxt-delay-hydration',
         "@nuxtjs/google-analytics",
         "@nuxtjs/router-extras",
         "bootstrap-vue/nuxt",
@@ -74,7 +75,9 @@ export default {
         "~/modules/mymodule.js"],
 
     modules: [],
-
+    delayHydration: {
+        mode: 'init'
+    },
     bootstrapVue: {
         bootstrapCSS: true,
         bootstrapVueCSS: true,
@@ -109,7 +112,7 @@ export default {
     build: {
         extend(config, ctx) {
             if (ctx.isClient) {
-                config.optimization.splitChunks.maxSize = 250000;
+                config.optimization = {} //.splitChunks.maxSize = 250000;
             }
             if (ctx.isDev) {
                 config.devtool = ctx.isClient ? "source-map" : "inline-source-map";
