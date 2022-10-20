@@ -238,6 +238,7 @@ tasks:
         cmds:
             - task: generate
             - defer: {task: upload-cache}
+            - defer: docker compose logs
 
 
 
@@ -291,6 +292,7 @@ tasks:
     default:
         deps: [build-all, unittests, end2end-tests]
 
+# local-only, non-docker commands:
 
     local-run-backend:
         cd backend &&

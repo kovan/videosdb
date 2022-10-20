@@ -253,7 +253,7 @@ export default {
             if (this.no_more_data) return
             this.loading = true
             var self = this
-            const PAGE_SIZE = 20
+            const PAGE_SIZE = 12
             // this.logs.push('--- doQuery ----')
 
             if (!(this.mutex instanceof Mutex)) this.mutex = new Mutex()
