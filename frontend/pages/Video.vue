@@ -156,17 +156,9 @@ export default {
     },
     methods: {},
     async asyncData({ $db, params, payload, error, store }) {
-        let video = null
-        if (payload) {
-            video = payload.obj
-            store.commit('setInitial', payload.vuex_data)
-
-        } else {
-
-            const q = query(collection($db, "videos"), where('videosdb.slug', '==', params.slug))
-            let result = await getDocs(q)
-            video = result.docs[0].data()
-        }
+        const q = query(collection($db, "videos"), where('videosdb.slug', '==', params.slug))
+        let result = await getDocs(q)
+        let video = result.docs[0].data()
 
         if ('playlists' in video.videosdb && video.videosdb.playlists.length) {
             let dereferenced = await dereferenceDb($db,

@@ -40,12 +40,6 @@ export default {
     },
 
     async asyncData({ $db, params, payload, store, error }) {
-        if (payload) {
-            store.commit('setInitial', payload.vuex_data)
-            return { category: payload.obj }
-        }
-
-
         const q_category = query(collection($db, "playlists"), where('videosdb.slug', '==', params.slug))
         let result = await getDocs(q_category)
         let category = result.docs[0].data()

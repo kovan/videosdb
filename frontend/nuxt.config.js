@@ -1,5 +1,5 @@
-import { getSitemap } from "./modules/mymodule.js"
-import { getVuexData, getDb, getFirebaseSettings } from "./utils/utils"
+import { installUnhandledExceptionHandlers, getSitemap, generateRoutes, getFirebaseSettings } from "./utils/utils"
+installUnhandledExceptionHandlers()
 
 let myConfig = {
 
@@ -22,7 +22,7 @@ export default {
 
 
     generate: {
-        concurrency: 200,
+        concurrency: 20,
         fallback: true,
         crawler: false,
         devtools: true,
@@ -71,8 +71,7 @@ export default {
         "@nuxtjs/router-extras",
         "bootstrap-vue/nuxt",
         //'@nuxtjs/firebase',
-        "@nuxtjs/sitemap",
-        "~/modules/mymodule.js"],
+        "@nuxtjs/sitemap"],
 
     modules: [],
     delayHydration: {
@@ -176,11 +175,12 @@ export default {
 
     hooks: {
         generate: {
-            async route({ setPayload }) {
-                let db = getDb(await getFirebaseSettings())
-                let vuex_data = await getVuexData(db)
-                setPayload({ vuex_data })
-            }
+            before:
+                async (generator, generateOptions) => {
+                    installUnhandledExceptionHandlers()
+                    generateOptions.routes = await generateRoutes(await getFirebaseSettings())
+                }
+
         }
     },
 
