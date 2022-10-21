@@ -95,6 +95,7 @@ tasks:
                 {{end}}'
             - docker compose restart
             - docker compose up --detach
+            - docker compose logs -f &
             - task: wait-for-redis
             - task: wait-for-emulator
 
@@ -296,6 +297,7 @@ tasks:
 # local-only, non-docker commands:
 
     local-run:
+        - docker compose logs -f &
         - task: local-run-backend
         - task: local-run-frontend
 
