@@ -199,18 +199,7 @@ function videoToStructuredData(video) {
     return string
 }
 
-function installUnhandledExceptionHandlers() {
-    process.on('unhandledRejection', (error) => {
-        console.trace(error);
-    });
 
-    process.on('uncaughtException', (error) => {
-        console.error(error)
-    })
-
-
-
-}
 
 async function generateRoutes(dbOptions) {
     let db = getDb(dbOptions)
