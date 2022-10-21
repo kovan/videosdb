@@ -6,7 +6,7 @@ RUN apt install curl -y
 RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt-get install -y nodejs
 
-RUN apt-get install -y default-jre-headless
+RUN apt-get install -y openjdk-17-jre
 RUN apt clean
 
 RUN npm install -g firebase-tools

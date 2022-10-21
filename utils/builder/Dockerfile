@@ -3,9 +3,7 @@ RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cl
 RUN tar -xf google-cloud-cli-405.0.0-linux-x86_64.tar.gz
 RUN ./google-cloud-sdk/install.sh -q
 RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
-RUN apt install -y netcat 
-RUN apt install -y nodejs npm
-RUN npm install -g node-firestore-import-export
+RUN apt install -y netcat
 RUN apt install -y ltrace strace
 
 
