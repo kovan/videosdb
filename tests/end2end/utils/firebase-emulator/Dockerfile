@@ -18,4 +18,4 @@ WORKDIR /root
 COPY . .
 
 
-ENTRYPOINT [ "/root/entrypoint.sh" ]
+ENTRYPOINT ["firebase", "emulators:start", "--project", "demo-test"]
