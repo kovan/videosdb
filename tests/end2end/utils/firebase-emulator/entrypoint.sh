@@ -1,4 +1,3 @@
 #!/bin/bash
-export JAVA_TOOL_OPTIONS="-Xmx3g"
-firebase use default
-firebase emulators:start --debug
+firebase use $GCP_PROJECT
+firebase emulators:start $@

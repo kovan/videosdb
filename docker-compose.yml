@@ -21,9 +21,10 @@ services:
             - GCP_PROJECT=${FIREBASE_PROJECT-firebase-testing}
             - ENABLE_UI=true
             - WSL_DISTRO_NAME=ubuntu
+            - JAVA_TOOL_OPTIONS="-Xmx3g"
         ports:
             - 46456:46456
-        stop_grace_period: 1m
+        stop_grace_period: 10s
 
     redis:
         network_mode: host
@@ -31,5 +32,5 @@ services:
         ports:
             - 6379:6379
         command: redis-server --loglevel warning
-        stop_grace_period: 1m
+        stop_grace_period: 10s
 
