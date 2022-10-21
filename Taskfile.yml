@@ -224,7 +224,6 @@ tasks:
         run: once
         deps: [build-frontend]
         cmds:
-            - docker compose start redis
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
