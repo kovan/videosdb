@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "nuxt-ssr-cache": "^1.5.2"
+  }
+}

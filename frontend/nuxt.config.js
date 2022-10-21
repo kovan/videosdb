@@ -71,9 +71,12 @@ export default {
         "@nuxtjs/router-extras",
         "bootstrap-vue/nuxt",
         //'@nuxtjs/firebase',
-        "@nuxtjs/sitemap"],
+        "@nuxtjs/sitemap"
+    ],
 
-    modules: [],
+    modules: [
+        'nuxt-ssr-cache'
+    ],
     delayHydration: {
         mode: 'init'
     },
@@ -205,5 +208,42 @@ export default {
 
     googleAnalytics: {
         id: "UA-171658328-1",
+    },
+
+    cache: {
+        // if you're serving multiple host names (with differing
+        // results) from the same server, set this option to true.
+        // (cache keys will be prefixed by your host name)
+        // if your server is behind a reverse-proxy, please use
+        // express or whatever else that uses 'X-Forwarded-Host'
+        // header field to provide req.hostname (actual host name)
+        useHostPrefix: true,
+        pages: [
+            // these are prefixes of pages that need to be cached
+            // if you want to cache all pages, just include '/'
+            '/',
+        ],
+        store: {
+            type: 'memory',
+
+            // maximum number of pages to store in memory
+            // if limit is reached, least recently used page
+            // is removed.
+            max: 100,
+
+            // number of seconds to store this page in cache
+            ttl: 3600 * 4,
+        },
+        // store: {
+        //     type: 'redis',
+        //     host: 'localhost',
+        //     ttl: 10 * 60 * 3600,
+        //     configure: [
+        //         // these values are configured
+        //         // on redis upon initialization
+        //         ['maxmemory', '300mb'],
+        //         ['maxmemory-policy', 'allkeys-lru'],
+        //     ],
+        // },
     },
 };

@@ -223,6 +223,7 @@ tasks:
         run: once
         deps: [build-frontend]
         cmds:
+            - docker compose start redis
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
@@ -293,6 +294,10 @@ tasks:
         deps: [build-all, unittests, end2end-tests]
 
 # local-only, non-docker commands:
+
+    local-run:
+        - task: local-run-backend
+        - task: local-run-frontend
 
     local-run-backend:
         cd backend &&
