@@ -23,6 +23,7 @@ services:
             - WSL_DISTRO_NAME=ubuntu
         ports:
             - 46456:46456
+        stop_grace_period: 1m
 
     redis:
         network_mode: host
@@ -30,4 +31,5 @@ services:
         ports:
             - 6379:6379
         command: redis-server --loglevel warning
+        stop_grace_period: 1m
 
