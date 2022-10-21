@@ -66,18 +66,16 @@ async function getFirebaseSettings(config) {
 
 
 
-var vuex_data = null
+var g_categories = null
 
-async function getVuexData(db) {
-    if (vuex_data)
-        return vuex_data
+async function getCategories(db) {
+    if (g_categories)
+        return g_categories
 
-    console.log("getting vuex data")
+    console.log("getting categories")
     const q = query(collection(db, "playlists"), orderBy('videosdb.lastUpdated', 'desc'))
 
-    let [results] = await Promise.all([
-        getDocs(q)
-    ])
+    let results = await getDocs(q)
     let categories = []
     results.forEach((doc) => {
         let category = {
@@ -90,11 +88,8 @@ async function getVuexData(db) {
     })
     categories.sort()
 
-    vuex_data = {
-        categories
-    }
-
-    return vuex_data
+    g_categories = categories
+    return categories
 }
 
 var db = null
@@ -171,6 +166,79 @@ async function dereferenceDb(db, id_list, collection) {
 }
 
 
+
+function videoToStructuredData(video) {
+
+    let json = {
+        '@context': 'https://schema.org',
+        '@type': 'VideoObject',
+        name: video.snippet.title,
+        description: video.snippet.description
+            ? video.snippet.description
+            : video.snippet.title,
+        thumbnailUrl: Object.values(video.snippet.thumbnails).map(
+            (thumb) => thumb.url
+        ),
+        uploadDate: dateToISO(video.snippet.publishedAt),
+        duration: video.contentDetails.duration,
+        embedUrl: `https://www.youtube.com/watch?v=${video.id}`
+    }
+
+    // if ('filename' in video.videosdb) {
+    //     json.contentUrl =
+    //         'https://videos.sadhguru.digital/' +
+    //         encodeURIComponent(video.videosdb.filename)
+
+    // } else {
+    //     json.embedUrl = `https://www.youtube.com/watch?v=${video.id}`
+
+    // }
+
+
+    let string = JSON.stringify(json)
+    return string
+}
+
+function installUnhandledExceptionHandlers() {
+    process.on('unhandledRejection', (error) => {
+        console.trace(error);
+    });
+
+    process.on('uncaughtException', (error) => {
+        console.error(error)
+    })
+
+
+
+}
+
+async function generateRoutes(dbOptions) {
+    let db = getDb(dbOptions)
+    let routes = []
+
+
+    let q = query(collection(db, "videos"))
+    let docRefs = await getDocs(q)
+    docRefs.forEach(video => {
+        let data = video.data().videosdb.slug
+        routes.push(`/video/${data}`)
+    })
+
+    q = query(collection(db, "playlists"))
+    docRefs = await getDocs(q)
+    docRefs.forEach(playlist => {
+        let data = playlist.data().videosdb.slug
+        routes.push(`/category/${data}`)
+    })
+
+
+    return routes
+}
+
+
+
+
+
 function videoToSitemapEntry(video) {
     // Reference:
     // https://developers.google.com/search/docs/advanced/sitemaps/video-sitemaps
@@ -204,37 +272,37 @@ function videoToSitemapEntry(video) {
     return json
 }
 
-function videoToStructuredData(video) {
+async function getSitemap(dbOptions) {
+    let db = getDb(dbOptions)
 
-    let json = {
-        '@context': 'https://schema.org',
-        '@type': 'VideoObject',
-        name: video.snippet.title,
-        description: video.snippet.description
-            ? video.snippet.description
-            : video.snippet.title,
-        thumbnailUrl: Object.values(video.snippet.thumbnails).map(
-            (thumb) => thumb.url
-        ),
-        uploadDate: dateToISO(video.snippet.publishedAt),
-        duration: video.contentDetails.duration,
-        embedUrl: `https://www.youtube.com/watch?v=${video.id}`
+    function transformCategory(cat) {
+        return {
+            url: `/category/${cat.videosdb.slug}`,
+            priority: 0.1
+        }
     }
 
-    // if ('filename' in video.videosdb) {
-    //     json.contentUrl =
-    //         'https://videos.sadhguru.digital/' +
-    //         encodeURIComponent(video.videosdb.filename)
+    var sitemap = [
+        {
+            url: "/",
+            changefreq: "daily",
+        },
+    ]
 
-    // } else {
-    //     json.embedUrl = `https://www.youtube.com/watch?v=${video.id}`
+    let q = query(collection(db, "videos"))
+    let docRefs = await getDocs(q)
+    docRefs.forEach(video => {
+        sitemap.push(videoToSitemapEntry(video.data()))
+    })
 
-    // }
+    q = query(collection(db, "playlists"))
+    docRefs = await getDocs(q)
+    docRefs.forEach(playlist => {
+        sitemap.push(transformCategory(playlist.data()))
+    })
 
 
-
-    let string = JSON.stringify(json)
-    return string
+    return sitemap
 }
 
 var unhandledExceptionHandlersInstalled = false
@@ -251,18 +319,21 @@ function installUnhandledExceptionHandlers() {
     process.on('uncaughtException', (error) => {
         console.error(error)
     })
-
 }
+
 
 export {
     getDb,
     formatDate,
-    getVuexData,
+    getSitemap,
+    getCategories,
     dereferenceDb,
+    generateRoutes,
     dateToISO,
     videoToStructuredData,
     videoToSitemapEntry,
     getFirebaseSettings,
     installUnhandledExceptionHandlers
 }
+
 

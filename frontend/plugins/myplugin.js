@@ -1,4 +1,4 @@
-import { getDb, formatDate, dateToISO, getFirebaseSettings } from '~/utils/utils'
+import { getDb, formatDate, dateToISO, getFirebaseSettings, installUnhandledExceptionHandlers } from '~/utils/utils'
 
 
 
@@ -15,4 +15,5 @@ export default async function (context, inject) { // real args are: context and 
     inject("myDebugger", function () { debugger })
     inject("myFormatDate", formatDate)
     inject("myDateToISO", dateToISO)
+    installUnhandledExceptionHandlers()
 }
