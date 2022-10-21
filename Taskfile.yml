@@ -236,9 +236,9 @@ tasks:
     generate-gcp:
         deps: [build-all, unittests, end2end-tests, download-cache]
         cmds:
-            - task: generate
             - defer: {task: upload-cache}
             - defer: docker compose logs
+            - task: generate
 
 
 
