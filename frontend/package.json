@@ -27,6 +27,7 @@
         "node-cache": "^5.1.2",
         "nuxt": "^2.15",
         "nuxt-delay-hydration": "^0.4.5",
+        "nuxt-ssr-cache": "^1.5.2",
         "pug": "^3.0.0",
         "pug-plain-loader": "^1.1.0",
         "vue-infinite-scroll": "^2.0.2",
