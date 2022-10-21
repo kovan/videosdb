@@ -21,7 +21,7 @@
         ]
     },
     "emulators": {
-        "single_project_mode": false,
+        "singlePojectMode": false,
         "hosting": {
             "host": "127.0.0.1",
             "port": 3001
