@@ -1,12 +1,9 @@
 timeout: 5400s
-options:
-    env:
-        - BRANCH=$_BRANCH
 
 steps:
   - name: us-central1-docker.pkg.dev/worpdress-279321/registry/videosdb-builder
     args:
-        - git checkout $BRANCH
+        - git checkout $BRANCH_NAME
 
   - name: us-central1-docker.pkg.dev/worpdress-279321/registry/videosdb-builder
     args:
