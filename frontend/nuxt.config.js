@@ -1,5 +1,5 @@
-import { installUnhandledExceptionHandlers, getSitemap, generateRoutes, getFirebaseSettings } from "./utils/utils"
-installUnhandledExceptionHandlers()
+import { getSitemap } from "./modules/mymodule.js"
+import { getVuexData, getDb, getFirebaseSettings } from "./utils/utils"
 
 let myConfig = {
 
@@ -75,7 +75,8 @@ export default {
     ],
 
     modules: [
-        'nuxt-ssr-cache'
+        'nuxt-ssr-cache',
+        "~/modules/mymodule.js"
     ],
     delayHydration: {
         mode: 'init'
@@ -178,12 +179,11 @@ export default {
 
     hooks: {
         generate: {
-            before:
-                async (generator, generateOptions) => {
-                    installUnhandledExceptionHandlers()
-                    generateOptions.routes = await generateRoutes(await getFirebaseSettings())
-                }
-
+            async route({ setPayload }) {
+                let db = getDb(await getFirebaseSettings())
+                let vuex_data = await getVuexData(db)
+                setPayload({ vuex_data })
+            }
         }
     },
 

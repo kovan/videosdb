@@ -81,7 +81,7 @@ import {
 
 import { parseISO } from 'date-fns'
 import { BIcon, BIconSearch, BIconShuffle } from 'bootstrap-vue'
-import { getCategories } from '~/utils/utils'
+import { getVuexData } from '~/utils/utils'
 import LazyHydrate from 'vue-lazy-hydration'
 import { orderBy as lodashOrderBy } from 'lodash'
 
@@ -170,9 +170,14 @@ export default {
     async fetch() {
 
         try {
-            let categories = await getCategories(this.$db)
+            if (
+                typeof this.$store.state.categories == 'undefined'
+            ) {
+                let vuex_data = await getVuexData(this.$db)
+                this.$store.commit('setInitial', vuex_data)
+            }
 
-            this.categories = categories
+            this.categories = [...this.$store.state.categories]
         } catch (error) {
             console.error(error)
         }
