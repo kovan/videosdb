@@ -292,6 +292,7 @@ tasks:
 
     deploy-only-nithyananda:
         deps: [init-gcp, build-frontend]
+        cmds:
             - docker run --rm
                 --env-file common/env/nithyananda.txt
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/nithyananda.json
