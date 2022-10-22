@@ -22,7 +22,7 @@ export default {
 
 
     generate: {
-        concurrency: 2,
+        concurrency: 20,
         fallback: true,
         crawler: false,
         devtools: true,
