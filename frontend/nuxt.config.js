@@ -22,11 +22,11 @@ export default {
 
 
     generate: {
-        concurrency: 2,
+        concurrency: 1,
         fallback: true,
         crawler: false,
         devtools: true,
-        interval: 10, // in milliseconds
+        interval: 0, // in milliseconds
         manifest: false,
         exclude: [/^\/tag/]
     },
