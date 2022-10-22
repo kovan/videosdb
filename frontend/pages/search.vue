@@ -34,12 +34,16 @@ export default {
                 },
             ]
         }
-    }
+    },
+    async asyncData({ payload, store }) {
+        if (payload) {
+            store.commit('setInitial', payload.vuex_data)
+        }
+    },
 }
 </script>
 
 <style>
-
 </style>
 
 <router>

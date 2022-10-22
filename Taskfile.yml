@@ -26,6 +26,7 @@ tasks:
     build:
         internal: true
         cmds:
+            - date
             # pull the image for --cache-from
             - cmd: '{{if .BUILD_ID }} docker pull -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest{{end}}'
               ignore_error: true
@@ -88,6 +89,7 @@ tasks:
     start-servers:
         run: once
         cmds:
+            - date
             - '{{if .BUILD_ID }}
                     docker compose pull -q
                 {{else}}
@@ -95,7 +97,6 @@ tasks:
                 {{end}}'
             - docker compose restart
             - docker compose up --detach
-            - docker compose logs -f &
             - task: wait-for-redis
             - task: wait-for-emulator
 
@@ -105,6 +106,7 @@ tasks:
         run: once
         deps:  [build-frontend]
         cmds:
+            - date
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
@@ -116,6 +118,7 @@ tasks:
         run: once
         deps: [build-backend, start-servers]
         cmds:
+            - date
             - rm -f {{.CID_FILE}}
             - docker run
                 --cidfile {{.CID_FILE}}
@@ -140,7 +143,7 @@ tasks:
         run: once
         deps: [build-frontend, build-backend, start-servers]
         cmds:
-            #- defer: docker compose logs
+            - date
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
@@ -200,6 +203,7 @@ tasks:
         run: once
         deps: [build-backend]
         cmds:
+            - date
             - docker compose stop redis
             - docker compose cp dump.rdb redis:/data
             - docker compose up redis -d
@@ -207,6 +211,7 @@ tasks:
             - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
             - docker compose restart firebase-emulator
             - task: wait-for-emulator
+            - docker compose logs -f -t --no-color &
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
@@ -224,6 +229,7 @@ tasks:
         run: once
         deps: [build-frontend]
         cmds:
+            - date
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
@@ -238,7 +244,6 @@ tasks:
         deps: [build-all, unittests, end2end-tests, download-cache]
         cmds:
             - defer: {task: upload-cache}
-            - defer: docker compose logs
             - task: generate
 
 
@@ -254,6 +259,7 @@ tasks:
     push:
         internal: true
         cmds:
+            - date
             - docker push -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.REVISION_ID}}
             - docker push -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
 
@@ -283,9 +289,16 @@ tasks:
             - REPO={{.REGISTRY}} docker compose push {{.TEST_SERVERS}}
             - docker build utils/builder -t {{.REGISTRY}}videosdb-builder
             - docker push {{.REGISTRY}}videosdb-builder
-        vars:
-            BUILD_ID: dummy-build-id
 
+    deploy-only-nithyananda:
+        deps: [init-gcp]
+        cmds:
+            - docker pull {{.REGISTRY}}frontend-{{.BRANCH}}:latest
+            - docker run --rm
+                --env-file common/env/nithyananda.txt
+                -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/nithyananda.json
+                {{.REGISTRY}}frontend-{{.BRANCH}}:latest
+                yarn run-s generate deploy
 
     test:
         deps: [unittests, end2end-tests]
@@ -296,7 +309,7 @@ tasks:
 # local-only, non-docker commands:
 
     local-run:
-        - docker compose logs -f &
+        - docker compose logs -f -t --no-color &
         - task: local-run-backend
         - task: local-run-frontend
 
@@ -324,6 +337,7 @@ tasks:
     local-firebase-emulator: cd common/firebase && firebase use default && firebase emulators:start; cd ../..
 
     local-push-to-prod: git checkout prod && git merge master && git push && git checkout master
+
 
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
@@ -373,4 +387,5 @@ tasks:
             - task: generate-gcp
         preconditions:
             - test {{.VIDEOSDB_CONFIG}}
+
 

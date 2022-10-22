@@ -41,7 +41,33 @@ const firebase_testing = {
 };
 
 
+/**
+ * Removes invalid XML characters from a string
+ * @param {string} str - a string containing potentially invalid XML characters (non-UTF8 characters, STX, EOX etc)
+ * @param {boolean} removeDiscouragedChars - should it remove discouraged but valid XML characters
+ * @return {string} a sanitized string stripped of invalid XML characters
+ */
+function removeXMLInvalidChars(string, removeDiscouragedChars = true) {
+    // remove everything forbidden by XML 1.0 specifications, plus the unicode replacement character U+FFFD
+    var regex = /((?:[\0-\x08\x0B\f\x0E-\x1F\uFFFD\uFFFE\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g;
+    string = string.replace(regex, "");
 
+    if (removeDiscouragedChars) {
+        // remove everything not suggested by XML 1.0 specifications
+        regex = new RegExp(
+            "([\\x7F-\\x84]|[\\x86-\\x9F]|[\\uFDD0-\\uFDEF]|(?:\\uD83F[\\uDFFE\\uDFFF])|(?:\\uD87F[\\uDF" +
+            "FE\\uDFFF])|(?:\\uD8BF[\\uDFFE\\uDFFF])|(?:\\uD8FF[\\uDFFE\\uDFFF])|(?:\\uD93F[\\uDFFE\\uD" +
+            "FFF])|(?:\\uD97F[\\uDFFE\\uDFFF])|(?:\\uD9BF[\\uDFFE\\uDFFF])|(?:\\uD9FF[\\uDFFE\\uDFFF])" +
+            "|(?:\\uDA3F[\\uDFFE\\uDFFF])|(?:\\uDA7F[\\uDFFE\\uDFFF])|(?:\\uDABF[\\uDFFE\\uDFFF])|(?:\\" +
+            "uDAFF[\\uDFFE\\uDFFF])|(?:\\uDB3F[\\uDFFE\\uDFFF])|(?:\\uDB7F[\\uDFFE\\uDFFF])|(?:\\uDBBF" +
+            "[\\uDFFE\\uDFFF])|(?:\\uDBFF[\\uDFFE\\uDFFF])(?:[\\0-\\t\\x0B\\f\\x0E-\\u2027\\u202A-\\uD7FF\\" +
+            "uE000-\\uFFFF]|[\\uD800-\\uDBFF][\\uDC00-\\uDFFF]|[\\uD800-\\uDBFF](?![\\uDC00-\\uDFFF])|" +
+            "(?:[^\\uD800-\\uDBFF]|^)[\\uDC00-\\uDFFF]))", "g");
+        string = string.replace(regex, "");
+    }
+
+    return string;
+}
 
 async function getFirebaseSettings(config) {
 
@@ -66,16 +92,18 @@ async function getFirebaseSettings(config) {
 
 
 
-var g_categories = null
+var vuex_data = null
 
-async function getCategories(db) {
-    if (g_categories)
-        return g_categories
+async function getVuexData(db) {
+    if (vuex_data)
+        return vuex_data
 
-    console.log("getting categories")
+    console.log("getting vuex data")
     const q = query(collection(db, "playlists"), orderBy('videosdb.lastUpdated', 'desc'))
 
-    let results = await getDocs(q)
+    let [results] = await Promise.all([
+        getDocs(q)
+    ])
     let categories = []
     results.forEach((doc) => {
         let category = {
@@ -88,8 +116,11 @@ async function getCategories(db) {
     })
     categories.sort()
 
-    g_categories = categories
-    return categories
+    vuex_data = {
+        categories
+    }
+
+    return vuex_data
 }
 
 var db = null
@@ -104,13 +135,16 @@ function getDb(config) {
         app = getApp()
         db = getFirestore()
     } catch {
-        app = initializeApp(config)
-        db = getFirestore()
         console.log(process.env)
         if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
-            console.info("Using FIREBASE EMULATOR")
+            config.projectId = "demo-project" // important
+            app = initializeApp(config)
+            db = getFirestore()
             connectFirestoreEmulator(db, ...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
+            console.info("Using FIREBASE EMULATOR")
         } else {
+            app = initializeApp(config)
+            db = getFirestore()
             console.info("Using LIVE database.")
         }
     }
@@ -195,6 +229,7 @@ function videoToStructuredData(video) {
     // }
 
 
+
     let string = JSON.stringify(json)
     return string
 }
@@ -261,38 +296,7 @@ function videoToSitemapEntry(video) {
     return json
 }
 
-async function getSitemap(dbOptions) {
-    let db = getDb(dbOptions)
 
-    function transformCategory(cat) {
-        return {
-            url: `/category/${cat.videosdb.slug}`,
-            priority: 0.1
-        }
-    }
-
-    var sitemap = [
-        {
-            url: "/",
-            changefreq: "daily",
-        },
-    ]
-
-    let q = query(collection(db, "videos"))
-    let docRefs = await getDocs(q)
-    docRefs.forEach(video => {
-        sitemap.push(videoToSitemapEntry(video.data()))
-    })
-
-    q = query(collection(db, "playlists"))
-    docRefs = await getDocs(q)
-    docRefs.forEach(playlist => {
-        sitemap.push(transformCategory(playlist.data()))
-    })
-
-
-    return sitemap
-}
 
 var unhandledExceptionHandlersInstalled = false
 
@@ -314,15 +318,12 @@ function installUnhandledExceptionHandlers() {
 export {
     getDb,
     formatDate,
-    getSitemap,
-    getCategories,
+    getVuexData,
     dereferenceDb,
-    generateRoutes,
     dateToISO,
     videoToStructuredData,
     videoToSitemapEntry,
     getFirebaseSettings,
     installUnhandledExceptionHandlers
 }
-
 
