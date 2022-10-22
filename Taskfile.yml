@@ -95,7 +95,6 @@ tasks:
                 {{end}}'
             - docker compose restart
             - docker compose up --detach
-            - docker compose logs -f &
             - task: wait-for-redis
             - task: wait-for-emulator
 
@@ -207,6 +206,7 @@ tasks:
             - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
             - docker compose restart firebase-emulator
             - task: wait-for-emulator
+            - docker compose logs -f &
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
