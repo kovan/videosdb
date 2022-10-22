@@ -290,6 +290,13 @@ tasks:
             - docker build utils/builder -t {{.REGISTRY}}videosdb-builder
             - docker push {{.REGISTRY}}videosdb-builder
 
+    deploy-only-nithyananda:
+        deps: [init-gcp, build-frontend]
+            - docker run --rm
+                --env-file common/env/nithyananda.txt
+                -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/nithyananda.json
+                REPO={{.REGISTRY}}frontend-{{.BRANCH}}:latest
+                yarn run-s generate deploy
 
     test:
         deps: [unittests, end2end-tests]
@@ -328,6 +335,7 @@ tasks:
     local-firebase-emulator: cd common/firebase && firebase use default && firebase emulators:start; cd ../..
 
     local-push-to-prod: git checkout prod && git merge master && git push && git checkout master
+
 
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
@@ -377,4 +385,5 @@ tasks:
             - task: generate-gcp
         preconditions:
             - test {{.VIDEOSDB_CONFIG}}
+
 
