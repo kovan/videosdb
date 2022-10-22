@@ -26,6 +26,7 @@ tasks:
     build:
         internal: true
         cmds:
+            - date
             # pull the image for --cache-from
             - cmd: '{{if .BUILD_ID }} docker pull -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest{{end}}'
               ignore_error: true
@@ -88,6 +89,7 @@ tasks:
     start-servers:
         run: once
         cmds:
+            - date
             - '{{if .BUILD_ID }}
                     docker compose pull -q
                 {{else}}
@@ -104,6 +106,7 @@ tasks:
         run: once
         deps:  [build-frontend]
         cmds:
+            - date
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
@@ -115,6 +118,7 @@ tasks:
         run: once
         deps: [build-backend, start-servers]
         cmds:
+            - date
             - rm -f {{.CID_FILE}}
             - docker run
                 --cidfile {{.CID_FILE}}
@@ -139,6 +143,7 @@ tasks:
         run: once
         deps: [build-frontend, build-backend, start-servers]
         cmds:
+            - date
             #- defer: docker compose logs
             - docker run --rm
                 --network host
@@ -199,6 +204,7 @@ tasks:
         run: once
         deps: [build-backend]
         cmds:
+            - date
             - docker compose stop redis
             - docker compose cp dump.rdb redis:/data
             - docker compose up redis -d
@@ -224,6 +230,7 @@ tasks:
         run: once
         deps: [build-frontend]
         cmds:
+            - date
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
@@ -254,6 +261,7 @@ tasks:
     push:
         internal: true
         cmds:
+            - date
             - docker push -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.REVISION_ID}}
             - docker push -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
 
