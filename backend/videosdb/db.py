@@ -59,6 +59,7 @@ class DB:
         logger.info("Current project: " + project)
         logger.info("Current config: " + config)
         if "FIRESTORE_EMULATOR_HOST" in os.environ:
+            project = "demo-project"
             logger.info("USING EMULATOR: %s",
                         os.environ["FIRESTORE_EMULATOR_HOST"])
         else:

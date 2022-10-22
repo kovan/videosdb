@@ -104,13 +104,16 @@ function getDb(config) {
         app = getApp()
         db = getFirestore()
     } catch {
-        app = initializeApp(config)
-        db = getFirestore()
         console.log(process.env)
         if (process.env.FIRESTORE_EMULATOR_HOST != undefined) {
-            console.info("Using FIREBASE EMULATOR")
+            config.projectId = "demo-project" // important
+            app = initializeApp(config)
+            db = getFirestore()
             connectFirestoreEmulator(db, ...process.env.FIRESTORE_EMULATOR_HOST.split(":"));
+            console.info("Using FIREBASE EMULATOR")
         } else {
+            app = initializeApp(config)
+            db = getFirestore()
             console.info("Using LIVE database.")
         }
     }
