@@ -274,7 +274,6 @@ class Downloader:
                 await self._phase2()
             finally:
                 await self._print_debug_info(True)
-                await self.api.aclose()
 
             # await anyio.wait_all_tasks_blocked()
             global_nursery.cancel_scope.cancel()
