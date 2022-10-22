@@ -6,8 +6,6 @@ env:
     REPO: '{{if .BUILD_ID }}{{.REGISTRY}}{{end}}'
     FIRESTORE_EMULATOR: 127.0.0.1:46456
     YOUTUBE_API_URL: http://127.0.0.1:43783/youtube/v3
-    BRANCH:
-        sh: git branch --show-current
     REVISION_ID:
         sh: git rev-parse HEAD
     TEST_SERVERS: json-caching-proxy firebase-emulator
@@ -18,23 +16,25 @@ tasks:
     init-gcp:
         run: once
         cmds:
+            - env
             - echo {{.DOCKER_PASSWORD}} | docker login --username eelis --password-stdin;
             - gcloud auth activate-service-account --key-file common/keys/{{.MAIN_PROJECT}}.json;
             - gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
-            - env
+            # - git clone --depth 1 git@github.com:kovan/videosdb
+            # - git checkout $BRANCH_NAME
 
     build:
         internal: true
         cmds:
             - date
             # pull the image for --cache-from
-            - cmd: '{{if .BUILD_ID }} docker pull -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest{{end}}'
+            - cmd: '{{if .BUILD_ID }} docker pull -q {{.REPO}}{{.IMAGE}}-{{.BRANCH_NAME}}:latest{{end}}'
               ignore_error: true
 
             - docker build
-                -t {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.REVISION_ID}}
-                -t {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
-                --cache-from {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
+                -t {{.REPO}}{{.IMAGE}}-{{.BRANCH_NAME}}:{{.REVISION_ID}}
+                -t {{.REPO}}{{.IMAGE}}-{{.BRANCH_NAME}}:latest
+                --cache-from {{.REPO}}{{.IMAGE}}-{{.BRANCH_NAME}}:latest
                 {{.IMAGE}}
 
 
@@ -110,7 +110,7 @@ tasks:
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
-                {{.REPO}}frontend-{{.BRANCH}}:latest
+                {{.REPO}}frontend-{{.BRANCH_NAME}}:latest
                 yarn test
 
 
@@ -128,7 +128,7 @@ tasks:
                 -e DEBUG=1
                 -e PYTHONDEVMODE=1
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
-                {{.REPO}}backend-{{.BRANCH}}:latest
+                {{.REPO}}backend-{{.BRANCH_NAME}}:latest
                 run sh -c "coverage run -m unittest && coverage report -m && coverage html"
             - defer: docker rm $(cat {{.CID_FILE}})
             - docker cp $(cat {{.CID_FILE}}):/app/htmlcov .
@@ -152,14 +152,14 @@ tasks:
                 -e PYTHONDEVMODE=1
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 -e YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
-                {{.REPO}}backend-{{.BRANCH}}:latest
+                {{.REPO}}backend-{{.BRANCH_NAME}}:latest
                 run main -c
 
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
-                {{.REPO}}frontend-{{.BRANCH}}:latest
+                {{.REPO}}frontend-{{.BRANCH_NAME}}:latest
                 {{if .BUILD_ID }}
                     yarn generate
                 {{else}}
@@ -176,14 +176,14 @@ tasks:
     #             -e YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
     #             -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
     #             --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
-    #             {{.REPO}}backend-{{.BRANCH}}:latest
+    #             {{.REPO}}backend-{{.BRANCH_NAME}}:latest
     #             run main -c
 
     #         - docker run
     #             --network host
     #             --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
     #             -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
-    #             {{.REPO}}frontend-{{.BRANCH}}:latest
+    #             {{.REPO}}frontend-{{.BRANCH_NAME}}:latest
     #             yarn run-s generate deploy
 
     download-cache:
@@ -216,7 +216,7 @@ tasks:
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 {{if .LOGLEVEL}} -e LOGLEVEL={{.LOGLEVEL}} {{end}}
-                {{.REPO}}backend-{{.BRANCH}}:latest
+                {{.REPO}}backend-{{.BRANCH_NAME}}:latest
                 run main
                     --check-for-new-videos
                     --enable-transcripts
@@ -235,7 +235,7 @@ tasks:
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
-                {{.REPO}}frontend-{{.BRANCH}}:latest
+                {{.REPO}}frontend-{{.BRANCH_NAME}}:latest
                 yarn run-s generate deploy
 
 
@@ -260,8 +260,8 @@ tasks:
         internal: true
         cmds:
             - date
-            - docker push -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:{{.REVISION_ID}}
-            - docker push -q {{.REPO}}{{.IMAGE}}-{{.BRANCH}}:latest
+            - docker push -q {{.REPO}}{{.IMAGE}}-{{.BRANCH_NAME}}:{{.REVISION_ID}}
+            - docker push -q {{.REPO}}{{.IMAGE}}-{{.BRANCH_NAME}}:latest
 
 
     push-frontend:
@@ -293,11 +293,11 @@ tasks:
     deploy-only-nithyananda:
         deps: [init-gcp]
         cmds:
-            - docker pull {{.REGISTRY}}frontend-{{.BRANCH}}:latest
+            - docker pull {{.REGISTRY}}frontend-{{.BRANCH_NAME}}:latest
             - docker run --rm
                 --env-file common/env/nithyananda.txt
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/nithyananda.json
-                {{.REGISTRY}}frontend-{{.BRANCH}}:latest
+                {{.REGISTRY}}frontend-{{.BRANCH_NAME}}:latest
                 yarn run-s generate deploy
 
     test:
