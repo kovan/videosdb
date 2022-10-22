@@ -180,12 +180,13 @@ class VideoProcessor:
 
     # entrypoint:
     async def close(self):
-        async with self._video_to_playlist_list as videos:
-            video_ids = list(videos.keys())
-            random.shuffle(video_ids)
-            for video_id in video_ids:
-                playlists = videos[video_id]
-                await self._create_video(video_id, playlists)
+        async with anyio.create_task_group() as tg:
+            async with self._video_to_playlist_list as videos:
+                video_ids = list(videos.keys())
+                random.shuffle(video_ids)
+                for video_id in video_ids:
+                    playlists = videos[video_id]
+                    tg.start_soon(self._create_video, video_id, playlists)
 
     async def add_video(self, video_id, playlist_id):
         logger.debug(
