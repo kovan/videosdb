@@ -1,22 +1,18 @@
 timeout: 5400s
+options:
+    env:
+        - 'BUILD_ID=$BUILD_ID'
+        - 'BRANCH_NAME=$BRANCH_NAME'
+        - 'VIDEOSDB_CONFIG=$_VIDEOSDB_CONFIG'
+        - 'LOGLEVEL=$_LOGLEVEL'
 
 steps:
-#   - name: us-central1-docker.pkg.dev/worpdress-279321/registry/videosdb-builder
-#     entrypoint: git
-#     args:
-#         - checkout
-#         - $BRANCH_NAME
-
   - name: us-central1-docker.pkg.dev/worpdress-279321/registry/videosdb-builder
     args:
         - --verbose
         - init-gcp
 
   - name: us-central1-docker.pkg.dev/worpdress-279321/registry/videosdb-builder
-    env:
-        - 'BUILD_ID=$BUILD_ID'
-        - 'VIDEOSDB_CONFIG=$_VIDEOSDB_CONFIG'
-        - 'LOGLEVEL=$_LOGLEVEL'
     args:
         - --verbose
         - $TRIGGER_NAME
