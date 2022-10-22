@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import re
-from typing import Iterable, NewType, TypeVar
+from typing import Any, Iterable, NewType, TypeVar, Union
 import anyio
 import httpx
 from urllib.parse import urlencode
@@ -223,8 +223,7 @@ class YoutubeAPI:
 
 # ------- PRIVATE-------------------------------------------------------
 
-
-    async def _request_one(self, url, params, use_cache=True):
+    async def _request_one(self, url, params, use_cache=True) -> tuple[bool, Union[dict, None]]:
 
         modified, generator = await self._request_main(url, params, use_cache)
         try:

@@ -1,6 +1,7 @@
 
 import socket
 import time
+from typing import Callable, Type
 import anyio
 import logging
 import os
@@ -41,8 +42,9 @@ def wait_for_port(port: int, host: str = 'localhost', timeout: float = 30.0):
                                    'connections.'.format(port, host)) from ex
 
 
-def my_handler(my_type, e, handler):
-    if type(e) == anyio.ExceptionGroup:
+def my_handler(my_type: Type[Exception], e: Exception, handler: Callable):
+    logger.debug("Exception happened: ", str(e))
+    if isinstance(e, anyio.ExceptionGroup):
         unhandled = []
         for ex in e.exceptions:
             if isinstance(e, my_type):

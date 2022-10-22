@@ -4,7 +4,8 @@ import pprint
 import random
 import re
 from abc import abstractmethod
-from typing import Any
+from types import AsyncGeneratorType
+from typing import Any, AsyncGenerator, Iterable, Type
 
 import anyio
 import bleach
@@ -183,6 +184,7 @@ class VideoProcessor:
         async with anyio.create_task_group() as tg:
             async with self._video_to_playlist_list as videos:
                 video_ids = list(videos.keys())
+                logger.info("Writing %s videos" % len(video_ids))
                 random.shuffle(video_ids)
                 for video_id in video_ids:
                     playlists = videos[video_id]
@@ -190,7 +192,7 @@ class VideoProcessor:
                     # tg.start_soon(self._create_video, video_id,
                     #             playlists, name=f"Create video {video_id}")
 
-    async def add_video(self, video_id, playlist_id):
+    async def add_video(self, video_id: str, playlist_id: str):
         logger.debug(
             f"Processing playlist item video {video_id}, playlist {playlist_id}")
 
@@ -199,7 +201,8 @@ class VideoProcessor:
                 videos[video_id] = []
             videos[video_id].append(playlist_id)
 
-    async def _create_video(self, video_id, playlists):
+    async def _create_video(self, video_id: str, playlist_ids: Iterable[str]):
+        logger.info("Writing video: %s ..." % video_id)
         video = {}
         try:
             _, downloaded_video = await self._api.get_video_info(video_id)
@@ -236,12 +239,10 @@ class VideoProcessor:
             for stat, value in video["statistics"].items():
                 video["statistics"][stat] = int(value)
 
-        if playlists:
-            video["videosdb"]["playlists"] = firestore.ArrayUnion(playlists)
+        if playlist_ids:
+            video["videosdb"]["playlists"] = firestore.ArrayUnion(playlist_ids)
 
         await self._db.set("videos/" + video["id"], video, merge=True)
-
-        logger.info("Wrote video: %s" % video["id"])
 
         return video
 
@@ -267,8 +268,8 @@ class Downloader:
         logger.info("Sync start")
         async with anyio.create_task_group() as global_nursery:
             await self.init()
-            global_nursery.start_soon(self._print_debug_info,
-                                      name="Debug info")
+            # global_nursery.start_soon(self._print_debug_info,
+            #                           name="Debug info")
 
             try:
                 await self._phase1()
@@ -282,7 +283,8 @@ class Downloader:
         logger.info("Sync finished")
 
     async def _phase1(self):
-        # Phase 1:
+        logger.info("Init phase 1")
+
         video_processor = VideoProcessor(
             self.db, self.api, self.YT_CHANNEL_ID)
         try:
@@ -296,6 +298,7 @@ class Downloader:
             my_handler(QuotaExceeded, e, logger.error)
 
     async def _phase2(self):
+        logger.info("Init phase 2")
         # Phase 2: does not use Youtube quota:
         async with anyio.create_task_group() as phase2_nursery:
             args = self.db, self.options, phase2_nursery
@@ -310,9 +313,8 @@ class Downloader:
             await self._final_video_iteration(tasks)
             await export_to_emulator_task.export_pending_collections()
 
-    async def _final_video_iteration(self, phase2_tasks):
+    async def _final_video_iteration(self, phase2_tasks: Iterable[Task]):
         final_video_ids = LockedItem(set())
-        logger.info("Init phase 2")
 
         async for video_ref in self.db.list_documents("videos"):
             video = await video_ref.get()  # type: ignore
@@ -336,7 +338,10 @@ class Downloader:
         logger.info("Final video list length: " + str(len(ids)))
         return ids
 
-    async def _process_playlist_ids(self, playlist_ids, channel_name, video_processor):
+    async def _process_playlist_ids(self,
+                                    playlist_ids: list[str],
+                                    channel_name: str,
+                                    video_processor: VideoProcessor):
 
         async with anyio.create_task_group() as phase1:
             random.shuffle(playlist_ids)
@@ -352,9 +357,9 @@ class Downloader:
                 )
 
     async def _process_playlist(self,
-                                playlist_id,
-                                channel_name,
-                                video_processor,
+                                playlist_id: str,
+                                channel_name: str,
+                                video_processor: VideoProcessor,
                                 task_group):
 
         logger.info("Processing playlist " + playlist_id)
@@ -383,7 +388,7 @@ class Downloader:
                 name="Add video %s" % video_id
             )
 
-    async def _retrieve_all_playlist_ids(self, channel_id):
+    async def _retrieve_all_playlist_ids(self, channel_id: str):
         _, ids = await self.api.list_channelsection_playlist_ids(channel_id)
         _, ids2 = await self.api.list_channel_playlist_ids(channel_id)
         if "DEBUG" in os.environ:
@@ -411,7 +416,9 @@ class Downloader:
         await self.db.set("channel_infos/" + channel_id, channel_info, merge=True)
         return channel_info
 
-    async def _create_playlist(self, playlist, playlist_items):
+    async def _create_playlist(self,
+                               playlist: dict,
+                               playlist_items: AsyncGeneratorType):
 
         video_count = 0
         last_updated = None
@@ -472,7 +479,7 @@ class Downloader:
             return description[:match.start()]
         return description
 
-    async def _print_debug_info(self, once=False):
+    async def _print_debug_info(self, once: bool = False):
         while True:
             tasks = anyio.get_running_tasks()
             logger.info('Running tasks:' + str(len(tasks)))
