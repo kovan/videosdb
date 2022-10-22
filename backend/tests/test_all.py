@@ -11,7 +11,7 @@ import sys
 
 import aiounittest
 import anyio
-import aioredis
+import redis.asyncio as redis
 import respx
 from dotenv import load_dotenv
 from google.api_core.datetime_helpers import DatetimeWithNanoseconds
@@ -94,7 +94,7 @@ class DownloaderTest(PatchedTestCase):
 
         # DB.wait_for_port(60.0)
 
-        cls.redis = aioredis.from_url("redis://localhost", db=1)
+        cls.redis = redis.Redis(db=1)
         cls.db = DB.get_client()
         cls.createMocks()
 
@@ -212,21 +212,21 @@ class DownloaderTest(PatchedTestCase):
 
         # check that pages were used:
 
-    # async def test_firestore_behavior(self):
-    #     a = await self.db.document("test_videos/" + "asdfsdf").set({
-    #         "videosdb": {
-    #             "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
-    #         }
-    #     }, merge=True)
-    #     b = await self.db.document("test_videos/" + "asdfsdf").set({
-    #         "videosdb": {
-    #             "playlists": firestore.ArrayUnion(["sdfsdf"])
-    #         }
-    #     }, merge=True)
+    async def test_firestore_behavior(self):
+        a = await self.db.document("test_videos/" + "asdfsdf").set({
+            "videosdb": {
+                "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
+            }
+        }, merge=True)
+        b = await self.db.document("test_videos/" + "asdfsdf").set({
+            "videosdb": {
+                "playlists": firestore.ArrayUnion(["sdfsdf"])
+            }
+        }, merge=True)
 
-    #     c = await self.db.document("test_videos/" + "asdfsdf").get()
-    #     self.assertEqual(
-    #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
+        c = await self.db.document("test_videos/" + "asdfsdf").get()
+        self.assertEqual(
+            {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
 
     async def test_transcript_downloading(self):
 
