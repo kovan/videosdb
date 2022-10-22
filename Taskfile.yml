@@ -291,12 +291,13 @@ tasks:
             - docker push {{.REGISTRY}}videosdb-builder
 
     deploy-only-nithyananda:
-        deps: [init-gcp, build-frontend]
+        deps: [init-gcp]
         cmds:
+            - docker pull {{.REGISTRY}}frontend-{{.BRANCH}}:latest
             - docker run --rm
                 --env-file common/env/nithyananda.txt
                 -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/nithyananda.json
-                REPO={{.REGISTRY}}frontend-{{.BRANCH}}:latest
+                {{.REGISTRY}}frontend-{{.BRANCH}}:latest
                 yarn run-s generate deploy
 
     test:
