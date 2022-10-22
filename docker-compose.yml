@@ -22,6 +22,7 @@ services:
             - JAVA_TOOL_OPTIONS="-Xmx3g"
         ports:
             - 46456:46456
+        entrypoint: firebase emulators:start --project demo-project --debug
 
     redis:
         network_mode: host
