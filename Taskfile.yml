@@ -200,15 +200,14 @@ tasks:
 
     run-backend:
         run: once
-        deps: [build-backend]
         cmds:
             - date
-            - docker compose stop redis
-            - docker compose cp dump.rdb redis:/data
-            - docker compose up redis -d
-            - task: wait-for-redis
+            - docker compose down
+            - cmd: docker compose cp dump.rdb redis:/data
+              ignore_error: true
+            - docker compose up -d --force-recreate
             - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
-            - docker compose up firebase-emulator -d --force-recreate
+            - task: wait-for-redis
             - task: wait-for-emulator
             - docker compose logs -f -t --no-color &
             - docker run --rm
@@ -226,7 +225,6 @@ tasks:
 
     run-frontend:
         run: once
-        deps: [build-frontend]
         cmds:
             - date
             - docker run --rm
@@ -240,7 +238,7 @@ tasks:
 
 
     generate-with-cache:
-        deps: [build-all, unittests, end2end-tests, download-cache]
+        deps: [download-cache]
         cmds:
             - defer: {task: upload-cache}
             - task: generate
@@ -248,7 +246,6 @@ tasks:
 
 
     generate:
-        deps: [build-all, unittests, end2end-tests, start-servers]
         cmds:
             - task: run-backend
             - task: run-frontend

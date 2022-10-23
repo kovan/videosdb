@@ -1,0 +1,245 @@
+{
+    "kind": "youtube#playlistItemListResponse",
+    "etag": "j61nqRvhrfEBF8d_mrN30cJkaqo",
+    "items": [
+        {
+            "kind": "youtube#playlistItem",
+            "etag": "Ik44UfXS_57p0RBJyj_GydULnwY",
+            "id": "VVVjWXpMQ3MzenJRSUJWSFlBMXNLMnN3Lk1CRGtrUDRWck8w",
+            "snippet": {
+                "publishedAt": "2022-10-23T16:21:06Z",
+                "channelId": "UCcYzLCs3zrQIBVHYA1sK2sw",
+                "title": "Sadhguru Explains the Lore, Legend, and Symbolism of Diwali | Sadhguru",
+                "description": "Discover the deeper significance of the festival of lights with Sadhguru as he explains the lore and reveals the symbolisms of Diwali.\n\nOfficial YouTube Channel of Sadhguru\n\nConsidered among India’s 50 most influential people, Sadhguru is a yogi, mystic, bestselling author, and poet. Absolute clarity of perception places him in a unique space, not only in matters spiritual but in business, environmental and international affairs, and opens a new door on all that he touches.\n\nInner Engineering \n\nInner Engineering is a comprehensive course for personal growth that brings about a shift in the way you perceive and experience your life, your work, and the world that you live in.\n\nhttps://www.innerengineering.com/\n\nSave Soil Movement\n\nLaunched by Sadhguru, Save Soil is the world's largest people's movement, reaching 3.91 billion people to address impending soil extinction by supporting governments to create policies for soil revitalization.\n\nhttps://savesoil.org/\n\nSadhguru app \n\nAccelerate your spiritual journey with transformative guided meditations, daily wisdom, and Yogic tools.\n\nhttp://onelink.to/sadhguru__app",
+                "thumbnails": {
+                    "default": {
+                        "url": "https://i.ytimg.com/vi/MBDkkP4VrO0/default.jpg",
+                        "width": 120,
+                        "height": 90
+                    },
+                    "medium": {
+                        "url": "https://i.ytimg.com/vi/MBDkkP4VrO0/mqdefault.jpg",
+                        "width": 320,
+                        "height": 180
+                    },
+                    "high": {
+                        "url": "https://i.ytimg.com/vi/MBDkkP4VrO0/hqdefault.jpg",
+                        "width": 480,
+                        "height": 360
+                    },
+                    "standard": {
+                        "url": "https://i.ytimg.com/vi/MBDkkP4VrO0/sddefault.jpg",
+                        "width": 640,
+                        "height": 480
+                    },
+                    "maxres": {
+                        "url": "https://i.ytimg.com/vi/MBDkkP4VrO0/maxresdefault.jpg",
+                        "width": 1280,
+                        "height": 720
+                    }
+                },
+                "channelTitle": "Sadhguru",
+                "playlistId": "UUcYzLCs3zrQIBVHYA1sK2sw",
+                "position": 0,
+                "resourceId": {
+                    "kind": "youtube#video",
+                    "videoId": "ed7pFle2yM8"
+                },
+                "videoOwnerChannelTitle": "Sadhguru",
+                "videoOwnerChannelId": "UCcYzLCs3zrQIBVHYA1sK2sw"
+            }
+        },
+        {
+            "kind": "youtube#playlistItem",
+            "etag": "9g4PlyrsPMPXUkelcJyAgBT79Fg",
+            "id": "VVVjWXpMQ3MzenJRSUJWSFlBMXNLMnN3LjZHTk42WWtZNzBN",
+            "snippet": {
+                "publishedAt": "2022-10-22T11:53:47Z",
+                "channelId": "UCcYzLCs3zrQIBVHYA1sK2sw",
+                "title": "How To Be Alone | Sadhguru",
+                "description": "oneliness is something that many people suffer from. In this video, Sadhguru distinguishes between loneliness and being alone, and how being alone is a profound and wonderful experience.\n\n#sadhguru #alone  \n\nOfficial YouTube Channel of Sadhguru\n\nConsidered among India’s 50 most influential people, Sadhguru is a yogi, mystic, bestselling author, and poet. Absolute clarity of perception places him in a unique space, not only in matters spiritual but in business, environmental and international affairs, and opens a new door on all that he touches.\n\nInner Engineering \n\nInner Engineering is a comprehensive course for personal growth that brings about a shift in the way you perceive and experience your life, your work, and the world that you live in.\n\n[ https://www.innerengineering.com/\n\nSave Soil Movement\n\nLaunched by Sadhguru, Save Soil is the world's largest people's movement, reaching 3.91 billion people to address impending soil extinction by supporting governments to create policies for soil revitalization.\n\nhttps://savesoil.org/\n\nSadhguru app \n\nAccelerate your spiritual journey with transformative guided meditations, daily wisdom, and Yogic tools.\n\nhttp://onelink.to/sadhguru__app",
+                "thumbnails": {
+                    "default": {
+                        "url": "https://i.ytimg.com/vi/6GNN6YkY70M/default.jpg",
+                        "width": 120,
+                        "height": 90
+                    },
+                    "medium": {
+                        "url": "https://i.ytimg.com/vi/6GNN6YkY70M/mqdefault.jpg",
+                        "width": 320,
+                        "height": 180
+                    },
+                    "high": {
+                        "url": "https://i.ytimg.com/vi/6GNN6YkY70M/hqdefault.jpg",
+                        "width": 480,
+                        "height": 360
+                    },
+                    "standard": {
+                        "url": "https://i.ytimg.com/vi/6GNN6YkY70M/sddefault.jpg",
+                        "width": 640,
+                        "height": 480
+                    },
+                    "maxres": {
+                        "url": "https://i.ytimg.com/vi/6GNN6YkY70M/maxresdefault.jpg",
+                        "width": 1280,
+                        "height": 720
+                    }
+                },
+                "channelTitle": "Sadhguru",
+                "playlistId": "UUcYzLCs3zrQIBVHYA1sK2sw",
+                "position": 1,
+                "resourceId": {
+                    "kind": "youtube#video",
+                    "videoId": "HADeWBBb1so"
+                },
+                "videoOwnerChannelTitle": "Sadhguru",
+                "videoOwnerChannelId": "UCcYzLCs3zrQIBVHYA1sK2sw"
+            }
+        },
+        {
+            "kind": "youtube#playlistItem",
+            "etag": "62uGVPbPELHx_2KSQ2bP6Aq_nhg",
+            "id": "VVVjWXpMQ3MzenJRSUJWSFlBMXNLMnN3LmFVcm4ta2R4YVR3",
+            "snippet": {
+                "publishedAt": "2022-10-20T11:39:48Z",
+                "channelId": "UCcYzLCs3zrQIBVHYA1sK2sw",
+                "title": "The Secret Behind Beethoven's Musical Genius | Sadhguru",
+                "description": "Official YouTube Channel of Sadhguru\n\nConsidered among India’s 50 most influential people, Sadhguru is a yogi, mystic, bestselling author, and poet. Absolute clarity of perception places him in a unique space, not only in matters spiritual but in business, environmental and international affairs, and opens a new door on all that he touches.\n\nInner Engineering \n\nInner Engineering is a comprehensive course for personal growth that brings about a shift in the way you perceive and experience your life, your work, and the world that you live in.\n\n[ https://www.innerengineering.com/\n\nSave Soil Movement\n\nLaunched by Sadhguru, Save Soil is the world's largest people's movement, reaching 3.91 billion people to address impending soil extinction by supporting governments to create policies for soil revitalization.\n\nhttps://savesoil.org/\n\nSadhguru app \n\nAccelerate your spiritual journey with transformative guided meditations, daily wisdom, and Yogic tools.\n\nhttp://onelink.to/sadhguru__app",
+                "thumbnails": {
+                    "default": {
+                        "url": "https://i.ytimg.com/vi/aUrn-kdxaTw/default.jpg",
+                        "width": 120,
+                        "height": 90
+                    },
+                    "medium": {
+                        "url": "https://i.ytimg.com/vi/aUrn-kdxaTw/mqdefault.jpg",
+                        "width": 320,
+                        "height": 180
+                    },
+                    "high": {
+                        "url": "https://i.ytimg.com/vi/aUrn-kdxaTw/hqdefault.jpg",
+                        "width": 480,
+                        "height": 360
+                    },
+                    "standard": {
+                        "url": "https://i.ytimg.com/vi/aUrn-kdxaTw/sddefault.jpg",
+                        "width": 640,
+                        "height": 480
+                    },
+                    "maxres": {
+                        "url": "https://i.ytimg.com/vi/aUrn-kdxaTw/maxresdefault.jpg",
+                        "width": 1280,
+                        "height": 720
+                    }
+                },
+                "channelTitle": "Sadhguru",
+                "playlistId": "UUcYzLCs3zrQIBVHYA1sK2sw",
+                "position": 2,
+                "resourceId": {
+                    "kind": "youtube#video",
+                    "videoId": "gavq4LM8XK0"
+                },
+                "videoOwnerChannelTitle": "Sadhguru",
+                "videoOwnerChannelId": "UCcYzLCs3zrQIBVHYA1sK2sw"
+            }
+        },
+        {
+            "kind": "youtube#playlistItem",
+            "etag": "NJP0JGTlF6ODiZN9bH9WGPmfKuc",
+            "id": "VVVjWXpMQ3MzenJRSUJWSFlBMXNLMnN3LjJCVEtpMGdsZHV3",
+            "snippet": {
+                "publishedAt": "2022-10-17T11:30:05Z",
+                "channelId": "UCcYzLCs3zrQIBVHYA1sK2sw",
+                "title": "Why The Kind of Clothes You Wear Matter | Sadhguru",
+                "description": "Sadhguru looks at why it is important to wear clothing made of natural, organic material, and how synthetic clothing material has a negative impact on our lives.\n\n#sadhguru #clothing \n\nOfficial YouTube Channel of Sadhguru\n\nConsidered among India’s 50 most influential people, Sadhguru is a yogi, mystic, bestselling author, and poet. Absolute clarity of perception places him in a unique space, not only in matters spiritual but in business, environmental and international affairs, and opens a new door on all that he touches.\n\nInner Engineering \n\nInner Engineering is a comprehensive course for personal growth that brings about a shift in the way you perceive and experience your life, your work, and the world that you live in.\n\n[ https://www.innerengineering.com/\n\nSave Soil Movement\n\nLaunched by Sadhguru, Save Soil is the world's largest people's movement, reaching 3.91 billion people to address impending soil extinction by supporting governments to create policies for soil revitalization.\n\nhttps://savesoil.org/\n\nSadhguru app \n\nAccelerate your spiritual journey with transformative guided meditations, daily wisdom, and Yogic tools.\n\nhttp://onelink.to/sadhguru__app",
+                "thumbnails": {
+                    "default": {
+                        "url": "https://i.ytimg.com/vi/2BTKi0glduw/default.jpg",
+                        "width": 120,
+                        "height": 90
+                    },
+                    "medium": {
+                        "url": "https://i.ytimg.com/vi/2BTKi0glduw/mqdefault.jpg",
+                        "width": 320,
+                        "height": 180
+                    },
+                    "high": {
+                        "url": "https://i.ytimg.com/vi/2BTKi0glduw/hqdefault.jpg",
+                        "width": 480,
+                        "height": 360
+                    },
+                    "standard": {
+                        "url": "https://i.ytimg.com/vi/2BTKi0glduw/sddefault.jpg",
+                        "width": 640,
+                        "height": 480
+                    },
+                    "maxres": {
+                        "url": "https://i.ytimg.com/vi/2BTKi0glduw/maxresdefault.jpg",
+                        "width": 1280,
+                        "height": 720
+                    }
+                },
+                "channelTitle": "Sadhguru",
+                "playlistId": "UUcYzLCs3zrQIBVHYA1sK2sw",
+                "position": 3,
+                "resourceId": {
+                    "kind": "youtube#video",
+                    "videoId": "J-1WVf5hFIk"
+                },
+                "videoOwnerChannelTitle": "Sadhguru",
+                "videoOwnerChannelId": "UCcYzLCs3zrQIBVHYA1sK2sw"
+            }
+        },
+        {
+            "kind": "youtube#playlistItem",
+            "etag": "989sqAtwF-D8JDvmb-kqnXY5w8A",
+            "id": "VVVjWXpMQ3MzenJRSUJWSFlBMXNLMnN3LmtuS0w2OXFsU3k4",
+            "snippet": {
+                "publishedAt": "2022-10-15T11:38:56Z",
+                "channelId": "UCcYzLCs3zrQIBVHYA1sK2sw",
+                "title": "Channelizing Your Energy For Success | Sadhguru",
+                "description": "Being successful and influential is a result of how we harness our body, mind and energy, Sadhguru explains, and looks at the importance of developing a pleasant atmosphere within before we embark on our journey to success.\n\n#success #sadhguru \n\nOfficial YouTube Channel of Sadhguru\n\nConsidered among India’s 50 most influential people, Sadhguru is a yogi, mystic, bestselling author, and poet. Absolute clarity of perception places him in a unique space, not only in matters spiritual but in business, environmental and international affairs, and opens a new door on all that he touches.\n\nInner Engineering \n\nInner Engineering is a comprehensive course for personal growth that brings about a shift in the way you perceive and experience your life, your work, and the world that you live in.\n\n[ https://www.innerengineering.com/\n\nSave Soil Movement\n\nLaunched by Sadhguru, Save Soil is the world's largest people's movement, reaching 3.91 billion people to address impending soil extinction by supporting governments to create policies for soil revitalization.\n\nhttps://savesoil.org/\n\nSadhguru app \n\nAccelerate your spiritual journey with transformative guided meditations, daily wisdom, and Yogic tools.\n\nhttp://onelink.to/sadhguru__app",
+                "thumbnails": {
+                    "default": {
+                        "url": "https://i.ytimg.com/vi/knKL69qlSy8/default.jpg",
+                        "width": 120,
+                        "height": 90
+                    },
+                    "medium": {
+                        "url": "https://i.ytimg.com/vi/knKL69qlSy8/mqdefault.jpg",
+                        "width": 320,
+                        "height": 180
+                    },
+                    "high": {
+                        "url": "https://i.ytimg.com/vi/knKL69qlSy8/hqdefault.jpg",
+                        "width": 480,
+                        "height": 360
+                    },
+                    "standard": {
+                        "url": "https://i.ytimg.com/vi/knKL69qlSy8/sddefault.jpg",
+                        "width": 640,
+                        "height": 480
+                    },
+                    "maxres": {
+                        "url": "https://i.ytimg.com/vi/knKL69qlSy8/maxresdefault.jpg",
+                        "width": 1280,
+                        "height": 720
+                    }
+                },
+                "channelTitle": "Sadhguru",
+                "playlistId": "UUcYzLCs3zrQIBVHYA1sK2sw",
+                "position": 4,
+                "resourceId": {
+                    "kind": "youtube#video",
+                    "videoId": "FBYoZ-FgC84"
+                },
+                "videoOwnerChannelTitle": "Sadhguru",
+                "videoOwnerChannelId": "UCcYzLCs3zrQIBVHYA1sK2sw"
+            }
+        }
+    ],
+    "pageInfo": {
+        "totalResults": 1,
+        "resultsPerPage": 5
+    }
+}

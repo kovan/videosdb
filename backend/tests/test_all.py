@@ -41,38 +41,19 @@ class PatchedTestCase(aiounittest.AsyncTestCase):
         pass
 
 
+def read_file(file):
+    with open(f"{DATA_DIR}/{file}") as f:
+        return json.load(f)
+
+
 class DownloaderTest(PatchedTestCase):
     VIDEO_IDS = {'ZhI-stDIlCE', 'ed7pFle2yM8', 'J-1WVf5hFIk',
                  'FBYoZ-FgC84', 'QEkHcPt-Vpw', 'HADeWBBb1so', 'gavq4LM8XK0'}
     PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
-
+    ALL_VIDEOS_PLAYLIST_ID = "UUcYzLCs3zrQIBVHYA1sK2sw"
     VIDEO_ID = "HADeWBBb1so"
 
     YT_CHANNEL_ID = "UCcYzLCs3zrQIBVHYA1sK2sw"
-
-    @classmethod
-    def read_response_files(cls, video_ids):
-        raw_responses = {}
-        with open(f"{DATA_DIR}/channel-{cls.YT_CHANNEL_ID}.response.json") as f:
-            raw_responses["channels"] = json.load(f)
-
-        with open(f"{DATA_DIR}/channelSections-{cls.YT_CHANNEL_ID}.response.json") as f:
-            raw_responses["channelSections"] = json.load(f)
-
-        with open(f"{DATA_DIR}/playlist-{cls.PLAYLIST_ID}.response.json") as f:
-            raw_responses["playlists"] = json.load(f)
-
-        raw_responses["playlistItems"] = []
-        for i in range(2):
-            with open(f"{DATA_DIR}/playlistItems-{cls.PLAYLIST_ID}.response.{i}.json") as f:
-                raw_responses["playlistItems"].append(json.load(f))
-
-        raw_responses["videos"] = {}
-        for vid in video_ids:
-            with open(f"{DATA_DIR}/video-{vid}.response.json") as f:
-                raw_responses["videos"][vid] = json.load(f)
-
-        return raw_responses
 
     def setUp(self):
 
@@ -109,7 +90,7 @@ class DownloaderTest(PatchedTestCase):
 
     @classmethod
     def createMocks(cls):
-        cls.raw_responses = cls.read_response_files(cls.VIDEO_IDS)
+
         cls.mocked_api = respx.mock(base_url=YoutubeAPI.get_root_url(),
                                     assert_all_called=False)
 
@@ -117,29 +98,48 @@ class DownloaderTest(PatchedTestCase):
             path="/channels",
             name="channels"
         ).mock(
-            Response(200, json=cls.raw_responses["channels"])
+            Response(200, json=read_file(
+                f"channel-{cls.YT_CHANNEL_ID}.response.json"))
         )
 
         cls.mocked_api.route(
             path="/channelSections",
             name="channelSections"
         ).mock(
-            Response(200, json=cls.raw_responses["channelSections"])
-        )
-        cls.mocked_api.route(
-            path="/playlists",
-            name="playlists"
-        ).mock(
-            Response(200, json=cls.raw_responses["playlists"])
+            Response(200, json=read_file(
+                f"channelSections-{cls.YT_CHANNEL_ID}.response.json"))
         )
 
-        effects_list = [Response(200, json=response)
-                        for response in cls.raw_responses["playlistItems"]]
+        cls.mocked_api.route(
+            path="/playlists",
+            name="playlists",
+            params={"id": cls.PLAYLIST_ID}
+        ).mock(
+            return_value=Response(200, json=read_file(
+                f"playlist-{cls.PLAYLIST_ID}.response.json"))
+
+        )
+
+        cls.mocked_api.route(
+            path="/playlists",
+            name="playlistAllVideos",
+            params={"id": cls.ALL_VIDEOS_PLAYLIST_ID}
+        ).mock(
+            return_value=Response(200, json=read_file(
+                f"playlist-{cls.ALL_VIDEOS_PLAYLIST_ID}.response.json"))
+        )
+
         cls.mocked_api.route(
             path="/playlistItems",
-            name="playlistItems"
+            name="playlistItems",
+            params={"playlistId": cls.PLAYLIST_ID}
         ).mock(
-            side_effect=effects_list
+            side_effect=[
+                Response(200, json=read_file(
+                    f"playlistItems-{cls.PLAYLIST_ID}.response.0.json")),
+                Response(200, json=read_file(
+                    f"playlistItems-{cls.PLAYLIST_ID}.response.1.json"))
+            ]
         )
 
         for vid in cls.VIDEO_IDS:
@@ -147,8 +147,8 @@ class DownloaderTest(PatchedTestCase):
                 path="/videos",
                 params={"id": vid}
             ).mock(
-                return_value=Response(
-                    200, json=cls.raw_responses["videos"][vid])
+                return_value=Response(200, json=read_file(
+                    f"video-{vid}.response.json"))
             )
 
     @ respx.mock
@@ -156,8 +156,8 @@ class DownloaderTest(PatchedTestCase):
 
         await self.downloader.check_for_new_videos()
 
-        self.assertEqual(self.mocked_api["playlists"].call_count, 2)
-        self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
+        self.assertEqual(self.mocked_api["playlists"].call_count, 3)
+        self.assertEqual(self.mocked_api["playlistItems"].call_count, 3)
 
         pls = [doc.get("id") async for doc in self.db.collection("test_playlists").stream()]
         self.assertEqual(len(pls), 1)
@@ -171,8 +171,9 @@ class DownloaderTest(PatchedTestCase):
 
         for video in videos:
             self.assertIn(video.get("id"), self.VIDEO_IDS)
-            self.assertEqual([self.PLAYLIST_ID],
-                             video.get("videosdb.playlists"))
+            for plid in video.get("videosdb.playlists"):
+                self.assertIn(
+                    plid, [self.PLAYLIST_ID, self.ALL_VIDEOS_PLAYLIST_ID])
             self.assertNotEqual(video.get("id"), excluded_video_id)
             self.assertIn("slug", video.get("videosdb"))
 
@@ -182,13 +183,13 @@ class DownloaderTest(PatchedTestCase):
         self.assertEqual(playlist["kind"], "youtube#playlist")
         self.assertEqual(playlist["id"], self.PLAYLIST_ID)
 
-        vdb = playlist["videosdb"]
+        videosdb_dict = playlist["videosdb"]
         self.assertEqual(
-            vdb["slug"], 'how-to-be-really-successful-sadhguru-answers')
-        self.assertEqual(vdb["videoCount"], 7)
-        self.assertEqual(vdb["lastUpdated"], DatetimeWithNanoseconds(
+            videosdb_dict["slug"], 'how-to-be-really-successful-sadhguru-answers')
+        self.assertEqual(videosdb_dict["videoCount"], 7)
+        self.assertEqual(videosdb_dict["lastUpdated"], DatetimeWithNanoseconds(
             2022, 7, 6, 12, 18, 45, tzinfo=datetime.timezone.utc))
-        self.assertEqual(set(vdb["videoIds"]), self.VIDEO_IDS)
+        self.assertEqual(set(videosdb_dict["videoIds"]), self.VIDEO_IDS)
 
         # check that one video is processed correctly:
         self.VIDEO_ID = "HADeWBBb1so"

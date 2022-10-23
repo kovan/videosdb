@@ -202,7 +202,7 @@ class VideoProcessor:
             videos[video_id].append(playlist_id)
 
     async def _create_video(self, video_id: str, playlist_ids: Iterable[str]):
-        logger.info("Writing video: %s ..." % video_id)
+        logger.info("Writing video: %s..." % video_id)
         video = {}
         try:
             _, downloaded_video = await self._api.get_video_info(video_id)
@@ -242,8 +242,8 @@ class VideoProcessor:
         if playlist_ids:
             video["videosdb"]["playlists"] = firestore.ArrayUnion(playlist_ids)
 
-        await self._db.set("videos/" + video["id"], video, merge=True)
-
+        await self._db.set("videos/" + video_id, video, merge=True)
+        logger.info("Wrote video %s" % video_id)
         return video
 
 
@@ -291,8 +291,23 @@ class Downloader:
             channel = await self._create_channel(self.YT_CHANNEL_ID)
             if not channel:
                 return
+            channel_name = channel["snippet"]["title"]
             playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
-            await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"], video_processor)
+
+            async with anyio.create_task_group() as phase1_nursery:
+                await self._process_playlist_ids(playlist_ids,
+                                                 channel_name,
+                                                 video_processor,
+                                                 phase1_nursery)
+
+                all_videos_playlist_id = str(fnc.get(
+                    "contentDetails.relatedPlaylists.uploads", channel))
+
+                await self._process_playlist(all_videos_playlist_id,
+                                             channel_name,
+                                             video_processor,
+                                             phase1_nursery,
+                                             False)
             await video_processor.close()
         except Exception as e:
             my_handler(QuotaExceeded, e, logger.error)
@@ -336,32 +351,37 @@ class Downloader:
                 "videoIds": firestore.ArrayUnion(list(ids))
             })
 
-        logger.info("Final video list length: " + str(len(ids)))
+        final_videos_length = len(ids)
+        if final_videos_length == 0:
+            # this should never happen, but just in case, as a protection for not emptying the website
+            raise Exception("No videos to publish")
+        logger.info("Final video list length: %s" % final_videos_length)
         return ids
 
     async def _process_playlist_ids(self,
                                     playlist_ids: list[str],
                                     channel_name: str,
-                                    video_processor: VideoProcessor):
+                                    video_processor: VideoProcessor,
+                                    nursery):
 
-        async with anyio.create_task_group() as phase1:
-            random.shuffle(playlist_ids)
-            # main iterations:
-            for playlist_id in playlist_ids:
-                phase1.start_soon(
-                    self._process_playlist,
-                    playlist_id,
-                    channel_name,
-                    video_processor,
-                    phase1,
-                    name="Playlist %s processor" % playlist_id
-                )
+        random.shuffle(playlist_ids)
+        # main iterations:
+        for playlist_id in playlist_ids:
+            nursery.start_soon(
+                self._process_playlist,
+                playlist_id,
+                channel_name,
+                video_processor,
+                nursery,
+                name="Playlist %s processor" % playlist_id
+            )
 
     async def _process_playlist(self,
                                 playlist_id: str,
                                 channel_name: str,
                                 video_processor: VideoProcessor,
-                                task_group):
+                                task_group,
+                                write: bool = True):
 
         logger.info("Processing playlist " + playlist_id)
 
@@ -373,10 +393,9 @@ class Downloader:
             return
 
         _, playlist_items = await self.api.list_playlist_items(playlist_id)
-        # if not _:
-        #     return
 
-        await self._create_playlist(playlist, playlist_items)
+        await self._create_playlist(playlist, playlist_items, write)
+
         # create videos:
         video_ids = playlist["videosdb"]["videoIds"]
         random.shuffle(video_ids)
@@ -419,7 +438,8 @@ class Downloader:
 
     async def _create_playlist(self,
                                playlist: dict,
-                               playlist_items: AsyncGeneratorType):
+                               playlist_items: AsyncGeneratorType,
+                               write: bool = True):
 
         video_count = 0
         last_updated = None
@@ -444,8 +464,9 @@ class Downloader:
                 "slug": slugify(playlist["snippet"]["title"])
             }
         }
-        await self.db.set("playlists/" + playlist["id"], playlist, merge=True)
-        logger.info("Wrote playlist: " + playlist["snippet"]["title"])
+        if write:
+            await self.db.set("playlists/" + playlist["id"], playlist, merge=True)
+            logger.info("Wrote playlist: " + playlist["snippet"]["title"])
 
     # async def _fill_related_videos(self):
 

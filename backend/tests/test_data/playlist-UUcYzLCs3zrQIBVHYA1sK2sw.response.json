@@ -1,0 +1,54 @@
+{
+  "kind": "youtube#playlistListResponse",
+  "etag": "T_yd2Q8a7aZPEKuhZTIgccxgqg8",
+  "pageInfo": {
+    "totalResults": 1,
+    "resultsPerPage": 5
+  },
+  "items": [
+    {
+      "kind": "youtube#playlist",
+      "etag": "3DbLtFuqcT53MLdBSm-LjXyCeqQ",
+      "id": "UUcYzLCs3zrQIBVHYA1sK2sw",
+      "snippet": {
+        "publishedAt": "2020-02-23T08:00:00Z",
+        "channelId": "UCcYzLCs3zrQIBVHYA1sK2sw",
+        "title": "Uploads from Sadhguru",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/MBDkkP4VrO0/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/MBDkkP4VrO0/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/MBDkkP4VrO0/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/MBDkkP4VrO0/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/MBDkkP4VrO0/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Sadhguru",
+        "defaultLanguage": "en",
+        "localized": {
+          "title": "Uploads from Sadhguru",
+          "description": ""
+        }
+      }
+    }
+  ]
+}

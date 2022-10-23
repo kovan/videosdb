@@ -14,19 +14,21 @@
                     "default"
                 ],
                 "env": {
-                    "DEBUG": "1",
+                    //"DEBUG": "1",
                     "LOGLEVEL": "DEBUG",
                     "PYTHONDEVMODE": "1",
-                    "FIRESTORE_EMULATOR_HOST": "127.0.0.1:46456",
-                    "YOUTUBE_API_URL": "http://127.0.0.1:43783/youtube/v3"
+                    //"FIRESTORE_EMULATOR_HOST": "127.0.0.1:46456",
+                    //"YOUTUBE_API_URL": "http://127.0.0.1:43783/youtube/v3"
                 },
                 "envFile": "${workspaceFolder}/common/env/testing.txt",
                 "args": [
-                    "-c"
+                    "-c",
+                    "--export-to-emulator-host",
+                    "127.0.0.1:46456"
                 ],
                 "console": "integratedTerminal",
                 "cwd": "${workspaceFolder}/backend",
-                "justMyCode": false
+                "justMyCode": true
             },
             {
                 "name": "Python: Debug Tests",
