@@ -1,3 +1,4 @@
+from ctypes import Union
 import logging
 import os
 import pprint
@@ -192,17 +193,18 @@ class VideoProcessor:
                     # tg.start_soon(self._create_video, video_id,
                     #             playlists, name=f"Create video {video_id}")
 
-    async def add_video(self, video_id: str, playlist_id: str):
+    async def add_video(self, video_id: str, playlist_id):
         logger.debug(
             f"Processing playlist item video {video_id}, playlist {playlist_id}")
 
         async with self._video_to_playlist_list as videos:
             if video_id not in videos.keys():
-                videos[video_id] = []
-            videos[video_id].append(playlist_id)
+                videos[video_id] = set()
+            if playlist_id:
+                videos[video_id].add(playlist_id)
 
     async def _create_video(self, video_id: str, playlist_ids: Iterable[str]):
-        logger.info("Writing video: %s ..." % video_id)
+        logger.info("Writing video: %s..." % video_id)
         video = {}
         try:
             _, downloaded_video = await self._api.get_video_info(video_id)
@@ -240,10 +242,11 @@ class VideoProcessor:
                 video["statistics"][stat] = int(value)
 
         if playlist_ids:
-            video["videosdb"]["playlists"] = firestore.ArrayUnion(playlist_ids)
+            video["videosdb"]["playlists"] = firestore.ArrayUnion(
+                list(playlist_ids))
 
-        await self._db.set("videos/" + video["id"], video, merge=True)
-
+        await self._db.set("videos/" + video_id, video, merge=True)
+        logger.info("Wrote video %s" % video_id)
         return video
 
 
@@ -251,13 +254,13 @@ class VideoProcessor:
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
-    def __init__(self, options=None, db=None, redis_db_n=None):
+    def __init__(self, options=None, db=None, redis_db_n=None, channel_id=None):
 
         logger.debug("ENVIRONMENT:")
         logger.debug(pprint.pformat(os.environ))
         self.options = options
 
-        self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
+        self.YT_CHANNEL_ID = channel_id if channel_id else os.environ["YOUTUBE_CHANNEL_ID"]
         self.db = db if db else DB()
         self.api = YoutubeAPI(self.db, redis_db_n=redis_db_n)
 
@@ -291,8 +294,24 @@ class Downloader:
             channel = await self._create_channel(self.YT_CHANNEL_ID)
             if not channel:
                 return
+            channel_name = channel["snippet"]["title"]
             playlist_ids = await self._retrieve_all_playlist_ids(self.YT_CHANNEL_ID)
-            await self._process_playlist_ids(playlist_ids, channel["snippet"]["title"], video_processor)
+
+            async with anyio.create_task_group() as phase1_nursery:
+                await self._process_playlist_ids(playlist_ids,
+                                                 channel_name,
+                                                 video_processor,
+                                                 phase1_nursery)
+
+                all_videos_playlist_id = str(fnc.get(
+                    "contentDetails.relatedPlaylists.uploads", channel))
+
+                if "DEBUG" not in os.environ:
+                    await self._process_playlist(all_videos_playlist_id,
+                                                 channel_name,
+                                                 video_processor,
+                                                 phase1_nursery,
+                                                 False)
             await video_processor.close()
         except Exception as e:
             my_handler(QuotaExceeded, e, logger.error)
@@ -325,6 +344,7 @@ class Downloader:
 
             async with final_video_ids as video_ids:
                 video_ids.add(video_id)
+            logger.debug("Applying tasks for video %s" % video_id)
 
             for task in phase2_tasks:
                 await task(video_dict)
@@ -335,32 +355,37 @@ class Downloader:
                 "videoIds": firestore.ArrayUnion(list(ids))
             })
 
-        logger.info("Final video list length: " + str(len(ids)))
+        final_videos_length = len(ids)
+        if final_videos_length == 0:
+            # this should never happen, but just in case, as a protection for not emptying the website
+            raise Exception("No videos to publish")
+        logger.info("Final video list length: %s" % final_videos_length)
         return ids
 
     async def _process_playlist_ids(self,
                                     playlist_ids: list[str],
                                     channel_name: str,
-                                    video_processor: VideoProcessor):
+                                    video_processor: VideoProcessor,
+                                    nursery):
 
-        async with anyio.create_task_group() as phase1:
-            random.shuffle(playlist_ids)
-            # main iterations:
-            for playlist_id in playlist_ids:
-                phase1.start_soon(
-                    self._process_playlist,
-                    playlist_id,
-                    channel_name,
-                    video_processor,
-                    phase1,
-                    name="Playlist %s processor" % playlist_id
-                )
+        random.shuffle(playlist_ids)
+        # main iterations:
+        for playlist_id in playlist_ids:
+            nursery.start_soon(
+                self._process_playlist,
+                playlist_id,
+                channel_name,
+                video_processor,
+                nursery,
+                name="Playlist %s processor" % playlist_id
+            )
 
     async def _process_playlist(self,
                                 playlist_id: str,
                                 channel_name: str,
                                 video_processor: VideoProcessor,
-                                task_group):
+                                task_group,
+                                write: bool = True):
 
         logger.info("Processing playlist " + playlist_id)
 
@@ -372,19 +397,18 @@ class Downloader:
             return
 
         _, playlist_items = await self.api.list_playlist_items(playlist_id)
-        # if not _:
-        #     return
 
-        await self._create_playlist(playlist, playlist_items)
+        await self._create_playlist(playlist, playlist_items, write)
+
         # create videos:
-        video_ids = playlist["videosdb"]["videoIds"]
+        video_ids = list(playlist["videosdb"]["videoIds"])
         random.shuffle(video_ids)
 
         for video_id in video_ids:
             task_group.start_soon(
                 video_processor.add_video,
                 video_id,
-                playlist_id,
+                playlist_id if write else None,
                 name="Add video %s" % video_id
             )
 
@@ -418,16 +442,17 @@ class Downloader:
 
     async def _create_playlist(self,
                                playlist: dict,
-                               playlist_items: AsyncGeneratorType):
+                               playlist_items: AsyncGeneratorType,
+                               write: bool = True):
 
         video_count = 0
         last_updated = None
-        video_ids = []
+        video_ids = set()
 
         async for item in playlist_items:
             if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
                 continue
-            video_ids.append(
+            video_ids.add(
                 item["snippet"]["resourceId"]["videoId"])
             video_count += 1
             video_date = isodate.parse_datetime(
@@ -443,8 +468,9 @@ class Downloader:
                 "slug": slugify(playlist["snippet"]["title"])
             }
         }
-        await self.db.set("playlists/" + playlist["id"], playlist, merge=True)
-        logger.info("Wrote playlist: " + playlist["snippet"]["title"])
+        if write:
+            await self.db.set("playlists/" + playlist["id"], playlist, merge=True)
+            logger.info("Wrote playlist: " + playlist["snippet"]["title"])
 
     # async def _fill_related_videos(self):
 

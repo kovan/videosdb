@@ -1,6 +1,6 @@
 {
   "kind": "youtube#channelListResponse",
-  "etag": "KHlTlsX85zlkkPtF9Stq676FQC8",
+  "etag": "XHjeC78KR0xM5ARj7OmTLLwdDU8",
   "pageInfo": {
     "totalResults": 1,
     "resultsPerPage": 5
@@ -8,11 +8,11 @@
   "items": [
     {
       "kind": "youtube#channel",
-      "etag": "M8LtoVspedUPHLmNT3cfSEPY0MQ",
+      "etag": "xLLGpB68AQtawIvDLPiWs9-YNGA",
       "id": "UCcYzLCs3zrQIBVHYA1sK2sw",
       "snippet": {
         "title": "Sadhguru",
-        "description": "Official YouTube Channel of Sadhguru.\n\nConsidered among India’s 50 most influential people, Sadhguru is a yogi, mystic, bestselling\nauthor, and poet. Absolute clarity of perception places him in a unique space, not only in\nmatters spiritual but in business, environmental and international affairs, and opens a new\ndoor on all that he touches.\n\n⚡ Full Moon Flirtations ⚡ \nSadhguru Satsang Every Purnima\nRegister For Free at isha.co/FMF-YT-ANT\n\n⚡ Sadhguru Exclusive\nStart Your 7 Day Trial for Free*\n Only On Sadhguru App\n*T&C Applied\n⚡ http://isha.co/ex-yt (Register Now)\n\n'Karma: A Yogi's Guide to Crafting Destiny.' - A book by Sadhguru\n\nPre-order Now: https://sadhguru.org/karma\n\nAvailable everywhere: April 27, 2021\n\n#CauveryCalling Action Now to Save Cauvery!\nSupport Farmers To Plant 242 Crore Trees At http://isha.co/cauvery-calling-yt\n\nSadhguru App (Download)\n📱 http://onelink.to/sadhguru__app\n\nOfficial Sadhguru Website \n🌎 http://isha.sadhguru.org \n\n\n",
+        "description": " Official YouTube Channel of Sadhguru\n\nConsidered among India’s 50 most influential people, Sadhguru is a yogi, mystic, bestselling author, and poet. Absolute clarity of perception places him in a unique space, not only in matters spiritual but in business, environmental and international affairs, and opens a new door on all that he touches.\n\nInner Engineering \n\nInner Engineering is a comprehensive course for personal growth that brings about a shift in the way you perceive and experience your life, your work, and the world that you live in.\n\n[ https://www.innerengineering.com/\n\nSave Soil Movement\n\nLaunched by Sadhguru, Save Soil is the world's largest people's movement, reaching 3.91 billion people to address impending soil extinction by supporting governments to create policies for soil revitalization.\n\nhttps://savesoil.org/\n\nSadhguru app \n\nAccelerate your spiritual journey with transformative guided meditations, daily wisdom, and Yogic tools.\n\nhttp://onelink.to/sadhguru__app\n\n\n\n\n",
         "customUrl": "@sadhguru",
         "publishedAt": "2007-03-28T06:45:46Z",
         "thumbnails": {
@@ -34,7 +34,7 @@
         },
         "localized": {
           "title": "Sadhguru",
-          "description": "Official YouTube Channel of Sadhguru.\n\nConsidered among India’s 50 most influential people, Sadhguru is a yogi, mystic, bestselling\nauthor, and poet. Absolute clarity of perception places him in a unique space, not only in\nmatters spiritual but in business, environmental and international affairs, and opens a new\ndoor on all that he touches.\n\n⚡ Full Moon Flirtations ⚡ \nSadhguru Satsang Every Purnima\nRegister For Free at isha.co/FMF-YT-ANT\n\n⚡ Sadhguru Exclusive\nStart Your 7 Day Trial for Free*\n Only On Sadhguru App\n*T&C Applied\n⚡ http://isha.co/ex-yt (Register Now)\n\n'Karma: A Yogi's Guide to Crafting Destiny.' - A book by Sadhguru\n\nPre-order Now: https://sadhguru.org/karma\n\nAvailable everywhere: April 27, 2021\n\n#CauveryCalling Action Now to Save Cauvery!\nSupport Farmers To Plant 242 Crore Trees At http://isha.co/cauvery-calling-yt\n\nSadhguru App (Download)\n📱 http://onelink.to/sadhguru__app\n\nOfficial Sadhguru Website \n🌎 http://isha.sadhguru.org \n\n\n"
+          "description": " Official YouTube Channel of Sadhguru\n\nConsidered among India’s 50 most influential people, Sadhguru is a yogi, mystic, bestselling author, and poet. Absolute clarity of perception places him in a unique space, not only in matters spiritual but in business, environmental and international affairs, and opens a new door on all that he touches.\n\nInner Engineering \n\nInner Engineering is a comprehensive course for personal growth that brings about a shift in the way you perceive and experience your life, your work, and the world that you live in.\n\n[ https://www.innerengineering.com/\n\nSave Soil Movement\n\nLaunched by Sadhguru, Save Soil is the world's largest people's movement, reaching 3.91 billion people to address impending soil extinction by supporting governments to create policies for soil revitalization.\n\nhttps://savesoil.org/\n\nSadhguru app \n\nAccelerate your spiritual journey with transformative guided meditations, daily wisdom, and Yogic tools.\n\nhttp://onelink.to/sadhguru__app\n\n\n\n\n"
         },
         "country": "IN"
       },
@@ -45,10 +45,10 @@
         }
       },
       "statistics": {
-        "viewCount": "1314932001",
-        "subscriberCount": "10500000",
+        "viewCount": "1335187390",
+        "subscriberCount": "10600000",
         "hiddenSubscriberCount": false,
-        "videoCount": "2615"
+        "videoCount": "2629"
       }
     }
   ]
