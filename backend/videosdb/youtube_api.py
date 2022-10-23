@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import re
-from typing import Any, Iterable, NewType, TypeVar, Union
+from typing import Any, AsyncGenerator, Iterable, NewType, TypeVar, Union
 import anyio
 import httpx
 from urllib.parse import urlencode
@@ -41,7 +41,7 @@ class Cache:
         return self.redis.info("stats")
 
     @staticmethod
-    def key_func(url: str, params: dict):
+    def key_func(url: str, params: dict) -> str:
         keys = list(params.keys())
         keys.sort()
         params_seq = []
@@ -50,7 +50,8 @@ class Cache:
                 continue
             params_seq.append((key, params[key]))
 
-        return url.lstrip("/") + "?" + urlencode(params_seq)
+        final = url.lstrip("/") + "?" + urlencode(params_seq)
+        return final
 
     @staticmethod
     def _pages_key_func(key, page_n):
@@ -75,7 +76,7 @@ class Cache:
 
         return json_value["etag"], page_generator()
 
-    async def set(self, key, page_generator):
+    async def set(self, key, page_generator: AsyncGenerator):
         transaction = self.redis.pipeline()
         page_count = 0
         etag = None

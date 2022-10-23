@@ -251,13 +251,13 @@ class VideoProcessor:
 class Downloader:
 
     # PUBLIC: -------------------------------------------------------------
-    def __init__(self, options=None, db=None, redis_db_n=None):
+    def __init__(self, options=None, db=None, redis_db_n=None, channel_id=None):
 
         logger.debug("ENVIRONMENT:")
         logger.debug(pprint.pformat(os.environ))
         self.options = options
 
-        self.YT_CHANNEL_ID = os.environ["YOUTUBE_CHANNEL_ID"]
+        self.YT_CHANNEL_ID = channel_id if channel_id else os.environ["YOUTUBE_CHANNEL_ID"]
         self.db = db if db else DB()
         self.api = YoutubeAPI(self.db, redis_db_n=redis_db_n)
 
@@ -325,6 +325,7 @@ class Downloader:
 
             async with final_video_ids as video_ids:
                 video_ids.add(video_id)
+            logger.debug("Applying tasks for video %s" % video_id)
 
             for task in phase2_tasks:
                 await task(video_dict)

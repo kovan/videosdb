@@ -27,23 +27,6 @@ BASE_DIR = os.path.dirname(str(sys.modules[__name__].__file__))
 DATA_DIR = BASE_DIR + "/test_data"
 
 
-def read_response_files(video_ids):
-    raw_responses = {}
-    with open(DATA_DIR + "/playlist-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.json") as f:
-        raw_responses["playlists"] = json.load(f)
-    with open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.1.json") as f:
-        raw_responses["playlistItems.1"] = json.load(f)
-    with open(DATA_DIR + "/playlistItems-PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU.response.2.json") as f:
-        raw_responses["playlistItems.2"] = json.load(f)
-
-    raw_responses["videos"] = {}
-    for vid in video_ids:
-        with open(f"{DATA_DIR}/video-{vid}.response.json") as f:
-            raw_responses["videos"][vid] = json.load(f)
-
-    return raw_responses
-
-
 class PatchedTestCase(aiounittest.AsyncTestCase):
 
     def get_event_loop(self):  # workaround for bug
@@ -65,6 +48,29 @@ class DownloaderTest(PatchedTestCase):
 
     VIDEO_ID = "HADeWBBb1so"
 
+    YT_CHANNEL_ID = "UCcYzLCs3zrQIBVHYA1sK2sw"
+
+    @classmethod
+    def read_response_files(cls, video_ids):
+        raw_responses = {}
+        with open(f"{DATA_DIR}/channel-{cls.YT_CHANNEL_ID}.response.json") as f:
+            raw_responses["channel"] = json.load(f)
+
+        with open(f"{DATA_DIR}/playlist-{cls.PLAYLIST_ID}.response.json") as f:
+            raw_responses["playlists"] = json.load(f)
+
+        raw_responses["playlistItems"] = []
+        for i in range(2):
+            with open(f"{DATA_DIR}/playlistItems-{cls.PLAYLIST_ID}.response.{i}.json") as f:
+                raw_responses["playlistItems"].append(json.load(f))
+
+        raw_responses["videos"] = {}
+        for vid in video_ids:
+            with open(f"{DATA_DIR}/video-{vid}.response.json") as f:
+                raw_responses["videos"][vid] = json.load(f)
+
+        return raw_responses
+
     def setUp(self):
 
         self.get_event_loop()
@@ -72,9 +78,9 @@ class DownloaderTest(PatchedTestCase):
         self.mocked_api.start()
         self.addCleanup(self.mocked_api.stop)
 
-        self.YT_CHANNEL_ID = "UCcYzLCs3zrQIBVHYA1sK2sw"
         self.mydb = DB(prefix="test_")
-        self.downloader = Downloader(db=self.mydb, redis_db_n=1)
+        self.downloader = Downloader(
+            db=self.mydb, redis_db_n=1, channel_id=self.YT_CHANNEL_ID)
         self.video_processor = VideoProcessor(
             self.mydb, YoutubeAPI(self.mydb), self.YT_CHANNEL_ID)
 
@@ -100,7 +106,7 @@ class DownloaderTest(PatchedTestCase):
 
     @classmethod
     def createMocks(cls):
-        cls.raw_responses = read_response_files(cls.VIDEO_IDS)
+        cls.raw_responses = cls.read_response_files(cls.VIDEO_IDS)
         cls.mocked_api = respx.mock(base_url=YoutubeAPI.get_root_url(),
                                     assert_all_called=False)
 
@@ -111,14 +117,13 @@ class DownloaderTest(PatchedTestCase):
             Response(200, json=cls.raw_responses["playlists"])
         )
 
+        effects_list = [Response(200, json=response)
+                        for response in cls.raw_responses["playlistItems"]]
         cls.mocked_api.route(
             path="/playlistItems",
             name="playlistItems"
         ).mock(
-            side_effect=[
-                Response(200, json=cls.raw_responses["playlistItems.1"]),
-                Response(200, json=cls.raw_responses["playlistItems.2"])
-            ]
+            side_effect=effects_list
         )
 
         for vid in cls.VIDEO_IDS:
@@ -206,37 +211,37 @@ class DownloaderTest(PatchedTestCase):
         cached_page_0 = json.loads(await self.redis.get(cache_id + "_page_0"))
         cached_page_1 = json.loads(await self.redis.get(cache_id + "_page_1"))
         self.assertEqual(
-            cached_page_0["etag"], self.raw_responses["playlistItems.1"]["etag"])
+            cached_page_0["etag"], self.raw_responses["playlistItems"][0]["etag"])
         self.assertEqual(
-            cached_page_1["etag"], self.raw_responses["playlistItems.2"]["etag"])
+            cached_page_1["etag"], self.raw_responses["playlistItems"][1]["etag"])
 
         # check that pages were used:
 
-    async def test_firestore_behavior(self):
-        a = await self.db.document("test_videos/" + "asdfsdf").set({
-            "videosdb": {
-                "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
-            }
-        }, merge=True)
-        b = await self.db.document("test_videos/" + "asdfsdf").set({
-            "videosdb": {
-                "playlists": firestore.ArrayUnion(["sdfsdf"])
-            }
-        }, merge=True)
+    # async def test_firestore_behavior(self):
+    #     a = await self.db.document("test_videos/" + "asdfsdf").set({
+    #         "videosdb": {
+    #             "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
+    #         }
+    #     }, merge=True)
+    #     b = await self.db.document("test_videos/" + "asdfsdf").set({
+    #         "videosdb": {
+    #             "playlists": firestore.ArrayUnion(["sdfsdf"])
+    #         }
+    #     }, merge=True)
 
-        c = await self.db.document("test_videos/" + "asdfsdf").get()
-        self.assertEqual(
-            {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
+    #     c = await self.db.document("test_videos/" + "asdfsdf").get()
+    #     self.assertEqual(
+    #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
 
-    async def test_transcript_downloading(self):
+    # async def test_transcript_downloading(self):
 
-        video = self.raw_responses["videos"][self.VIDEO_ID]["items"][0]
+    #     video = self.raw_responses["videos"][self.VIDEO_ID]["items"][0]
 
-        async with anyio.create_task_group() as tg:
-            task = RetrievePendingTranscriptsTask(
-                self.mydb, nursery=tg)
-            task.enabled = True
-            await task(video)
+    #     async with anyio.create_task_group() as tg:
+    #         task = RetrievePendingTranscriptsTask(
+    #             self.mydb, nursery=tg)
+    #         task.enabled = True
+    #         await task(video)
 
-        self.assertIn("transcript", video["videosdb"])
-        self.assertIn("transcript_status", video["videosdb"])
+    #     self.assertIn("transcript", video["videosdb"])
+    #     self.assertIn("transcript_status", video["videosdb"])

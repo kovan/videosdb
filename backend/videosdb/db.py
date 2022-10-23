@@ -56,14 +56,15 @@ class DB:
         creds_json_path = os.path.join(
             BASE_DIR, "../common/keys/%s.json" % config.strip('"'))
 
-        logger.info("Current project: " + project)
-        logger.info("Current config: " + config)
         if "FIRESTORE_EMULATOR_HOST" in os.environ:
             project = "demo-project"
             logger.info("USING EMULATOR: %s",
                         os.environ["FIRESTORE_EMULATOR_HOST"])
         else:
             logger.info("USING LIVE DATABASE")
+        logger.info("Current project: " + project)
+        logger.info("Current config: " + config)
+
         db = firestore.AsyncClient(project=project,
                                    credentials=service_account.Credentials.from_service_account_file(
                                        creds_json_path))
