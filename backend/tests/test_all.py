@@ -176,7 +176,15 @@ class DownloaderTest(PatchedTestCase):
         await self.downloader.check_for_new_videos()
 
         self.assertEqual(self.mocked_api["playlists"].call_count, 1)
+        self.assertEqual(self.mocked_api["playlistForChannel"].call_count, 1)
         self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
+        self.assertEqual(self.mocked_api["playlistAllVideos"].call_count, 0)
+        self.assertEqual(
+            self.mocked_api["playlistItemsAllVideos"].call_count, 0)
+        self.assertEqual(
+            self.mocked_api["channelSections"].call_count, 1)
+        self.assertEqual(
+            self.mocked_api["channels"].call_count, 1)
 
         pls = [doc.get("id") async for doc in self.db.collection("test_playlists").stream()]
         self.assertEqual(len(pls), 1)
@@ -192,7 +200,7 @@ class DownloaderTest(PatchedTestCase):
             self.assertIn(video.get("id"), self.VIDEO_IDS)
             for plid in video.get("videosdb.playlists"):
                 self.assertIn(
-                    plid, [self.PLAYLIST_ID, self.ALL_VIDEOS_PLAYLIST_ID])
+                    plid, [self.PLAYLIST_ID])
             self.assertNotEqual(video.get("id"), excluded_video_id)
             self.assertIn("slug", video.get("videosdb"))
 
