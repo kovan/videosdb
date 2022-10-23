@@ -1,0 +1,16 @@
+{
+    "kind": "youtube#channelSectionListResponse",
+    "etag": "xWnRupiKYNmyS-hZsCZtz8nTtKI",
+    "items": [
+        {
+            "kind": "youtube#channelSection",
+            "etag": "-BJF5GxmlHeEITnKFxRUuRGcsXc",
+            "id": "UCcYzLCs3zrQIBVHYA1sK2sw.MykmTeTiooA",
+            "contentDetails": {
+                "playlists": [
+                    "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+                ]
+            }
+        }
+    ]
+}

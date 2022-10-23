@@ -54,7 +54,10 @@ class DownloaderTest(PatchedTestCase):
     def read_response_files(cls, video_ids):
         raw_responses = {}
         with open(f"{DATA_DIR}/channel-{cls.YT_CHANNEL_ID}.response.json") as f:
-            raw_responses["channel"] = json.load(f)
+            raw_responses["channels"] = json.load(f)
+
+        with open(f"{DATA_DIR}/channelSections-{cls.YT_CHANNEL_ID}.response.json") as f:
+            raw_responses["channelSections"] = json.load(f)
 
         with open(f"{DATA_DIR}/playlist-{cls.PLAYLIST_ID}.response.json") as f:
             raw_responses["playlists"] = json.load(f)
@@ -111,6 +114,19 @@ class DownloaderTest(PatchedTestCase):
                                     assert_all_called=False)
 
         cls.mocked_api.route(
+            path="/channels",
+            name="channels"
+        ).mock(
+            Response(200, json=cls.raw_responses["channels"])
+        )
+
+        cls.mocked_api.route(
+            path="/channelSections",
+            name="channelSections"
+        ).mock(
+            Response(200, json=cls.raw_responses["channelSections"])
+        )
+        cls.mocked_api.route(
             path="/playlists",
             name="playlists"
         ).mock(
@@ -136,12 +152,11 @@ class DownloaderTest(PatchedTestCase):
             )
 
     @ respx.mock
-    async def test_process_playlist_ids(self):
+    async def test_all(self):
 
-        await self.downloader._process_playlist_ids(
-            [self.PLAYLIST_ID], "Sadhguru", self.video_processor)
+        await self.downloader.check_for_new_videos()
 
-        self.assertEqual(self.mocked_api["playlists"].call_count, 1)
+        self.assertEqual(self.mocked_api["playlists"].call_count, 2)
         self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
 
         pls = [doc.get("id") async for doc in self.db.collection("test_playlists").stream()]
@@ -149,19 +164,10 @@ class DownloaderTest(PatchedTestCase):
         self.assertEqual(pls[0], self.PLAYLIST_ID)
 
         # check that VideoProcessor works correctly:
-        await self.video_processor.close()
 
-        self.assertEqual(self.video_processor._video_to_playlist_list.item, {
-            'FBYoZ-FgC84': [self.PLAYLIST_ID],
-            'HADeWBBb1so': [self.PLAYLIST_ID],
-            'QEkHcPt-Vpw': [self.PLAYLIST_ID],
-            'ZhI-stDIlCE': [self.PLAYLIST_ID],
-            'ed7pFle2yM8': [self.PLAYLIST_ID],
-            'gavq4LM8XK0': [self.PLAYLIST_ID],
-            'J-1WVf5hFIk': [self.PLAYLIST_ID]
-        })
         excluded_video_id = 'FBYoZ-FgC84'
         videos = [doc async for doc in self.db.collection("test_videos").stream()]
+        self.assertEqual(len(videos), 6)
 
         for video in videos:
             self.assertIn(video.get("id"), self.VIDEO_IDS)
