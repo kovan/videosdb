@@ -217,7 +217,7 @@ class DownloaderTest(PatchedTestCase):
         self.assertEqual(video["kind"], "youtube#video")
         self.assertEqual(video["id"], self.VIDEO_ID)
         self.assertEqual(set(video["videosdb"]["playlists"]),
-                         {self.ALL_VIDEOS_PLAYLIST_ID, self.PLAYLIST_ID})
+                         {self.PLAYLIST_ID})
         self.assertEqual(video["videosdb"]["slug"],
                          "fate-god-luck-or-effort-what-decides-your-success-sadhguru")
         self.assertIn("descriptionTrimmed", video["videosdb"])

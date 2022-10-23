@@ -1,3 +1,4 @@
+from ctypes import Union
 import logging
 import os
 import pprint
@@ -192,14 +193,15 @@ class VideoProcessor:
                     # tg.start_soon(self._create_video, video_id,
                     #             playlists, name=f"Create video {video_id}")
 
-    async def add_video(self, video_id: str, playlist_id: str):
+    async def add_video(self, video_id: str, playlist_id):
         logger.debug(
             f"Processing playlist item video {video_id}, playlist {playlist_id}")
 
         async with self._video_to_playlist_list as videos:
             if video_id not in videos.keys():
                 videos[video_id] = set()
-            videos[video_id].add(playlist_id)
+            if playlist_id:
+                videos[video_id].add(playlist_id)
 
     async def _create_video(self, video_id: str, playlist_ids: Iterable[str]):
         logger.info("Writing video: %s..." % video_id)
@@ -304,11 +306,12 @@ class Downloader:
                 all_videos_playlist_id = str(fnc.get(
                     "contentDetails.relatedPlaylists.uploads", channel))
 
-                await self._process_playlist(all_videos_playlist_id,
-                                             channel_name,
-                                             video_processor,
-                                             phase1_nursery,
-                                             False)
+                if "DEBUG" not in os.environ:
+                    await self._process_playlist(all_videos_playlist_id,
+                                                 channel_name,
+                                                 video_processor,
+                                                 phase1_nursery,
+                                                 False)
             await video_processor.close()
         except Exception as e:
             my_handler(QuotaExceeded, e, logger.error)
@@ -405,7 +408,7 @@ class Downloader:
             task_group.start_soon(
                 video_processor.add_video,
                 video_id,
-                playlist_id,
+                playlist_id if write else None,
                 name="Add video %s" % video_id
             )
 
