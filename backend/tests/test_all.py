@@ -130,6 +130,15 @@ class DownloaderTest(PatchedTestCase):
         )
 
         cls.mocked_api.route(
+            path="/playlists",
+            name="playlistForChannel",
+            params={"channelId": cls.YT_CHANNEL_ID}
+        ).mock(
+            return_value=Response(200, json=read_file(
+                f"playlist-empty.response.json"))
+        )
+
+        cls.mocked_api.route(
             path="/playlistItems",
             name="playlistItems",
             params={"playlistId": cls.PLAYLIST_ID}
@@ -140,6 +149,16 @@ class DownloaderTest(PatchedTestCase):
                 Response(200, json=read_file(
                     f"playlistItems-{cls.PLAYLIST_ID}.response.1.json"))
             ]
+        )
+
+        cls.mocked_api.route(
+            path="/playlistItems",
+            name="playlistItemsAllVideos",
+            params={"playlistId": cls.ALL_VIDEOS_PLAYLIST_ID}
+        ).mock(
+            return_value=Response(200, json=read_file(
+                f"playlistItems-{cls.ALL_VIDEOS_PLAYLIST_ID}.response.json")),
+
         )
 
         for vid in cls.VIDEO_IDS:
@@ -156,8 +175,8 @@ class DownloaderTest(PatchedTestCase):
 
         await self.downloader.check_for_new_videos()
 
-        self.assertEqual(self.mocked_api["playlists"].call_count, 3)
-        self.assertEqual(self.mocked_api["playlistItems"].call_count, 3)
+        self.assertEqual(self.mocked_api["playlists"].call_count, 1)
+        self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
 
         pls = [doc.get("id") async for doc in self.db.collection("test_playlists").stream()]
         self.assertEqual(len(pls), 1)
@@ -197,7 +216,8 @@ class DownloaderTest(PatchedTestCase):
         video = (await self.db.document("test_videos/" + self.VIDEO_ID).get()).to_dict()
         self.assertEqual(video["kind"], "youtube#video")
         self.assertEqual(video["id"], self.VIDEO_ID)
-        self.assertEqual(video["videosdb"]["playlists"], [self.PLAYLIST_ID])
+        self.assertEqual(set(video["videosdb"]["playlists"]),
+                         {self.ALL_VIDEOS_PLAYLIST_ID, self.PLAYLIST_ID})
         self.assertEqual(video["videosdb"]["slug"],
                          "fate-god-luck-or-effort-what-decides-your-success-sadhguru")
         self.assertIn("descriptionTrimmed", video["videosdb"])
@@ -218,9 +238,9 @@ class DownloaderTest(PatchedTestCase):
         cached_page_0 = json.loads(await self.redis.get(cache_id + "_page_0"))
         cached_page_1 = json.loads(await self.redis.get(cache_id + "_page_1"))
         self.assertEqual(
-            cached_page_0["etag"], self.raw_responses["playlistItems"][0]["etag"])
+            cached_page_0["etag"], read_file(f"playlistItems-{self.PLAYLIST_ID}.response.0.json")["etag"])
         self.assertEqual(
-            cached_page_1["etag"], self.raw_responses["playlistItems"][1]["etag"])
+            cached_page_1["etag"], read_file(f"playlistItems-{self.PLAYLIST_ID}.response.1.json")["etag"])
 
         # check that pages were used:
 

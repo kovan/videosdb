@@ -198,8 +198,8 @@ class VideoProcessor:
 
         async with self._video_to_playlist_list as videos:
             if video_id not in videos.keys():
-                videos[video_id] = []
-            videos[video_id].append(playlist_id)
+                videos[video_id] = set()
+            videos[video_id].add(playlist_id)
 
     async def _create_video(self, video_id: str, playlist_ids: Iterable[str]):
         logger.info("Writing video: %s..." % video_id)
@@ -240,7 +240,8 @@ class VideoProcessor:
                 video["statistics"][stat] = int(value)
 
         if playlist_ids:
-            video["videosdb"]["playlists"] = firestore.ArrayUnion(playlist_ids)
+            video["videosdb"]["playlists"] = firestore.ArrayUnion(
+                list(playlist_ids))
 
         await self._db.set("videos/" + video_id, video, merge=True)
         logger.info("Wrote video %s" % video_id)
@@ -397,7 +398,7 @@ class Downloader:
         await self._create_playlist(playlist, playlist_items, write)
 
         # create videos:
-        video_ids = playlist["videosdb"]["videoIds"]
+        video_ids = list(playlist["videosdb"]["videoIds"])
         random.shuffle(video_ids)
 
         for video_id in video_ids:
@@ -443,12 +444,12 @@ class Downloader:
 
         video_count = 0
         last_updated = None
-        video_ids = []
+        video_ids = set()
 
         async for item in playlist_items:
             if item["snippet"]["channelId"] != self.YT_CHANNEL_ID:
                 continue
-            video_ids.append(
+            video_ids.add(
                 item["snippet"]["resourceId"]["videoId"])
             video_count += 1
             video_date = isodate.parse_datetime(
