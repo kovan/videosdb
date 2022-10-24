@@ -1,5 +1,6 @@
-- pagespeed sólo score 76, probar firebase lite?
-    * Core web vitals failed: https://pagespeed.web.dev/report?url=https%3A%2F%2Fsadhguru.digital%2F
+
+- la cache no va
+- paralelizar writes de videos¿?
 - poner descripciones de los botones en caso de tablet/escritorio
 - habilitar related videos en sadhguru ¿? consume muchisima quota
 

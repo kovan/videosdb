@@ -175,7 +175,7 @@ tasks:
 
     upload-cache:
         cmds:
-            - gzip --keep dump.rdb
+            - gzip -f --keep dump.rdb
             - gsutil cp dump.rdb.gz gs://httpx-cache-{{.VIDEOSDB_CONFIG}}/
             - rm -f dump.rdb.gz
 
