@@ -257,8 +257,10 @@ class YoutubeAPI:
         etag, cached_pages = await self.cache.get(key)
 
         if etag:
-            logger.debug("Request Etag: " + etag)
+            logger.debug(f"Request with key {key} CACHED, E-tag: {etag}")
             headers["If-None-Match"] = etag
+        else:
+            logger.debug(f"Request with key {key} NOT cached")
 
         status_code, response_pages = await pop_first(
             self._request_base(url, params, headers=headers)

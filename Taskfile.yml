@@ -184,9 +184,9 @@ tasks:
         run: once
         cmds:
             - date
-            - docker compose down
-            - cmd: docker compose cp dump.rdb redis:/data
-              ignore_error: true
+            - docker compose up  redis -d
+            - docker compose stop redis
+            - docker compose cp dump.rdb redis:/data
             - docker compose up -d --force-recreate --no-build
             - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
             - task: wait-for-redis

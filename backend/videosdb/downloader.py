@@ -82,6 +82,7 @@ class ExportToEmulatorTask(Task):
     async def export_pending_collections(self):
         if not self.enabled:
             return
+        logger.info("Exporting remaining DB to emulator...")
         async for col in self.db._db.collections():
             if col == "videos":
                 continue
@@ -189,6 +190,13 @@ class VideoProcessor:
                 random.shuffle(video_ids)
                 for video_id in video_ids:
                     playlists = videos[video_id]
+                    while True:
+                        tasks = anyio.get_running_tasks()
+                        if len(tasks) < 100:
+                            break
+                        del tasks
+                        await anyio.sleep(1)
+
                     # await self._create_video(video_id, playlists)
                     tg.start_soon(self._create_video, video_id,
                                   playlists, name=f"Create video {video_id}")
