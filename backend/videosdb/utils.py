@@ -43,7 +43,7 @@ def wait_for_port(port: int, host: str = 'localhost', timeout: float = 30.0):
 
 
 def my_handler(my_type: Type[Exception], e: Exception, handler: Callable):
-    logger.debug("Exception happened: ", str(e))
+    logger.debug("Exception happened: %s" % str(e))
     if isinstance(e, anyio.ExceptionGroup):
         unhandled = []
         for ex in e.exceptions:
