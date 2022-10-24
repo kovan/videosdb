@@ -1,6 +1,4 @@
 
-- la cache no va
-- paralelizar writes de videos¿?
 - poner descripciones de los botones en caso de tablet/escritorio
 - habilitar related videos en sadhguru ¿? consume muchisima quota
 
