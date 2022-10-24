@@ -190,12 +190,10 @@ class VideoProcessor:
                 random.shuffle(video_ids)
                 for video_id in video_ids:
                     playlists = videos[video_id]
-                    while True:
-                        tasks = anyio.get_running_tasks()
-                        if len(tasks) < 100:
-                            break
-                        del tasks
+                    tasks = anyio.get_running_tasks()
+                    if len(tasks) > 100:
                         await anyio.sleep(1)
+                    del tasks
 
                     # await self._create_video(video_id, playlists)
                     tg.start_soon(self._create_video, video_id,
