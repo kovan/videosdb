@@ -98,7 +98,7 @@ tasks:
                     docker compose build
                 {{end}}'
             - docker compose restart
-            - docker compose up --detach
+            - docker compose up --detach --no-build
             - task: wait-for-redis
             - task: wait-for-emulator
 
@@ -187,7 +187,7 @@ tasks:
             - docker compose down
             - cmd: docker compose cp dump.rdb redis:/data
               ignore_error: true
-            - docker compose up -d --force-recreate
+            - docker compose up -d --force-recreate --no-build
             - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
             - task: wait-for-redis
             - task: wait-for-emulator
