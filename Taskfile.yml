@@ -165,25 +165,7 @@ tasks:
                 {{.REPO}}frontend-{{.BRANCH_NAME}}:latest
                 yarn generate
 
-
-    # deploy-test:
-    #     run: once
-    #     deps: [build-frontend, build-backend, start-servers]
-    #     cmds:
-    #         - docker run
-    #             --network host
-    #             -e YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
-    #             -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
-    #             --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
-    #             {{.REPO}}backend-{{.BRANCH_NAME}}:latest
-    #             run main -c
-
-    #         - docker run
-    #             --network host
-    #             --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
-    #             -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/{{.VIDEOSDB_CONFIG}}.json
-    #             {{.REPO}}frontend-{{.BRANCH_NAME}}:latest
-    #             yarn run-s generate deploy
+    tail-servers-logs: (docker compose logs -f -t --no-color | grep -v "Detected non-HTTP/2 connection"  | grep -v HttpVersionRoutingHandler ) &
 
     download-cache:
         cmds:
@@ -209,7 +191,7 @@ tasks:
             - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
             - task: wait-for-redis
             - task: wait-for-emulator
-            - docker compose logs -f -t --no-color &
+            - task: tail-servers-logs
             - docker run --rm
                 --network host
                 --env-file common/env/{{.VIDEOSDB_CONFIG}}.txt
@@ -307,7 +289,7 @@ tasks:
 # local-only, non-docker commands:
 
     local-run:
-        - docker compose logs -f -t --no-color &
+        - task: tail-servers-logs
         - task: local-run-backend
         - task: local-run-frontend
 
