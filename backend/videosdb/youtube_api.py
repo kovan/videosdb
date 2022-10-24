@@ -1,4 +1,5 @@
-import aioredis
+
+from copy import deepcopy
 import json
 import logging
 import os
@@ -7,6 +8,7 @@ from typing import Any, AsyncGenerator, Iterable, NewType, TypeVar, Union
 import anyio
 import httpx
 from urllib.parse import urlencode
+import redis.asyncio as redis
 from videosdb.utils import wait_for_port, QuotaExceeded
 import youtube_transcript_api
 from urllib.parse import urlparse
@@ -30,11 +32,10 @@ async def pop_first(async_generator):
 class Cache:
 
     def __init__(self, redis_db_n=None):
-        url = "redis://localhost"
         if redis_db_n:
-            self.redis = aioredis.from_url(url, db=redis_db_n)
+            self.redis = redis.Redis(db=redis_db_n)
         else:
-            self.redis = aioredis.from_url(url,)
+            self.redis = redis.Redis()
 
     def stats(self):
         return self.redis.info("stats")
@@ -75,27 +76,27 @@ class Cache:
 
         return json_value["etag"], page_generator()
 
-    async def set(self, key, page_generator):
-        async with self.redis.pipeline(transaction=True) as transaction:
-            page_count = 0
-            etag = None
-            pages = []
-            async for page in page_generator:
-                if page_count == 0:
-                    etag = page["etag"]
-                transaction.set(
-                    self._pages_key_func(key, page_count),
-                    json.dumps(page))
-                page_count += 1
-                pages.append(page)
+    async def set(self, key, page_generator: AsyncGenerator):
+        transaction = self.redis.pipeline()
+        page_count = 0
+        etag = None
+        pages = []
+        async for page in page_generator:
+            if page_count == 0:
+                etag = page["etag"]
+            transaction.set(
+                self._pages_key_func(key, page_count),
+                json.dumps(page))
+            page_count += 1
+            pages.append(page)
 
-            transaction.set(key,
-                            json.dumps({
-                                "etag": etag,
-                                "n_pages": page_count
-                            }))
+        transaction.set(key,
+                        json.dumps({
+                            "etag": etag,
+                            "n_pages": page_count
+                        }))
 
-            await transaction.execute()
+        await transaction.execute()
         return pages
 
 
