@@ -180,6 +180,7 @@ class VideoProcessor:
         self._api = api
         self._channel_id = channel_id
         self._video_to_playlist_list = LockedItem(dict())
+        self._quota_exceeded = False
 
     # entrypoint:
     async def close(self):
@@ -212,13 +213,19 @@ class VideoProcessor:
     async def _create_video(self, video_id: str, playlist_ids: Iterable[str]):
         logger.info("Writing video: %s..." % video_id)
         video = {}
-        try:
-            _, downloaded_video = await self._api.get_video_info(video_id)
-            if downloaded_video:
-                video |= downloaded_video
-        except Exception as e:
-            # keep going so that we write whatever we have (playlists)
-            my_handler(YoutubeAPI.YTQuotaExceeded, e, logger.error)
+        downloaded_video = None
+        if not self._quota_exceeded:
+            try:
+
+                _, downloaded_video = await self._api.get_video_info(video_id)
+                if downloaded_video:
+                    video |= downloaded_video
+            except Exception as e:
+                # keep going so that we write whatever we have (playlists)
+                exception_catched = my_handler(
+                    YoutubeAPI.YTQuotaExceeded, e, logger.error)
+                if exception_catched:
+                    self._quota_exceeded = True
 
         if not video:
             return

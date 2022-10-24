@@ -43,11 +43,13 @@ def wait_for_port(port: int, host: str = 'localhost', timeout: float = 30.0):
 
 
 def my_handler(my_type: Type[Exception], e: Exception, handler: Callable):
+    catched = False
     logger.debug("Exception happened: %s" % str(e))
     if isinstance(e, anyio.ExceptionGroup):
         unhandled = []
         for ex in e.exceptions:
             if isinstance(e, my_type):
+                catched = True
                 handler(ex)
             else:
                 unhandled.append(ex)
@@ -55,9 +57,12 @@ def my_handler(my_type: Type[Exception], e: Exception, handler: Callable):
             raise anyio.ExceptionGroup(unhandled)
 
     elif isinstance(e, my_type):
+        catched = True
         handler(e)
     else:
         raise e
+
+    return catched
 
 
 def put_item_at_front(seq, item):
