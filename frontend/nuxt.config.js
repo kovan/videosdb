@@ -116,7 +116,7 @@ export default {
         extend(config, ctx) {
             const isProd = process.env.NODE_ENV === 'production';
             if (isProd && ctx.isClient) {
-                config.optimization.splitChunks.maxSize = 249856; // 244 Kib
+                config.optimization.splitChunks.maxSize = 500856; // 244 Kib
             }
             if (ctx.isDev) {
                 config.devtool = ctx.isClient ? "source-map" : "inline-source-map";
