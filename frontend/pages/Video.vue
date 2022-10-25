@@ -34,10 +34,11 @@ b-container.m-0.p-0.mx-auto
                         LazyHydrate(when-visible)
                             .card.mb-4.shadow-sm.text-center
                                 NuxtLink(:to='"/category/" + item.videosdb.slug')
-                                    b-img-lazy.bd-placeholder-img.card-img-top(
+                                    b-img.bd-placeholder-img.card-img-top(
                                         :src='item.snippet.thumbnails.medium.url',
                                         height='180',
                                         width='320',
+                                        loading="lazy",
                                         :id='item.id',
                                         :alt='item.snippet.title',
                                         fluid
@@ -66,10 +67,11 @@ b-container.m-0.p-0.mx-auto
                         LazyHydrate(when-visible)
                             .card.mb-4.shadow-sm.text-center
                                 NuxtLink(:to='"/video/" + related.videosdb.slug')
-                                    b-img-lazy.bd-placeholder-img.card-img-top(
+                                    b-img.bd-placeholder-img.card-img-top(
                                         :src='related.snippet.thumbnails.medium.url',
                                         height='180',
                                         width='320',
+                                        loading="lazy",
                                         :id='related.id',
                                         :alt='related.snippet.title',
                                         fluid
