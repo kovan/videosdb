@@ -114,8 +114,9 @@ export default {
 
     build: {
         extend(config, ctx) {
-            if (ctx.isClient) {
-                config.optimization = {} //.splitChunks.maxSize = 250000;
+            const isProd = process.env.NODE_ENV === 'production';
+            if (isProd && ctx.isClient) {
+                config.optimization.splitChunks.maxSize = 249856; // 244 Kib
             }
             if (ctx.isDev) {
                 config.devtool = ctx.isClient ? "source-map" : "inline-source-map";
@@ -146,11 +147,11 @@ export default {
         //parallel: true,
         //cache: true,
         hardSource: false,
-        splitChunks: {
-            layouts: false,
-            pages: false,
-            components: false,
-        },
+        // splitChunks: {
+        //     layouts: false,
+        //     pages: false,
+        //     components: false,
+        // },
         html: {
             minify: {
                 minifyCSS: false,
