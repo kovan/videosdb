@@ -116,6 +116,7 @@ tasks:
                 yarn test
 
 
+
     unittests-backend:
         run: once
         deps: [build-backend, start-servers]
@@ -163,7 +164,7 @@ tasks:
                 --env-file common/env/testing.txt
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 {{.REPO}}frontend-{{.BRANCH_NAME}}:latest
-                yarn generate
+                yarn run-s generate {{if .START_DEV_SERVER}}start{{end}}
 
     tail-servers-logs: (docker compose logs -f -t --no-color | grep -v "Detected non-HTTP/2 connection"  | grep -v HttpVersionRoutingHandler ) &
 

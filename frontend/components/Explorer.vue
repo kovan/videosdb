@@ -24,7 +24,7 @@
                     LazyHydrate(when-visible)
                         .card.mb-4.shadow-sm.text-center
                             NuxtLink(:to='"/video/" + video.videosdb.slug')
-                                b-img.bd-placeholder-img.card-img-top(
+                                b-img-lazy.bd-placeholder-img.card-img-top(
                                     :src='video.snippet.thumbnails.medium.url',
                                     height='180',
                                     width='320',
@@ -253,7 +253,7 @@ export default {
             if (this.no_more_data) return
             this.loading = true
             var self = this
-            const PAGE_SIZE = 10
+            const PAGE_SIZE = 20
             // this.logs.push('--- doQuery ----')
 
             if (!(this.mutex instanceof Mutex)) this.mutex = new Mutex()
