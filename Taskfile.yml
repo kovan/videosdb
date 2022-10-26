@@ -53,7 +53,7 @@ tasks:
                     until nc -z {{.HOST}} {{.PORT}};
                         do echo "waiting for port {{.PORT}} on host {{.HOST}} ...";
                         sleep 2;
-                    done'
+                    done; sleep 1;'
 
     build-backend:
         run: once
