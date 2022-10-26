@@ -84,10 +84,12 @@ class ExportToEmulatorTask(Task):
             return
         logger.info("Exporting remaining DB to emulator...")
         async for col in self.db._db.collections():
+            # TODO
             if col == "videos":
                 continue
 
             async for doc_ref in col.list_documents():
+                await self.db._db.increase_quota(CounterTypes.READS)
                 doc = await doc_ref.get()
                 emulator_ref = self.emulator_client.collection(
                     col.id).document(doc.id)
@@ -144,7 +146,7 @@ class RetrievePendingTranscriptsTask(Task):
             }
         }
 
-        await self.db.set_noquota("videos/" + video["id"], video, merge=True)
+        await self.db.set("videos/" + video["id"], video, merge=True)
 
     @staticmethod
     async def _download_transcript(video_id, capacity_limiter):
@@ -284,8 +286,8 @@ class Downloader:
         logger.info("Sync start")
         async with anyio.create_task_group() as global_nursery:
             await self.init()
-            # global_nursery.start_soon(self._print_debug_info,
-            #                           name="Debug info")
+            global_nursery.start_soon(self._print_debug_info,
+                                      name="Debug info")
 
             try:
                 await self._phase1()
@@ -522,11 +524,13 @@ class Downloader:
         while True:
             tasks = anyio.get_running_tasks()
             logger.info('Running tasks:' + str(len(tasks)))
-            logger.info(pprint.pformat(tasks))
-            stats = await self.api.cache.stats()
-            logger.info("Cache stats: ")
-            logger.info(pprint.pformat(stats))
+            del tasks
+            logger.info("DB stats:")
+            logger.info(pprint.pformat(self.db.get_stats()))
+            cache_stats = await self.api.cache.stats()
+            logger.info("Cache stats:")
+            logger.info(pprint.pformat(cache_stats))
 
             if once:
                 return
-            await anyio.sleep(30)
+            await anyio.sleep(120)

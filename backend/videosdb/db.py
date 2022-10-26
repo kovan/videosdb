@@ -111,8 +111,16 @@ class DB:
         return self._db.collection(self.prefix + path)
     # ---------------------- PUBLIC -------------------------------
 
-    async def increase_reserved_quota(self, type: CounterTypes, quota_increase: int = 1):
-        await self._counters[type].inc(quota_increase)
+    def get_stats(self):
+        read_c = self._counters[CounterTypes.READS]
+        write_c = self._counters[CounterTypes.WRITES]
+        return {
+            str(read_c),
+            str(write_c),
+        }
+
+    async def increase_counter(self, type: CounterTypes, increase: int = 1):
+        await self._counters[type].inc(increase)
 
     @Retry()
     async def set(self, path, *args, **kwargs):
@@ -161,5 +169,6 @@ class DB:
 
         async for doc_ref in self._collection("videos").list_documents():
             video = await doc_ref.get()  # type: ignore
+            await self._counters[CounterTypes.READS].inc()
             video_dict = video.to_dict()
             validate(instance=video_dict, schema=schema)

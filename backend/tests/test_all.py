@@ -1,5 +1,6 @@
 # type: ignore
 import asyncio
+from unittest.mock import MagicMock
 
 from google.cloud import firestore
 import datetime
@@ -17,7 +18,7 @@ from dotenv import load_dotenv
 from google.api_core.datetime_helpers import DatetimeWithNanoseconds
 from httpx import Response
 from videosdb.db import DB
-from videosdb.downloader import Downloader, RetrievePendingTranscriptsTask, VideoProcessor
+from videosdb.downloader import Downloader, ExportToEmulatorTask, RetrievePendingTranscriptsTask, VideoProcessor
 from videosdb.publisher import TwitterPublisher
 from videosdb.youtube_api import Cache, YoutubeAPI
 
@@ -250,33 +251,44 @@ class DownloaderTest(PatchedTestCase):
         self.assertEqual(
             cached_page_1["etag"], read_file(f"playlistItems-{self.PLAYLIST_ID}.response.1.json")["etag"])
 
-        # check that pages were used:
+    async def test_export_to_emulator(self):
+        video = read_file(f"video-{self.VIDEO_ID}.response.json")["items"][0]
 
-    # async def test_firestore_behavior(self):
-    #     a = await self.db.document("test_videos/" + "asdfsdf").set({
-    #         "videosdb": {
-    #             "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
-    #         }
-    #     }, merge=True)
-    #     b = await self.db.document("test_videos/" + "asdfsdf").set({
-    #         "videosdb": {
-    #             "playlists": firestore.ArrayUnion(["sdfsdf"])
-    #         }
-    #     }, merge=True)
+        mock = MagicMock()
+        mock.
+        async with anyio.create_task_group() as tg:
 
-    #     c = await self.db.document("test_videos/" + "asdfsdf").get()
-    #     self.assertEqual(
-    #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
+            task = ExportToEmulatorTask(
+                self.mydb,
+                nursery=tg)
+            task.enabled = True
+            await task(video)
 
-    # async def test_transcript_downloading(self):
+        # async def test_firestore_behavior(self):
+        #     a = await self.db.document("test_videos/" + "asdfsdf").set({
+        #         "videosdb": {
+        #             "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
+        #         }
+        #     }, merge=True)
+        #     b = await self.db.document("test_videos/" + "asdfsdf").set({
+        #         "videosdb": {
+        #             "playlists": firestore.ArrayUnion(["sdfsdf"])
+        #         }
+        #     }, merge=True)
 
-    #     video = self.raw_responses["videos"][self.VIDEO_ID]["items"][0]
+        #     c = await self.db.document("test_videos/" + "asdfsdf").get()
+        #     self.assertEqual(
+        #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
 
-    #     async with anyio.create_task_group() as tg:
-    #         task = RetrievePendingTranscriptsTask(
-    #             self.mydb, nursery=tg)
-    #         task.enabled = True
-    #         await task(video)
+        # async def test_transcript_downloading(self):
 
-    #     self.assertIn("transcript", video["videosdb"])
-    #     self.assertIn("transcript_status", video["videosdb"])
+        #     video = self.raw_responses["videos"][self.VIDEO_ID]["items"][0]
+
+        #     async with anyio.create_task_group() as tg:
+        #         task = RetrievePendingTranscriptsTask(
+        #             self.mydb, nursery=tg)
+        #         task.enabled = True
+        #         await task(video)
+
+        #     self.assertIn("transcript", video["videosdb"])
+        #     self.assertIn("transcript_status", video["videosdb"])

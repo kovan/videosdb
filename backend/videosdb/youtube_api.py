@@ -37,8 +37,21 @@ class Cache:
         else:
             self.redis = redis.Redis()
 
-    def stats(self):
-        return self.redis.info("stats")
+    async def stats(self):
+        redis_stats = {}
+        redis_stats |= await self.redis.info("stats")  # type: ignore
+        interesting_keys = {
+            "keyspace_hits",
+            "keyspace_misses",
+            "total_commands_processed",
+            "total_reads_processed",
+            "total_writes_processed"
+        }
+
+        result = {key: redis_stats[key]
+                  for key in redis_stats.keys() & interesting_keys}
+
+        return result
 
     @staticmethod
     def key_func(url: str, params: dict) -> str:
@@ -223,6 +236,7 @@ class YoutubeAPI:
 
 
 # ------- PRIVATE-------------------------------------------------------
+
 
     async def _request_one(self, url, params, use_cache=True) -> tuple[bool, Union[dict, None]]:
 
