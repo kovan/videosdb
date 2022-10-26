@@ -14,6 +14,11 @@ env:
 
 output: prefixed
 
+
+# WARNING: parallelization of tasks unittests-backend and end2end-tests task
+# may result in unexpected test results (due to the same tests sharing the same DB instance).
+
+
 tasks:
     init-gcp:
         run: once
@@ -147,6 +152,7 @@ tasks:
         deps: [build-frontend, build-backend, start-servers]
         cmds:
             - date
+            - curl -X DELETE "http://{{.FIRESTORE_EMULATOR}}/emulator/v1/projects/demo-project/databases/(default)/documents"
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
@@ -279,23 +285,26 @@ tasks:
                 {{.REGISTRY}}frontend-{{.BRANCH_NAME}}:latest
                 yarn run-s generate deploy
 
-    test:
-        deps: [unittests, end2end-tests]
+    tests:
+        cmds:
+            - task: unittests
+            - task: end2end-tests
 
     default:
-        deps: [build-all, unittests, end2end-tests]
+        deps: [build-all]
         cmds:
-            - defer: env
+            - task: tests
+            - env
 
 # local-only, non-docker commands:
 
     local-unittests-backend:
         cd backend &&
-        DEBUG=1 
-        PYTHONDEVMODE=1 
+        DEBUG=1
+        PYTHONDEVMODE=1
         FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
             poetry run python -m unittest; cd ..
-                
+
 
 
     local-run:
@@ -338,8 +347,9 @@ tasks:
             - task: push-backend
 
     backend-prod:
-        deps: [build-backend, unittests-backend, end2end-tests]
+        deps: [build-backend, unittests-backend]
         cmds:
+            - task: end2end-tests
             - task: push-backend
 
     frontend-master:
@@ -348,8 +358,9 @@ tasks:
             - task: push-frontend
 
     frontend-prod:
-        deps: [build-frontend, unittests-frontend, end2end-tests]
+        deps: [build-frontend, unittests-frontend]
         cmds:
+            - task: end2end-tests
             - task: push-frontend
 
     tests-end2end-master:

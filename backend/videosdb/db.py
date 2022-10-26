@@ -71,8 +71,7 @@ class DB:
 
         return db
 
-    def __init__(self, prefix=""):
-        self.prefix = prefix
+    def __init__(self,):
 
         self.FREE_TIER_WRITE_QUOTA = 20000
         self.FREE_TIER_READ_QUOTA = 50000
@@ -90,25 +89,18 @@ class DB:
 
     async def init(self):
         # initialize meta table:
-        doc = await self._document("meta/video_ids").get()
+        doc = await self._db.document("meta/video_ids").get()
         if not doc.exists or "videoIds" not in doc.to_dict():  # type: ignore
             await doc.reference.set(  # type: ignore
                 {"videoIds": list()}
             )
-        doc = await self._document("meta/state").get()
+        doc = await self._db.document("meta/state").get()
         if not doc.exists:  # type: ignore
             await doc.reference.set({})  # type: ignore
         # check writes are not out of quota:
         await self.set("meta/test", {})
         return self
 
-    # google.api_core.exceptions.ResourceExhausted: 429 Quota exceeded.
-
-    def _document(self, path):
-        return self._db.document(self.prefix + path)
-
-    def _collection(self, path):
-        return self._db.collection(self.prefix + path)
     # ---------------------- PUBLIC -------------------------------
 
     def get_stats(self):
@@ -125,49 +117,45 @@ class DB:
     @Retry()
     async def set(self, path, *args, **kwargs):
         await self._counters[CounterTypes.WRITES].inc()
-        return await self._document(path).set(*args, **kwargs)
+        return await self._db.document(path).set(*args, **kwargs)
 
     @Retry()
     async def get(self, path, *args, **kwargs):
         await self._counters[CounterTypes.READS].inc()
-        return await self._document(path).get(*args, **kwargs)
+        return await self._db.document(path).get(*args, **kwargs)
 
     @Retry()
     async def update(self, path, *args, **kwargs):
         await self._counters[CounterTypes.WRITES].inc()
-        return await self._document(path).update(*args, **kwargs)
+        return await self._db.document(path).update(*args, **kwargs)
 
     @Retry()
     async def delete(self, path, *args, **kwargs):
         await self._counters[CounterTypes.WRITES].inc()
-        return await self._document(path).delete(*args, **kwargs)
-
-    @Retry()
-    def list_documents(self, collection_name):
-        return self._collection(collection_name).list_documents()
+        return await self._db.document(path).delete(*args, **kwargs)
 
     @Retry()
     async def recursive_delete(self, path):
-        ref = self._document(path)
+        ref = self._db.document(path)
         return await self._db.recursive_delete(ref)
 
     @Retry()
     async def set_noquota(self, path, *args, **kwargs):
-        return await self._document(path).set(*args, **kwargs)
+        return await self._db.document(path).set(*args, **kwargs)
 
     @Retry()
     async def update_noquota(self, path, *args, **kwargs):
-        return await self._document(path).update(*args, **kwargs)
+        return await self._db.document(path).update(*args, **kwargs)
 
     @Retry()
     async def get_noquota(self, path, *args, **kwargs):
-        return await self._document(path).get(*args, **kwargs)
+        return await self._db.document(path).get(*args, **kwargs)
 
     async def validate_videos_schema(self):
         with open(get_module_path() + "/../../common/firebase/db-schema.json") as f:
             schema = json.load(f)
 
-        async for doc_ref in self._collection("videos").list_documents():
+        async for doc_ref in self._db.collection("videos").list_documents():
             video = await doc_ref.get()  # type: ignore
             await self._counters[CounterTypes.READS].inc()
             video_dict = video.to_dict()

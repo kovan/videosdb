@@ -7,7 +7,7 @@ import re
 from abc import abstractmethod
 from types import AsyncGeneratorType
 from typing import Any, AsyncGenerator, Iterable, Type
-
+from google.api_core.retry import Retry
 import anyio
 import bleach
 import fnc
@@ -82,14 +82,14 @@ class ExportToEmulatorTask(Task):
     async def export_pending_collections(self):
         if not self.enabled:
             return
-        logger.info("Exporting remaining DB to emulator...")
+
         async for col in self.db._db.collections():
-            # TODO
-            if col == "videos":
+            if col.id == "videos":
                 continue
+            logger.info(f"Exporting collection {col.id} to emulator...")
 
             async for doc_ref in col.list_documents():
-                await self.db._db.increase_quota(CounterTypes.READS)
+                await self.db.increase_counter(CounterTypes.READS)
                 doc = await doc_ref.get()
                 emulator_ref = self.emulator_client.collection(
                     col.id).document(doc.id)
@@ -350,8 +350,9 @@ class Downloader:
     async def _final_video_iteration(self, phase2_tasks: Iterable[Task]):
         final_video_ids = LockedItem(set())
 
-        async for video_ref in self.db.list_documents("videos"):
-            video = await video_ref.get()  # type: ignore
+        # this excludes all documents that don't have "id" field:
+        query = self.db._db.collection("videos").order_by("id")
+        async for video in query.stream(retry=Retry()):  # type: ignore
             video_dict = video.to_dict()
             video_id = video_dict.get("id")
             if not video_id:
@@ -522,9 +523,8 @@ class Downloader:
 
     async def _print_debug_info(self, once: bool = False):
         while True:
-            tasks = anyio.get_running_tasks()
-            logger.info('Running tasks:' + str(len(tasks)))
-            del tasks
+
+            logger.info('Running tasks:' + str(len(anyio.get_running_tasks())))
             logger.info("DB stats:")
             logger.info(pprint.pformat(self.db.get_stats()))
             cache_stats = await self.api.cache.stats()

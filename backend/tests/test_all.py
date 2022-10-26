@@ -9,7 +9,7 @@ import logging
 import os
 import pprint
 import sys
-
+import requests
 import aiounittest
 import anyio
 import redis.asyncio as redis
@@ -53,6 +53,7 @@ class DownloaderTest(PatchedTestCase):
     PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
     ALL_VIDEOS_PLAYLIST_ID = "UUcYzLCs3zrQIBVHYA1sK2sw"
     VIDEO_ID = "HADeWBBb1so"
+    EMULATOR_HOST = "127.0.0.1:46456"
 
     YT_CHANNEL_ID = "UCcYzLCs3zrQIBVHYA1sK2sw"
 
@@ -63,15 +64,15 @@ class DownloaderTest(PatchedTestCase):
         self.mocked_api.start()
         self.addCleanup(self.mocked_api.stop)
 
-        self.mydb = DB(prefix="test_")
+        self.mydb = DB()
         self.downloader = Downloader(
             db=self.mydb, redis_db_n=1, channel_id=self.YT_CHANNEL_ID)
         self.video_processor = VideoProcessor(
             self.mydb, YoutubeAPI(self.mydb), self.YT_CHANNEL_ID)
 
     async def _clear_dbs(self):
-        async for col in self.db.collections():
-            await self.db.recursive_delete(col)
+        requests.delete(
+            f"http://{self.EMULATOR_HOST}/emulator/v1/projects/demo-project/databases/(default)/documents")
         await self.redis.flushdb()
 
     @classmethod
@@ -79,7 +80,7 @@ class DownloaderTest(PatchedTestCase):
         load_dotenv("common/env/testing.txt")
         if "FIRESTORE_EMULATOR_HOST" not in os.environ:
 
-            os.environ["FIRESTORE_EMULATOR_HOST"] = "127.0.0.1:46456"
+            os.environ["FIRESTORE_EMULATOR_HOST"] = cls.EMULATOR_HOST
 
         logger.debug(pprint.pformat(os.environ))
 
@@ -187,14 +188,14 @@ class DownloaderTest(PatchedTestCase):
         self.assertEqual(
             self.mocked_api["channels"].call_count, 1)
 
-        pls = [doc.get("id") async for doc in self.db.collection("test_playlists").stream()]
+        pls = [doc.get("id") async for doc in self.db.collection("playlists").stream()]
         self.assertEqual(len(pls), 1)
         self.assertEqual(pls[0], self.PLAYLIST_ID)
 
         # check that VideoProcessor works correctly:
 
         excluded_video_id = 'FBYoZ-FgC84'
-        videos = [doc async for doc in self.db.collection("test_videos").stream()]
+        videos = [doc async for doc in self.db.collection("videos").stream()]
         self.assertEqual(len(videos), 6)
 
         for video in videos:
@@ -207,7 +208,7 @@ class DownloaderTest(PatchedTestCase):
 
         # check that one playlist is processed correctly:
 
-        playlist = (await self.db.document("test_playlists/" + self.PLAYLIST_ID).get()).to_dict()
+        playlist = (await self.db.document("playlists/" + self.PLAYLIST_ID).get()).to_dict()
         self.assertEqual(playlist["kind"], "youtube#playlist")
         self.assertEqual(playlist["id"], self.PLAYLIST_ID)
 
@@ -222,7 +223,7 @@ class DownloaderTest(PatchedTestCase):
         # check that one video is processed correctly:
         self.VIDEO_ID = "HADeWBBb1so"
 
-        video = (await self.db.document("test_videos/" + self.VIDEO_ID).get()).to_dict()
+        video = (await self.db.document("videos/" + self.VIDEO_ID).get()).to_dict()
         self.assertEqual(video["kind"], "youtube#video")
         self.assertEqual(video["id"], self.VIDEO_ID)
         self.assertEqual(set(video["videosdb"]["playlists"]),
@@ -253,16 +254,35 @@ class DownloaderTest(PatchedTestCase):
 
     async def test_export_to_emulator(self):
         video = read_file(f"video-{self.VIDEO_ID}.response.json")["items"][0]
+        test_path = "test_collection/test_document"
+        test_doc_ref = self.db.document(test_path)
+        test_doc_dict = {
+            "this is a test": True
+        }
+        await test_doc_ref.set(test_doc_dict)
 
         mock = MagicMock()
-        mock.
+        mock.export_to_emulator_host = self.EMULATOR_HOST
         async with anyio.create_task_group() as tg:
 
             task = ExportToEmulatorTask(
                 self.mydb,
+                mock,
                 nursery=tg)
-            task.enabled = True
+
+            self.assertTrue(task.enabled)
+            self.assertIsNotNone(task.emulator_client)
+
             await task(video)
+
+            await task.export_pending_collections()
+
+            exported_doc_ref = task.emulator_client.document(test_path)
+            exported_doc_dict = (await exported_doc_ref.get()).to_dict()
+            self.assertEqual(
+                exported_doc_dict,
+                test_doc_dict
+            )
 
         # async def test_firestore_behavior(self):
         #     a = await self.db.document("test_videos/" + "asdfsdf").set({
