@@ -289,6 +289,15 @@ tasks:
 
 # local-only, non-docker commands:
 
+    local-unittests-backend:
+        cd backend &&
+        DEBUG=1 
+        PYTHONDEVMODE=1 
+        FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
+            poetry run python -m unittest; cd ..
+                
+
+
     local-run:
         - task: tail-servers-logs
         - task: local-run-backend
@@ -315,7 +324,7 @@ tasks:
 
     local-ipython-shell: backend/utils/ipythonshell.sh
 
-    local-firebase-emulator: cd common/firebase && firebase use default && firebase emulators:start; cd ../..
+    local-start-servers: sudo systemctl start redis-server && cd common/firebase && firebase emulators:start --project demo-project; cd ../..
 
     local-push-to-prod: git checkout prod && git merge master && git push && git checkout master
 
