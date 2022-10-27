@@ -350,9 +350,12 @@ class Downloader:
     async def _final_video_iteration(self, phase2_tasks: Iterable[Task]):
         final_video_ids = LockedItem(set())
 
-        # this excludes all documents that don't have "id" field:
-        query = self.db._db.collection("videos").order_by("id")
-        async for video in query.stream(retry=Retry()):  # type: ignore
+        # we only want videos ready to publish:
+        query = self.db._db.collection(
+            "videos").where("videosdb.slug", "!=", "")
+
+        # type: ignore
+        for video in await query.get(retry=Retry(), timeout=3600000):  # type: ignore
             video_dict = video.to_dict()
             video_id = video_dict.get("id")
             if not video_id:
