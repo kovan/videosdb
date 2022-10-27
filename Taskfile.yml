@@ -85,12 +85,10 @@ tasks:
 
     wait-for-emulator:
         cmds:
-            - task: wait-for-port
-              vars:
-                HOST:
-                    sh: echo {{.FIRESTORE_EMULATOR}} | cut -d ":" -f 1
-                PORT:
-                    sh: echo {{.FIRESTORE_EMULATOR}} | cut -d ":" -f 2
+            - until curl --silent {{.FIRESTORE_EMULATOR}};
+                    do echo "waiting for Firestore emulator on host {{.FIRESTORE_EMULATOR}}...";
+                    sleep 2;
+                done;
 
 
     start-servers:
