@@ -34,7 +34,6 @@
                 "name": "Python: Debug Tests",
                 "type": "python",
                 "env": {
-                    "DEBUG": "1",
                     "LOGLEVEL": "DEBUG",
                     "PYTHONDEVMODE": "1",
                 },

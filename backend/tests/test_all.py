@@ -1,5 +1,7 @@
 # type: ignore
 import asyncio
+#import memory_profiler
+import unittest
 from unittest.mock import MagicMock
 
 from google.cloud import firestore
@@ -21,6 +23,7 @@ from videosdb.db import DB
 from videosdb.downloader import Downloader, ExportToEmulatorTask, RetrievePendingTranscriptsTask, VideoProcessor
 from videosdb.publisher import TwitterPublisher
 from videosdb.youtube_api import Cache, YoutubeAPI
+import tracemalloc
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +61,6 @@ class DownloaderTest(PatchedTestCase):
     YT_CHANNEL_ID = "UCcYzLCs3zrQIBVHYA1sK2sw"
 
     def setUp(self):
-
         self.get_event_loop()
         self.my_loop.run_until_complete(self._clear_dbs())
         self.mocked_api.start()
@@ -180,9 +182,9 @@ class DownloaderTest(PatchedTestCase):
         self.assertEqual(self.mocked_api["playlists"].call_count, 1)
         self.assertEqual(self.mocked_api["playlistForChannel"].call_count, 1)
         self.assertEqual(self.mocked_api["playlistItems"].call_count, 2)
-        self.assertEqual(self.mocked_api["playlistAllVideos"].call_count, 0)
+        self.assertEqual(self.mocked_api["playlistAllVideos"].call_count, 1)
         self.assertEqual(
-            self.mocked_api["playlistItemsAllVideos"].call_count, 0)
+            self.mocked_api["playlistItemsAllVideos"].call_count, 1)
         self.assertEqual(
             self.mocked_api["channelSections"].call_count, 1)
         self.assertEqual(
@@ -312,3 +314,19 @@ class DownloaderTest(PatchedTestCase):
 
         #     self.assertIn("transcript", video["videosdb"])
         #     self.assertIn("transcript_status", video["videosdb"])
+
+
+# @memory_profiler.profile
+def main():
+    tracemalloc.start()
+    snapshot = tracemalloc.take_snapshot()
+    try:
+        unittest.main()
+    except KeyboardInterrupt as e:
+        snapshot2 = tracemalloc.take_snapshot()
+        print("Took snapshot")
+
+
+if __name__ == "__main__":
+    print("Running tests...")
+    main()
