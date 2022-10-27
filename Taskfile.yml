@@ -85,7 +85,7 @@ tasks:
 
     wait-for-emulator:
         cmds:
-            - until curl --silent {{.FIRESTORE_EMULATOR}};
+            - until curl -v {{.FIRESTORE_EMULATOR}};
                     do echo "waiting for Firestore emulator on host {{.FIRESTORE_EMULATOR}}...";
                     sleep 2;
                 done;
