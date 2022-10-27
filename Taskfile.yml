@@ -85,13 +85,15 @@ tasks:
 
     wait-for-emulator:
         cmds:
-            - until curl -v {{.FIRESTORE_EMULATOR}};
-                    do echo "waiting for Firestore emulator on host {{.FIRESTORE_EMULATOR}}...";
-                    sleep 2;
-                done;
+            - task: wait-for-port
+              vars:
+                HOST:
+                    sh: echo {{.FIRESTORE_EMULATOR}} | cut -d ":" -f 1
+                PORT:
+                    sh: echo {{.FIRESTORE_EMULATOR}} | cut -d ":" -f 2
 
 
-    start-servers:
+    prepare-servers:
         run: once
         cmds:
             - date
@@ -100,10 +102,7 @@ tasks:
                 {{else}}
                     docker compose build
                 {{end}}'
-            - docker compose restart
-            - docker compose up --detach --no-build
-            - task: wait-for-redis
-            - task: wait-for-emulator
+            - docker compose create
 
     stop-servers: docker compose down
 
@@ -122,9 +121,11 @@ tasks:
 
     unittests-backend:
         run: once
-        deps: [build-backend, start-servers]
+        deps: [build-backend, prepare-servers]
         cmds:
             - date
+            - docker compose restart firebase-emulator redis
+            - task: wait-for-emulator
             - rm -f {{.CID_FILE}}
             - docker run
                 --cidfile {{.CID_FILE}}
@@ -146,10 +147,12 @@ tasks:
 
     end2end-tests:
         run: once
-        deps: [build-frontend, build-backend, start-servers]
+        deps: [build-frontend, build-backend, prepare-servers]
         cmds:
             - date
-            - curl -X DELETE "http://{{.FIRESTORE_EMULATOR}}/emulator/v1/projects/demo-project/databases/(default)/documents"
+            - docker compose restart firebase-emulator redis json-caching-proxy
+            - task: wait-for-emulator
+            - task: tail-servers-logs
             - docker run --rm
                 --network host
                 --env-file common/env/testing.txt
@@ -188,13 +191,11 @@ tasks:
         run: once
         cmds:
             - date
-            - docker compose up  redis -d
-            - docker compose stop redis
+            - docker compose stop
             - docker compose cp dump.rdb redis:/data
-            - docker compose up -d --force-recreate --no-build
-            - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
-            - task: wait-for-redis
+            - docker compose start firebase-emulator redis
             - task: wait-for-emulator
+            - defer: docker compose stop redis && docker compose cp redis:/data/dump.rdb .
             - task: tail-servers-logs
             - docker run --rm
                 --network host
@@ -334,7 +335,7 @@ tasks:
 
     local-ipython-shell: backend/utils/ipythonshell.sh
 
-    local-start-servers: sudo systemctl start redis-server && cd common/firebase && firebase emulators:start --project demo-project; cd ../..
+    local-prepare-servers: sudo systemctl start redis-server && cd common/firebase && firebase emulators:start --project demo-project; cd ../..
 
     local-push-to-prod: git checkout prod && git merge master && git push && git checkout master
 

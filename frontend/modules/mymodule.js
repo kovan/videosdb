@@ -70,7 +70,9 @@ async function generateCache(dbOptions) {
 
         async function download(db, type, startAfterParam = null) {
             let q = query(collection(db, type), limit(PAGE_SIZE))
-            q = query(q, orderBy("id")) // so that docs without ID are excluded
+            // filter videos not ready to show:
+            q = query(q, where("videosdb.slug", "!=", ""))
+
             if (startAfterParam)
                 q = query(q, startAfter(startAfterParam))
             let q_results = await getDocs(q)
