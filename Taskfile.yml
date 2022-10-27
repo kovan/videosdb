@@ -131,7 +131,6 @@ tasks:
                 --network host
                 --env-file common/env/testing.txt
                 -e LOGLEVEL=DEBUG
-                -e DEBUG=1
                 -e PYTHONDEVMODE=1
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 {{.REPO}}backend-{{.BRANCH_NAME}}:latest
