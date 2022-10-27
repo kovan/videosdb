@@ -188,6 +188,7 @@ tasks:
 
 
     run-backend:
+        deps: [prepare-servers]
         run: once
         cmds:
             - date
