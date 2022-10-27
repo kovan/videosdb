@@ -247,7 +247,6 @@ tasks:
 
 
     push-frontend:
-        deps: [build-frontend]
         run: once
         cmds:
             - task: push
@@ -256,12 +255,17 @@ tasks:
 
 
     push-backend:
-        deps: [build-backend]
         run: once
         cmds:
             - task: push
               vars:
                 IMAGE: backend
+
+    push-all:
+        run: once
+        cmds:
+            - task: push-backend
+            - task: push-frontend
 
     build-and-push-other-images:
         deps: [init-gcp]
@@ -338,27 +342,18 @@ tasks:
 
 # cloud build trigger tasks. Task names must match with the trigger names in the GCP console
 
-    backend-master:
-        deps: [build-backend, unittests-backend]
+    build-and-push-master:
         cmds:
-            - task: push-backend
+            - task: build-all
+            - task: unittests
+            - task: push-all
 
-    backend-prod:
-        deps: [build-backend, unittests-backend]
+    build-and-push-prod:
         cmds:
+            - task: build-all
+            - task: unittests
             - task: end2end-tests
-            - task: push-backend
-
-    frontend-master:
-        deps: [build-frontend, unittests-frontend]
-        cmds:
-            - task: push-frontend
-
-    frontend-prod:
-        deps: [build-frontend, unittests-frontend]
-        cmds:
-            - task: end2end-tests
-            - task: push-frontend
+            - task: push-all
 
     tests-end2end-master:
         cmds:
