@@ -64,6 +64,7 @@ import {
     doc,
     query, collection
 } from 'firebase/firestore/lite'
+import { Logger } from '@firebase/logger'
 
 export default {
     name: 'Explorer',
@@ -314,6 +315,7 @@ export default {
                     //hack: sometimes docs somehow have bad formatted date, so exclude them:
                     try {
                         self.formatDuration(doc.data().snippet.publishedAt)
+                        console.warn("Excluding id : " + doc.id)
                     } catch (e) {
                         if (e instanceof RangeError) {
                             return
