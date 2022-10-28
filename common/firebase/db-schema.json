@@ -33,12 +33,7 @@
                                 "width": {
                                     "type": "integer"
                                 }
-                            },
-                            "required": [
-                                "height",
-                                "url",
-                                "width"
-                            ]
+                            }
                         },
                         "default": {
                             "type": "object",
@@ -52,18 +47,9 @@
                                 "width": {
                                     "type": "integer"
                                 }
-                            },
-                            "required": [
-                                "height",
-                                "url",
-                                "width"
-                            ]
+                            }
                         }
-                    },
-                    "required": [
-                        "medium",
-                        "default"
-                    ]
+                    }
                 },
                 "description": {
                     "type": "string"
@@ -71,15 +57,7 @@
                 "title": {
                     "type": "string"
                 }
-            },
-            "required": [
-                "publishedAt",
-                "channelTitle",
-                "channelId",
-                "thumbnails",
-                "description",
-                "title"
-            ]
+            }
         },
         "statistics": {},
         "videosdb": {
@@ -100,13 +78,7 @@
                 "descriptionTrimmed": {
                     "type": "string"
                 }
-            },
-            "required": [
-                "slug",
-                "playlists",
-                "durationSeconds",
-                "descriptionTrimmed"
-            ]
+            }
         },
         "etag": {
             "type": "string"
@@ -126,22 +98,7 @@
                 "caption": {
                     "type": "string"
                 }
-            },
-            "required": [
-                "duration",
-                "projection",
-                "definition",
-                "caption"
-            ]
+            }
         }
-    },
-    "required": [
-        "kind",
-        "id",
-        "snippet",
-        "statistics",
-        "videosdb",
-        "etag",
-        "contentDetails"
-    ]
+    }
 }

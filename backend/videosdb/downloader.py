@@ -6,7 +6,7 @@ import random
 import re
 from abc import abstractmethod
 from types import AsyncGeneratorType
-from typing import Any, AsyncGenerator, Iterable, Type
+from typing import Any, AsyncGenerator, Callable, Iterable, Type
 from google.api_core.retry import Retry
 import anyio
 import bleach
@@ -341,13 +341,14 @@ class Downloader:
             tasks = [
                 RetrievePendingTranscriptsTask(*args),
                 PublishTask(*args),
-                export_to_emulator_task
+                export_to_emulator_task,
+                lambda video_dict: self.db.validate_video_schema(video_dict)
             ]
 
             await self._final_video_iteration(tasks)
             await export_to_emulator_task.export_pending_collections()
 
-    async def _final_video_iteration(self, phase2_tasks: Iterable[Task]):
+    async def _final_video_iteration(self, phase2_tasks: Iterable[Callable]):
         final_video_ids = LockedItem(set())
 
         # we only want videos ready to publish:

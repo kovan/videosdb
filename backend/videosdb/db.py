@@ -6,10 +6,13 @@ from google.cloud import firestore
 from google.oauth2 import service_account
 import os
 import logging
+import fnc
 import sys
 from google.api_core.retry import Retry
-from jsonschema import validate
+from jsonschema import validate, ValidationError
 from videosdb.utils import QuotaExceeded, wait_for_port
+
+BASE_DIR = os.path.dirname(str(sys.modules[__name__].__file__))
 logger = logging.getLogger(__name__)
 
 
@@ -52,7 +55,6 @@ class DB:
         if not project:
             project = os.environ.get("FIREBASE_PROJECT", "videosdb-testing")
 
-        BASE_DIR = os.path.dirname(str(sys.modules[__name__].__file__))
         creds_json_path = os.path.join(
             BASE_DIR, "../common/keys/%s.json" % config.strip('"'))
 
@@ -85,6 +87,10 @@ class DB:
                         self.FREE_TIER_WRITE_QUOTA - 500)
         }
 
+        with open(os.path.join(
+                BASE_DIR, "../common/firebase/db-schema.json")) as f:
+            self.db_schema = json.load(f)
+
         self._db = self.get_client()
 
     async def init(self):
@@ -114,49 +120,56 @@ class DB:
     async def increase_counter(self, type: CounterTypes, increase: int = 1):
         await self._counters[type].inc(increase)
 
-    @Retry()
+    @ Retry()
     async def set(self, path, *args, **kwargs):
         await self._counters[CounterTypes.WRITES].inc()
         return await self._db.document(path).set(*args, **kwargs)
 
-    @Retry()
+    @ Retry()
     async def get(self, path, *args, **kwargs):
         await self._counters[CounterTypes.READS].inc()
         return await self._db.document(path).get(*args, **kwargs)
 
-    @Retry()
+    @ Retry()
     async def update(self, path, *args, **kwargs):
         await self._counters[CounterTypes.WRITES].inc()
         return await self._db.document(path).update(*args, **kwargs)
 
-    @Retry()
+    @ Retry()
     async def delete(self, path, *args, **kwargs):
         await self._counters[CounterTypes.WRITES].inc()
         return await self._db.document(path).delete(*args, **kwargs)
 
-    @Retry()
+    @ Retry()
     async def recursive_delete(self, path):
         ref = self._db.document(path)
         return await self._db.recursive_delete(ref)
 
-    @Retry()
+    @ Retry()
     async def set_noquota(self, path, *args, **kwargs):
         return await self._db.document(path).set(*args, **kwargs)
 
-    @Retry()
+    @ Retry()
     async def update_noquota(self, path, *args, **kwargs):
         return await self._db.document(path).update(*args, **kwargs)
 
-    @Retry()
+    @ Retry()
     async def get_noquota(self, path, *args, **kwargs):
         return await self._db.document(path).get(*args, **kwargs)
 
-    async def validate_videos_schema(self):
-        with open(get_module_path() + "/../../common/firebase/db-schema.json") as f:
-            schema = json.load(f)
+    async def validate_video_schema(self, video_dict) -> bool:
+        try:
+            validate(instance=video_dict, schema=self.db_schema)
+        except ValidationError as e:
+            logger.warn(
+                f"Video {video_dict['id']} did not pass schema validation")
+            return False
+        # if not isinstance(fnc.get("snippet.publishedAt", video_dict),
+        return True
 
-        async for doc_ref in self._db.collection("videos").list_documents():
-            video = await doc_ref.get()  # type: ignore
-            await self._counters[CounterTypes.READS].inc()
-            video_dict = video.to_dict()
-            validate(instance=video_dict, schema=schema)
+    async def delete_invalid_docs(self):
+
+        async for video_ref in self._db.collection("videos").list_documents():
+            video = await video_ref.get()  # type: ignore
+            if not self.validate_video_schema(video.to_dict()):
+                await video_ref.delete()  # type: ignore
