@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore/lite'
 
 
+
 var lock = new AsyncLock();
 const NodeCache = require("node-cache");
 
@@ -113,20 +114,36 @@ async function generateRoutes(dbOptions) {
     return routes
 }
 
+
+function writeRobotsTxtFile() {
+    const hostname = process.env.VIDEOSDB_HOSTNAME
+    const fs = require('fs');
+    const content = `User-agent: *
+Allow: /
+
+Sitemap: ${hostname}/sitemap.xml
+`
+
+    fs.writeFile('dist/robots.txt', content, err => {
+        if (err) {
+            console.error(err);
+        }
+        // file written successfully
+    });
+}
+
 export default function (moduleOptions) {
     this.nuxt.hook('generate:before', async (generator, generateOptions) => {
         installUnhandledExceptionHandlers()
         generateOptions.routes = await generateRoutes(await getFirebaseSettings())
+
     })
 
+    this.nuxt.hook('generate:done', (generator, errors) => {
+        writeRobotsTxtFile()
 
-    // this.nuxt.hook('sitemap:generate:before', async (nuxt, sitemapOptions) => {
+    })
 
-    //     sitemapOptions.routes = async () => {
-    //         return getSitemap(nuxt.options.publicRuntimeConfig.firebase);
-    //     }
-
-    // })
 
 }
 
