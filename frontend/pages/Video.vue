@@ -38,7 +38,6 @@ b-container.m-0.p-0.mx-auto
                                         :src='item.snippet.thumbnails.medium.url',
                                         height='180',
                                         width='320',
-                                        loading="lazy",
                                         :id='item.id',
                                         :alt='item.snippet.title',
                                         fluid

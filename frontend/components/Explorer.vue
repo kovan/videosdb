@@ -20,7 +20,7 @@
                             @change='handleChange'
                         )
             .row(v-if='Object.keys(this.videos).length')
-                .col-md-4(v-for='video in this.videos', :key='video.id')
+                .col-md-4(v-for='(video, key, index) in this.videos', :key='video.id')
                     LazyHydrate(when-visible)
                         .card.mb-4.shadow-sm.text-center
                             NuxtLink(:to='"/video/" + video.videosdb.slug')
@@ -28,7 +28,7 @@
                                     :src='video.snippet.thumbnails.medium.url',
                                     height='180',
                                     width='320',
-                                    loading="lazy",
+                                    v-bind:loading='index < 5 ? "eager" : "lazy"',
                                     :id='video.id',
                                     :alt='video.snippet.title',
                                     fluid
