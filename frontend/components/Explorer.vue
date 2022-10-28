@@ -44,7 +44,7 @@
                                         | {{ video.snippet.title }}
                                 .d-flex.justify-content-between.align-items-center
                                     small.text-muted Published: <br/>{{ $myFormatDate(video.snippet.publishedAt) }}
-                                    small.text-muted Duration (hh:mm:ss): <br/>{{ new Date(video.videosdb.durationSeconds * 1000).toISOString().substr(11, 8) }}
+                                    small.text-muted Duration (hh:mm:ss): <br/>{{ formatDuration(video.videosdb.durationSeconds) }}
                 .col-md-4(v-if='loading')
                     .card.mb-4.shadow-sm.text-center
                         Loading
@@ -216,6 +216,9 @@ export default {
     //   this.current_page = this.$route.query.page || this.initial_page
     // },
     methods: {
+        formatDuration(date) {
+            return new Date(date * 1000).toISOString().substr(11, 8)
+        },
         async loadMore() {
             // this.logs.push('loadMore')
             await this.doQuery()
@@ -308,6 +311,16 @@ export default {
                 }
 
                 results.forEach((doc) => {
+                    //hack: sometimes docs somehow have bad formatted date, so exclude them:
+                    try {
+                        self.formatDuration(doc.data().snippet.publishedAt)
+                    } catch (e) {
+                        if (e instanceof RangeError) {
+                            return
+                        } else {
+                            throw e // re-throw the error unchanged
+                        }
+                    }
                     self.$set(self.videos, doc.data().id, doc.data())
                 })
 

@@ -320,19 +320,19 @@ tasks:
         LOGLEVEL=DEBUG
         DEBUG=1
         YOUTUBE_API_URL=http://127.0.0.1:43783/youtube/v3
-        FIRESTORE_EMULATOR_HOST=localhost:46456
+        FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
         poetry run main -c --dotenv ../common/env/testing.txt; cd ..
 
     local-run-frontend:
         cd frontend &&
-        FIRESTORE_EMULATOR_HOST=localhost:46456
+        FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
         yarn generate --dotenv ../common/env/testing.txt &&
         yarn start    --dotenv ../common/env/testing.txt; cd ..
 
     local-dev-frontend:
         cd frontend &&
-        FIRESTORE_EMULATOR_HOST=localhost:46456
-        yarn dev -t static --dotenv ../common/env/testing.txt; cd ..
+        FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
+        yarn dev -t spa --dotenv ../common/env/testing.txt; cd ..
 
     local-ipython-shell: backend/utils/ipythonshell.sh
 
