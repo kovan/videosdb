@@ -314,7 +314,7 @@ export default {
                 results.forEach((doc) => {
                     //hack: sometimes docs somehow have bad formatted date, so exclude them:
                     try {
-                        self.formatDuration(doc.data().snippet.publishedAt)
+                        self.formatDuration(doc.data().videosdb.durationSeconds)
                     } catch (e) {
                         if (e instanceof RangeError) {
                             console.warn("Excluding id: " + doc.id)
