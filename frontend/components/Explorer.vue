@@ -315,9 +315,9 @@ export default {
                     //hack: sometimes docs somehow have bad formatted date, so exclude them:
                     try {
                         self.formatDuration(doc.data().snippet.publishedAt)
-                        console.warn("Excluding id : " + doc.id)
                     } catch (e) {
                         if (e instanceof RangeError) {
+                            console.warn("Excluding id: " + doc.id)
                             return
                         } else {
                             throw e // re-throw the error unchanged
