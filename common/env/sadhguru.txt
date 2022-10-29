@@ -2,7 +2,7 @@ FIREBASE_PROJECT=videosdb-firebase
 VIDEOSDB_CONFIG=sadhguru
 VIDEOSDB_CSE_URL=https://cse.google.com/cse.js?cx=7c33eb2b1fc2db635
 VIDEOSDB_HOSTNAME=https://www.sadhguru.digital
-VIDEOSDB_SHOW_TRANSCRIPTS=false
+VIDEOSDB_SHOW_TRANSCRIPTS=true
 VIDEOSDB_SUBTITLE="Mysticism, yoga, spirituality, day-to-day life tips, ancient wisdom, interviews, tales, and much more."
 VIDEOSDB_TITLE="Sadhguru wisdom"
 VIDEOSDB_WEBSITE=https://isha.sadhguru.org/global/en/wisdom
