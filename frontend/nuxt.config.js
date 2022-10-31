@@ -206,7 +206,7 @@ export default {
     },
 
     googleAnalytics: {
-        id: "UA-171658328-1",
+        id: process.env.GOOGLE_ANALYTICS_ID,
     },
 
     cache: {
