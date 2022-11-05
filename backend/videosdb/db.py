@@ -13,6 +13,10 @@ from jsonschema import validate, ValidationError
 from videosdb.utils import QuotaExceeded, wait_for_port
 
 BASE_DIR = os.path.dirname(str(sys.modules[__name__].__file__))
+COMMON_DIR = BASE_DIR + "/../../common"
+if not os.path.exists(COMMON_DIR):
+    COMMON_DIR = BASE_DIR + "/../common"
+
 logger = logging.getLogger(__name__)
 
 
@@ -56,7 +60,7 @@ class DB:
             project = os.environ.get("FIREBASE_PROJECT", "videosdb-testing")
 
         creds_json_path = os.path.join(
-            BASE_DIR, "../../common/keys/%s.json" % config.strip('"'))
+            COMMON_DIR, "keys/%s.json" % config.strip('"'))
 
         if "FIRESTORE_EMULATOR_HOST" in os.environ:
             project = "demo-project"
@@ -73,7 +77,7 @@ class DB:
 
         return db
 
-    def __init__(self,):
+    def __init__(self):
 
         self.FREE_TIER_WRITE_QUOTA = 20000
         self.FREE_TIER_READ_QUOTA = 50000
@@ -88,7 +92,7 @@ class DB:
         }
 
         with open(os.path.join(
-                BASE_DIR, "../../common/firebase/db-schema.json")) as f:
+                COMMON_DIR, "firebase/db-schema.json")) as f:
             self.db_schema = json.load(f)
 
         self._db = self.get_client()
