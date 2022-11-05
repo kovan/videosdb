@@ -56,7 +56,7 @@ class DB:
             project = os.environ.get("FIREBASE_PROJECT", "videosdb-testing")
 
         creds_json_path = os.path.join(
-            BASE_DIR, "../common/keys/%s.json" % config.strip('"'))
+            BASE_DIR, "../../common/keys/%s.json" % config.strip('"'))
 
         if "FIRESTORE_EMULATOR_HOST" in os.environ:
             project = "demo-project"
@@ -88,7 +88,7 @@ class DB:
         }
 
         with open(os.path.join(
-                BASE_DIR, "../common/firebase/db-schema.json")) as f:
+                BASE_DIR, "../../common/firebase/db-schema.json")) as f:
             self.db_schema = json.load(f)
 
         self._db = self.get_client()

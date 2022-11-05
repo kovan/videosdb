@@ -55,5 +55,6 @@ sudo apt-get install -y nodejs
 sudo apt install python3-distutils -y
 curl -sSL https://install.python-poetry.org | python3 -
 
-#sudo npm i -g firebase-tools
+sudo apt install openjdk-17-jre-headless -y
+sudo npm i -g firebase-tools
 sudo npm i -g yarn
