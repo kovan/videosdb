@@ -308,7 +308,11 @@ tasks:
         FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
             poetry run python -m unittest; cd ..
 
+    local-unittests-frontend:
+        cd frontend && yarn test
 
+    local-unittests:
+        deps: [local-unittests-backend, local-unittests-frontend]
 
     local-run:
         - task: tail-servers-logs
