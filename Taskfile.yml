@@ -130,7 +130,6 @@ tasks:
             - docker run
                 --cidfile {{.CID_FILE}}
                 --network host
-                --env-file common/env/testing.txt
                 -e LOGLEVEL=DEBUG
                 -e PYTHONDEVMODE=1
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
@@ -303,12 +302,15 @@ tasks:
 
     local-unittests-backend:
         cd backend &&
-        DEBUG=1
         PYTHONDEVMODE=1
         FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
             poetry run python -m unittest; cd ..
 
+    local-unittests-frontend:
+        cd frontend && yarn test
 
+    local-unittests:
+        deps: [local-unittests-backend, local-unittests-frontend]
 
     local-run:
         - task: tail-servers-logs

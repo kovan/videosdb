@@ -1,14 +1,11 @@
 #!/bin/bash
 # all this for debian
 sudo apt-get update
-sudo apt install -y zsh curl wget tmux git fzf vim net-tools apt-file netcat nmap strace ltrace bwm-ng ripgrep htop fd-find aptitude bpytop rsync
 sudo apt-file update
 
 
 
 sudo usermod -a -G docker k
-git config --global user.name kovan
-git config --global user.email "you@example.com"
 echo net.ipv4.ping_group_range="0 2147483647" | sudo tee /etc/sysctl.conf
 
 
@@ -55,5 +52,6 @@ sudo apt-get install -y nodejs
 sudo apt install python3-distutils -y
 curl -sSL https://install.python-poetry.org | python3 -
 
-#sudo npm i -g firebase-tools
+sudo apt install openjdk-17-jre-headless -y
+sudo npm i -g firebase-tools
 sudo npm i -g yarn

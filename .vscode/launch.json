@@ -38,7 +38,6 @@
                     "PYTHONDEVMODE": "1",
                 },
                 "request": "launch",
-                "envFile": "${workspaceFolder}/common/env/testing.txt",
                 "program": "${file}",
                 "purpose": [
                     "debug-test"
