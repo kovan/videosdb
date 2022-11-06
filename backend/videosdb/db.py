@@ -3,7 +3,7 @@ import json
 from enum import Enum
 import anyio
 from google.cloud import firestore
-from google.oauth2 import service_account
+from google.oauth2.service_account import Credentials
 import os
 import logging
 import fnc
@@ -72,7 +72,7 @@ class DB:
         logger.info("Current config: " + config)
 
         db = firestore.AsyncClient(project=project,
-                                   credentials=service_account.Credentials.from_service_account_file(
+                                   credentials=Credentials.from_service_account_file(
                                        creds_json_path))
 
         return db
