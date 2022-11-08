@@ -300,6 +300,11 @@ tasks:
 
 # local-only, non-docker commands:
 
+    local-prepare:
+        cd backend && poetry install; cd -; 
+        cd frontend && yarn install; cd -; 
+        cd common/firebase && firebase emulators:setup; cd -;
+
     local-unittests-backend:
         cd backend &&
         PYTHONDEVMODE=1
