@@ -303,7 +303,7 @@ tasks:
     local-prepare:
         cd backend && poetry install; cd -; 
         cd frontend && yarn install; cd -; 
-        cd common/firebase && firebase emulators:setup; cd -;
+        sudo yarn global add firebase-tools && cd common/firebase && firebase emulators:setup; cd -;
 
     local-unittests-backend:
         cd backend &&
