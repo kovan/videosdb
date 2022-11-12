@@ -25,6 +25,9 @@ from videosdb.publisher import TwitterPublisher
 from videosdb.youtube_api import Cache, YoutubeAPI
 import tracemalloc
 
+import hy
+import db_hy
+
 logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(str(sys.modules[__name__].__file__))
@@ -315,18 +318,21 @@ class DownloaderTest(PatchedTestCase):
         #     self.assertIn("transcript", video["videosdb"])
         #     self.assertIn("transcript_status", video["videosdb"])
 
+    def test_lisp(self):
+        db_hy.get_client("demo-project", "testing")
+
 
 # @memory_profiler.profile
-def main():
-    tracemalloc.start()
-    snapshot = tracemalloc.take_snapshot()
-    try:
-        unittest.main()
-    except KeyboardInterrupt as e:
-        snapshot2 = tracemalloc.take_snapshot()
-        print("Took snapshot")
+# def main():
+#     tracemalloc.start()
+#     snapshot = tracemalloc.take_snapshot()
+#     try:
+#         unittest.main()
+#     except KeyboardInterrupt as e:
+#         snapshot2 = tracemalloc.take_snapshot()
+#         print("Took snapshot")
 
 
-if __name__ == "__main__":
-    print("Running tests...")
-    main()
+# if __name__ == "__main__":
+#     print("Running tests...")
+#     main()

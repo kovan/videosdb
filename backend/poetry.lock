@@ -69,14 +69,6 @@ test = ["contextlib2", "coverage[toml] (>=4.5)", "hypothesis (>=4.0)", "mock (>=
 trio = ["trio (>=0.16,<0.22)"]
 
 [[package]]
-name = "appdirs"
-version = "1.4.4"
-description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "appnope"
 version = "0.1.3"
 description = "Disable App Nap on macOS >= 10.9"
@@ -512,17 +504,16 @@ socks = ["socksio (>=1.0.0,<2.0.0)"]
 
 [[package]]
 name = "hy"
-version = "0.20.0"
-description = "Lisp and Python love each other."
+version = "0.24.0"
+description = "A Lisp dialect embedded in Python"
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">= 3.7, < 3.11"
 
 [package.dependencies]
-astor = ">=0.8"
+astor = {version = ">=0.8", markers = "python_version < \"3.9\""}
 colorama = "*"
-funcparserlib = ">=0.3.6"
-rply = ">=0.7.7"
+funcparserlib = ">=1.0,<2.0"
 
 [[package]]
 name = "hyperframe"
@@ -1038,17 +1029,6 @@ typing-extensions = {version = ">=4.0.0,<5.0", markers = "python_version < \"3.9
 jupyter = ["ipywidgets (>=7.5.1,<8.0.0)"]
 
 [[package]]
-name = "rply"
-version = "0.7.8"
-description = "A pure Python Lex/Yacc that works with RPython"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-appdirs = "*"
-
-[[package]]
 name = "rsa"
 version = "4.9"
 description = "Pure-Python RSA implementation"
@@ -1252,7 +1232,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">3.7.0,<3.7.1 || >3.7.1,<3.11"
-content-hash = "6c5c048dda5db085b19b0d4da15576e53f99d2531163643e93510501f4c7b312"
+content-hash = "49a3b7fdf6b16ed7d74a4885835ba3b5a3cb54f97935aa42c6643019fd6e73cc"
 
 [metadata.files]
 aiohttp = [
@@ -1359,10 +1339,6 @@ aiounittest = [
 anyio = [
     {file = "anyio-3.6.2-py3-none-any.whl", hash = "sha256:fbbe32bd270d2a2ef3ed1c5d45041250284e31fc0a4df4a5a6071842051a51e3"},
     {file = "anyio-3.6.2.tar.gz", hash = "sha256:25ea0d673ae30af41a0c442f81cf3b38c7e79fdc7b60335a4c14e05eb0947421"},
-]
-appdirs = [
-    {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
-    {file = "appdirs-1.4.4.tar.gz", hash = "sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41"},
 ]
 appnope = [
     {file = "appnope-0.1.3-py2.py3-none-any.whl", hash = "sha256:265a455292d0bd8a72453494fa24df5a11eb18373a60c7c0430889f22548605e"},
@@ -1661,8 +1637,7 @@ httpx = [
     {file = "httpx-0.23.0.tar.gz", hash = "sha256:f28eac771ec9eb4866d3fb4ab65abd42d38c424739e80c08d8d20570de60b0ef"},
 ]
 hy = [
-    {file = "hy-0.20.0-py2.py3-none-any.whl", hash = "sha256:f4c6cdf6ee04e6d94fd8b5c6e8389bd99df4c672d570b3eb847615a5f882047c"},
-    {file = "hy-0.20.0.tar.gz", hash = "sha256:1b72863754fb57e2dd275a9775bf621cb50a565e76733a2e74e9954e7fbb060e"},
+    {file = "hy-0.24.0.tar.gz", hash = "sha256:de3928ff7f97893bb825e59f17f3cd19e4b59beecb71c38039b8f349ca8dfe1d"},
 ]
 hyperframe = [
     {file = "hyperframe-6.0.1-py3-none-any.whl", hash = "sha256:0ec6bafd80d8ad2195c4f03aacba3a8265e57bc4cff261e802bf39970ed02a15"},
@@ -1931,10 +1906,6 @@ rfc3986 = [
 rich = [
     {file = "rich-12.6.0-py3-none-any.whl", hash = "sha256:a4eb26484f2c82589bd9a17c73d32a010b1e29d89f1604cd9bf3a2097b81bb5e"},
     {file = "rich-12.6.0.tar.gz", hash = "sha256:ba3a3775974105c221d31141f2c116f4fd65c5ceb0698657a11e9f295ec93fd0"},
-]
-rply = [
-    {file = "rply-0.7.8-py2.py3-none-any.whl", hash = "sha256:28ffd11d656c48aeb8c508eb382acd6a0bd906662624b34388751732a27807e7"},
-    {file = "rply-0.7.8.tar.gz", hash = "sha256:2a808ac25a4580a9991fc304d64434e299a8fc75760574492f242cbb5bb301c9"},
 ]
 rsa = [
     {file = "rsa-4.9-py3-none-any.whl", hash = "sha256:90260d9058e514786967344d0ef75fa8727eed8a7d2e43ce9f4bcf1b536174f7"},

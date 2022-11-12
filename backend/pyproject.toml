@@ -20,7 +20,7 @@ bleach = "^5.0.1"
 tweepy = {extras = ["async"], version = "^4.10.1"}
 redis = "^4.3.4"
 jsonschema = "^4.16.0"
-hy = "^0.20.0"
+hy = "^0.24.0"
 
 
 [tool.poetry.dev-dependencies]
