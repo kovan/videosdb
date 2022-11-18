@@ -6,17 +6,7 @@ sudo apt-file update
 
 
 sudo usermod -a -G docker k
-echo net.ipv4.ping_group_range="0 2147483647" | sudo tee /etc/sysctl.conf
 
-
-#other
-mkdir -p ~/prj
-cd ~/prj
-git clone https://github.com/kovan/dotfiles
-
-sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-cp ~/prj/dotfiles/zshrc ~/.zshrc
-source ~/.zshrc
 
 
 # task
@@ -42,7 +32,7 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plu
 
 echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-sudo apt-get update && sudo apt-get install google-cloud-cli
+#sudo apt-get update && sudo apt-get install google-cloud-cli
 
 #node
 
@@ -55,3 +45,4 @@ curl -sSL https://install.python-poetry.org | python3 -
 sudo apt install openjdk-17-jre-headless -y
 sudo npm i -g firebase-tools
 sudo npm i -g yarn
+

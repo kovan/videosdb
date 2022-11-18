@@ -303,7 +303,7 @@ tasks:
     local-prepare:
         cd backend && poetry install; cd -; 
         cd frontend && yarn install; cd -; 
-        cd common/firebase && firebase emulators:setup; cd -;
+        cd common/firebase && firebase setup:emulators:firestore && firebase setup:emulators:ui; cd -;
 
     local-unittests-backend:
         cd backend &&
@@ -343,7 +343,7 @@ tasks:
 
     local-ipython-shell: backend/utils/ipythonshell.sh
 
-    local-prepare-servers: sudo systemctl start redis && cd common/firebase && firebase emulators:start --project demo-project; cd ../..
+    local-prepare-servers: sudo systemctl start redis-server && cd common/firebase && firebase emulators:start --project demo-project; cd ../..
 
     local-push-to-prod: git checkout prod && git merge master && git push && git checkout master
 
