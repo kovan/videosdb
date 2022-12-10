@@ -79,7 +79,7 @@ export default {
         "~/modules/mymodule.js"
     ],
     delayHydration: {
-        mode: 'init'
+        mode: 'mount'
     },
     bootstrapVue: {
         bootstrapCSS: true,
