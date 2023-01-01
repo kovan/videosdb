@@ -32,7 +32,7 @@ div
         strong {{ this.$config.subtitle }}
     b-container
         .row
-            LazyHydrate(when-visible)
+            DelayHydration
                 b-sidebar#sidebarMenu(
                     v-model='sidebar_visible',
                     no-slide,
