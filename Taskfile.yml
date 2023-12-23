@@ -301,15 +301,17 @@ tasks:
 # local-only, non-docker commands:
 
     local-prepare:
+        sudo npm install --global yarn
         cd backend && poetry install; cd -; 
         cd frontend && yarn install; cd -; 
+        sudo npm install --global firebase-tools
         cd common/firebase && firebase setup:emulators:firestore && firebase setup:emulators:ui; cd -;
 
     local-unittests-backend:
         cd backend &&
         PYTHONDEVMODE=1
         FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
-            poetry run python -m unittest; cd ..
+            poetry run python -m unittest -v; cd ..
 
     local-unittests-frontend:
         cd frontend && yarn test
