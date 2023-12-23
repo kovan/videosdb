@@ -15,12 +15,14 @@
     "python.testing.unittestEnabled": true,
     "python.testing.pytestEnabled": false,
     "python.formatting.provider": "autopep8",
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.defaultInterpreterPath": "backend/.venv/bin/python",
     "python.testing.unittestArgs": [
         "-v",
         "-s",
         "./backend",
         "-p",
-        "test_*.py"
+        "test*.py"
     ],
     "python.analysis.typeCheckingMode": "basic",
     "git.ignoreLimitWarning": true,
