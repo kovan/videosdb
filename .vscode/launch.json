@@ -5,6 +5,26 @@
         "version": "0.2.0",
         "configurations": [
             {
+                "name": "Python: Debug Tests",
+                "type": "python",
+                "pythonArgs": [
+                    "-W",
+                    "default"
+                ],                
+                "env": {
+                    "LOGLEVEL": "DEBUG",
+                    "PYTHONDEVMODE": "1",
+                },
+                "envFile": "${workspaceFolder}/common/env/testing.txt",
+                "request": "launch",
+                "program": "${file}",
+                "purpose": [
+                    "debug-test"
+                ],
+                "console": "integratedTerminal",
+                "justMyCode": true
+            },
+            {
                 "name": "Backend run check",
                 "type": "python",
                 "request": "launch",
@@ -28,21 +48,6 @@
                 ],
                 "console": "integratedTerminal",
                 "cwd": "${workspaceFolder}/backend",
-                "justMyCode": true
-            },
-            {
-                "name": "Python: Debug Tests",
-                "type": "python",
-                "env": {
-                    "LOGLEVEL": "DEBUG",
-                    "PYTHONDEVMODE": "1",
-                },
-                "request": "launch",
-                "program": "${file}",
-                "purpose": [
-                    "debug-test"
-                ],
-                "console": "integratedTerminal",
                 "justMyCode": true
             },
             {
