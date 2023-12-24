@@ -24,10 +24,11 @@
         "-p",
         "test*.py"
     ],
-    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.typeCheckingMode": "off",
     "git.ignoreLimitWarning": true,
     "python.analysis.diagnosticSeverityOverrides": {
         "reportOptionalMemberAccess": "none",
         "reportUnboundVariable": "none"
     },
+    "python.analysis.autoImportCompletions": true,
 }

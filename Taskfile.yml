@@ -11,6 +11,7 @@ env:
     TEST_SERVERS: json-caching-proxy firebase-emulator
     BRANCH_NAME:
         sh: echo ${BRANCH_NAME:-$(git branch --show-current)}
+    NODE_OPTIONS: --openssl-legacy-provider
 
 output: prefixed
 
@@ -301,10 +302,10 @@ tasks:
 # local-only, non-docker commands:
 
     local-prepare:
-        sudo npm install --global yarn
+        sudo npm install --global yarn;
         cd backend && poetry install; cd -; 
         cd frontend && yarn install; cd -; 
-        sudo npm install --global firebase-tools
+        sudo npm install --global firebase-tools;
         cd common/firebase && firebase setup:emulators:firestore && firebase setup:emulators:ui; cd -;
 
     local-unittests-backend:
@@ -325,18 +326,24 @@ tasks:
         - task: local-run-frontend
 
     local-run-backend:
-        cd backend &&
-        LOGLEVEL=DEBUG
-        DEBUG=1
-        YOUTUBE_API_URL=http://127.0.0.1:43783/youtube/v3
-        FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
-        poetry run main -c --dotenv ../common/env/testing.txt; cd ..
+        cmds:
+            - cd backend && 
+                LOGLEVEL=DEBUG
+                DEBUG=1
+                YOUTUBE_API_URL=http://127.0.0.1:43783/youtube/v3
+                FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
+                poetry run main -c --dotenv ../common/env/testing.txt
+
 
     local-run-frontend:
-        cd frontend &&
-        FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
-        yarn generate --dotenv ../common/env/testing.txt &&
-        yarn start    --dotenv ../common/env/testing.txt; cd ..
+        cmds:
+            - 
+            - cd frontend && FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
+                yarn generate --dotenv ../common/env/testing.txt
+            - cd frontend && yarn start --dotenv ../common/env/testing.txt
+
+        vars:
+            FIRESTORE_EMULATOR_HOST: .FIRESTORE_EMULATOR
 
     local-dev-frontend:
         cd frontend &&
