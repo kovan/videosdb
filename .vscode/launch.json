@@ -17,11 +17,13 @@
                 },
                 "envFile": "${workspaceFolder}/common/env/testing.txt",
                 "request": "launch",
-                "program": "${file}",
+                "module": "unittest",
+                "args": [ "-v"],
                 "purpose": [
                     "debug-test"
                 ],
                 "console": "integratedTerminal",
+                "cwd": "${workspaceFolder}/backend",
                 "justMyCode": true
             },
             {
