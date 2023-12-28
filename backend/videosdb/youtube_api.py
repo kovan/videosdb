@@ -16,6 +16,8 @@ from types import AsyncGeneratorType
 logger = logging.getLogger(__name__)
 
 
+
+
 def parse_youtube_id(string: str):
     match = re.search(r'\[(.{11})]\.', string)
     if not match:
@@ -138,6 +140,7 @@ class YoutubeAPI:
 
     def __init__(self, db, yt_key=None, redis_db_n=None):
         self.db = db
+        
         limits = httpx.Limits(max_connections=50)
         self.http = httpx.AsyncClient(limits=limits)
 

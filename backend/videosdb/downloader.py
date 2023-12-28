@@ -22,9 +22,8 @@ from videosdb.publisher import TwitterPublisher
 from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 
 from videosdb.utils import QuotaExceeded, my_handler
-
 import hy
-import videosdb.youtube_api_hy
+import videosdb.lisp.youtube_api as lisp
 
 logger = logging.getLogger(__name__)
 
@@ -412,7 +411,7 @@ class Downloader:
 
         logger.info("Processing playlist " + playlist_id)
 
-        _, playlist = await self.api.get_playlist_info(playlist_id)
+        _, playlist = await lisp.get_playlist_info(self.api, playlist_id)
         if not playlist:
             return
 
