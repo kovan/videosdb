@@ -23,8 +23,6 @@ from videosdb.youtube_api import YoutubeAPI, get_video_transcript
 
 from videosdb.utils import QuotaExceeded, my_handler
 
-import hy
-import videosdb.youtube_api_hy
 
 logger = logging.getLogger(__name__)
 

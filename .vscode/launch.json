@@ -10,7 +10,7 @@
                 "pythonArgs": [
                     "-W",
                     "default"
-                ],                
+                ],
                 "env": {
                     "LOGLEVEL": "DEBUG",
                     "PYTHONDEVMODE": "1",
@@ -18,7 +18,9 @@
                 "envFile": "${workspaceFolder}/common/env/testing.txt",
                 "request": "launch",
                 "module": "unittest",
-                "args": [ "-v"],
+                "args": [
+                    "-v"
+                ],
                 "purpose": [
                     "debug-test"
                 ],
@@ -36,11 +38,8 @@
                     "default"
                 ],
                 "env": {
-                    //"DEBUG": "1",
                     "LOGLEVEL": "DEBUG",
                     "PYTHONDEVMODE": "1",
-                    //"FIRESTORE_EMULATOR_HOST": "127.0.0.1:46456",
-                    //"YOUTUBE_API_URL": "http://127.0.0.1:43783/youtube/v3"
                 },
                 "envFile": "${workspaceFolder}/common/env/testing.txt",
                 "args": [
@@ -51,14 +50,6 @@
                 "console": "integratedTerminal",
                 "cwd": "${workspaceFolder}/backend",
                 "justMyCode": true
-            },
-            {
-                "name": "Python: Current File",
-                "type": "python",
-                "request": "launch",
-                "program": "${file}",
-                "console": "integratedTerminal",
-                "justMyCode": false
             },
             {
                 "name": "yarn generate",

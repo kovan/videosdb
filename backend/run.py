@@ -10,7 +10,6 @@ from videosdb.db import DB
 from videosdb.downloader import Downloader
 from videosdb.settings import LOGGING
 from autologging import TRACE
-import videosdb.utils
 
 
 def entrypoint():
@@ -30,7 +29,6 @@ def entrypoint():
                         action="store_true")
     parser.add_argument(
         "-f", "--download-and-register-in-ipfs", action="store_true")
-    #parser.add_argument("-o", "--overwrite-hashes", action="store_true")
     parser.add_argument("-s", "--validate-db-schema", action="store_true")
 
     options = parser.parse_args()
@@ -39,8 +37,6 @@ def entrypoint():
         load_dotenv(options.dotenv)
 
     if options.check_for_new_videos:
-        # DB.wait_for_port()
-        # YoutubeAPI.wait_for_port()
         downloader = Downloader(options)
 
         anyio.run(downloader.check_for_new_videos)
