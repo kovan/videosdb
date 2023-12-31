@@ -357,10 +357,7 @@ def get_video_transcript(youtube_id):
 
         final = ''.join([i.capitalize() for i in split_with_punctuation])
         return final
-    # url = "/captions?part=id,snippet&videoId=" + youtube_id
-    # transcripts = self.transcript_fetcher.fetch(youtube_id)
-    # transcript = transcripts.find_transcript(
-    #     ("en", "en-US", "en-GB")).fetch()
+
     transcripts = youtube_transcript_api.YouTubeTranscriptApi.get_transcript(
         youtube_id, languages=("en", "en-US", "en-GB"))
 

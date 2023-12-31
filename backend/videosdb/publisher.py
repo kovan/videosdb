@@ -19,19 +19,6 @@ class Publisher:
         self.db = db
         self.http = httpx.AsyncClient()
 
-    # async def _get_short_url_bitly(self, url):
-    #     response = await self.http.post("https://api-ssl.bitly.com/v4/shorten",
-    #                                     headers={
-    #                                         "Authorization": "Bearer " + BITLY_ACCESS_TOKEN,
-    #                                     },
-    #                                     json={
-    #                                         "long_url": url,
-    #                                         "domain": "bit.ly",
-    #                                         "group_guid": "Bma3nPlFgj5"
-    #                                     })
-    #     response.raise_for_status()
-    #     return response.json()["link"]
-
     async def _get_short_url_firebase(self, url):
 
         config = os.environ["VIDEOSDB_CONFIG"]

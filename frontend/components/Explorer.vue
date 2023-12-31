@@ -80,25 +80,6 @@ export default {
             query_cursor: null,
             no_more_data: false,
             videos: {},
-            // period_options: [
-            //   {
-            //     text: 'Last week',
-            //     value: sub(new Date(), { weeks: 1 }),
-            //   },
-            //   {
-            //     text: 'Last month',
-            //     value: sub(new Date(), { months: 1 }),
-            //   },
-            //   {
-            //     text: 'Last year',
-            //     value: sub(new Date(), { years: 1 }),
-            //   },
-            //   {
-            //     text: 'Always',
-            //     value: null,
-            //   },
-            // ],
-            // start_date: null,
             ordering_options: [
                 {
                     text: 'Latest',
@@ -184,49 +165,15 @@ export default {
             return ''
         },
     },
-    beforeCreate: function () { },
-    created: function () {
-        // this.logs.push('created')
-    },
-    beforeMount: function () {
-        // this.logs.push('beforeMount')
-    },
-    mounted: function () {
-        // this.logs.push('mounted')
-    },
-    beforeUpdate: function () {
-        // this.logs.push('beforeUpdate')
-    },
-    beforeUpdate: function () {
-        // // this.logs.push('updated')
-    },
-    beforeUnmount: function () {
-        // this.logs.push('beforeUnmount')
-    },
-    unmounted: function () {
-        // this.logs.push('unmounted')
-    },
-    // watch: {
-    //   '$route.query': '$fetch',
-    //   // $route(to, from) {
-    //   //   this.current_page = this.$route.query.page || 1
-    //   //   this.$fetch()
-    //   // },
-    // },
-    // created() {
-    //   this.current_page = this.$route.query.page || this.initial_page
-    // },
     methods: {
         formatDuration(date) {
             return new Date(date * 1000).toISOString().substr(11, 8)
         },
         async loadMore() {
-            // this.logs.push('loadMore')
             await this.doQuery()
         },
         async handleChange() {
-            // if (this.ordering != 'snippet.publishedAt') this.start_date = null
-            // this.logs.push('handling change')
+
             this.query_cursor = null
             this.no_more_data = false
             for (var key in this.videos) {
@@ -237,23 +184,6 @@ export default {
             await this.doQuery()
         },
 
-        // getSrcSetAndSizes (video) {
-        //   let srcset = ""
-        //   let sizes = ""
-        //   const resolutions = {
-        //     default: 120,
-        //     medium: 320,
-        //     high: 480,
-        //     standard: 640
-        //   }
-        //   for (const res in resolutions) {
-        //     if (video.thumbnails.hasOwnProperty(res)) {
-        //       srcset += `${video.thumbnails[res].url} ${resolutions[res]}w, `
-        //       sizes += `(max-width: ${resolutions[res]}px) ${resolutions[res]}px, `
-        //     }
-        //   }
-        //   return [srcset.slice(0, -2), sizes.slice(0, -2)]
-        // }
         async doQuery() {
             if (this.no_more_data) return
             this.loading = true

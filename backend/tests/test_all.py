@@ -286,22 +286,6 @@ class DownloaderTest(PatchedTestCase):
                 test_doc_dict
             )
 
-        # async def test_firestore_behavior(self):
-        #     a = await self.db.document("test_videos/" + "asdfsdf").set({
-        #         "videosdb": {
-        #             "playlists": firestore.ArrayUnion(["sdjfpoasdjf"])
-        #         }
-        #     }, merge=True)
-        #     b = await self.db.document("test_videos/" + "asdfsdf").set({
-        #         "videosdb": {
-        #             "playlists": firestore.ArrayUnion(["sdfsdf"])
-        #         }
-        #     }, merge=True)
-
-        #     c = await self.db.document("test_videos/" + "asdfsdf").get()
-        #     self.assertEqual(
-        #         {'videosdb': {'playlists': ['sdjfpoasdjf', 'sdfsdf']}}, c.to_dict())
-
         # async def test_transcript_downloading(self):
 
         #     video = self.raw_responses["videos"][self.VIDEO_ID]["items"][0]
