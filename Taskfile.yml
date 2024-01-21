@@ -278,16 +278,6 @@ tasks:
             - docker build utils/builder -t {{.REGISTRY}}videosdb-builder
             - docker push {{.REGISTRY}}videosdb-builder
 
-    deploy-only-nithyananda:
-        deps: [init-gcp]
-        cmds:
-            - docker pull {{.REGISTRY}}frontend-{{.BRANCH_NAME}}:latest
-            - docker run --rm
-                --env-file common/env/nithyananda.txt
-                -e GOOGLE_APPLICATION_CREDENTIALS=common/keys/nithyananda.json
-                {{.REGISTRY}}frontend-{{.BRANCH_NAME}}:latest
-                yarn run-s generate deploy
-
     tests:
         cmds:
             - task: unittests
@@ -382,18 +372,6 @@ tasks:
             - task: end2end-tests
 
     generate-testing:
-        cmds:
-            - task: generate-with-cache
-        preconditions:
-            - test {{.VIDEOSDB_CONFIG}}
-
-    generate-sadhguru:
-        cmds:
-            - task: generate-with-cache
-        preconditions:
-            - test {{.VIDEOSDB_CONFIG}}
-
-    generate-nithyananda:
         cmds:
             - task: generate-with-cache
         preconditions:
