@@ -132,5 +132,17 @@
                 ],
                 "port": 9229
             },
+            {
+                "name": "Leiningen: Run",
+                "type": "clojure",
+                "request": "launch",
+                "cwd": "${workspaceFolder}/backend/clojure",
+                "replType": "clj",
+                "projectType": "lein",
+                "main": "user",
+                "args": [],
+                "env": {},
+                "console": "integratedTerminal"
+            },
         ]
     }
