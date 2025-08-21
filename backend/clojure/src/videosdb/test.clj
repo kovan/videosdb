@@ -1,5 +1,5 @@
 ;; test/videosdb/core_test.clj
-(ns videosdb.core-test
+(ns videosdb.test
   (:require [clojure.test :refer :all]
             [clojure.data.json :as json]
             [clojure.java.io :as io]

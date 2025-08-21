@@ -326,7 +326,7 @@
          (:require [midje.sweet :refer :all]
                    [videosdb.publisher :as publisher]
                    [videosdb.db :as db]
-                   [clj-http.fake :refer [with-fake-routes]])
+                   [clj-http.fake :refer [with-fake-routes]]) º
          (:import [java.time Instant Duration]))
 
        (def mock-db-state
@@ -531,5 +531,5 @@
                                                                         :status 200}})
                                           (let [app-state (main/create-app-state)
                                                 initialized-state (main/init-app-state app-state)]
-                                            (main/run-sync initialized-state {} "test-channel") => anything))))
+                                            (main/run-sync initialized-state {} "test-channel") => anything)))))
 
