@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "videosdb"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+isodate = "^0.6.0"
+aiostream = "^0.4"
+google-cloud-firestore = "^2.6"
+youtube-transcript-api = {git = "https://github.com/kovan/youtube-transcript-api", rev = "eaf6c194aba9c02cc05bc30d37be97ecaeaeadae"}
+python-slugify = "^5.0.2"
+anyio = "^3.6"
+async_generator = "^1.10"
+httpx = {extras = ["http2"], version = "^0.23.0"}
+Autologging = "^1.3.2"
+fnc = "^0.5.3"
+bleach = "^5.0.1"
+tweepy = {extras = ["async"], version = "^4.10.1"}
+redis = "^4.3.4"
+jsonschema = "^4.16.0"
+basilisp = "^0.4.0"
+
+
+[tool.poetry.dev-dependencies]
+ipdb = "^0.13.4"
+pylint = "^2.6.0"
+autopep8 = "^1.5.4"
+python-dotenv = "^0.21.0"
+respx = "^0.20.0"
+aiounittest = "^1.4.2"
+coverage = "^6.5.0"
+
+
+[tool.poetry.group.dev.dependencies]
+httpx = {extras = ["cli"], version = "^0.23.0"}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.scripts]
+main = "run:entrypoint"

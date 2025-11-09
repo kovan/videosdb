@@ -1,0 +1,37 @@
+
+;; src/videosdb/settings.lpy
+(ns videosdb.settings
+  (:require [basilisp.string :as str]))
+
+(def logging-config
+  {:version 1
+   :disable-existing-loggers false
+   :formatters {:verbose {:format "{levelname}\t{asctime}:{name}.{funcName} ({filename}:{lineno:d}): {message}"
+                          :style "{"}
+                :simple {:format "{levelname}\t{message}"
+                         :style "{"}}
+   :handlers {:console {:class "logging.StreamHandler"
+                        :formatter "verbose"
+                        :stream python/sys.stdout}}
+   :loggers {:anyio {:level (python/os.environ.get "LOGLEVEL" "INFO")}
+             :asyncio {:level (python/os.environ.get "LOGLEVEL" "INFO")}
+             :videosdb {:handlers ["console"]
+                        :level (python/os.environ.get "LOGLEVEL" "INFO")
+                        :propagate false}
+             :property-manager {:handlers ["console"]
+                                :level "INFO"
+                                :propagate false}
+             "" {:handlers ["console"]
+                 :level "INFO"
+                 :propagate true}}})
+
+(def ipfs-host (python/os.environ.get "IPFS_HOST" "127.0.0.1"))
+(def ipfs-port (python/os.environ.get "IPFS_PORT" 5001))
+(def videosdb-domain "sadhguru.digital")
+(def videosdb-dnszone "sadhguru")
+(def youtube-channel {:id "UCcYzLCs3zrQIBVHYA1sK2sw"
+                      :name "Sadhguru"})
+(def truncate-description-after "#Sadhguru")
+(def video-files-dir "/mnt/videos")
+(def youtube-key "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU")
+(def youtube-key-testing "AIzaSyDM-rEutI1Mr6_b1Uz8tofj2dDlwcOzkjs")

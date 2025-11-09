@@ -1,0 +1,155 @@
+
+
+;; src/videosdb/db.lpy
+(ns videosdb.db
+  (:require [basilisp.json :as json]
+            [basilisp.logging :as log]
+            [videosdb.utils :as utils])
+  (:import [google.cloud firestore]
+           [google.oauth2 service-account]
+           [google.api-core.retry Retry]
+           [jsonschema validate ValidationError]))
+
+(def free-tier-write-quota 20000)
+(def free-tier-read-quota 50000)
+
+(def counter-types
+  {:reads 1
+   :writes 2})
+
+(defrecord Counter [type counter limit lock])
+
+(defn make-counter
+  [type limit]
+  (->Counter type (atom 0) limit (python/anyio.Lock)))
+
+(defn inc-counter
+  [counter & {:keys [quantity] :or {quantity 1}}]
+  (python/await
+   (with [_ (.-lock counter)]
+         (swap! (.-counter counter) + quantity)
+         (when (> @(.-counter counter) (.-limit counter))
+           (throw (utils/QuotaExceeded
+                   (str "Surpassed " (.-type counter) " ops limit of " (.-limit counter))))))))
+
+(defn wait-for-port
+  [timeout]
+  (when-let [emulator-host (python/os.environ.get "FIRESTORE_EMULATOR_HOST")]
+    (->> emulator-host
+         (python/str.split ":")
+         ((fn [[host port]]
+            (utils/wait-for-port (python/int port) :host host :timeout timeout))))))
+
+(defn get-client
+  [& {:keys [project config]}]
+  (let [config (or config (python/os.environ.get "VIDEOSDB_CONFIG" "testing"))
+        project (or project (python/os.environ.get "FIREBASE_PROJECT" "videosdb-testing"))
+        common-dir (-> python/__file__
+                       python/os.path.dirname
+                       (str "/../../common"))
+        creds-json-path (->> (str "keys/" config ".json")
+                             (python/os.path.join common-dir))
+        [project' log-msg] (if (python/os.environ.get "FIRESTORE_EMULATOR_HOST")
+                             ["demo-project" "USING EMULATOR"]
+                             [project "USING LIVE DATABASE"])]
+    (doto project'
+      (->> (str "Current project: ") log/info))
+    (log/info (str "Current config: " config))
+    (python/firestore.AsyncClient
+     :project project'
+     :credentials (-> creds-json-path
+                      python/service-account.Credentials.from-service-account-file))))
+
+(defrecord DB [counters db-schema db])
+
+(defn make-db
+  []
+  (let [common-dir (-> python/__file__
+                       python/os.path.dirname
+                       (str "/../../common"))
+        schema-path (python/os.path.join common-dir "firebase/db-schema.json")
+        schema (with-open [f (python/open schema-path)]
+                 (python/json.load f))]
+    (->DB {:reads (make-counter :reads (- free-tier-read-quota 5000))
+           :writes (make-counter :writes (- free-tier-write-quota 500))}
+          schema
+          (get-client))))
+
+(defn init-db
+  [db]
+  (python/await
+   (let [video-ids-doc (-> db .-db (.document "meta/video_ids") .get python/await)
+         video-ids-dict (-> video-ids-doc .to-dict python/await)]
+     (when (or (not (.-exists video-ids-doc))
+               (not (get video-ids-dict "videoIds")))
+       (->> {"videoIds" []}
+            (.set (.-reference video-ids-doc))
+            python/await))
+
+     (let [state-doc (-> db .-db (.document "meta/state") .get python/await)]
+       (when-not (.-exists state-doc)
+         (->> {}
+              (.set (.-reference state-doc))
+              python/await)))
+
+     (python/await (set-doc db "meta/test" {}))
+     db)))
+
+(defn get-stats
+  [db]
+  (let [read-c (get-in db [:counters :reads])
+        write-c (get-in db [:counters :writes])]
+    #{(str read-c)
+      (str write-c)}))
+
+(defn increase-counter
+  [db type & {:keys [increase] :or {increase 1}}]
+  (inc-counter (get-in db [:counters type]) :quantity increase))
+
+(defn set-doc
+  [db path & args]
+  (python/await
+   (do
+     (python/await (increase-counter db :writes))
+     (->> args
+          (python/apply (-> db .-db (.document path) .-set))
+          python/await))))
+
+(defn get-doc
+  [db path & args]
+  (python/await
+   (do
+     (python/await (increase-counter db :reads))
+     (->> args
+          (python/apply (-> db .-db (.document path) .-get))
+          python/await))))
+
+(defn update-doc
+  [db path & args]
+  (python/await
+   (do
+     (python/await (increase-counter db :writes))
+     (->> args
+          (python/apply (-> db .-db (.document path) .-update))
+          python/await))))
+
+(defn delete-doc
+  [db path & args]
+  (python/await
+   (do
+     (python/await (increase-counter db :writes))
+     (->> args
+          (python/apply (-> db .-db (.document path) .-delete))
+          python/await))))
+
+(defn validate-video-schema
+  [db video-dict]
+  (try
+    (python/validate :instance video-dict :schema (.-db-schema db))
+    true
+    (catch ValidationError e
+      (->> video-dict
+           (get "id")
+           (str "Video " " did not pass schema validation")
+           log/warn)
+      false)))

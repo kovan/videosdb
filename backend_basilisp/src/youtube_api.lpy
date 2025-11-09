@@ -1,0 +1,282 @@
+
+;; src/videosdb/youtube_api.lpy
+(ns videosdb.youtube-api
+  (:require [basilisp.logging :as log]
+            [basilisp.json :as json]
+            [videosdb.utils :as utils])
+  (:import [httpx AsyncClient Limits]
+           [redis.asyncio redis]))
+
+(defn parse-youtube-id
+  "Extract YouTube ID from string like [abc123def456].mp4"
+  [s]
+  (some->> s
+           (python/re.search #"\[(.{11})\]\.")
+           (#(.group % 1))))
+
+(defn pop-first
+  "Pop first element from async generator, return [first-elem generator]"
+  [async-gen]
+  (python/await
+   (let [first (python/await (.__anext__ async-gen))]
+     [first async-gen])))
+
+(defrecord Cache [redis])
+
+(defn make-cache
+  [& {:keys [redis-db-n]}]
+  (->Cache (if redis-db-n
+             (python/redis.Redis :db redis-db-n)
+             (python/redis.Redis))))
+
+(defn cache-key-func
+  "Generate cache key from URL and params, excluding 'key' param"
+  [url params]
+  (->> params
+       keys
+       (remove #(= % "key"))
+       sort
+       (map #(vector % (get params %)))
+       python/urllib.parse.urlencode
+       (str (python/str.lstrip url "/") "?")))
+
+(defn cache-stats
+  [cache]
+  (python/await
+   (let [redis-stats (python/await (.info (.-redis cache) "stats"))
+         interesting-keys #{"keyspace_hits" "keyspace_misses"
+                            "total_commands_processed" "total_reads_processed"
+                            "total_writes_processed"}]
+     (->> redis-stats
+          (filter #(interesting-keys (key %)))
+          (into {})))))
+
+(defn cache-get
+  [cache key]
+  (python/await
+   (if-let [value (python/await (.get (.-redis cache) key))]
+     (let [json-value (python/json.loads value)
+           page-count (get json-value "n_pages")
+           page-gen (python/async-gen
+                     (doseq [page-n (range page-count)]
+                       (if-let [page-value (python/await
+                                            (.get (.-redis cache)
+                                                  (str key "_page_" page-n)))]
+                         (python/yield (python/json.loads page-value))
+                         (throw (python/KeyError)))))]
+       [(get json-value "etag") page-gen])
+     [nil nil])))
+
+(defn cache-set
+  [cache key page-gen]
+  (python/await
+   (let [transaction (.pipeline (.-redis cache))
+         pages (atom [])
+         etag (atom nil)]
+     (python/async-for [[idx page] (->> page-gen
+                                        (python/enumerate))]
+                       (when (zero? idx)
+                         (reset! etag (get page "etag")))
+                       (.set transaction
+                             (str key "_page_" idx)
+                             (python/json.dumps page))
+                       (swap! pages conj page))
+
+     (.set transaction key
+           (python/json.dumps {:etag @etag
+                               :n_pages (count @pages)}))
+     (python/await (.execute transaction))
+     @pages)))
+
+(defrecord YoutubeAPI [db http cache yt-key root-url])
+
+(defn get-root-url
+  []
+  (python/os.environ.get "YOUTUBE_API_URL" "https://www.googleapis.com/youtube/v3"))
+
+(defn make-youtube-api
+  [db & {:keys [yt-key redis-db-n]}]
+  (let [limits (python/httpx.Limits :max-connections 50)
+        http (python/httpx.AsyncClient :limits limits)
+        cache (make-cache :redis-db-n redis-db-n)
+        yt-key (or (python/os.environ.get "YOUTUBE_API_KEY")
+                   yt-key
+                   "AIzaSyAL2IqFU-cDpNa7grJDxpVUSowonlWQFmU")
+        root-url (get-root-url)]
+    (->> root-url
+         (str "Pointing at URL: ")
+         log/debug)
+    (->YoutubeAPI db http cache yt-key root-url)))
+
+;; Public API functions using threading macros
+(defn get-playlist-info
+  [api playlist-id]
+  (python/await
+   (request-one api "/playlists" {:part "snippet"
+                                  :id playlist-id})))
+
+(defn get-video-info
+  [api youtube-id]
+  (python/await
+   (request-one api "/videos" {:part "snippet,contentDetails,statistics"
+                               :id youtube-id})))
+
+(defn list-playlist-items
+  [api playlist-id]
+  (python/await
+   (request-main api "/playlistItems" {:part "snippet"
+                                       :playlistId playlist-id})))
+
+(defn get-channel-info
+  [api channel-id]
+  (python/await
+   (request-one api "/channels" {:part "snippet,contentDetails,statistics"
+                                 :id channel-id})))
+
+(defn list-channelsection-playlist-ids
+  [api channel-id]
+  (python/await
+   (let [[modified results] (python/await
+                             (request-main api "/channelSections"
+                                           {:part "contentDetails"
+                                            :channelId channel-id}))
+         gen (python/async-gen
+              (python/async-for [item results]
+                                (when-let [details (get item "contentDetails")]
+                                  (when-let [playlists (get details "playlists")]
+                                    (doseq [id playlists]
+                                      (python/yield id))))))]
+     [modified gen])))
+
+(defn list-channel-playlist-ids
+  [api channel-id]
+  (python/await
+   (let [[modified results] (python/await
+                             (request-main api "/playlists"
+                                           {:part "snippet,contentDetails"
+                                            :channelId channel-id}))
+         gen (python/async-gen
+              (python/async-for [item results]
+                                (python/yield (get item "id"))))]
+     [modified gen])))
+
+;; Helper functions for request handling with better threading
+(defn request-one
+  [api url params & {:keys [use-cache] :or {use-cache true}}]
+  (python/await
+   (let [[modified generator] (python/await (request-main api url params use-cache))]
+     (try
+       [modified (python/await (.__anext__ generator))]
+       (catch StopAsyncIteration _
+         [modified nil])))))
+
+(defn request-main
+  [api url params & [use-cache]]
+  (python/await
+   (let [use-cache (if (nil? use-cache) true use-cache)
+         result (if use-cache
+                  (request-with-cache api url params)
+                  (request-base api url params))
+         [status-code pages] (python/await (pop-first result))
+         gen (python/async-gen
+              (python/async-for [page pages]
+                                (->> page
+                                     (get "items")
+                                     (run! python/yield))))]
+     [(not= status-code 304) gen])))
+
+(defn request-with-cache
+  [api url params]
+  (python/async-gen
+   (let [key (cache-key-func url params)
+         [etag cached-pages] (python/await (cache-get (.-cache api) key))
+         headers (if etag
+                   (do (->> etag
+                            (str "Request with key " key " CACHED, E-tag: ")
+                            log/debug)
+                       {"If-None-Match" etag})
+                   (do (log/debug (str "Request with key " key " NOT cached"))
+                       {}))
+         [status-code response-pages] (python/await
+                                       (pop-first (request-base api url params :headers headers)))]
+     (python/yield status-code)
+
+     (if (= status-code 304)
+       (when-not cached-pages
+         (throw (python/KeyError)))
+       (let [pages (if (= status-code 304)
+                     cached-pages
+                     (python/await (cache-set (.-cache api) key response-pages)))]
+         (python/async-for [page pages]
+                           (python/yield page)))))))
+
+(defn request-base
+  [api url params & {:keys [headers]}]
+  (python/async-gen
+   (let [params (assoc params :key (.-yt-key api))
+         url (str url "?" (python/urllib.parse.urlencode params))]
+     (loop [page-token nil]
+       (let [final-url (if page-token
+                         (str url "&pageToken=" page-token)
+                         url)
+             _ (log/debug (str "requesting: " final-url))
+             response (python/await (get-with-retries api
+                                                      (str (.-root-url api) final-url)
+                                                      :headers (or headers {})))]
+         (when (= (.-status-code response) 403)
+           (throw (utils/QuotaExceeded (.-status-code response) (.json response))))
+
+         (when (not= (.-status-code response) 304)
+           (.raise-for-status response))
+
+         (when-not page-token
+           (python/yield (.-status-code response)))
+
+         (when-not (= (.-status-code response) 304)
+           (let [json-response (.json response)]
+             (python/yield json-response)
+
+             (when-let [next-token (get json-response "nextPageToken")]
+               (recur next-token)))))))))
+
+(defn get-with-retries
+  "GET request with exponential backoff for 5xx errors"
+  [api url & {:keys [timeout headers max-retries]
+              :or {timeout 60.0 headers {} max-retries 5}}]
+  (python/await
+   (loop [retries 0]
+     (let [response (python/await (.get (.-http api) url
+                                        :timeout timeout
+                                        :headers headers))
+           must-retry (and (>= (.-status-code response) 500)
+                           (< (.-status-code response) 600))
+           log-fn (if must-retry log/warn log/debug)]
+       (->> response
+            .-status-code
+            (str "Received response for URL: " url " code: ")
+            log-fn)
+       (if must-retry
+         (do
+           (when (>= retries max-retries)
+             (.raise-for-status response))
+           (python/await (python/anyio.sleep 3.0))
+           (recur (inc retries)))
+         response)))))
+
+(defn get-video-transcript
+  "Download and format YouTube transcript with sentence case"
+  [youtube-id]
+  (letfn [(sentence-case [text]
+            (let [punc-filter (python/re.compile #"([.!?]\s*)")
+                  split-with-punctuation (python/re.split punc-filter text)]
+              (->> split-with-punctuation
+                   (map python/str.capitalize)
+                   (apply str))))]
+    (let [transcripts (python/youtube-transcript-api.YouTubeTranscriptApi.get-transcript
+                       youtube-id :languages ["en" "en-US" "en-GB"])]
+      (->> transcripts
+           (map #(get % "text"))
+           (clojure.string/join "\n")
+           python/str.capitalize
+           (str ".")
+           sentence-case))))

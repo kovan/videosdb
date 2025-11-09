@@ -1,0 +1,21 @@
+;; (defproject videosdb "0.1.0"
+;;   :description "Videos database backend in Basilisp"
+;;   :dependencies [[org.basilisp/basilisp "0.2.0"]
+;;                  [google-cloud-firestore "2.7.2"]
+;;                  [httpx "0.23.0"]
+;;                  [redis "4.3.4"]
+;;                  [python/isodate "0.6.1"]
+;;                  [python/slugify "5.0.2"]
+;;                  [python/bleach "5.0.1"]
+;;                  [python/jsonschema "4.16.0"]
+;;                  [python/anyio "3.6.1"]]
+;;   :main ^:skip-aot videosdb.core
+;;   :target-path "target/%s"
+;;   :profiles {:dev {:dependencies [[python/ipdb "0.13.9"]
+;;                                   [python/respx "0.20.0"]]}})
+
+
+;; project.edn - Basilisp project configuration
+{:paths ["src"]
+ :deps {basilisp/basilisp {:mvn/version "0.1.0"}
+        org.clojure/core.async {:mvn/version "1.6.673"}}}

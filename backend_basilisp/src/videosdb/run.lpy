@@ -1,0 +1,43 @@
+
+
+
+;; src/videosdb/run.lpy
+(ns videosdb.run
+  (:require [basilisp.logging :as log]
+            [videosdb.downloader :as dl]
+            [videosdb.db :as db]
+            [videosdb.settings :as settings])
+  (:import [argparse ArgumentParser]
+           [dotenv load-dotenv]
+           [logging.config dictConfig]))
+
+(defn entrypoint
+  []
+  (python/logging.config.dictConfig settings/logging-config)
+
+  (let [parser (python/ArgumentParser)
+        _ (doto parser
+            (.add-argument "-c" "--check-for-new-videos" :action "store_true")
+            (.add-argument "-e" "--enable-transcripts" :action "store_true")
+            (.add-argument "-d" "--fill-related-videos" :action "store_true")
+            (.add-argument "-u" "--update-dnslink" :action "store_true")
+            (.add-argument "-v" "--dotenv" :action "store")
+            (.add-argument "-x" "--export-to-emulator-host" :action "store")
+            (.add-argument "-t" "--enable-twitter-publishing" :action "store_true")
+            (.add-argument "-f" "--download-and-register-in-ipfs" :action "store_true")
+            (.add-argument "-s" "--validate-db-schema" :action "store_true"))
+        options (.parse-args parser)]
+
+    (when (.-dotenv options)
+      (python/load-dotenv (.-dotenv options)))
+
+    (when (.-check-for-new-videos options)
+      (let [downloader (dl/make-downloader :options options)]
+        (python/anyio.run dl/check-for-new-videos downloader)))
+
+    (when (.-validate-db-schema options)
+      (let [db (db/make-db)]
+        (python/anyio.run #(db/init-db db))))))
+
+(when (= python/__name__ "__main__")
+  (entrypoint))

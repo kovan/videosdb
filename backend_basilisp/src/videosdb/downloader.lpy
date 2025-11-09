@@ -1,0 +1,462 @@
+
+
+;; src/videosdb/downloader.lpy
+(ns videosdb.downloader
+  (:require [basilisp.logging :as log]
+            [videosdb.db :as db]
+            [videosdb.youtube-api :as yt]
+            [videosdb.publisher :as pub]
+            [videosdb.utils :as utils])
+  (:import [slugify slugify]
+           [isodate parse-duration parse-datetime]
+           [bleach linkify]
+           [youtube-transcript-api YouTubeTranscriptApi TooManyRequests CouldNotRetrieveTranscript]))
+
+;; Task Protocol
+(defprotocol ITask
+  (execute [this video]))
+
+;; Export to Emulator Task
+(defrecord ExportToEmulatorTask [db options nursery enabled emulator-client]
+  ITask
+  (execute [this video]
+    (python/await
+     (when (:enabled this)
+       (-> (:emulator-client this)
+           (.collection "videos")
+           (.document (get video "id"))
+           (.set video)
+           python/await)))))
+
+(defn make-export-task
+  [db options nursery]
+  (let [enabled (and options (.-export-to-emulator-host options))]
+    (if-not enabled
+      (->ExportToEmulatorTask db options nursery false nil)
+      (let [previous-emu (python/os.environ.get "FIRESTORE_EMULATOR_HOST")
+            _ (python/os.environ.__setitem__
+               "FIRESTORE_EMULATOR_HOST"
+               (.-export-to-emulator-host options))
+            emulator-client (db/get-client)
+            _ (if previous-emu
+                (python/os.environ.__setitem__ "FIRESTORE_EMULATOR_HOST" previous-emu)
+                (python/os.environ.__delitem__ "FIRESTORE_EMULATOR_HOST"))]
+        (->ExportToEmulatorTask db options nursery true emulator-client)))))
+
+(defn export-pending-collections
+  [task]
+  (python/await
+   (when (:enabled task)
+     (python/async-for [col (-> task :db :db .collections)]
+                       (when (not= (.-id col) "videos")
+                         (log/info (str "Exporting collection " (.-id col) " to emulator..."))
+                         (python/async-for [doc-ref (.list-documents col)]
+                                           (python/await (db/increase-counter (:db task) :writes))
+                                           (let [doc (python/await (.get doc-ref))
+                                                 emulator-ref (-> task
+                                                                  :emulator-client
+                                                                  (.collection (.-id col))
+                                                                  (.document (.-id doc)))]
+                                             (python/await (.set emulator-ref (.to-dict doc))))))))))
+
+;; Publish Task
+(defrecord PublishTask [db options nursery enabled publisher]
+  ITask
+  (execute [this video]
+    (python/await
+     (when (:enabled this)
+       (try
+         (python/await (pub/publish-video (:publisher this) video))
+         (catch Exception e
+           (log/exception e)))))))
+
+(defn make-publish-task
+  [db options nursery]
+  (let [enabled (and options (.-enable-twitter-publishing options))]
+    (->PublishTask db options nursery enabled
+                   (when enabled (pub/make-twitter-publisher db)))))
+
+;; Retrieve Transcripts Task
+(defrecord RetrievePendingTranscriptsTask [db options nursery enabled capacity-limiter]
+  ITask
+  (execute [this video]
+    (python/await
+     (when (:enabled this)
+       (.start-soon (:nursery this)
+                    handle-transcript
+                    this
+                    video
+                    :name (str "Download transcript for video " (get video "id")))))))
+
+(defn make-transcript-task
+  [db options nursery]
+  (let [enabled (and options (.-enable-transcripts options))]
+    (->RetrievePendingTranscriptsTask db options nursery enabled
+                                      (python/anyio.CapacityLimiter 10))))
+
+(defn handle-transcript
+  [task video]
+  (python/await
+   (let [current-status (utils/deep-get video ["videosdb" "transcript_status"])]
+     (when (contains? #{"pending" nil} current-status)
+       (->> current-status
+            str
+            (str "Downloading transcript for video: " (get video "id") " because its status is ")
+            log/info)
+       (let [[transcript new-status] (python/await
+                                      (download-transcript (get video "id")
+                                                           (:capacity-limiter task)))]
+         (when (not= new-status current-status)
+           (let [updated-video (-> video
+                                   (utils/deep-assoc ["videosdb" "transcript_status"] new-status)
+                                   (utils/deep-assoc ["videosdb" "transcript"] transcript))]
+             (python/await (db/set-doc (:db task)
+                                       (str "videos/" (get video "id"))
+                                       updated-video
+                                       :merge true)))))))))
+
+(defn download-transcript
+  [video-id capacity-limiter]
+  (python/await
+   (try
+     (let [transcript (python/await
+                       (python/anyio.to-thread.run-sync
+                        yt/get-video-transcript
+                        video-id
+                        :limiter capacity-limiter))]
+       [transcript "downloaded"])
+     (catch TooManyRequests e
+       (log/warning (str e))
+       (log/warning "New status: pending")
+       [nil "pending"])
+     (catch CouldNotRetrieveTranscript e
+       (if (and (python/hasattr e "video_id")
+                (python/hasattr (.-video-id e) "response")
+                (= (-> e .-video-id .-response .-status-code) 429))
+         (do (log/warning (str e))
+             (log/warning "New status: pending")
+             [nil "pending"])
+         (do (log/info (str "Transcription not available for video: " video-id))
+             (log/info (str e))
+             (log/info "New status: unavailable")
+             [nil "unavailable"]))))))
+
+;; Video Processor
+(defrecord VideoProcessor [db api channel-id video-to-playlist-list quota-exceeded])
+
+(defn make-video-processor
+  [db api channel-id]
+  (->VideoProcessor db api channel-id (atom {}) (atom false)))
+
+(defn add-video
+  [processor video-id playlist-id]
+  (python/await
+   (swap! (:video-to-playlist-list processor)
+          (fn [videos]
+            (update videos video-id
+                    (fn [playlists]
+                      (if playlists
+                        (if playlist-id (conj playlists playlist-id) playlists)
+                        (if playlist-id #{playlist-id} #{}))))))))
+
+(defn close-processor
+  [processor]
+  (python/await
+   (python/async-with [tg (python/anyio.create-task-group)]
+                      (let [video-ids (->> @(:video-to-playlist-list processor)
+                                           keys
+                                           shuffle
+                                           vec)]
+                        (->> video-ids
+                             count
+                             (str "Writing " " videos")
+                             log/info)
+                        (doseq [video-id video-ids]
+                          (let [playlists (get @(:video-to-playlist-list processor) video-id)]
+                            (.start-soon tg create-video processor video-id playlists
+                                         :name (str "Create video " video-id))))))))
+
+(defn create-video
+  [processor video-id playlist-ids]
+  (python/await
+   (log/info (str "Writing video: " video-id "..."))
+   (let [video (atom {})
+         downloaded-video (when-not @(:quota-exceeded processor)
+                            (try
+                              (let [[_ vid] (python/await (yt/get-video-info (:api processor) video-id))]
+                                (when vid
+                                  (swap! video merge vid))
+                                vid)
+                              (catch Exception e
+                                (when (utils/my-handler yt/YTQuotaExceeded e log/error)
+                                  (reset! (:quota-exceeded processor) true))
+                                nil)))]
+
+     (when-not (seq @video)
+       nil)
+
+     (swap! video assoc "videosdb" {})
+
+     (when downloaded-video
+       ;; Exclude videos from other channels
+       (when (not= (utils/deep-get @video ["snippet" "channelId"])
+                   (:channel-id processor))
+         nil)
+
+       ;; Process video metadata with threading macros
+       (swap! video
+              #(-> %
+                   (utils/deep-assoc ["videosdb" "slug"]
+                                     (python/slugify (utils/deep-get % ["snippet" "title"])))
+                   (utils/deep-assoc ["videosdb" "descriptionTrimmed"]
+                                     (python/bleach.linkify (utils/deep-get % ["snippet" "description"])))
+                   (utils/deep-assoc ["videosdb" "durationSeconds"]
+                                     (-> %
+                                         (utils/deep-get ["contentDetails" "duration"])
+                                         python/isodate.parse-duration
+                                         .total-seconds))
+                   (utils/deep-assoc ["snippet" "publishedAt"]
+                                     (-> %
+                                         (utils/deep-get ["snippet" "publishedAt"])
+                                         python/isodate.parse-datetime))))
+
+       ;; Convert statistics to integers
+       (doseq [[stat value] (get @video "statistics")]
+         (swap! video utils/deep-assoc ["statistics" stat] (python/int value))))
+
+     (when (seq playlist-ids)
+       (swap! video utils/deep-assoc ["videosdb" "playlists"]
+              (python/firestore.ArrayUnion (vec playlist-ids))))
+
+     (python/await (db/set-doc (:db processor) (str "videos/" video-id) @video :merge true))
+     (log/info (str "Wrote video " video-id))
+     @video)))
+
+;; Downloader
+(defrecord Downloader [options yt-channel-id db api])
+
+(defn make-downloader
+  [& {:keys [options db redis-db-n channel-id]}]
+  (let [channel-id (or channel-id (python/os.environ.__getitem__ "YOUTUBE_CHANNEL_ID"))
+        db (or db (db/make-db))
+        api (yt/make-youtube-api db :redis-db-n redis-db-n)]
+    (->Downloader options channel-id db api)))
+
+(defn check-for-new-videos
+  [downloader]
+  (python/await
+   (log/info "Sync start")
+   (python/async-with [global-nursery (python/anyio.create-task-group)]
+                      (python/await (db/init-db (:db downloader)))
+                      (.start-soon global-nursery print-debug-info downloader :name "Debug info")
+
+                      (try
+                        (python/await (phase1 downloader))
+                        (python/await (phase2 downloader))
+                        (finally
+                          (python/await (print-debug-info downloader true))
+                          (.cancel (.-cancel-scope global-nursery))))
+
+                      (log/info "Sync finished"))))
+
+(defn phase1
+  [downloader]
+  (python/await
+   (log/info "Init phase 1")
+   (let [video-processor (make-video-processor (:db downloader)
+                                               (:api downloader)
+                                               (:yt-channel-id downloader))]
+     (try
+       (when-let [channel (python/await (create-channel downloader (:yt-channel-id downloader)))]
+         (let [channel-name (utils/deep-get channel ["snippet" "title"])
+               playlist-ids (python/await (retrieve-all-playlist-ids downloader (:yt-channel-id downloader)))]
+
+           (python/async-with [phase1-nursery (python/anyio.create-task-group)]
+                              (python/await (process-playlist-ids downloader
+                                                                  playlist-ids
+                                                                  channel-name
+                                                                  video-processor
+                                                                  phase1-nursery))
+
+                              (let [all-videos-playlist-id (utils/deep-get channel ["contentDetails" "relatedPlaylists" "uploads"])]
+                                (when-not (python/os.environ.get "DEBUG")
+                                  (python/await (process-playlist downloader
+                                                                  all-videos-playlist-id
+                                                                  channel-name
+                                                                  video-processor
+                                                                  phase1-nursery
+                                                                  false))))))
+
+         (python/await (close-processor video-processor)))
+       (catch Exception e
+         (utils/my-handler utils/QuotaExceeded e log/error))))))
+
+(defn phase2
+  [downloader]
+  (python/await
+   (log/info "Init phase 2")
+   (python/async-with [phase2-nursery (python/anyio.create-task-group)]
+                      (let [args [(:db downloader) (:options downloader) phase2-nursery]
+                            export-task (make-export-task (first args) (second args) (nth args 2))
+                            tasks [(make-transcript-task (first args) (second args) (nth args 2))
+                                   (make-publish-task (first args) (second args) (nth args 2))
+                                   export-task
+                                   #(db/validate-video-schema (:db downloader) %)]]
+
+                        (python/await (final-video-iteration downloader tasks))
+                        (python/await (export-pending-collections export-task))))))
+
+(defn final-video-iteration
+  [downloader tasks]
+  (python/await
+   (let [final-video-ids (atom #{})
+         query (-> downloader :db :db
+                   (.collection "videos")
+                   (.where "videosdb.slug" "!=" ""))
+         videos (python/await (.get query :retry (python/Retry) :timeout 3600000))]
+
+     (doseq [video videos]
+       (let [video-dict (.to-dict video)
+             video-id (get video-dict "id")]
+         (when video-id
+           (swap! final-video-ids conj video-id)
+           (log/debug (str "Applying tasks for video " video-id))
+
+           (doseq [task tasks]
+             (python/await (task video-dict))))))
+
+     (when (seq @final-video-ids)
+       (->> @final-video-ids
+            vec
+            python/firestore.ArrayUnion
+            (hash-map "videoIds")
+            (python/await (db/set-doc (:db downloader) "meta/video_ids" :merge true))))
+
+     (let [count (count @final-video-ids)]
+       (when (zero? count)
+         (throw (python/Exception "No videos to publish")))
+       (log/info (str "Final video list length: " count)))
+
+     @final-video-ids)))
+
+(defn retrieve-all-playlist-ids
+  [downloader channel-id]
+  (python/await
+   (let [[_ ids1] (python/await (yt/list-channelsection-playlist-ids (:api downloader) channel-id))
+         [_ ids2] (python/await (yt/list-channel-playlist-ids (:api downloader) channel-id))
+         playlist-ids (atom #{})]
+
+     (if (python/os.environ.get "DEBUG")
+       (python/async-for [id ids1]
+                         (swap! playlist-ids conj id))
+       (do
+         (python/async-for [id ids1]
+                           (swap! playlist-ids conj id))
+         (python/async-for [id ids2]
+                           (swap! playlist-ids conj id))))
+
+     (log/info "Retrieved all playlist IDs.")
+     (vec @playlist-ids))))
+
+(defn process-playlist-ids
+  [downloader playlist-ids channel-name video-processor nursery]
+  (python/await
+   (doseq [playlist-id (shuffle playlist-ids)]
+     (.start-soon nursery
+                  process-playlist
+                  downloader
+                  playlist-id
+                  channel-name
+                  video-processor
+                  nursery
+                  :name (str "Playlist " playlist-id " processor")))))
+
+(defn process-playlist
+  [downloader playlist-id channel-name video-processor task-group & [write]]
+  (python/await
+   (let [write (if (nil? write) true write)]
+     (log/info (str "Processing playlist " playlist-id))
+
+     (when-let [[_ playlist] (python/await (yt/get-playlist-info (:api downloader) playlist-id))]
+       (when (= (utils/deep-get playlist ["snippet" "channelTitle"]) channel-name)
+         (let [[_ playlist-items] (python/await (yt/list-playlist-items (:api downloader) playlist-id))]
+           (python/await (create-playlist downloader playlist playlist-items write))
+
+           (let [video-ids (->> playlist
+                                (utils/deep-get ["videosdb" "videoIds"])
+                                vec
+                                shuffle)]
+             (doseq [video-id video-ids]
+               (.start-soon task-group
+                            add-video
+                            video-processor
+                            video-id
+                            (when write playlist-id)
+                            :name (str "Add video " video-id))))))))))
+
+(defn create-channel
+  [downloader channel-id]
+  (python/await
+   (when-let [[_ channel-info] (python/await (yt/get-channel-info (:api downloader) channel-id))]
+     (->> channel-info
+          (utils/deep-get ["snippet" "title"])
+          (str "Processing channel: ")
+          log/info)
+     (python/await (db/set-doc (:db downloader)
+                               (str "channel_infos/" channel-id)
+                               channel-info
+                               :merge true))
+     channel-info)))
+
+(defn create-playlist
+  [downloader playlist playlist-items & [write]]
+  (python/await
+   (let [write (if (nil? write) true write)
+         state (atom {:video-count 0
+                      :last-updated nil
+                      :video-ids #{}})]
+
+     (python/async-for [item playlist-items]
+                       (when (= (utils/deep-get item ["snippet" "channelId"])
+                                (:yt-channel-id downloader))
+                         (let [video-id (utils/deep-get item ["snippet" "resourceId" "videoId"])
+                               video-date (python/isodate.parse-datetime
+                                           (utils/deep-get item ["snippet" "publishedAt"]))]
+                           (swap! state update :video-ids conj video-id)
+                           (swap! state update :video-count inc)
+                           (when (or (nil? (:last-updated @state))
+                                     (> video-date (:last-updated @state)))
+                             (swap! state assoc :last-updated video-date)))))
+
+     (let [updated-playlist (-> playlist
+                                (utils/deep-assoc ["videosdb" "videoCount"] (:video-count @state))
+                                (utils/deep-assoc ["videosdb" "lastUpdated"] (:last-updated @state))
+                                (utils/deep-assoc ["videosdb" "videoIds"] (:video-ids @state))
+                                (utils/deep-assoc ["videosdb" "slug"]
+                                                  (python/slugify (utils/deep-get playlist ["snippet" "title"]))))]
+       (when write
+         (python/await (db/set-doc (:db downloader)
+                                   (str "playlists/" (get playlist "id"))
+                                   updated-playlist
+                                   :merge true))
+         (log/info (str "Wrote playlist: " (utils/deep-get playlist ["snippet" "title"]))))))))
+
+(defn print-debug-info
+  [downloader & [once]]
+  (python/await
+   (let [once (boolean once)]
+     (loop []
+       (->> (python/anyio.get-running-tasks)
+            count
+            (str "Running tasks: ")
+            log/info)
+       (log/info "DB stats:")
+       (->> downloader :db db/get-stats log/info)
+
+       (let [cache-stats (python/await (yt/cache-stats (-> downloader :api :cache)))]
+         (log/info "Cache stats:")
+         (log/info cache-stats))
+
+       (when-not once
+         (python/await (python/anyio.sleep 120))
+         (recur))))))

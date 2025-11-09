@@ -37,3 +37,6 @@ cache.tar.gz
 dump.rdb
 db-backup.json
 htmlcov
+
+.calva
+.clj-kondo/.cache/

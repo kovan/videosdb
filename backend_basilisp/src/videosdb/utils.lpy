@@ -1,0 +1,93 @@
+
+;; src/videosdb/utils.lpy
+(ns videosdb.utils
+  (:require [basilisp.logging :as log])
+  (:import [socket socket]
+           [time time]))
+
+(defn quota-exceeded? [e]
+  (instance? QuotaExceeded e))
+
+(deftype QuotaExceeded [Exception])
+
+(defn wait-for-port
+  [port & {:keys [host timeout]
+           :or {host "localhost" timeout 30.0}}]
+  (log/debug (str "waiting for port " port ":" host " to be open"))
+  (let [start-time (python/time.perf-counter)]
+    (loop []
+      (try
+        (with [conn (python/socket.create-connection [host port] :timeout timeout)]
+              nil)
+        (catch OSError e
+          (python/time.sleep 0.01)
+          (when (>= (- (python/time.perf-counter) start-time) timeout)
+            (throw (python/TimeoutError
+                    (str "Waited too long for port " port " on host " host))))
+          (recur))))))
+
+(defn my-handler
+  "Handle exceptions with type checking and optional filtering.
+   Returns true if exception was caught and handled."
+  [my-type e handler]
+  (->> e
+       str
+       (str "Exception happened: ")
+       log/debug)
+  (cond
+    (instance? python/anyio.ExceptionGroup e)
+    (let [unhandled (->> (.-exceptions e)
+                         (remove #(instance? my-type %))
+                         vec)]
+      (->> (.-exceptions e)
+           (filter #(instance? my-type %))
+           (run! handler))
+      (when (seq unhandled)
+        (throw (python/anyio.ExceptionGroup unhandled)))
+      true)
+
+    (instance? my-type e)
+    (do (handler e) true)
+
+    :else
+    (throw e)))
+
+(defn put-item-at-front
+  "Move item to front of sequence if found, otherwise return sequence unchanged."
+  [seq item]
+  (if-not item
+    seq
+    (try
+      (let [i (.index seq item)]
+        (->> seq
+             (split-at i)
+             reverse
+             (apply concat)))
+      (catch ValueError _
+        seq))))
+
+(defn thread-some->
+  "Like some-> but stops at first nil/false."
+  [x & forms]
+  (reduce (fn [acc form]
+            (when acc
+              (if (seq? form)
+                (apply (first form) acc (rest form))
+                (form acc))))
+          x
+          forms))
+
+(defn deep-get
+  "Get nested value using path like ['snippet' 'title']"
+  [m path]
+  (reduce #(when %1 (get %1 %2)) m path))
+
+(defn deep-assoc
+  "Associate nested value using path."
+  [m path value]
+  (if (= 1 (count path))
+    (assoc m (first path) value)
+    (assoc m (first path)
+           (deep-assoc (get m (first path) {})
+                       (rest path)
+                       value))))

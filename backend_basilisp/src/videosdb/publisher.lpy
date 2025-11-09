@@ -1,0 +1,104 @@
+
+
+;; src/videosdb/publisher.lpy
+(ns videosdb.publisher
+  (:require [basilisp.logging :as log]
+            [basilisp.json :as json]
+            [videosdb.utils :as utils])
+  (:import [httpx AsyncClient]
+           [tweepy.asynchronous AsyncClient]))
+
+(def bitly-access-token "35811ca34a0829350789fceabfffd6ed57588672")
+
+(defprotocol IPublisher
+  (publish-video [this video]))
+
+(defrecord Publisher [db http])
+
+(defn make-publisher
+  [db]
+  (->Publisher db (python/httpx.AsyncClient)))
+
+(defn get-short-url-firebase
+  [publisher url]
+  (python/await
+   (let [config (python/os.environ.__getitem__ "VIDEOSDB_CONFIG")
+         config-path (-> python/__file__
+                         python/os.path.dirname
+                         (python/os.path.join (str "../common/firebase/configs/" config ".json")))
+         api-key (with-open [f (python/open config-path)]
+                   (-> f python/json.load (get "apiKey")))
+         request-url (str "https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=" api-key)
+         json-data {:dynamicLinkInfo {:domainUriPrefix "https://www.nithyananda.cc/v"
+                                      :link url}}
+         response (python/await (.post (:http publisher) request-url :json json-data))]
+     (-> response .json (get "shortLink")))))
+
+(defn create-post-text
+  [publisher video]
+  (python/await
+   (let [url (str (python/os.environ.__getitem__ "VIDEOSDB_HOSTNAME")
+                  "/video/"
+                  (utils/deep-get video ["videosdb" "slug"]))
+         short-url (python/await (get-short-url-firebase publisher url))
+         yt-url (str "http://youtu.be/" (get video "id"))]
+     (clojure.string/join "\n"
+                          [(utils/deep-get video ["snippet" "title"])
+                           yt-url
+                           short-url]))))
+
+(defrecord TwitterPublisher [db api http videos]
+  IPublisher
+  (publish-video [this video]
+    (python/await
+     (when (not= (python/os.environ.__getitem__ "VIDEOSDB_CONFIG") "nithyananda")
+       nil)
+
+     (let [video-date (utils/deep-get video ["snippet" "publishedAt"])
+           now (python/datetime.datetime.now python/datetime.timezone.utc)
+           already-published? (utils/deep-get video ["videosdb" "publishing" "id"])
+           too-old? (> (- now video-date) (python/datetime.timedelta :weeks 1))]
+       (when (or already-published? too-old?)
+         nil)
+
+       (let [text (python/await (create-post-text this video))
+             result (python/await (create-tweet this :text text))
+             publishing-data {:publishDate (.isoformat now)
+                              :id (utils/deep-get result ["data" "id"])
+                              :text text}]
+         (->> publishing-data
+              (utils/deep-assoc video ["videosdb" "publishing"])
+              (python/await (videosdb.db/set-doc
+                             (:db this)
+                             (str "videos/" (get video "id"))
+                             :merge true)))
+
+         (->> text
+              (str "Published in Twitter video " (get video "id") " with text: ")
+              log/info)
+
+         (python/await (python/anyio.sleep 5))
+         nil)))))
+
+(def twitter-keys-prod
+  {:api-key "f73ZNvOyGwYVJUUyav65KW4xv"
+   :api-secret "QOU5Oo9svOWT9tEd9SPiPUUck41gqmU0C6mLzr1wCJtpZeifOp"
+   :access-token "1576729637199265793-nDzS5ceL3iwqrw69tarOT9Crw4FClG"
+   :access-secret "xuxWmsnsfHCbCyWxe5GDgOsaBjmpJpoZygFK6bXWXst9g"})
+
+(defn make-twitter-publisher
+  [db]
+  (let [keys twitter-keys-prod
+        api (python/tweepy.asynchronous.AsyncClient
+             :consumer-key (:api-key keys)
+             :consumer-secret (:api-secret keys)
+             :access-token (:access-token keys)
+             :access-token-secret (:access-secret keys))]
+    (->TwitterPublisher db api (python/httpx.AsyncClient) #{})))
+
+(defn create-tweet
+  [publisher & args]
+  (python/await
+   (->> args
+        (python/apply (.create-tweet (:api publisher)))
+        python/await)))

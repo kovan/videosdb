@@ -1,0 +1,196 @@
+
+
+;; src/videosdb/ipfs.lpy
+(ns videosdb.ipfs
+  (:require [basilisp.logging :as log]
+            [videosdb.settings :as settings])
+  (:import [google.cloud dns firestore]
+           [google.oauth2 service-account]
+           [ipfshttpclient connect]
+           [socket gethostbyname]))
+
+(defrecord DNS [dns-zone client])
+
+(defn make-dns
+  [dns-zone]
+  (let [creds-path (-> python/__file__
+                       python/os.path.dirname
+                       (python/os.path.join "creds-wordpress.json"))
+        client (python/dns.Client
+                :credentials (python/service-account.Credentials.from-service-account-file
+                              creds-path))]
+    (->DNS dns-zone client)))
+
+(defn update-record
+  [dns record-name record-type ttl new-value]
+  (when-let [zone-name (:dns-zone dns)]
+    (let [zone (.zone (:client dns) zone-name)
+          records (.list-resource-record-sets zone)
+          changes (.changes zone)]
+
+      ;; Delete old records
+      (->> records
+           (filter #(and (= (.-name %) (str record-name "."))
+                         (= (.-record-type %) record-type)))
+           (run! #(.delete-record-set changes %)))
+
+      ;; Add new record
+      (let [record (.resource-record-set zone
+                                         (str record-name ".")
+                                         record-type
+                                         ttl
+                                         [new-value])]
+        (.add-record-set changes record))
+
+      (.create changes))))
+
+(defn update-dnslink
+  [dns record-name new-root-hash]
+  (update-record dns record-name "TXT" 300
+                 (str "dnslink=/ipfs/" new-root-hash)))
+
+(defn update-ip
+  [dns record-name new-ip]
+  (update-record dns record-name "A" 300 new-ip))
+
+(defrecord IPFS [db host port files-root api dnslink-update-pending])
+
+(defn make-ipfs
+  [& {:keys [files-root] :or {files-root "/videos"}}]
+  (let [creds-path (-> python/__file__
+                       python/os.path.dirname
+                       (python/os.path.join "creds.json"))
+        db (python/firestore.Client
+            :credentials (python/service-account.Credentials.from-service-account-file
+                          creds-path))
+        host (python/socket.gethostbyname settings/ipfs-host)
+        port settings/ipfs-port
+        api (python/ipfshttpclient.connect
+             (str "/ip4/" host "/tcp/" port "/http")
+             :session true)]
+    (.mkdir (.-files api) files-root :parents true)
+    (->IPFS db host port files-root api (atom false))))
+
+(defn add-file
+  [ipfs filename & {:keys [add-to-dir] :or {add-to-dir true} :as kwargs}]
+  (let [result (.add (:api ipfs) filename :pin true kwargs)
+        ipfs-hash (-> result first (get "Hash"))]
+    (assert ipfs-hash)
+    (when add-to-dir
+      (add-to-dir ipfs filename ipfs-hash))
+    ipfs-hash))
+
+(defn add-to-dir
+  [ipfs filename hash]
+  (let [src (str "/ipfs/" hash)
+        dst (str (:files-root ipfs) "/" (python/os.path.basename filename))]
+    (try
+      (.rm (.-files (:api ipfs)) dst)
+      (catch python/ipfshttpclient.exceptions.StatusError _
+        nil))
+    (.cp (.-files (:api ipfs)) src dst)
+    (reset! (:dnslink-update-pending ipfs) true)))
+
+(defn get-file
+  [ipfs ipfs-hash]
+  (.get (:api ipfs) ipfs-hash)
+  (->> "."
+       python/os.listdir
+       (apply max-key python/os.path.getctime)))
+
+(defn update-dnslink-ipfs
+  [ipfs & {:keys [force] :or {force false}}]
+  (when (or @(:dnslink-update-pending ipfs) force)
+    (let [root-hash (-> (:api ipfs)
+                        .-files
+                        (.stat (:files-root ipfs))
+                        (get "Hash"))
+          dns (make-dns settings/videosdb-dnszone)]
+      (update-dnslink dns
+                      (str "videos." settings/videosdb-domain)
+                      root-hash)
+      (reset! (:dnslink-update-pending ipfs) false))))
+
+(defn files-in-ipfs-dict
+  [ipfs]
+  (->> (:files-root ipfs)
+       (.ls (.-files (:api ipfs)) {:long true})
+       (get "Entries")
+       (filter #(clojure.string/ends-with? (python/str.lower (get % "Name")) ".mp4"))
+       (map (fn [file]
+              (let [youtube-id (videosdb.youtube-api/parse-youtube-id (get file "Name"))]
+                (when youtube-id
+                  [youtube-id file]))))
+       (remove nil?)
+       (into {})))
+
+(defn download-and-register-folder
+  [ipfs & {:keys [overwrite-hashes] :or {overwrite-hashes false}}]
+  (let [yt-dl (videosdb.youtube-api/YoutubeDL)
+        videos-dir (python/os.path.abspath settings/video-files-dir)]
+
+    (when-not (python/os.path.exists videos-dir)
+      (python/os.mkdir videos-dir))
+
+    (let [files-in-ipfs (files-in-ipfs-dict ipfs)
+          files-in-disk (->> videos-dir
+                             python/os.listdir
+                             (remove #(clojure.string/ends-with? % ".part"))
+                             (map #(vector (videosdb.youtube-api/parse-youtube-id %) %))
+                             (remove #(nil? (first %)))
+                             (into {}))
+          video-ids (-> (:db ipfs)
+                        (.collection "meta")
+                        (.document "meta")
+                        .get
+                        .to-dict
+                        (get "videoIds"))]
+
+      (doseq [video-id video-ids]
+        (let [video-ref (-> (:db ipfs)
+                            (.collection "videos")
+                            (.document video-id))]
+
+          ;; Download if not on disk
+          (when-not (get files-in-disk video-id)
+            (log/debug (str "Downloading " video-id))
+            (python/with [tmpdir (python/tempfile.TemporaryDirectory :dir videos-dir)]
+                         (python/os.chdir (.-name tmpdir))
+                         (try
+                           (let [filename (.download-video yt-dl video-id)]
+                             (.set video-ref
+                                   {:videosdb {:filename filename}}
+                                   :merge true)
+                             (try
+                               (python/shutil.move filename videos-dir)
+                               (catch OSError e
+                                 (log/exception e)
+                                 (continue))))
+                           (catch videosdb.youtube-api/YoutubeDL.UnavailableError _
+                             (continue)))))
+
+          ;; Update if already in IPFS
+          (when-let [file (get files-in-ipfs video-id)]
+            (log/debug (str "Already in IPFS: " file))
+            (when overwrite-hashes
+              (.set video-ref
+                    {:videosdb {:filename (get file "Name")
+                                :ipfs-hash (get file "Hash")}}
+                    :merge true))
+            (continue))
+
+          ;; Add to IPFS
+          (let [video (-> video-ref .get .to-dict)
+                filename (utils/deep-get video ["videosdb" "filename"])]
+            (->> (str (utils/deep-get video ["snippet" "title"]))
+                 (str "Adding to IPFS: ID:" video-id ", title: ")
+                 log/debug)
+            (let [ipfs-hash (add-file ipfs
+                                      (str videos-dir "/" filename)
+                                      :wrap-with-directory true
+                                      :nocopy true)]
+              (.set video-ref
+                    {:videosdb {:ipfs-hash ipfs-hash}}
+                    :merge true)))))
+
+      (update-dnslink-ipfs ipfs))))
