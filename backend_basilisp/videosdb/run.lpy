@@ -1,9 +1,6 @@
 
-
-
-;; src/videosdb/run.lpy
 (ns videosdb.run
-  (:require [basilisp.logging :as log]
+  (:require [python/logging :as log]
             [videosdb.downloader :as dl]
             [videosdb.db :as db]
             [videosdb.settings :as settings])

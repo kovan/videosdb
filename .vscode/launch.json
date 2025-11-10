@@ -52,6 +52,29 @@
                 "justMyCode": true
             },
             {
+                "name": "Backend run Basilisp",
+                "type": "debugpy",
+                "request": "launch",
+                "program": "run.py",
+                "pythonArgs": [
+                    "-W",
+                    "default"
+                ],
+                "env": {
+                    "LOGLEVEL": "DEBUG",
+                    "PYTHONDEVMODE": "1",
+                },
+                "envFile": "${workspaceFolder}/common/env/testing.txt",
+                "args": [
+                    "-c",
+                    "--export-to-emulator-host",
+                    "127.0.0.1:46456"
+                ],
+                "console": "integratedTerminal",
+                "cwd": "${workspaceFolder}/backend_basilisp",
+                "justMyCode": false
+            },
+            {
                 "name": "yarn generate",
                 "request": "launch",
                 "runtimeExecutable": "yarn",
