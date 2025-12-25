@@ -1,11 +1,8 @@
-
-# ============================================================================
-# Database Module
-# ============================================================================
 module DB
 
 using Logging
 using JSON3
+using JSONSchema
 using Dates
 using ..Utils
 import ..Utils: QuotaExceeded
@@ -170,6 +167,16 @@ function validate_video_schema(db::DatabaseClient, video_dict::Dict)
     end
     
     try
+        # Use JSONSchema.jl to validate
+        schema = JSONSchema.Schema(db.db_schema)
+        result = JSONSchema.validate(schema, video_dict)
+        
+        if !isnothing(result)
+            video_id = get(video_dict, "id", "unknown")
+            @warn "Video $video_id did not pass schema validation: $result"
+            return false
+        end
+        
         return true
     catch e
         video_id = get(video_dict, "id", "unknown")
