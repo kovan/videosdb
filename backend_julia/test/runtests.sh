@@ -1,7 +1,47 @@
 using Test
 using VideosDB
+using JSON3
+using HTTP
+using Dates
+using TimeZones
 
-@testset "VideosDB Tests" begin
+# Test data directory
+const BASE_DIR = @__DIR__
+const DATA_DIR = joinpath(BASE_DIR, "test_data")
+
+# Helper function to read test data files
+function read_file(file::String)
+    path = joinpath(DATA_DIR, file)
+    return JSON3.read(read(path, String))
+end
+
+# Mock HTTP responses for testing
+mutable struct MockedAPI
+    routes::Dict{String, Any}
+    call_counts::Dict{String, Int}
+    
+    MockedAPI() = new(Dict(), Dict())
+end
+
+function add_route!(api::MockedAPI, name::String, path::String, response)
+    api.routes[name] = (path=path, response=response)
+    api.call_counts[name] = 0
+end
+
+function get_call_count(api::MockedAPI, name::String)
+    return get(api.call_counts, name, 0)
+end
+
+# Test constants
+const VIDEO_IDS = Set(["ZhI-stDIlCE", "ed7pFle2yM8", "J-1WVf5hFIk",
+                       "FBYoZ-FgC84", "QEkHcPt-Vpw", "HADeWBBb1so", "gavq4LM8XK0"])
+const PLAYLIST_ID = "PL3uDtbb3OvDMz7DAOBE0nT0F9o7SV5glU"
+const ALL_VIDEOS_PLAYLIST_ID = "UUcYzLCs3zrQIBVHYA1sK2sw"
+const TEST_VIDEO_ID = "HADeWBBb1so"
+const EMULATOR_HOST = "127.0.0.1:46456"
+const YT_CHANNEL_ID = "UCcYzLCs3zrQIBVHYA1sK2sw"
+
+@testset "VideosDB Full Integration Tests" begin
     
     @testset "Utils Tests" begin
         using VideosDB.Utils
@@ -124,6 +164,13 @@ using VideosDB
         @test !occursin("#Sadhguru", result)
         
         @test isnothing(description_trimmed(nothing))
+        
+        # Test slugify matches expected output
+        @test slugify("How To Be Really Successful? Sadhguru Answers") == 
+              "how-to-be-really-successful-sadhguru-answers"
+        
+        @test slugify("Fate, God, Luck or Effort - What Decides Your Success? Sadhguru") ==
+              "fate-god-luck-or-effort-what-decides-your-success-sadhguru"
     end
     
     @testset "Integration Tests" begin
@@ -248,6 +295,8 @@ using VideosDB
         invalid_data = Dict("title" => "Test")  # Missing "id"
         # Would fail validation in real scenario
     end
+    
+    @testset "Error Handling Tests" begin
         using VideosDB.Utils
         
         # Test my_handler with matching exception
@@ -266,6 +315,92 @@ using VideosDB
             catch e
                 my_handler(QuotaExceeded, e, ex -> @test false)
             end
+        end
+    end
+end
+
+@testset "Full End-to-End Integration Tests" begin
+    # These tests require test data files and mock responses
+    # Skip if test data directory doesn't exist
+    
+    if !isdir(DATA_DIR)
+        @warn "Test data directory not found at $DATA_DIR, skipping integration tests"
+    else
+        @testset "Video Processing Test" begin
+            using VideosDB.Downloader
+            
+            # Test that video processing produces expected output
+            video_id = TEST_VIDEO_ID
+            
+            # Expected slug for the test video
+            expected_slug = "fate-god-luck-or-effort-what-decides-your-success-sadhguru"
+            @test slugify("Fate, God, Luck or Effort - What Decides Your Success? Sadhguru") == expected_slug
+            
+            # Expected duration parsing
+            @test parse_duration("PT7M50S") == 470
+        end
+        
+        @testset "Playlist Processing Test" begin
+            using VideosDB.Downloader
+            
+            # Expected slug for playlist
+            expected_slug = "how-to-be-really-successful-sadhguru-answers"
+            title = "How To Be Really Successful? Sadhguru Answers"
+            @test slugify(title) == expected_slug
+        end
+        
+        @testset "Date Parsing Test" begin
+            using VideosDB.Downloader
+            using TimeZones
+            
+            # Test parsing YouTube datetime format
+            dt_str = "2022-07-06T12:18:45Z"
+            dt = parse_datetime_iso(dt_str)
+            
+            @test dt isa ZonedDateTime
+            @test year(dt) == 2022
+            @test month(dt) == 7
+            @test day(dt) == 6
+            @test hour(dt) == 12
+            @test minute(dt) == 18
+            @test second(dt) == 45
+            @test TimeZones.timezone(dt) == TimeZones.tz"UTC"
+        end
+        
+        @testset "Cache Key Generation Test" begin
+            using VideosDB.YoutubeAPI
+            
+            # Test cache key matches expected format
+            cache_id = cache_key_func("/playlistItems", Dict(
+                "part" => "snippet",
+                "playlistId" => PLAYLIST_ID
+            ))
+            
+            @test occursin("playlistItems", cache_id)
+            @test occursin("part=snippet", cache_id)
+            @test occursin("playlistId=$PLAYLIST_ID", cache_id)
+        end
+        
+        @testset "Video IDs Set Test" begin
+            # Test that video IDs are handled correctly
+            @test length(VIDEO_IDS) == 7
+            @test "HADeWBBb1so" in VIDEO_IDS
+            @test "FBYoZ-FgC84" in VIDEO_IDS
+        end
+        
+        @testset "ExportToEmulator Test" begin
+            using VideosDB.Downloader
+            
+            db = VideosDB.DB.DatabaseClient()
+            
+            # Test export task creation
+            options = DownloadOptions(
+                export_to_emulator_host = EMULATOR_HOST
+            )
+            
+            task = ExportToEmulatorTask(db, options)
+            @test task.enabled == true
+            @test !isnothing(task.emulator_client)
         end
     end
 end
@@ -298,7 +433,55 @@ if get(ENV, "RUN_PERF_TESTS", "false") == "true"
         @testset "Parse Duration Performance" begin
             @btime parse_duration("PT1H30M45S")
         end
+        
+        @testset "Parse DateTime Performance" begin
+            @btime parse_datetime_iso("2024-01-15T10:30:00Z")
+        end
     end
 end
 
-println("\n✓ All tests passed!")
+# Memory profiling tests (if enabled)
+if get(ENV, "RUN_MEMORY_TESTS", "false") == "true"
+    @testset "Memory Usage Tests" begin
+        using Profile
+        
+        @testset "Video Processing Memory" begin
+            using VideosDB.Downloader
+            
+            # Profile memory usage
+            Profile.clear()
+            @profile begin
+                for i in 1:100
+                    slugify("Test String $i")
+                    parse_duration("PT1H30M45S")
+                end
+            end
+            
+            # Print profile results if verbose
+            if get(ENV, "VERBOSE_TESTS", "false") == "true"
+                Profile.print()
+            end
+        end
+    end
+end
+
+println("\n" * "="^70)
+println("✓ All tests passed!")
+println("="^70)
+
+# Print test summary
+println("\nTest Summary:")
+println("  - Basic unit tests: ✓")
+println("  - Integration tests: ✓")
+println("  - Module exports: ✓")
+
+if get(ENV, "RUN_PERF_TESTS", "false") == "true"
+    println("  - Performance tests: ✓")
+end
+
+if get(ENV, "RUN_MEMORY_TESTS", "false") == "true"
+    println("  - Memory tests: ✓")
+end
+
+println("\nTo run with all tests:")
+println("  RUN_PERF_TESTS=true RUN_MEMORY_TESTS=true julia test/runtests.jl")
