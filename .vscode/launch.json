@@ -5,6 +5,17 @@
         "version": "0.2.0",
         "configurations": [
             {
+                "type": "julia",
+                "request": "launch",
+                "name": "Julia backend",
+                "program": "./src/run.jl",
+                "cwd": "${workspaceFolder}/backend_julia",
+                "args": [
+                    "--check-for-new-videos"
+                ],
+                "stopOnEntry": false
+            },
+            {
                 "name": "Python: Debug Tests",
                 "type": "python",
                 "pythonArgs": [

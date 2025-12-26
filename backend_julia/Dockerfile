@@ -8,13 +8,24 @@ RUN apt clean
 
 WORKDIR /app
 
+
 RUN curl -fsSL https://install.julialang.org | sh
 
-ADD poetry.lock pyproject.toml  /app/
+# Copy project files
+COPY Project.toml Manifest.toml ./
+COPY src/ ./src/
 
-ENV PATH="/root/.local/bin:${PATH}"
-RUN echo $PATH
-RUN poetry install --no-interaction
+# Install dependencies
+RUN julia --project=. -e 'using Pkg; Pkg.instantiate()'
+
+# Precompile
+RUN julia --project=. -e 'using Pkg; Pkg.precompile()'
+
+# Set entry point
+#ENTRYPOINT ["julia", "--project=.", "src/run.jl"]
+#CMD ["--check-for-new-videos"]
+
+
 
 
 COPY  . .

@@ -11,6 +11,7 @@ module RunVideosDB
 using ArgParse
 using Logging
 using Dates
+#using VideosDB
 
 # Load environment variables (similar to dotenv in Python)
 # In Julia, you might use DotEnv.jl package
@@ -136,9 +137,6 @@ function main()
     
     @info "VideosDB Starting..."
     @info "Arguments: $args"
-    
-    # Load the VideosDB module (assuming it's in the load path)
-    using VideosDB
     
     # Check for new videos
     if args["check-for-new-videos"]
