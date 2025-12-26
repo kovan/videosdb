@@ -11,6 +11,7 @@
                 "program": "./src/run.jl",
                 "cwd": "${workspaceFolder}/backend_julia",
                 "args": [
+                    "--project=.",
                     "--check-for-new-videos"
                 ],
                 "stopOnEntry": false

@@ -1,1 +1,27 @@
+name = "VideosDB"
+uuid = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+version = "1.0.0"
+authors = ["Your Name <your.email@example.com>"]
+
 [deps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Firebase = "d5d4129f-b518-43ad-8b57-4a757381be86"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Redis = "0cf705f9-a9e2-50d1-a699-2b372a39b750"
+Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
+TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
+URIs = "5c2747f8-b7ea-4ff2-ba2e-563bfd36b1d4"
+
+[compat]
+Firebase = "0.1.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
