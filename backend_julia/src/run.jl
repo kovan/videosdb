@@ -11,7 +11,8 @@ module RunVideosDB
 using ArgParse
 using Logging
 using Dates
-using VideosDB
+include("Downloader.jl")
+using DB
 
 # Load environment variables (similar to dotenv in Python)
 # In Julia, you might use DotEnv.jl package
@@ -144,16 +145,16 @@ function main()
     if args["check-for-new-videos"]
         @info "Checking for new videos..."
 
-        options = VideosDB.Downloader.DownloadOptions(
+        options = Downloader.DownloadOptions(
             enable_transcripts=args["enable-transcripts"],
             enable_twitter_publishing=args["enable-twitter-publishing"],
             export_to_emulator_host=args["export-to-emulator-host"]
         )
 
-        downloader = VideosDB.Downloader.VideoDownloader(options=options)
+        downloader = Downloader.VideoDownloader(options=options)
 
         try
-            VideosDB.Downloader.check_for_new_videos!(downloader)
+            Downloader.check_for_new_videos!(downloader)
             @info "Video check completed successfully"
         catch e
             @error "Error during video check" exception = (e, catch_backtrace())
@@ -165,11 +166,11 @@ function main()
     if args["validate-db-schema"]
         @info "Validating database schema..."
 
-        db = VideosDB.DB.DatabaseClient()
-        VideosDB.DB.init_db!(db)
+        db = DB.DatabaseClient()
+        DB.init_db!(db)
 
         try
-            VideosDB.DB.delete_invalid_docs!(db)
+            DB.delete_invalid_docs!(db)
             @info "Schema validation completed successfully"
         catch e
             @error "Error during schema validation" exception = (e, catch_backtrace())
