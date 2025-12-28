@@ -30,6 +30,5 @@
         "reportOptionalMemberAccess": "none",
         "reportUnboundVariable": "none"
     },
-    "python.analysis.autoImportCompletions": true,
-    "julia.environmentPath": "backend_julia"
+    "python.analysis.autoImportCompletions": true
 }
