@@ -11,8 +11,8 @@ module RunVideosDB
 using ArgParse
 using Logging
 using Dates
-include("Downloader.jl")
-using DB
+using .Downloader
+using .DB
 
 # Load environment variables (similar to dotenv in Python)
 # In Julia, you might use DotEnv.jl package
