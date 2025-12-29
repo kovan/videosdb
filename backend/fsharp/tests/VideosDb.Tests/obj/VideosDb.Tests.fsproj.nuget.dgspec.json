@@ -63,12 +63,12 @@
             },
             "Ipfs.Http.Client": {
               "target": "Package",
-              "version": "[1.2.0, )",
+              "version": "[0.33.0, )",
               "generatePathProperty": true
             },
             "NJsonSchema": {
               "target": "Package",
-              "version": "[10.9.3, )",
+              "version": "[11.0.0, )",
               "generatePathProperty": true
             },
             "NodaTime": {
@@ -78,7 +78,7 @@
             },
             "Slugify": {
               "target": "Package",
-              "version": "[2.0.0, )",
+              "version": "[0.1.0.20570, )",
               "generatePathProperty": true
             },
             "StackExchange.Redis": {
@@ -93,7 +93,7 @@
             },
             "TweetinviAPI": {
               "target": "Package",
-              "version": "[6.0.0, )",
+              "version": "[5.0.4, )",
               "generatePathProperty": true
             }
           },
@@ -175,7 +175,7 @@
             },
             "Microsoft.NET.Test.Sdk": {
               "target": "Package",
-              "version": "[18.4.0, )",
+              "version": "[18.0.1, )",
               "generatePathProperty": true
             },
             "RichardSzalay.MockHttp": {

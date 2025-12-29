@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<linker>
+  <assembly fullname="VideosDb">
+    <resource name="FSharpSignatureData.VideosDb" action="remove"></resource>
+    <resource name="FSharpSignatureCompressedData.VideosDb" action="remove"></resource>
+    <resource name="FSharpSignatureDataB.VideosDb" action="remove"></resource>
+    <resource name="FSharpSignatureCompressedDataB.VideosDb" action="remove"></resource>
+    <resource name="FSharpOptimizationData.VideosDb" action="remove"></resource>
+    <resource name="FSharpOptimizationCompressedData.VideosDb" action="remove"></resource>
+    <resource name="FSharpOptimizationDataB.VideosDb" action="remove"></resource>
+    <resource name="FSharpOptimizationCompressedDataB.VideosDb" action="remove"></resource>
+    <resource name="FSharpOptimizationInfo.VideosDb" action="remove"></resource>
+    <resource name="FSharpSignatureInfo.VideosDb" action="remove"></resource>
+  </assembly>
+</linker>

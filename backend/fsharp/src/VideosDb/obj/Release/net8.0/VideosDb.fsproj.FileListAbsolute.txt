@@ -1,0 +1,12 @@
+/home/k/videosdb/backend/fsharp/src/VideosDb/bin/Release/net8.0/VideosDb.deps.json
+/home/k/videosdb/backend/fsharp/src/VideosDb/bin/Release/net8.0/VideosDb.dll
+/home/k/videosdb/backend/fsharp/src/VideosDb/bin/Release/net8.0/VideosDb.pdb
+/home/k/videosdb/backend/fsharp/src/VideosDb/obj/Release/net8.0/VideosDb.fsproj.AssemblyReference.cache
+/home/k/videosdb/backend/fsharp/src/VideosDb/obj/Release/net8.0/VideosDb.AssemblyInfoInputs.cache
+/home/k/videosdb/backend/fsharp/src/VideosDb/obj/Release/net8.0/VideosDb.AssemblyInfo.fs
+/home/k/videosdb/backend/fsharp/src/VideosDb/obj/Release/net8.0/VideosDb.fsproj.CoreCompileInputs.cache
+/home/k/videosdb/backend/fsharp/src/VideosDb/obj/Release/net8.0/VideosDb.sourcelink.json
+/home/k/videosdb/backend/fsharp/src/VideosDb/obj/Release/net8.0/VideosDb.dll
+/home/k/videosdb/backend/fsharp/src/VideosDb/obj/Release/net8.0/refint/VideosDb.dll
+/home/k/videosdb/backend/fsharp/src/VideosDb/obj/Release/net8.0/VideosDb.pdb
+/home/k/videosdb/backend/fsharp/src/VideosDb/obj/Release/net8.0/ref/VideosDb.dll

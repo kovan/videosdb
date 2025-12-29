@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <RestoreSuccess Condition=" '$(RestoreSuccess)' == '' ">False</RestoreSuccess>
+    <RestoreSuccess Condition=" '$(RestoreSuccess)' == '' ">True</RestoreSuccess>
     <RestoreTool Condition=" '$(RestoreTool)' == '' ">NuGet</RestoreTool>
     <ProjectAssetsFile Condition=" '$(ProjectAssetsFile)' == '' ">$(MSBuildThisFileDirectory)project.assets.json</ProjectAssetsFile>
     <NuGetPackageRoot Condition=" '$(NuGetPackageRoot)' == '' ">/home/k/.nuget/packages/</NuGetPackageRoot>
@@ -13,10 +13,13 @@
     <SourceRoot Include="/home/k/.nuget/packages/" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <PkgTweetinviAPI Condition=" '$(PkgTweetinviAPI)' == '' ">/home/k/.nuget/packages/tweetinviapi/5.0.4</PkgTweetinviAPI>
     <PkgSystem_Text_Json Condition=" '$(PkgSystem_Text_Json)' == '' ">/home/k/.nuget/packages/system.text.json/8.0.0</PkgSystem_Text_Json>
     <PkgStackExchange_Redis Condition=" '$(PkgStackExchange_Redis)' == '' ">/home/k/.nuget/packages/stackexchange.redis/2.6.66</PkgStackExchange_Redis>
+    <PkgSlugify Condition=" '$(PkgSlugify)' == '' ">/home/k/.nuget/packages/slugify/0.1.0.20570</PkgSlugify>
     <PkgNodaTime Condition=" '$(PkgNodaTime)' == '' ">/home/k/.nuget/packages/nodatime/3.1.0</PkgNodaTime>
     <PkgNJsonSchema Condition=" '$(PkgNJsonSchema)' == '' ">/home/k/.nuget/packages/njsonschema/11.0.0</PkgNJsonSchema>
+    <PkgIpfs_Http_Client Condition=" '$(PkgIpfs_Http_Client)' == '' ">/home/k/.nuget/packages/ipfs.http.client/0.33.0</PkgIpfs_Http_Client>
     <PkgGoogle_Cloud_Firestore Condition=" '$(PkgGoogle_Cloud_Firestore)' == '' ">/home/k/.nuget/packages/google.cloud.firestore/3.8.0</PkgGoogle_Cloud_Firestore>
     <PkgGoogle_Apis_YouTube_v3 Condition=" '$(PkgGoogle_Apis_YouTube_v3)' == '' ">/home/k/.nuget/packages/google.apis.youtube.v3/1.63.0.3205</PkgGoogle_Apis_YouTube_v3>
     <PkgFSharp_Core Condition=" '$(PkgFSharp_Core)' == '' ">/home/k/.nuget/packages/fsharp.core/10.0.100</PkgFSharp_Core>

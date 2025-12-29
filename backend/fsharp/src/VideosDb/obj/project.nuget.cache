@@ -1,10 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "eepRqL2MzCY=",
-  "success": false,
+  "dgSpecHash": "B+vIeJmWcqc=",
+  "success": true,
   "projectFilePath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
   "expectedPackageFiles": [
     "/home/k/.nuget/packages/anglesharp/1.0.1/anglesharp.1.0.1.nupkg.sha512",
+    "/home/k/.nuget/packages/autofac/4.9.4/autofac.4.9.4.nupkg.sha512",
+    "/home/k/.nuget/packages/common.logging/3.4.1/common.logging.3.4.1.nupkg.sha512",
+    "/home/k/.nuget/packages/common.logging.core/3.4.1/common.logging.core.3.4.1.nupkg.sha512",
     "/home/k/.nuget/packages/fsharp.core/10.0.100/fsharp.core.10.0.100.nupkg.sha512",
     "/home/k/.nuget/packages/google.api.commonprotos/2.15.0/google.api.commonprotos.2.15.0.nupkg.sha512",
     "/home/k/.nuget/packages/google.api.gax/4.8.0/google.api.gax.4.8.0.nupkg.sha512",
@@ -22,6 +25,8 @@
     "/home/k/.nuget/packages/grpc.core.api/2.60.0/grpc.core.api.2.60.0.nupkg.sha512",
     "/home/k/.nuget/packages/grpc.net.client/2.60.0/grpc.net.client.2.60.0.nupkg.sha512",
     "/home/k/.nuget/packages/grpc.net.common/2.60.0/grpc.net.common.2.60.0.nupkg.sha512",
+    "/home/k/.nuget/packages/ipfs.core/0.55.0/ipfs.core.0.55.0.nupkg.sha512",
+    "/home/k/.nuget/packages/ipfs.http.client/0.33.0/ipfs.http.client.0.33.0.nupkg.sha512",
     "/home/k/.nuget/packages/microsoft.bcl.asyncinterfaces/6.0.0/microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
     "/home/k/.nuget/packages/microsoft.csharp/4.3.0/microsoft.csharp.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/6.0.0/microsoft.extensions.dependencyinjection.abstractions.6.0.0.nupkg.sha512",
@@ -36,23 +41,50 @@
     "/home/k/.nuget/packages/njsonschema.annotations/11.0.0/njsonschema.annotations.11.0.0.nupkg.sha512",
     "/home/k/.nuget/packages/nodatime/3.1.0/nodatime.3.1.0.nupkg.sha512",
     "/home/k/.nuget/packages/pipelines.sockets.unofficial/2.2.2/pipelines.sockets.unofficial.2.2.2.nupkg.sha512",
+    "/home/k/.nuget/packages/portable.bouncycastle/1.8.5/portable.bouncycastle.1.8.5.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.native.system/4.3.0/runtime.native.system.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.native.system.net.http/4.3.0/runtime.native.system.net.http.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.native.system.security.cryptography.apple/4.3.0/runtime.native.system.security.cryptography.apple.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.native.system.security.cryptography.openssl/4.3.2/runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.opensuse.13.2-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.opensuse.13.2-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.opensuse.42.1-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.opensuse.42.1-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.osx.10.10-x64.runtime.native.system.security.cryptography.apple/4.3.0/runtime.osx.10.10-x64.runtime.native.system.security.cryptography.apple.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.osx.10.10-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.osx.10.10-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.rhel.7-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.rhel.7-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "/home/k/.nuget/packages/runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "/home/k/.nuget/packages/simplebase/1.3.1/simplebase.1.3.1.nupkg.sha512",
+    "/home/k/.nuget/packages/slugify/0.1.0.20570/slugify.0.1.0.20570.nupkg.sha512",
     "/home/k/.nuget/packages/stackexchange.redis/2.6.66/stackexchange.redis.2.6.66.nupkg.sha512",
     "/home/k/.nuget/packages/system.buffers/4.5.1/system.buffers.4.5.1.nupkg.sha512",
     "/home/k/.nuget/packages/system.codedom/7.0.0/system.codedom.7.0.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.collections/4.3.0/system.collections.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.collections.concurrent/4.3.0/system.collections.concurrent.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.collections.immutable/6.0.0/system.collections.immutable.6.0.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.configuration.configurationmanager/5.0.0/system.configuration.configurationmanager.5.0.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.diagnostics.debug/4.3.0/system.diagnostics.debug.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.diagnostics.diagnosticsource/4.3.0/system.diagnostics.diagnosticsource.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.diagnostics.performancecounter/5.0.0/system.diagnostics.performancecounter.5.0.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.diagnostics.tracing/4.3.0/system.diagnostics.tracing.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.drawing.common/5.0.0/system.drawing.common.5.0.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.dynamic.runtime/4.3.0/system.dynamic.runtime.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.globalization/4.3.0/system.globalization.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.globalization.calendars/4.3.0/system.globalization.calendars.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.globalization.extensions/4.3.0/system.globalization.extensions.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.io/4.3.0/system.io.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.io.filesystem/4.3.0/system.io.filesystem.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.io.filesystem.primitives/4.3.0/system.io.filesystem.primitives.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.io.pipelines/5.0.1/system.io.pipelines.5.0.1.nupkg.sha512",
     "/home/k/.nuget/packages/system.linq/4.3.0/system.linq.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.linq.async/6.0.1/system.linq.async.6.0.1.nupkg.sha512",
     "/home/k/.nuget/packages/system.linq.expressions/4.3.0/system.linq.expressions.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.management/7.0.2/system.management.7.0.2.nupkg.sha512",
+    "/home/k/.nuget/packages/system.net.http/4.3.4/system.net.http.4.3.4.nupkg.sha512",
+    "/home/k/.nuget/packages/system.net.primitives/4.3.0/system.net.primitives.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.objectmodel/4.3.0/system.objectmodel.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.reflection/4.3.0/system.reflection.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.reflection.emit/4.3.0/system.reflection.emit.4.3.0.nupkg.sha512",
@@ -60,15 +92,23 @@
     "/home/k/.nuget/packages/system.reflection.emit.lightweight/4.3.0/system.reflection.emit.lightweight.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.reflection.extensions/4.3.0/system.reflection.extensions.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.reflection.primitives/4.3.0/system.reflection.primitives.4.3.0.nupkg.sha512",
-    "/home/k/.nuget/packages/system.reflection.typeextensions/4.3.0/system.reflection.typeextensions.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.reflection.typeextensions/4.5.1/system.reflection.typeextensions.4.5.1.nupkg.sha512",
     "/home/k/.nuget/packages/system.resources.resourcemanager/4.3.0/system.resources.resourcemanager.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.runtime/4.3.0/system.runtime.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.runtime.compilerservices.unsafe/6.0.0/system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.runtime.extensions/4.3.0/system.runtime.extensions.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.runtime.handles/4.3.0/system.runtime.handles.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.runtime.interopservices/4.3.0/system.runtime.interopservices.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.runtime.numerics/4.3.0/system.runtime.numerics.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.security.accesscontrol/5.0.0/system.security.accesscontrol.5.0.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.security.cryptography.algorithms/4.3.0/system.security.cryptography.algorithms.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.security.cryptography.cng/4.3.0/system.security.cryptography.cng.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.security.cryptography.csp/4.3.0/system.security.cryptography.csp.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.security.cryptography.encoding/4.3.0/system.security.cryptography.encoding.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.security.cryptography.openssl/4.3.0/system.security.cryptography.openssl.4.3.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.security.cryptography.primitives/4.3.0/system.security.cryptography.primitives.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.security.cryptography.protecteddata/5.0.0/system.security.cryptography.protecteddata.5.0.0.nupkg.sha512",
+    "/home/k/.nuget/packages/system.security.cryptography.x509certificates/4.3.0/system.security.cryptography.x509certificates.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.security.permissions/5.0.0/system.security.permissions.5.0.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.security.principal.windows/5.0.0/system.security.principal.windows.5.0.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.text.encoding/4.3.0/system.text.encoding.4.3.0.nupkg.sha512",
@@ -78,6 +118,7 @@
     "/home/k/.nuget/packages/system.threading/4.3.0/system.threading.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.threading.tasks/4.3.0/system.threading.tasks.4.3.0.nupkg.sha512",
     "/home/k/.nuget/packages/system.windows.extensions/5.0.0/system.windows.extensions.5.0.0.nupkg.sha512",
+    "/home/k/.nuget/packages/tweetinviapi/5.0.4/tweetinviapi.5.0.4.nupkg.sha512",
     "/home/k/.nuget/packages/microsoft.netcore.app.ref/8.0.22/microsoft.netcore.app.ref.8.0.22.nupkg.sha512",
     "/home/k/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.22/microsoft.aspnetcore.app.ref.8.0.22.nupkg.sha512"
   ],
@@ -90,51 +131,6 @@
       "warningLevel": 1,
       "filePath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
       "libraryId": "Google.Apis.YouTube.v3",
-      "targetGraphs": [
-        "net8.0"
-      ]
-    },
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "message": "VideosDb depends on NJsonSchema (>= 10.9.3) but NJsonSchema 10.9.3 was not found. NJsonSchema 11.0.0 was resolved instead.",
-      "projectPath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
-      "warningLevel": 1,
-      "filePath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
-      "libraryId": "NJsonSchema",
-      "targetGraphs": [
-        "net8.0"
-      ]
-    },
-    {
-      "code": "NU1102",
-      "level": "Error",
-      "message": "Unable to find package Ipfs.Http.Client with version (>= 1.2.0)\n  - Found 12 version(s) in nuget.org [ Nearest version: 0.33.0 ]\n  - Found 0 version(s) in /usr/share/dotnet/sdk/10.0.100/FSharp/library-packs",
-      "projectPath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
-      "filePath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
-      "libraryId": "Ipfs.Http.Client",
-      "targetGraphs": [
-        "net8.0"
-      ]
-    },
-    {
-      "code": "NU1102",
-      "level": "Error",
-      "message": "Unable to find package TweetinviAPI with version (>= 6.0.0)\n  - Found 132 version(s) in nuget.org [ Nearest version: 5.0.4 ]\n  - Found 0 version(s) in /usr/share/dotnet/sdk/10.0.100/FSharp/library-packs",
-      "projectPath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
-      "filePath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
-      "libraryId": "TweetinviAPI",
-      "targetGraphs": [
-        "net8.0"
-      ]
-    },
-    {
-      "code": "NU1102",
-      "level": "Error",
-      "message": "Unable to find package Slugify with version (>= 2.0.0)\n  - Found 3 version(s) in nuget.org [ Nearest version: 0.1.0.20570 ]\n  - Found 0 version(s) in /usr/share/dotnet/sdk/10.0.100/FSharp/library-packs",
-      "projectPath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
-      "filePath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
-      "libraryId": "Slugify",
       "targetGraphs": [
         "net8.0"
       ]
@@ -159,6 +155,18 @@
       "warningLevel": 1,
       "filePath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
       "libraryId": "System.Text.Json",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "message": "Package 'Slugify 0.1.0.20570' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "projectPath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
+      "warningLevel": 1,
+      "filePath": "/home/k/videosdb/backend/fsharp/src/VideosDb/VideosDb.fsproj",
+      "libraryId": "Slugify",
       "targetGraphs": [
         "net8.0"
       ]
