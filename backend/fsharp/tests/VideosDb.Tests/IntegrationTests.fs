@@ -15,7 +15,8 @@ module IntegrationTests =
         if Environment.GetEnvironmentVariable("RUN_INTEGRATION") <> "true" then
             Assert.True(true)
         else
-            let db = FirestoreAdapter(Environment.GetEnvironmentVariable("FIRESTORE_PROJECT") ?? "demo-project") :> IDatabase
+            let project = match Environment.GetEnvironmentVariable("FIRESTORE_PROJECT") with | null | "" -> "demo-project" | v -> v
+            let db = FirestoreAdapter(project) :> IDatabase
             db.InitAsync().GetAwaiter().GetResult()
             Assert.True(true)
 
@@ -24,8 +25,9 @@ module IntegrationTests =
         if Environment.GetEnvironmentVariable("RUN_INTEGRATION") <> "true" then
             Assert.True(true)
         else
-            let host = Environment.GetEnvironmentVariable("IPFS_HOST") ?? "127.0.0.1"
-            let port = match Int32.TryParse(Environment.GetEnvironmentVariable("IPFS_PORT") ?? "5001") with | true, v -> v | _ -> 5001
+            let host = match Environment.GetEnvironmentVariable("IPFS_HOST") with | null | "" -> "127.0.0.1" | v -> v
+            let portStr = match Environment.GetEnvironmentVariable("IPFS_PORT") with | null | "" -> "5001" | v -> v
+            let port = match Int32.TryParse(portStr) with | true, v -> v | _ -> 5001
             let ipfs = Ipfs.IpfsAdapter(host, port) :> Ipfs.IIpfs
             let hash = ipfs.AddFileAsync("./dummy.txt", true).GetAwaiter().GetResult()
             Assert.False(String.IsNullOrEmpty(hash))
