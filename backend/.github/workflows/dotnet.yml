@@ -1,0 +1,24 @@
+name: .NET
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+    - name: Restore
+      run: dotnet restore ./fsharp/src/VideosDb/VideosDb.fsproj
+    - name: Build
+      run: dotnet build ./fsharp/src/VideosDb/VideosDb.fsproj -c Release --no-restore
+    - name: Run tests
+      run: dotnet test ./fsharp/tests/VideosDb.Tests/VideosDb.Tests.fsproj --no-build -c Release

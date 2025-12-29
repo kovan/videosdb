@@ -12,3 +12,5 @@ firestore-emulator-data
 firebase-export*
 common/
 .coverage
+
+.fake

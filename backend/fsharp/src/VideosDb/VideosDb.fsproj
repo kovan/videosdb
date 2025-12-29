@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Cloud.Firestore" Version="3.8.0" />
+    <PackageReference Include="Google.Apis.YouTube.v3" Version="1.63.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.6.66" />
+    <PackageReference Include="Ipfs.Http.Client" Version="1.2.0" />
+    <PackageReference Include="TweetinviAPI" Version="6.0.0" />
+    <PackageReference Include="Google.Cloud.Firestore" Version="3.8.0" />
+    <PackageReference Include="Slugify" Version="2.0.0" />
+    <PackageReference Include="AngleSharp" Version="1.0.1" />
+    <PackageReference Include="NodaTime" Version="3.1.0" />
+    <PackageReference Include="NJsonSchema" Version="10.9.3" />
+    <PackageReference Include="System.Text.Json" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
