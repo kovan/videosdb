@@ -41,3 +41,4 @@ htmlcov
 .calva
 .clj-kondo/.cache/
 
+backend_clojure/.clj-kondo/
