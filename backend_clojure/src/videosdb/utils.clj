@@ -23,22 +23,22 @@
 (defn quota-exceeded? [x]
   (= (::type x) quota-exceeded-type))
 
-;; Network utilities
-(defn wait-for-port
-  ([port] (wait-for-port port "localhost" 30.0))
-  ([port host] (wait-for-port port host 30.0))
-  ([port host timeout]
-   (log/debug (format "waiting for port %s:%s to be open" port host))
-   (let [start-time (System/currentTimeMillis)]
-     (loop []
-       (try
-         (let [socket (Socket. host port)]
-           (.close socket)
-           true)
-         (catch IOException _
-           (Thread/sleep 10)
-           (when (< (- (System/currentTimeMillis) start-time) (* timeout 1000))
-             (recur))))))))
+;; ;; Network utilities
+;; (defn wait-for-port
+;;   ([port] (wait-for-port port "localhost" 30.0))
+;;   ([port host] (wait-for-port port host 30.0))
+;;   ([port host timeout]
+;;    (log/debug (format "waiting for port %s:%s to be open" port host))
+;;    (let [start-time (System/currentTimeMillis)]
+;;      (loop []
+;;        (try
+;;          (let [socket (Socket. host port)]
+;;            (.close socket)
+;;            true)
+;;          (catch IOException _
+;;            (Thread/sleep 10)
+;;            (when (< (- (System/currentTimeMillis) start-time) (* timeout 1000))
+;;              (recur))))))))
 
 ;; Collection utilities
 (defn put-item-at-front [seq item]

@@ -63,6 +63,18 @@
      :db-schema db-schema
      :client db-client}))
 
+(defn increase-counter! [db-state counter-type & [increase]]
+  (let [inc-val (or increase 1)]
+    (utils/inc-counter! (get (:counters db-state) counter-type) inc-val)))
+
+;; Database operations with quota tracking
+(defn db-set! [db-state path data & [merge?]]
+  (increase-counter! db-state :writes)
+  (let [doc (.document (:client db-state) path)]
+    (if merge?
+      (.set doc data (com.google.cloud.firestore.SetOptions/merge))
+      (.set doc data))))
+
 ;; Database initialization
 (defn init-db! [db-state]
   (let [client (:client db-state)]
@@ -83,17 +95,6 @@
     db-state))
 
 ;; Counter operations
-(defn increase-counter! [db-state counter-type & [increase]]
-  (let [inc-val (or increase 1)]
-    (utils/inc-counter! (get (:counters db-state) counter-type) inc-val)))
-
-;; Database operations with quota tracking
-(defn db-set! [db-state path data & [merge?]]
-  (increase-counter! db-state :writes)
-  (let [doc (.document (:client db-state) path)]
-    (if merge?
-      (.set doc data com.google.cloud.firestore.SetOptions/merge)
-      (.set doc data))))
 
 (defn db-get [db-state path]
   (increase-counter! db-state :reads)
@@ -111,7 +112,7 @@
 (defn db-set-noquota! [db-state path data & [merge?]]
   (let [doc (.document (:client db-state) path)]
     (if merge?
-      (.set doc data com.google.cloud.firestore.SetOptions/merge)
+      (.set doc data (. com.google.cloud.firestore.SetOptions merge))
       (.set doc data))))
 
 (defn db-get-noquota [db-state path]
