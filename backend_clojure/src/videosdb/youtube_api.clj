@@ -8,6 +8,7 @@
             [clojure.data.json :as json]
             [clj-http.client :as http]
             [taoensso.carmine :as car]
+
             [videosdb.utils :as utils]
             [environ.core :refer [env]]
             [clojure.string :as str])

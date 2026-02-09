@@ -8,7 +8,6 @@
 
                  ;; Logging
                  [org.clojure/tools.logging "1.2.4"]
-                 [com.taoensso/timbre "6.2.2"]
 
                  ;; JSON processing
                  [org.clojure/data.json "2.4.0"]
