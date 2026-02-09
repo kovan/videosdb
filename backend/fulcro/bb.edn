@@ -1,0 +1,32 @@
+{:tasks
+ {:requires ([babashka.process :as p]
+             [babashka.fs :as fs])
+
+  sync
+  {:doc  "Sync YouTube data to Firestore"
+   :task (p/shell "clojure" "-M:cli" "-c")}
+
+  generate
+  {:doc  "Generate static site"
+   :task (do
+           (p/shell "npx" "shadow-cljs" "release" "client" "ssr")
+           (p/shell "clojure" "-M:cli" "-g"))}
+
+  deploy
+  {:doc  "Deploy to Firebase Hosting"
+   :task (p/shell "firebase" "deploy" "--only" "hosting")}
+
+  test
+  {:doc  "Run all tests"
+   :task (p/shell "clojure" "-X:test")}
+
+  dev
+  {:doc  "Start dev mode (shadow-cljs watch)"
+   :task (p/shell "npx" "shadow-cljs" "watch" "client")}
+
+  full-pipeline
+  {:doc  "Run full pipeline: sync -> generate -> deploy"
+   :task (do
+           (run 'sync)
+           (run 'generate)
+           (run 'deploy))}}}

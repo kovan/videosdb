@@ -1,0 +1,16 @@
+{:deps   true
+ :nrepl  {:port 9000}
+
+ :builds
+ {:client
+  {:target     :browser
+   :output-dir "resources/public/js/compiled"
+   :asset-path "/js/compiled"
+   :modules    {:main {:init-fn videosdb.app.client/init}}
+   :devtools   {:http-root "resources/public"
+                :http-port 8280}}
+
+  :ssr
+  {:target    :node-script
+   :output-to "target/ssr.js"
+   :main      videosdb.app.ssr/main}}}

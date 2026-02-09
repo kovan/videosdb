@@ -1,0 +1,15 @@
+# Build artifacts
+target/
+.cpcache/
+.shadow-cljs/
+node_modules/
+dist/
+resources/public/js/compiled/
+
+# IDE
+.nrepl-port
+.idea/
+*.iml
+
+# OS
+.DS_Store
