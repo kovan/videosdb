@@ -1,10 +1,7 @@
 (ns videosdb.app.ssr
   "Node.js SSR script entry point. Reads route+state from stdin, outputs HTML."
   (:require ["react-dom/server" :as rdom]
-            ["react" :as react]
-            [com.fulcrologic.fulcro.dom.server :as dom]
-            [com.fulcrologic.fulcro.components :as comp]
-            [clojure.string :as str]))
+            ["react" :as react]))
 
 ;; For SSR, we render a minimal version of the page
 ;; The full Fulcro app hydrates on the client

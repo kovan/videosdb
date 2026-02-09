@@ -145,7 +145,7 @@
     (let [enriched (assoc playlist :videosdb
                           {:videoCount  @video-count
                            :lastUpdated @last-updated
-                           :videoIds    @video-ids
+                           :videoIds    (vec @video-ids)
                            :slug        (slugify (get-in playlist [:snippet :title]))})]
       (when write?
         (fs/set-doc db (str "playlists/" (:id playlist)) enriched {:merge? true})
@@ -170,12 +170,16 @@
 ;; --- Main sync phases ---
 
 (defn- retrieve-all-playlist-ids
-  "Get all unique playlist IDs for a channel."
+  "Get all unique playlist IDs for a channel.
+   In DEBUG mode, only use channelSections (matching Python behavior)."
   [yt-client channel-id]
   (let [[_ section-ids] (yt/list-channelsection-playlist-ids yt-client channel-id)
-        [_ channel-ids] (yt/list-channel-playlist-ids yt-client channel-id)]
+        all-ids (if (config/env "DEBUG")
+                  section-ids
+                  (let [[_ channel-ids] (yt/list-channel-playlist-ids yt-client channel-id)]
+                    (distinct (concat section-ids channel-ids))))]
     (log/info "Retrieved all playlist IDs.")
-    (vec (distinct (concat section-ids channel-ids)))))
+    (vec all-ids)))
 
 (defn- phase1
   "Phase 1: Fetch channel/playlists/videos from YouTube API, write to Firestore."
@@ -205,12 +209,13 @@
                                 (shuffle playlist-ids)))]
               (doseq [f futures] @f))
 
-            ;; Process "all videos" playlist (uploads)
-            (let [uploads-id (get-in channel-info [:contentDetails :relatedPlaylists :uploads])]
-              (when uploads-id
-                (process-playlist db yt-client uploads-id
-                                  channel-name video-to-playlists
-                                  channel-id false))))
+            ;; Process "all videos" playlist (uploads) — skip in DEBUG mode
+            (when-not (config/env "DEBUG")
+              (let [uploads-id (get-in channel-info [:contentDetails :relatedPlaylists :uploads])]
+                (when uploads-id
+                  (process-playlist db yt-client uploads-id
+                                    channel-name video-to-playlists
+                                    channel-id false)))))
 
           ;; Write all videos
           (let [all-videos @video-to-playlists

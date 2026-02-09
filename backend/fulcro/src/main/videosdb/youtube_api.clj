@@ -5,7 +5,8 @@
             [clojure.tools.logging :as log]
             [clojure.string :as str]
             [videosdb.config :as config]
-            [videosdb.cache :as cache]))
+            [videosdb.cache :as cache])
+  (:import [java.net URLEncoder]))
 
 ;; --- Exceptions ---
 
@@ -22,7 +23,7 @@
     (let [resp (hc/get url {:http-client http-client
                             :headers     (or headers {})
                             :timeout     timeout
-                            :as          :auto})]
+                            :as          :string})]
       (if (and (>= (:status resp) 500) (< (:status resp) 600))
         (do
           (log/warn "5xx response for" url "status:" (:status resp))
@@ -56,7 +57,7 @@
   "Raw paginated HTTP request. Returns vector of [status-code & pages]."
   [{:keys [http-client api-key root-url]} url params & [headers]]
   (let [full-params (assoc params "key" api-key)
-        query-str   (str/join "&" (map (fn [[k v]] (str (name k) "=" v))
+        query-str   (str/join "&" (map (fn [[k v]] (str (name k) "=" (URLEncoder/encode (str v) "UTF-8")))
                                        full-params))
         base-url    (str url "?" query-str)]
     (loop [page-token nil

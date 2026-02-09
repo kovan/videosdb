@@ -27,11 +27,8 @@ COPY bb.edn ./
 # Build ClojureScript (client + SSR)
 RUN npx shadow-cljs release client ssr
 
-# AOT compile Clojure
-RUN clojure -M -e "(compile 'videosdb.cli)"
-
 # Stage 2: Runtime image
-FROM eclipse-temurin:21-jre-jammy AS runtime
+FROM clojure:temurin-21-tools-deps-bookworm-slim AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nodejs \
@@ -39,7 +36,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy compiled artifacts
+# Copy compiled artifacts and cached deps
+COPY --from=builder /root/.m2 /root/.m2
 COPY --from=builder /app/deps.edn ./
 COPY --from=builder /app/.cpcache ./.cpcache
 COPY --from=builder /app/src/main src/main
@@ -50,7 +48,6 @@ COPY --from=builder /app/node_modules node_modules
 COPY --from=builder /app/bb.edn ./
 
 # Copy common directory (service account keys, firebase configs)
-COPY ../../common common
+COPY common common
 
 ENTRYPOINT ["clojure"]
-CMD ["-M:cli", "-c"]

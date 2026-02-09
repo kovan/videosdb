@@ -74,6 +74,14 @@ tasks:
               vars:
                 IMAGE: frontend
 
+    build-fulcro:
+        run: once
+        cmds:
+            - cp -r common backend/fulcro
+            - task: build
+              vars:
+                IMAGE: backend/fulcro
+
     build-all:
         deps: [build-frontend, build-backend]
 
@@ -171,6 +179,31 @@ tasks:
                 -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
                 {{.REPO}}frontend-{{.BRANCH_NAME}}:latest
                 yarn run-s generate {{if .START_DEV_SERVER}}start{{end}}
+
+    end2end-tests-fulcro:
+        run: once
+        deps: [build-fulcro, prepare-servers]
+        cmds:
+            - date
+            - docker compose restart firebase-emulator redis json-caching-proxy
+            - task: wait-for-emulator
+            - task: tail-servers-logs
+            - docker run --rm
+                --network host
+                --env-file common/env/testing.txt
+                -e LOGLEVEL=DEBUG
+                -e DEBUG=1
+                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
+                -e YOUTUBE_API_URL={{.YOUTUBE_API_URL}}
+                -e YOUTUBE_CHANNEL_ID=UCcYzLCs3zrQIBVHYA1sK2sw
+                {{.REPO}}backend/fulcro-{{.BRANCH_NAME}}:latest
+                -M:cli -c
+            - docker run --rm
+                --network host
+                --env-file common/env/testing.txt
+                -e FIRESTORE_EMULATOR_HOST={{.FIRESTORE_EMULATOR}}
+                {{.REPO}}backend/fulcro-{{.BRANCH_NAME}}:latest
+                -M:cli -g
 
     tail-servers-logs: (docker compose logs -f -t --no-color | grep -v "Detected non-HTTP/2 connection"  | grep -v HttpVersionRoutingHandler ) &
 
