@@ -179,8 +179,7 @@
                             Query$Direction/DESCENDING))
 
                 where-clause
-                (let [[field op value] where-clause]
-                  (.whereArrayContains ^Query % field value))
+                (.whereArrayContains ^String (nth where-clause 0) ^Object (nth where-clause 2))
 
                 start-after
                 (.startAfter (into-array Object [start-after]))
