@@ -4,9 +4,13 @@
             [com.fulcrologic.fulcro.components :as comp]
             [com.fulcrologic.fulcro.routing.dynamic-routing :as dr]
             [videosdb.app.ui.root :as root]
+            [videosdb.app.ui.explorer :as explorer]
             [videosdb.app.firebase :as fb]))
 
 (defonce APP (app/fulcro-app {}))
+
+(defn- schedule-render! []
+  (app/schedule-render! APP))
 
 (defn ^:export init
   "Initialize the Fulcro application."
@@ -23,7 +27,13 @@
   (app/mount! APP root/Root "app")
 
   ;; Initialize routing
-  (dr/initialize! APP))
+  (dr/initialize! APP)
+
+  ;; Watch external atoms for changes and trigger re-renders
+  (add-watch root/sidebar-state :render (fn [_ _ _ _] (schedule-render!)))
+  (add-watch root/current-route :render (fn [_ _ _ _] (schedule-render!)))
+  (add-watch root/page-data :render (fn [_ _ _ _] (schedule-render!)))
+  (add-watch explorer/explorer-state :render (fn [_ _ _ _] (schedule-render!))))
 
 (defn ^:export refresh
   "Hot reload entry point."

@@ -31,7 +31,7 @@
                   :appId             "1:224322811272:web:82113e7ad6fa250915763d"}})
 
 (defn get-config []
-  (let [config-name (or js/goog.global.VIDEOSDB_CONFIG "testing")]
+  (let [config-name (or (js* "window[\"VIDEOSDB_CONFIG\"]") "testing")]
     (get firebase-configs config-name)))
 
 (defn init-db!
@@ -40,7 +40,7 @@
   (if @db-instance
     @db-instance
     (let [config     (get-config)
-          emulator   js/goog.global.FIRESTORE_EMULATOR_HOST
+          emulator   (js* "window[\"FIRESTORE_EMULATOR_HOST\"]")
           config     (if emulator
                        (assoc config :projectId "demo-project")
                        config)
@@ -82,8 +82,12 @@
         q     (apply query col (clj->js constraints))]
     (-> (getDocs q)
         (.then (fn [snapshot]
-                 (let [docs (array-seq (.-docs snapshot))]
-                   {:docs   (mapv (fn [d] (.data d)) docs)
+                 (let [docs (array-seq (unchecked-get snapshot "docs"))]
+                   {:docs   (mapv (fn [d]
+                                    (let [data (js->clj (js/JSON.parse (js/JSON.stringify (.data d)))
+                                                        :keywordize-keys true)]
+                                      (assoc data :id (unchecked-get d "id"))))
+                                  docs)
                     :cursor (last docs)
                     :count  (count docs)}))))))
 
@@ -94,7 +98,7 @@
     (-> (getDoc (doc db path))
         (.then (fn [snap]
                  (when (.exists snap)
-                   (.data snap)))))))
+                   (js/JSON.parse (js/JSON.stringify (.data snap)))))))))
 
 (defn query-by-field
   "Query a collection where field == value. Returns promise of first doc data."
@@ -104,9 +108,9 @@
         q   (query col (where field "==" value))]
     (-> (getDocs q)
         (.then (fn [snapshot]
-                 (let [docs (array-seq (.-docs snapshot))]
+                 (let [docs (array-seq (unchecked-get snapshot "docs"))]
                    (when (seq docs)
-                     (.data (first docs)))))))))
+                     (js/JSON.parse (js/JSON.stringify (.data (first docs)))))))))))
 
 (defn get-all-playlists
   "Get all playlists ordered by lastUpdated desc. Returns promise."
@@ -117,22 +121,26 @@
     (-> (getDocs q)
         (.then (fn [snapshot]
                  (mapv (fn [d]
-                         (let [data (.data d)]
-                           {:name        (.. data -snippet -title)
-                            :slug        (.. data -videosdb -slug)
-                            :use_count   (.. data -videosdb -videoCount)
-                            :last_updated (.. data -videosdb -lastUpdated)
-                            :id          (.-id data)}))
-                       (array-seq (.-docs snapshot))))))))
+                         (let [data (js->clj (js/JSON.parse (js/JSON.stringify (.data d)))
+                                             :keywordize-keys true)]
+                           (let [last-upd (get-in data [:videosdb :lastUpdated])]
+                             {:name         (get-in data [:snippet :title])
+                              :slug         (get-in data [:videosdb :slug])
+                              :use_count    (get-in data [:videosdb :videoCount])
+                              :last_updated (if (and (map? last-upd) (:seconds last-upd))
+                                              (:seconds last-upd)
+                                              last-upd)
+                              :id           (unchecked-get d "id")})))
+                       (array-seq (unchecked-get snapshot "docs"))))))))
 
 (defn get-random-video-slug
   "Get a random video slug from meta/video_ids. Returns promise of slug string."
   []
   (-> (get-doc-by-path "meta/video_ids")
       (.then (fn [data]
-               (let [ids (.-videoIds data)
-                     vid (aget ids (js/Math.floor (* (js/Math.random) (.-length ids))))]
+               (let [ids (unchecked-get data "videoIds")
+                     vid (aget ids (js/Math.floor (* (js/Math.random) (alength ids))))]
                  (-> (get-doc-by-path (str "videos/" vid))
                      (.then (fn [vdata]
                               (when vdata
-                                (.. vdata -videosdb -slug))))))))))
+                                (unchecked-get (unchecked-get vdata "videosdb") "slug"))))))))))

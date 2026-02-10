@@ -53,7 +53,7 @@
             :page-size   PAGE_SIZE})
           (.then (fn [{:keys [docs cursor count]}]
                    (let [new-videos (reduce (fn [m d]
-                                              (let [id (.-id d)]
+                                              (let [id (:id d)]
                                                 (assoc m id d)))
                                             {}
                                             docs)]
@@ -92,15 +92,17 @@
 
 ;; --- Video card ---
 (defn- ui-video-card [video idx]
-  (let [data     (if (object? video) (js->clj video :keywordize-keys true) video)
-        snippet  (:snippet data)
-        videosdb (:videosdb data)
+  (let [snippet  (:snippet video)
+        videosdb (:videosdb video)
         slug     (:slug videosdb)
         title    (:title snippet)
         thumb    (get-in snippet [:thumbnails :medium :url])
-        date     (:publishedAt snippet)
+        raw-date (:publishedAt snippet)
+        date     (if (and (map? raw-date) (:seconds raw-date))
+                   (.toISOString (js/Date. (* (:seconds raw-date) 1000)))
+                   raw-date)
         duration (:durationSeconds videosdb)]
-    (dom/div {:className "col-md-4" :key (or (:id data) idx)}
+    (dom/div {:className "col-md-4" :key (or (:id video) idx)}
       (dom/div {:className "card mb-4 shadow-sm text-center"}
         (dom/a {:href (str "/video/" slug)}
           (dom/img {:className "bd-placeholder-img card-img-top"
@@ -147,10 +149,14 @@
       (do-query! explorer-state))
 
     (let [{:keys [videos ordering loading?]} @explorer-state
-          sorted-videos (sort-by (fn [[_ v]]
-                                   (let [d (if (object? v) (js->clj v :keywordize-keys true) v)]
-                                     (get-in d [(keyword (first (str/split (:field ordering) #"\.")))
-                                                (keyword (second (str/split (:field ordering) #"\.")))])))
+          field-path (mapv keyword (str/split (:field ordering) #"\."))
+          sort-val  (fn [[_ v]]
+                      (let [raw (get-in v field-path)]
+                        ;; Firestore Timestamps become {:seconds N :nanoseconds N} after JSON round-trip
+                        (if (and (map? raw) (:seconds raw))
+                          (:seconds raw)
+                          (str raw))))
+          sorted-videos (sort-by sort-val
                                  (if (= "desc" (:direction ordering)) #(compare %2 %1) compare)
                                  videos)]
       (dom/div {:className "pt-2"}

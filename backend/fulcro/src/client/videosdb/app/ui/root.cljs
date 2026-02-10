@@ -13,11 +13,11 @@
 
 ;; --- App config from window globals ---
 (defn- get-app-config []
-  {:title    (or js/goog.global.VIDEOSDB_TITLE "VideosDB")
-   :subtitle (or js/goog.global.VIDEOSDB_SUBTITLE "")
-   :hostname (or js/goog.global.VIDEOSDB_HOSTNAME "")
-   :website  (or js/goog.global.VIDEOSDB_WEBSITE "")
-   :config   (or js/goog.global.VIDEOSDB_CONFIG "testing")})
+  {:title    (or (js* "window[\"VIDEOSDB_TITLE\"]") "VideosDB")
+   :subtitle (or (js* "window[\"VIDEOSDB_SUBTITLE\"]") "")
+   :hostname (or (js* "window[\"VIDEOSDB_HOSTNAME\"]") "")
+   :website  (or (js* "window[\"VIDEOSDB_WEBSITE\"]") "")
+   :config   (or (js* "window[\"VIDEOSDB_CONFIG\"]") "testing")})
 
 ;; --- Sidebar state ---
 (defonce sidebar-state
@@ -71,7 +71,7 @@
                (swap! page-data assoc :video video-data)
                ;; Load playlists for this video
                (when-let [playlist-ids (and video-data
-                                            (.. video-data -videosdb -playlists))]
+                                            (unchecked-get (unchecked-get video-data "videosdb") "playlists"))]
                  (let [ids (array-seq playlist-ids)]
                    (-> (js/Promise.all
                         (clj->js (map #(fb/get-doc-by-path (str "playlists/" %)) ids)))
