@@ -1,0 +1,14 @@
+name = "VideosDB"
+uuid = "c3a3f7d1-0000-4000-8000-000000000000"
+version = "0.1.0"
+description = "Julia port of the videosdb backend"
+
+[deps]
+HTTP = "cd3eb016-1a95-5a6c-8a1a-3f3f9c4c5d9c"
+JSON3 = "e5397b63-9a0a-5ffc-8f05-3f0d9f7f2f60"
+Dates = "ade2ca70-3891-5e02-a9f0-8d5b3e8a3c1a"
+Sockets = "d4d017d5-3a1a-5c3a-9f28-2a9f39c2e2b0"
+Test = "8dfed614-8f63-5b0b-8bf0-535df2b4b8a7"
+
+[targets]
+test = ["VideosDB"]
